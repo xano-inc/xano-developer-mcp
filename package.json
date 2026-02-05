@@ -1,0 +1,49 @@
+{
+  "name": "@xano/developer-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Xano Headless API documentation and XanoScript code validation",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "xano-developer-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "api_docs",
+    "xanoscript_docs"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "prepublishOnly": "npm run build",
+    "sync-docs": "npx ts-node scripts/sync-xanoscript-docs.ts"
+  },
+  "keywords": [
+    "xano",
+    "mcp",
+    "model-context-protocol",
+    "xanoscript",
+    "documentation",
+    "api",
+    "claude",
+    "ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xano-inc/xano-developer-mcp.git"
+  },
+  "homepage": "https://github.com/xano-inc/xano-developer-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/xano-inc/xano-developer-mcp/issues"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@xano/xanoscript-language-server": "^11.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  }
+}
