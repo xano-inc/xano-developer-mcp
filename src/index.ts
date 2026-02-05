@@ -129,6 +129,368 @@ const KEYWORD_ALIASES: Record<string, string> = {
   static: "frontend",
 };
 
+// Object type configuration for workspace initialization
+interface XanoObjectConfig {
+  path: string;           // Directory path
+  endpoint: string;       // API endpoint path segment
+  extension: string;      // File extension
+  hasXanoscript: boolean; // Whether the object has XanoScript content
+  supportsNesting?: boolean; // For API groups with endpoints
+}
+
+const XANO_OBJECT_TYPES: Record<string, XanoObjectConfig> = {
+  function: {
+    path: "functions",
+    endpoint: "function",
+    extension: ".xs",
+    hasXanoscript: true,
+  },
+  table: {
+    path: "tables",
+    endpoint: "table",
+    extension: ".xs",
+    hasXanoscript: true,
+  },
+  task: {
+    path: "tasks",
+    endpoint: "task",
+    extension: ".xs",
+    hasXanoscript: true,
+  },
+  api_group: {
+    path: "apis",
+    endpoint: "api-group",
+    extension: ".xs",
+    hasXanoscript: true,
+    supportsNesting: true,
+  },
+  tool: {
+    path: "tools",
+    endpoint: "tool",
+    extension: ".xs",
+    hasXanoscript: true,
+  },
+  agent: {
+    path: "agents",
+    endpoint: "agent",
+    extension: ".xs",
+    hasXanoscript: true,
+  },
+  middleware: {
+    path: "middlewares",
+    endpoint: "middleware",
+    extension: ".xs",
+    hasXanoscript: true,
+  },
+  addon: {
+    path: "addons",
+    endpoint: "addon",
+    extension: ".xs",
+    hasXanoscript: true,
+  },
+  mcp_server: {
+    path: "mcp_servers",
+    endpoint: "mcp-server",
+    extension: ".xs",
+    hasXanoscript: true,
+  },
+  realtime_channel: {
+    path: "realtime",
+    endpoint: "realtime-channel",
+    extension: ".xs",
+    hasXanoscript: true,
+  },
+};
+
+// Registry status types
+type XanoStatus = "new" | "unchanged" | "changed" | "deleted";
+
+interface RegistryRecord {
+  id: number;
+  type: string;
+  name: string;
+  path: string;
+  sha256?: string;
+  status: XanoStatus;
+  original?: string; // Base64-encoded original content
+  updated_at?: string;
+}
+
+interface WorkspaceRegistry {
+  workspace_id: number;
+  workspace_name: string;
+  branch: string;
+  base_url: string;
+  created_at: string;
+  updated_at: string;
+  objects: RegistryRecord[];
+}
+
+// Generate init_workspace documentation
+function generateInitWorkspaceDoc(): string {
+  const objectTypesTable = Object.entries(XANO_OBJECT_TYPES)
+    .map(([type, config]) => `| \`${type}\` | \`${config.path}/\` | \`${config.endpoint}\` |`)
+    .join("\n");
+
+  return `# Xano Workspace Initialization Guide
+
+This guide explains how to set up a local development workspace that syncs with the Xano Headless API.
+
+## Directory Structure
+
+Initialize your workspace with these directories:
+
+\`\`\`
+your-project/
+├── .xano/
+│   └── registry.json      # Tracks all objects and their sync state
+├── functions/             # Custom reusable functions
+│   ├── calculate_total.xs
+│   └── validate_email.xs
+├── tables/                # Database table schemas
+│   ├── user.xs
+│   └── order.xs
+├── tasks/                 # Scheduled background tasks
+│   └── cleanup_sessions.xs
+├── apis/                  # API groups and endpoints
+│   └── auth/              # API group directory
+│       ├── api_group.xs   # Group definition
+│       ├── POST_login.xs  # Endpoint: POST /auth/login
+│       └── GET_me.xs      # Endpoint: GET /auth/me
+├── tools/                 # AI-callable tools
+├── agents/                # AI agents
+├── middlewares/           # Request/response middleware
+├── addons/                # Query addons
+├── mcp_servers/           # MCP servers
+└── realtime/              # Realtime channels
+\`\`\`
+
+## Object Types
+
+| Type | Directory | API Endpoint |
+|------|-----------|--------------|
+${objectTypesTable}
+
+## File Naming Convention
+
+Files should follow snake_case naming with the \`.xs\` extension:
+- \`{name}.xs\` - Basic format (e.g., \`calculate_total.xs\`)
+- \`{id}_{name}.xs\` - With ID prefix for disambiguation (e.g., \`42_calculate_total.xs\`)
+- API endpoints: \`{VERB}_{path}.xs\` (e.g., \`POST_login.xs\`, \`GET_users_id.xs\`)
+
+## Registry Format
+
+The \`.xano/registry.json\` file tracks the sync state between local files and the Xano API:
+
+\`\`\`json
+{
+  "workspace_id": 12345,
+  "workspace_name": "My Project",
+  "branch": "",
+  "base_url": "https://your-instance.xano.io/api:headless",
+  "created_at": "2025-01-15T10:30:00Z",
+  "updated_at": "2025-01-15T10:30:00Z",
+  "objects": [
+    {
+      "id": 1,
+      "type": "function",
+      "name": "calculate_total",
+      "path": "functions/calculate_total.xs",
+      "sha256": "abc123...",
+      "status": "unchanged",
+      "original": "ZnVuY3Rpb24gY2FsY3VsYXRlX3RvdGFsIHsgLi4uIH0=",
+      "updated_at": "2025-01-15T10:30:00Z"
+    },
+    {
+      "id": 0,
+      "type": "function",
+      "name": "new_function",
+      "path": "functions/new_function.xs",
+      "status": "new"
+    }
+  ]
+}
+\`\`\`
+
+### Registry Record Fields
+
+| Field | Description |
+|-------|-------------|
+| \`id\` | Xano object ID (0 = new, not yet synced) |
+| \`type\` | Object type (function, table, task, etc.) |
+| \`name\` | Object name extracted from XanoScript |
+| \`path\` | Relative file path from workspace root |
+| \`sha256\` | SHA256 hash of file content for change detection |
+| \`status\` | Sync status: "new", "unchanged", "changed", "deleted" |
+| \`original\` | Base64-encoded original content (for conflict detection) |
+| \`updated_at\` | Last sync timestamp |
+
+### Status Values
+
+| Status | Description |
+|--------|-------------|
+| \`new\` | Created locally, not yet pushed to Xano |
+| \`unchanged\` | In sync with remote |
+| \`changed\` | Modified locally since last sync |
+| \`deleted\` | Marked for deletion (file removed locally) |
+
+## Fetching Objects from the API
+
+Use the Headless API to fetch objects. For detailed endpoint documentation, use \`api_docs({ object: "function" })\` etc.
+
+### List Objects
+
+\`\`\`
+GET /workspace/{workspace_id}/{type}
+Headers:
+  Authorization: Bearer {token}
+
+Query Parameters:
+  - branch: Branch label (empty = live branch)
+  - page: Page number (default: 1)
+  - per_page: Items per page (default: 50, max: 10000)
+  - search: Text search filter
+  - sort: Sort field (created_at, updated_at, name)
+  - order: asc or desc
+\`\`\`
+
+### Get Single Object with XanoScript
+
+\`\`\`
+GET /workspace/{workspace_id}/{type}/{id}
+Headers:
+  Authorization: Bearer {token}
+
+Query Parameters:
+  - branch: Branch label
+\`\`\`
+
+The response includes the \`xanoscript\` field with the code content:
+\`\`\`json
+{
+  "id": 1,
+  "name": "calculate_total",
+  "xanoscript": {
+    "status": "ok",
+    "value": "function calculate_total { ... }"
+  }
+}
+\`\`\`
+
+## Pull Workflow
+
+1. **Fetch object list** from API (paginated)
+2. **For each object**, get the full definition including XanoScript
+3. **Generate file path** based on type and name
+4. **Write file** to the appropriate directory
+5. **Update registry** with object metadata and SHA256 hash
+
+### Example Pull Request Sequence
+
+\`\`\`javascript
+// 1. List all functions
+const response = await fetch(
+  \`\${baseUrl}/workspace/\${workspaceId}/function?branch=\${branch}&per_page=100\`,
+  { headers: { Authorization: \`Bearer \${token}\` } }
+);
+const { items, nextPage } = await response.json();
+
+// 2. For each function, save to file
+for (const func of items) {
+  const xanoscript = func.xanoscript?.value || '';
+  const fileName = \`\${snakeCase(func.name)}.xs\`;
+  const filePath = \`functions/\${fileName}\`;
+
+  // Write file
+  await writeFile(filePath, xanoscript);
+
+  // Add to registry
+  registry.objects.push({
+    id: func.id,
+    type: 'function',
+    name: func.name,
+    path: filePath,
+    sha256: sha256(xanoscript),
+    status: 'unchanged',
+    original: btoa(xanoscript),
+    updated_at: func.updated_at
+  });
+}
+\`\`\`
+
+## Push Workflow
+
+1. **Read registry** to find changed/new objects
+2. **For each changed file**, read content and detect changes
+3. **Create or update** via API with XanoScript content
+4. **Update registry** with new IDs and hashes
+
+### Example Push Request
+
+\`\`\`javascript
+// Create new function
+const response = await fetch(
+  \`\${baseUrl}/workspace/\${workspaceId}/function?branch=\${branch}\`,
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': \`Bearer \${token}\`,
+      'Content-Type': 'text/x-xanoscript'
+    },
+    body: xanoscriptContent
+  }
+);
+
+// Update existing function
+const response = await fetch(
+  \`\${baseUrl}/workspace/\${workspaceId}/function/\${functionId}?publish=true\`,
+  {
+    method: 'PUT',
+    headers: {
+      'Authorization': \`Bearer \${token}\`,
+      'Content-Type': 'text/x-xanoscript'
+    },
+    body: xanoscriptContent
+  }
+);
+\`\`\`
+
+## API Documentation References
+
+For detailed API documentation on each object type, use:
+
+- \`api_docs()\` - Overview of all endpoints
+- \`api_docs({ object: "workspace" })\` - Workspace management
+- \`api_docs({ object: "function" })\` - Functions API
+- \`api_docs({ object: "table" })\` - Tables API
+- \`api_docs({ object: "task" })\` - Tasks API
+- \`api_docs({ object: "api_group" })\` - API groups and endpoints
+- \`api_docs({ object: "agent" })\` - AI agents
+- \`api_docs({ object: "tool" })\` - AI tools
+- \`api_docs({ object: "authentication" })\` - Auth and user info
+
+## XanoScript Documentation References
+
+For writing XanoScript code, use:
+
+- \`xanoscript_docs()\` - Full documentation index
+- \`xanoscript_docs({ keyword: "function" })\` - Function syntax
+- \`xanoscript_docs({ keyword: "table" })\` - Table schema syntax
+- \`xanoscript_docs({ keyword: "api_query" })\` - API endpoint syntax
+- \`xanoscript_docs({ keyword: "syntax" })\` - Language reference
+
+## Validating XanoScript
+
+Before pushing changes, validate the XanoScript syntax:
+
+\`\`\`
+validate_xanoscript({ code: "function foo { ... }" })
+\`\`\`
+
+This will check for syntax errors and return line/column positions for any issues.
+`;
+}
+
 // Map of object names to their documentation files
 const DOCS_MAP: Record<string, string> = {
   workspace: "workspace.md",
@@ -436,6 +798,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: [],
         },
       },
+      {
+        name: "init_workspace",
+        description:
+          "Get comprehensive instructions for initializing a local Xano development workspace. " +
+          "Returns documentation on directory structure, file naming conventions, registry format for tracking changes, " +
+          "and workflows for pulling/pushing XanoScript files via the Headless API. " +
+          "Use this when setting up local development for Xano projects.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
     ],
   };
 });
@@ -548,6 +923,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = request.params.arguments as { keyword?: string } | undefined;
     const keyword = args?.keyword;
     const documentation = readXanoscriptDocs(keyword);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: documentation,
+        },
+      ],
+    };
+  }
+
+  if (request.params.name === "init_workspace") {
+    const documentation = generateInitWorkspaceDoc();
 
     return {
       content: [
