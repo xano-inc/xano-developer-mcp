@@ -427,6 +427,7 @@ const server = new Server(
   {
     name: "xano-developer-mcp",
     version: "1.0.0",
+    description: "MCP server for Xano Headless API documentation and XanoScript code validation",
   },
   {
     capabilities: {
