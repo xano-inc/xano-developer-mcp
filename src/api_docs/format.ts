@@ -148,10 +148,14 @@ export function formatDocumentation(
     sections.push(doc.ai_hints);
   }
 
-  // Endpoints
-  if (doc.endpoints?.length) {
+  // Include base URL info if topic has endpoints or patterns (workflows)
+  if (doc.endpoints?.length || doc.patterns?.length) {
     sections.push("");
     sections.push(BASE_URL_INFO);
+  }
+
+  // Endpoints
+  if (doc.endpoints?.length) {
     sections.push("## Endpoints");
     for (const ep of doc.endpoints) {
       sections.push("");
