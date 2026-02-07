@@ -21,16 +21,53 @@ query "<path>" verb=<METHOD> {
 ### HTTP Methods
 `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
 
+### API Groups (Required)
+
+Every API endpoint **must** belong to an API group. An API group is a folder within `apis/` that organizes related endpoints together.
+
+- API groups appear as top-level folders under `apis/`
+- Each group **must** have an `api_group.xs` file that defines the group
+- The group contains `.xs` files defining individual endpoints
+- The group name becomes part of the endpoint URL path
+- You cannot create endpoints directly in the `apis/` root folder
+
+#### Defining an API Group
+
+Create an `api_group.xs` file in the group folder:
+
+```xs
+api_group "users" {
+  description = "User management endpoints"
+}
+```
+
+#### API Group Properties
+
+| Property | Description |
+|----------|-------------|
+| `description` | What this API group contains |
+| `canonical` | Optional: custom URL path (overrides folder name) |
+
+```xs
+api_group "events" {
+  canonical = "events-api"           # URL will use /events-api instead of /events
+}
+```
+
 ### File Structure
 ```
 apis/
-├── users/                      # API group
+├── users/                      # API group folder
+│   ├── api_group.xs            # Required: defines the group
 │   ├── list.xs                 # GET /users
 │   ├── create.xs               # POST /users
 │   └── {id}.xs                 # GET/PATCH/DELETE /users/{id}
-└── products/
-    └── search.xs
+└── products/                   # Another API group
+    ├── api_group.xs            # Required: defines the group
+    └── search.xs               # GET /products/search
 ```
+
+> **Note:** Files placed directly in `apis/` without a group folder are invalid. Each API group folder must contain an `api_group.xs` file.
 
 ---
 
