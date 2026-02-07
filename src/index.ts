@@ -14,6 +14,8 @@ import { dirname, join } from "path";
 import { minimatch } from "minimatch";
 import { xanoscriptParser } from "@xano/xanoscript-language-server/parser/parser.js";
 import { getSchemeFromContent } from "@xano/xanoscript-language-server/utils.js";
+import { apiDocsToolDefinition, handleApiDocs } from "./api_docs/index.js";
+import type { ApiDocsArgs } from "./api_docs/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -155,53 +157,13 @@ const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
 };
 
 // =============================================================================
-// API Documentation Configuration
-// =============================================================================
-
-const DOCS_MAP: Record<string, string> = {
-  workspace: "workspace.md",
-  table: "table.md",
-  api_group: "api_group.md",
-  function: "function.md",
-  task: "task.md",
-  middleware: "middleware.md",
-  addon: "addon.md",
-  agent: "agent.md",
-  tool: "tool.md",
-  mcp_server: "mcp_server.md",
-  realtime: "realtime.md",
-  triggers: "triggers.md",
-  file: "file.md",
-  history: "history.md",
-  authentication: "authentication.md",
-};
-
-// =============================================================================
 // Path Resolution
 // =============================================================================
 
-function getDocsPath(): string {
-  const possiblePaths = [
-    join(__dirname, "..", "api_docs"),
-    join(__dirname, "..", "..", "api_docs"),
-  ];
-
-  for (const p of possiblePaths) {
-    try {
-      readFileSync(join(p, "index.md"));
-      return p;
-    } catch {
-      continue;
-    }
-  }
-
-  return join(__dirname, "..", "api_docs");
-}
-
 function getXanoscriptDocsPath(): string {
   const possiblePaths = [
-    join(__dirname, "..", "xanoscript_docs"),
-    join(__dirname, "..", "..", "xanoscript_docs"),
+    join(__dirname, "xanoscript_docs"),           // dist/xanoscript_docs (production)
+    join(__dirname, "..", "src", "xanoscript_docs"), // src/xanoscript_docs (dev before build)
   ];
 
   for (const p of possiblePaths) {
@@ -213,10 +175,9 @@ function getXanoscriptDocsPath(): string {
     }
   }
 
-  return join(__dirname, "..", "xanoscript_docs");
+  return join(__dirname, "xanoscript_docs");
 }
 
-const DOCS_PATH = getDocsPath();
 const XANOSCRIPT_DOCS_PATH = getXanoscriptDocsPath();
 
 // =============================================================================
@@ -232,39 +193,6 @@ function getXanoscriptDocsVersion(): string {
     return JSON.parse(versionFile).version || "unknown";
   } catch {
     return "unknown";
-  }
-}
-
-function readDocumentation(object?: string): string {
-  try {
-    if (!object) {
-      return readFileSync(join(DOCS_PATH, "index.md"), "utf-8");
-    }
-
-    const normalizedObject = object.toLowerCase().trim();
-
-    if (normalizedObject in DOCS_MAP) {
-      const filePath = join(DOCS_PATH, DOCS_MAP[normalizedObject]);
-      return readFileSync(filePath, "utf-8");
-    }
-
-    const matchingKey = Object.keys(DOCS_MAP).find(
-      (key) =>
-        key.includes(normalizedObject) || normalizedObject.includes(key)
-    );
-
-    if (matchingKey) {
-      const filePath = join(DOCS_PATH, DOCS_MAP[matchingKey]);
-      return readFileSync(filePath, "utf-8");
-    }
-
-    const availableObjects = Object.keys(DOCS_MAP).join(", ");
-    return `Error: Unknown object "${object}". Available objects: ${availableObjects}
-
-Use api_docs() without parameters to see the full documentation index.`;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return `Error reading documentation: ${errorMessage}`;
   }
 }
 
@@ -454,21 +382,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: "api_docs",
-        description:
-          "Get Xano Headless API documentation. Returns documentation for interacting with the Xano Headless API using XanoScript. Use without parameters for an overview, or specify an object for detailed documentation.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            object: {
-              type: "string",
-              description: `Optional: The specific API object to get documentation for. Available values: ${Object.keys(DOCS_MAP).join(", ")}`,
-            },
-          },
-          required: [],
-        },
-      },
-      {
         name: "validate_xanoscript",
         description:
           "Validate XanoScript code for syntax errors. Returns a list of errors with line/column positions, or confirms the code is valid. The language server auto-detects the object type from the code syntax.",
@@ -529,26 +442,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: [],
         },
       },
+      apiDocsToolDefinition,
     ],
   };
 });
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === "api_docs") {
-    const args = request.params.arguments as { object?: string } | undefined;
-    const object = args?.object;
-    const documentation = readDocumentation(object);
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: documentation,
-        },
-      ],
-    };
-  }
-
   if (request.params.name === "validate_xanoscript") {
     const args = request.params.arguments as {
       code: string;
@@ -663,6 +562,53 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         },
       ],
     };
+  }
+
+  if (request.params.name === "api_docs") {
+    const args = request.params.arguments as {
+      topic?: string;
+      detail_level?: string;
+      include_schemas?: boolean;
+    } | undefined;
+
+    if (!args?.topic) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Error: 'topic' parameter is required. Use api_docs with topic='start' for overview.",
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    try {
+      const documentation = handleApiDocs({
+        topic: args.topic,
+        detail_level: args.detail_level as ApiDocsArgs["detail_level"],
+        include_schemas: args.include_schemas,
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: documentation,
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error retrieving API documentation: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
+    }
   }
 
   return {

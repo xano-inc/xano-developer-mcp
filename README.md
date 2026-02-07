@@ -6,10 +6,10 @@ A Model Context Protocol (MCP) server that provides AI assistants with comprehen
 
 This MCP server acts as a bridge between AI models and Xano's developer ecosystem, offering:
 
-- Complete Xano Headless API documentation
-- XanoScript code validation and syntax checking
-- XanoScript programming language documentation with examples
-- Development workflows and best practices
+- **Meta API Documentation** - Programmatically manage Xano workspaces, databases, APIs, functions, and more
+- **XanoScript Documentation** - Language reference with context-aware docs based on file type
+- **Code Validation** - Syntax checking with the official XanoScript language server
+- **Workflow Guides** - Step-by-step guides for common development tasks
 
 ## Quick Start
 
@@ -109,38 +109,7 @@ claude mcp add xano-developer node /path/to/xano-developer-mcp/dist/index.js
 
 ## Available Tools
 
-### 1. `api_docs`
-
-Retrieves Xano Headless API documentation for specific resources.
-
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `object` | string | No | Specific API resource to document |
-
-**Available Objects:**
-- `workspace` - Workspace management, branches, datasources, OpenAPI specs
-- `table` - Database table schema management
-- `api_group` - API groups and endpoints management
-- `function` - Reusable function library
-- `task` - Scheduled tasks (cron jobs)
-- `middleware` - Request/response middleware
-- `addon` - Response transformation queries
-- `agent` - AI agent configuration
-- `tool` - AI tool definitions for agents
-- `mcp_server` - Model Context Protocol server management
-- `realtime` - Realtime WebSocket channels
-- `triggers` - Event-driven triggers
-- `file` - File uploads and static hosting
-- `history` - Request history and audit logs
-- `authentication` - User authentication and session info
-
-**Example:**
-```
-api_docs({ object: "workspace" })
-```
-
-### 2. `validate_xanoscript`
+### 1. `validate_xanoscript`
 
 Validates XanoScript code for syntax errors. The language server auto-detects the object type from the code syntax.
 
@@ -158,7 +127,7 @@ validate_xanoscript({
 
 **Returns:** List of errors with line/column positions, or confirmation of validity.
 
-### 3. `xanoscript_docs`
+### 2. `xanoscript_docs`
 
 Retrieves XanoScript programming language documentation with context-aware support.
 
@@ -225,6 +194,54 @@ Get the current version of the Xano Developer MCP server.
 mcp_version()
 ```
 
+### 5. `api_docs`
+
+Get documentation for Xano's Meta API. Use this to understand how to programmatically manage Xano workspaces, databases, APIs, functions, agents, and more.
+
+**Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `topic` | string | Yes | Documentation topic to retrieve |
+| `detail_level` | string | No | `overview`, `detailed` (default), or `examples` |
+| `include_schemas` | boolean | No | Include JSON schemas for requests/responses (default: true) |
+
+**Available Topics:**
+
+| Topic | Description |
+|-------|-------------|
+| `start` | Getting started with the Meta API |
+| `authentication` | API authentication and authorization |
+| `workspace` | Workspace management endpoints |
+| `apigroup` | API group operations |
+| `api` | API endpoint management |
+| `table` | Database table operations |
+| `function` | Function management |
+| `task` | Scheduled task operations |
+| `agent` | AI agent configuration |
+| `tool` | AI tool management |
+| `mcp_server` | MCP server endpoints |
+| `middleware` | Middleware configuration |
+| `branch` | Branch management |
+| `realtime` | Real-time channel operations |
+| `file` | File management |
+| `history` | Version history |
+| `workflows` | Step-by-step workflow guides |
+
+**Examples:**
+```
+// Get overview of Meta API
+api_docs({ topic: "start" })
+
+// Get detailed table documentation
+api_docs({ topic: "table", detail_level: "detailed" })
+
+// Get examples without schemas (smaller context)
+api_docs({ topic: "api", detail_level: "examples", include_schemas: false })
+
+// Step-by-step workflow guides
+api_docs({ topic: "workflows" })
+```
+
 ## MCP Resources
 
 The server also exposes XanoScript documentation as MCP resources for direct access:
@@ -262,7 +279,6 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `build` | `tsc` | Compile TypeScript to JavaScript |
 | `start` | `node dist/index.js` | Run the MCP server |
 | `dev` | `tsc && node dist/index.js` | Build and run in development |
-| `sync-docs` | `npx ts-node scripts/sync-xanoscript-docs.ts` | Regenerate XanoScript documentation mapping |
 
 ## Project Structure
 
@@ -271,23 +287,19 @@ xano-developer-mcp/
 ├── src/
 │   ├── index.ts              # Main MCP server implementation
 │   ├── xanoscript.d.ts       # TypeScript declarations
+│   ├── api_docs/             # Meta API documentation
+│   │   ├── index.ts          # API docs tool handler
+│   │   ├── types.ts          # Type definitions
+│   │   ├── format.ts         # Documentation formatter
+│   │   └── topics/           # Individual topic modules
+│   ├── xanoscript_docs/      # XanoScript language documentation
+│   │   ├── version.json
+│   │   ├── README.md
+│   │   ├── syntax.md
+│   │   └── ...
 │   └── templates/
 │       └── xanoscript-index.ts
 ├── dist/                      # Compiled JavaScript output
-├── scripts/
-│   └── sync-xanoscript-docs.ts  # Documentation sync script
-├── api_docs/                  # Xano Headless API documentation (16 markdown files)
-│   ├── index.md
-│   ├── workspace.md
-│   ├── table.md
-│   └── ...
-├── xanoscript_docs/           # XanoScript language documentation
-│   ├── version.json
-│   ├── README.md
-│   ├── syntax.md
-│   ├── functions.md
-│   ├── apis.md
-│   └── ...
 ├── package.json
 └── tsconfig.json
 ```
@@ -311,15 +323,15 @@ MCP Protocol (JSON-RPC over stdio)
     ▼
 Xano Developer MCP Server
     │
-    ├─► api_docs → Reads /api_docs/*.md files
-    │
     ├─► validate_xanoscript → Parses code with XanoScript language server
     │
     ├─► xanoscript_docs → Context-aware docs from /xanoscript_docs/*.md
     │
+    ├─► api_docs → Meta API documentation with detail levels
+    │
     ├─► mcp_version → Returns server version from package.json
     │
-    └─► MCP Resources → Direct access to documentation files
+    └─► MCP Resources → Direct access to XanoScript documentation
 ```
 
 ## Authentication
@@ -338,11 +350,17 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
 
 ### Documentation Structure
 
-The XanoScript documentation uses a file-based structure in `xanoscript_docs/`. The documentation mapping is configured in `src/index.ts` via the `XANOSCRIPT_DOCS_V2` constant, which defines:
+**XanoScript Documentation** (`src/xanoscript_docs/`):
+- Markdown files for XanoScript language reference
+- Configured in `src/index.ts` via `XANOSCRIPT_DOCS_V2` with:
+  - **file**: The markdown file containing the documentation
+  - **applyTo**: Glob patterns for context-aware matching (e.g., `apis/**/*.xs`)
+  - **description**: Human-readable description of the topic
 
-- **file**: The markdown file containing the documentation
-- **applyTo**: Glob patterns for context-aware matching (e.g., `apis/**/*.xs`)
-- **description**: Human-readable description of the topic
+**Meta API Documentation** (`src/api_docs/`):
+- TypeScript modules with structured documentation
+- Supports parameterized output (detail levels, schema inclusion)
+- Better for AI consumption due to context efficiency
 
 ## License
 

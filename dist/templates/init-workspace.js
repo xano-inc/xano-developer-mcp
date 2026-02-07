@@ -110,7 +110,7 @@ The \`.xano/registry.json\` file tracks the sync state between local files and t
 
 ## Fetching Objects from the API
 
-Use the Headless API to fetch objects. For detailed endpoint documentation, use \`api_docs({ object: "function" })\` etc.
+Use the Headless API to fetch objects.
 
 ### List Objects
 
@@ -175,7 +175,7 @@ apis/
     └── GET_me.xs          # Another endpoint
 \`\`\`
 
-See \`api_docs({ object: "api_group" })\` for complete API group and endpoint documentation.
+API groups contain endpoints that share common configuration.
 
 ## Pull Workflow
 
@@ -254,20 +254,6 @@ const response = await fetch(
   }
 );
 \`\`\`
-
-## API Documentation References
-
-For detailed API documentation on each object type, use:
-
-- \`api_docs()\` - Overview of all endpoints
-- \`api_docs({ object: "workspace" })\` - Workspace management
-- \`api_docs({ object: "function" })\` - Functions API
-- \`api_docs({ object: "table" })\` - Tables API
-- \`api_docs({ object: "task" })\` - Tasks API
-- \`api_docs({ object: "api_group" })\` - API groups and endpoints
-- \`api_docs({ object: "agent" })\` - AI agents
-- \`api_docs({ object: "tool" })\` - AI tools
-- \`api_docs({ object: "authentication" })\` - Auth and user info
 
 ## XanoScript Documentation References
 

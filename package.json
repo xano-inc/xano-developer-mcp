@@ -1,6 +1,6 @@
 {
   "name": "@xano/developer-mcp",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "MCP server for Xano Headless API documentation and XanoScript code validation",
   "type": "module",
   "main": "dist/index.js",
@@ -8,16 +8,13 @@
     "xano-developer-mcp": "./dist/index.js"
   },
   "files": [
-    "dist",
-    "api_docs",
-    "xanoscript_docs"
+    "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -r src/xanoscript_docs dist/",
     "start": "node dist/index.js",
     "dev": "tsc && node dist/index.js",
-    "prepublishOnly": "npm run build",
-    "sync-docs": "npx ts-node scripts/sync-xanoscript-docs.ts"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "xano",
