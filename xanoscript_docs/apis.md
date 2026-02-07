@@ -10,6 +10,7 @@ HTTP endpoint definitions in XanoScript.
 
 ```xs
 query "<path>" verb=<METHOD> {
+  api_group = "<GroupName>"     # Required: API group for organization
   description = "What this endpoint does"
   auth = "<table>"              # Optional: require authentication
   input { ... }
@@ -23,7 +24,11 @@ query "<path>" verb=<METHOD> {
 
 ### API Groups (Required)
 
-Every API endpoint **must** belong to an API group. An API group is a folder within `apis/` that organizes related endpoints together.
+Every API endpoint **must** belong to an API group. API groups organize related endpoints together.
+
+**Two requirements for API groups:**
+1. Each `query` definition **must** include an `api_group` property specifying which group it belongs to
+2. API groups are organized as folders within `apis/`, each with an `api_group.xs` file
 
 - API groups appear as top-level folders under `apis/`
 - Each group **must** have an `api_group.xs` file that defines the group
@@ -75,6 +80,7 @@ apis/
 
 ```xs
 query "products" verb=GET {
+  api_group = "Products"
   description = "List all products"
   input {
     int page?=1 filters=min:1
@@ -96,6 +102,7 @@ query "products" verb=GET {
 ### Public Endpoint (default)
 ```xs
 query "status" verb=GET {
+  api_group = "System"
   stack { }
   response = { status: "ok" }
 }
@@ -104,6 +111,7 @@ query "status" verb=GET {
 ### Authenticated Endpoint
 ```xs
 query "profile" verb=GET {
+  api_group = "Users"
   auth = "user"                 # Requires valid JWT
   stack {
     db.get "user" {
@@ -128,6 +136,7 @@ Use `{param}` in the path:
 
 ```xs
 query "users/{user_id}" verb=GET {
+  api_group = "Users"
   auth = "user"
   input {
     int user_id { table = "user" }
@@ -149,6 +158,7 @@ query "users/{user_id}" verb=GET {
 ### List (GET)
 ```xs
 query "products" verb=GET {
+  api_group = "Products"
   input {
     text category? filters=trim|lower
     int page?=1
@@ -168,6 +178,7 @@ query "products" verb=GET {
 ### Create (POST)
 ```xs
 query "products" verb=POST {
+  api_group = "Products"
   auth = "user"
   input {
     text name filters=trim
@@ -193,6 +204,7 @@ query "products" verb=POST {
 ### Read (GET with ID)
 ```xs
 query "products/{product_id}" verb=GET {
+  api_group = "Products"
   input {
     int product_id { table = "product" }
   }
@@ -214,6 +226,7 @@ query "products/{product_id}" verb=GET {
 ### Update (PATCH)
 ```xs
 query "products/{product_id}" verb=PATCH {
+  api_group = "Products"
   auth = "user"
   input {
     int product_id { table = "product" }
@@ -248,6 +261,7 @@ query "products/{product_id}" verb=PATCH {
 ### Delete (DELETE)
 ```xs
 query "products/{product_id}" verb=DELETE {
+  api_group = "Products"
   auth = "user"
   input {
     int product_id { table = "product" }
