@@ -15,7 +15,7 @@ function "<name>" {
     <type> <name> [filters=...] { description = "..." }
   }
   stack {
-    # Logic here
+    // Logic here
   }
   response = $result
 }
@@ -110,21 +110,21 @@ stack {
 ### Loops
 ```xs
 stack {
-  # For loop (count-based)
+  // For loop (count-based)
   for (10) {
     each as $i {
       debug.log { value = $i }
     }
   }
 
-  # Foreach (array iteration)
+  // Foreach (array iteration)
   foreach ($input.items) {
     each as $item {
       debug.log { value = $item.name }
     }
   }
 
-  # While loop
+  // While loop
   while ($counter < 5) {
     each {
       math.add $counter { value = 1 }
@@ -161,10 +161,10 @@ For complete error handling reference (preconditions, try-catch, throw, early re
 Specify what the function returns:
 
 ```xs
-response = $total                    # Single variable
-response = { success: true, data: $result }   # Object literal
-response = $items|first              # With filter
-response = null                      # No return value
+response = $total                    // Single variable
+response = { success: true, data: $result }   // Object literal
+response = $items|first              // With filter
+response = null                      // No return value
 ```
 
 ---

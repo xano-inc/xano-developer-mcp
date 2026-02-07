@@ -71,10 +71,10 @@ ai.agent.run "Customer Support" {
 
 ```xs
 llm = {
-  type: "<provider>"                    # Required
-  system_prompt: "..."                  # Agent persona and rules
-  prompt: "{{ $args.input }}"           # User input template
-  max_steps: 5                          # Max LLM calls per run
+  type: "<provider>"                    // Required
+  system_prompt: "..."                  // Agent persona and rules
+  prompt: "{{ $args.input }}"           // User input template
+  max_steps: 5                          // Max LLM calls per run
 }
 ```
 
@@ -94,7 +94,7 @@ llm = {
   prompt: "{{ $args.message }}"
   max_steps: 3
   temperature: 0
-  search_grounding: false               # Google Search grounding
+  search_grounding: false               // Google Search grounding
 }
 ```
 
@@ -108,7 +108,7 @@ llm = {
   prompt: "{{ $args.message }}"
   max_steps: 5
   temperature: 0.2
-  thinking_tokens: 10000                # Extended thinking
+  thinking_tokens: 10000                // Extended thinking
   include_thoughts: true
 }
 ```
@@ -123,7 +123,7 @@ llm = {
   prompt: "{{ $args.message }}"
   max_steps: 5
   temperature: 0.8
-  reasoning_effort: "medium"            # low, medium, high
+  reasoning_effort: "medium"            // low, medium, high
 }
 ```
 
@@ -134,7 +134,7 @@ llm = {
   api_key: "{{ $env.GROQ_API_KEY }}"
   baseURL: "https://api.groq.com/openai/v1"
   model: "llama-3.3-70b-versatile"
-  compatibility: "compatible"           # Required for non-OpenAI
+  compatibility: "compatible"           // Required for non-OpenAI
   ...
 }
 ```
@@ -151,7 +151,7 @@ llm = {
   prompt: "{{ $args.message }}"
   max_steps: 8
   temperature: 0.3
-  send_reasoning: true                  # Include thinking blocks
+  send_reasoning: true                  // Include thinking blocks
 }
 ```
 
@@ -218,9 +218,9 @@ llm = {
 
 ### Available Variables
 ```xs
-{{ $args.any_arg }}                     # Runtime arguments
-{{ $env.MY_VAR }}                       # Environment variables
-{{ "now"|date("Y-m-d") }}               # Current date
+{{ $args.any_arg }}                     // Runtime arguments
+{{ $env.MY_VAR }}                       // Environment variables
+{{ "now"|date("Y-m-d") }}               // Current date
 ```
 
 ---

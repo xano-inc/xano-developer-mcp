@@ -10,9 +10,9 @@ HTTP endpoint definitions in XanoScript.
 
 ```xs
 query "<name>" verb=<METHOD> {
-  api_group = "<GroupName>"     # Required: API group for organization
+  api_group = "<GroupName>"     // Required: API group for organization
   description = "What this endpoint does"
-  auth = "<table>"              # Optional: require authentication
+  auth = "<table>"              // Optional: require authentication
   input { ... }
   stack { ... }
   response = $result
@@ -42,8 +42,8 @@ Every endpoint must belong to an API group. Each group is a folder with an `api_
 
 ```xs
 api_group "users" {
-  canonical = "users"                # Required: URL path segment
-  description = "User management"    # Optional
+  canonical = "users"                // Required: URL path segment
+  description = "User management"    // Optional
 }
 ```
 
@@ -51,12 +51,12 @@ api_group "users" {
 ```
 apis/
 ├── users/
-│   ├── api_group.xs            # Defines group (canonical = "users")
-│   ├── list.xs                 # GET /users/list
-│   └── by-id.xs                # GET/PATCH/DELETE /users/{id}
+│   ├── api_group.xs            // Defines group (canonical = "users")
+│   ├── list.xs                 // GET /users/list
+│   └── by-id.xs                // GET/PATCH/DELETE /users/{id}
 └── products/
-    ├── api_group.xs            # Defines group (canonical = "products")
-    └── search.xs               # GET /products/search
+    ├── api_group.xs            // Defines group (canonical = "products")
+    └── search.xs               // GET /products/search
 ```
 
 Full URL: `/<canonical>/<query name>` (e.g., `/users/profile`)
@@ -99,11 +99,11 @@ query "status" verb=GET {
 ```xs
 query "profile" verb=GET {
   api_group = "Users"
-  auth = "user"                 # Requires valid JWT
+  auth = "user"                 // Requires valid JWT
   stack {
     db.get "user" {
       field_name = "id"
-      field_value = $auth.id    # User ID from token
+      field_value = $auth.id    // User ID from token
     } as $user
   }
   response = $user

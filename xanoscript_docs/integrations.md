@@ -182,20 +182,20 @@ cloud.elasticsearch.document {
 
 ### Key-Value Operations
 ```xs
-# Set value
+// Set value
 redis.set {
   key = "user:123:session"
   data = $session_data
-  ttl = 3600                            # Expires in 1 hour
+  ttl = 3600                            // Expires in 1 hour
 }
 
-# Get value
+// Get value
 redis.get { key = "user:123:session" } as $session
 
-# Check exists
+// Check exists
 redis.has { key = "user:123:session" } as $exists
 
-# Delete
+// Delete
 redis.del { key = "user:123:session" }
 ```
 

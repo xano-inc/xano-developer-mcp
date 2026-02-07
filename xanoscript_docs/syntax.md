@@ -44,24 +44,24 @@ var $total { value = `$input.qty * $input.price` }
 
 ### Comparison
 ```xs
-$a == $b      # Equal
-$a != $b      # Not equal
-$a > $b       # Greater than
-$a >= $b      # Greater or equal
-$a < $b       # Less than
-$a <= $b      # Less or equal
+$a == $b      // Equal
+$a != $b      // Not equal
+$a > $b       // Greater than
+$a >= $b      // Greater or equal
+$a < $b       // Less than
+$a <= $b      // Less or equal
 ```
 
 ### Logical
 ```xs
-$a && $b      # AND
-$a || $b      # OR
-!$a           # NOT
+$a && $b      // AND
+$a || $b      // OR
+!$a           // NOT
 ```
 
 ### Null-Safe Comparisons (DB Queries)
 ```xs
-# In db.query where clauses - ignore condition if value is null
+// In db.query where clauses - ignore condition if value is null
 $db.post.category ==? $input.category
 $db.post.date >=? $input.start_date
 ```
@@ -88,11 +88,11 @@ $db.post.date >=? $input.start_date
 
 ### Array Math
 ```xs
-[1,2,3,4]|sum        # 10
-[1,2,3,4]|avg        # 2.5
-[1,2,3,4]|product    # 24
-[5,2,8,1]|array_min  # 1
-[5,2,8,1]|array_max  # 8
+[1,2,3,4]|sum        // 10
+[1,2,3,4]|avg        // 2.5
+[1,2,3,4]|product    // 24
+[5,2,8,1]|array_min  // 1
+[5,2,8,1]|array_max  // 8
 ```
 
 ### Trigonometry
@@ -123,10 +123,10 @@ $db.post.date >=? $input.start_date
 
 ### Regex
 ```xs
-"/pattern/"|regex_matches:"subject"           # Boolean match
-"/(\w+)/"|regex_get_first_match:"test"        # First match
-"/\w+/"|regex_get_all_matches:"a b c"         # All matches
-"/\s+/"|regex_replace:"-":"a  b"              # Replace: "a-b"
+"/pattern/"|regex_matches:"subject"           // Boolean match
+"/(\w+)/"|regex_get_first_match:"test"        // First match
+"/\w+/"|regex_get_all_matches:"a b c"         // All matches
+"/\s+/"|regex_replace:"-":"a  b"              // Replace: "a-b"
 ```
 
 ---
@@ -155,36 +155,36 @@ $db.post.date >=? $input.start_date
 
 ### Functional Operations
 ```xs
-# Map - transform each element
-[{v:1},{v:2}]|map:$$.v*2                    # [2,4]
+// Map - transform each element
+[{v:1},{v:2}]|map:$$.v*2                    // [2,4]
 
-# Filter - keep matching elements
-[1,2,3,4]|filter:$$%2==0                    # [2,4]
+// Filter - keep matching elements
+[1,2,3,4]|filter:$$%2==0                    // [2,4]
 
-# Find - first matching element
-[{id:1},{id:2}]|find:$$.id==2               # {id:2}
+// Find - first matching element
+[{id:1},{id:2}]|find:$$.id==2               // {id:2}
 
-# FindIndex - index of first match
-[{id:1},{id:2}]|findIndex:$$.id==2          # 1
+// FindIndex - index of first match
+[{id:1},{id:2}]|findIndex:$$.id==2          // 1
 
-# Some - any element matches?
-[1,2,3]|some:$$>2                           # true
+// Some - any element matches?
+[1,2,3]|some:$$>2                           // true
 
-# Every - all elements match?
-[2,4,6]|every:$$%2==0                       # true
+// Every - all elements match?
+[2,4,6]|every:$$%2==0                       // true
 
-# Reduce - accumulate to single value
-[1,2,3,4]|reduce:$$+$result:0               # 10
+// Reduce - accumulate to single value
+[1,2,3,4]|reduce:$$+$result:0               // 10
 ```
 
 ### Grouping & Indexing
 ```xs
-# Group by property
+// Group by property
 [{g:"a",v:1},{g:"b",v:2},{g:"a",v:3}]|index_by:g
-# {"a":[{g:"a",v:1},{g:"a",v:3}],"b":[{g:"b",v:2}]}
+// {"a":[{g:"a",v:1},{g:"a",v:3}],"b":[{g:"b",v:2}]}
 
-# Sort
-[{n:"z"},{n:"a"}]|sort:n:text:false         # Ascending by n
+// Sort
+[{n:"z"},{n:"a"}]|sort:n:text:false         // Ascending by n
 ```
 
 ---
@@ -205,9 +205,9 @@ $db.post.date >=? $input.start_date
 
 ### Conditional Set
 ```xs
-{a:1}|set_conditional:"b":2:true            # {a:1,b:2} if condition true
-{a:1}|set_ifnotempty:"b":"val"              # Set only if val not empty
-{a:1}|set_ifnotnull:"b":$var                # Set only if $var not null
+{a:1}|set_conditional:"b":2:true            // {a:1,b:2} if condition true
+{a:1}|set_ifnotempty:"b":"val"              // Set only if val not empty
+{a:1}|set_ifnotnull:"b":$var                // Set only if $var not null
 ```
 
 ---
@@ -229,8 +229,8 @@ $db.post.date >=? $input.start_date
 
 ### Null Handling
 ```xs
-null|first_notnull:0                        # 0
-""|first_notempty:"default"                 # "default"
+null|first_notnull:0                        // 0
+""|first_notempty:"default"                 // "default"
 ```
 
 ---
@@ -249,12 +249,12 @@ null|first_notnull:0                        # 0
 
 ### Timestamp Parts
 ```xs
-$ts|timestamp_year           # Year
-$ts|timestamp_month          # Month (1-12)
-$ts|timestamp_day_of_month   # Day (1-31)
-$ts|timestamp_hour           # Hour (0-23)
-$ts|timestamp_minute         # Minute (0-59)
-$ts|timestamp_day_of_week    # Day (0=Sunday)
+$ts|timestamp_year           // Year
+$ts|timestamp_month          // Month (1-12)
+$ts|timestamp_day_of_month   // Day (1-31)
+$ts|timestamp_hour           // Hour (0-23)
+$ts|timestamp_minute         // Minute (0-59)
+$ts|timestamp_day_of_week    // Day (0=Sunday)
 ```
 
 ---

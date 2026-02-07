@@ -20,18 +20,18 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 
 ```
 project/
-├── tables/              # Database table schemas
-├── functions/           # Reusable functions (supports subfolders)
+├── tables/              // Database table schemas
+├── functions/           // Reusable functions (supports subfolders)
 ├── apis/
-│   └── <api-group>/     # API endpoints grouped by domain
-├── tasks/               # Scheduled jobs
-├── triggers/            # Event-driven handlers
-├── agents/              # AI agents
-├── tools/               # AI tools
-├── mcp_servers/         # MCP server definitions
-├── addons/              # Query addons
-├── static/              # Frontend files (HTML, CSS, JS)
-└── ephemeral/           # Temporary test environments
+│   └── <api-group>/     // API endpoints grouped by domain
+├── tasks/               // Scheduled jobs
+├── triggers/            // Event-driven handlers
+├── agents/              // AI agents
+├── tools/               // AI tools
+├── mcp_servers/         // MCP server definitions
+├── addons/              // Query addons
+├── static/              // Frontend files (HTML, CSS, JS)
+└── ephemeral/           // Temporary test environments
 ```
 
 ## Environment Variables
@@ -55,28 +55,36 @@ Custom environment variables are set in the Xano dashboard and accessed as `$env
 ### Block Structure
 ```xs
 <construct> "<name>" {
-  input { ... }      # Parameters (optional)
-  stack { ... }      # Logic
-  response = $var    # Output
+  input { ... }      // Parameters (optional)
+  stack { ... }      // Logic
+  response = $var    // Output
 }
 ```
 
 ### Variable Access
 ```xs
-$input.field        # Input parameters
-$var.field          # Stack variables
-$auth.id            # Authenticated user ID
-$env.MY_VAR         # Environment variable
-$db.table.field     # Database field reference (in queries)
-$this               # Current item in loops/maps
+$input.field        // Input parameters
+$var.field          // Stack variables
+$auth.id            // Authenticated user ID
+$env.MY_VAR         // Environment variable
+$db.table.field     // Database field reference (in queries)
+$this               // Current item in loops/maps
 ```
+
+### Comments
+```xs
+// Single-line comment
+var $total { value = 0 }  // Inline comment
+```
+
+**Note:** XanoScript only supports `//` for comments. Other comment styles like `#` are not supported.
 
 ### Filters (Pipe Syntax)
 ```xs
-$value|trim|lower                    # Chain filters
-$input.name|strlen                   # Get length
-$array|first                         # First element
-($a + $b)|round:2                    # Math with precision
+$value|trim|lower                    // Chain filters
+$input.name|strlen                   // Get length
+$array|first                         // First element
+($a + $b)|round:2                    // Math with precision
 ```
 
 ## File Frontmatter

@@ -68,8 +68,8 @@ Access inputs in stack: `$input.username`, `$input.age`
 
 ### text
 ```xs
-text name filters=trim|lower           # With filters
-text bio? filters=max:500              # Optional, max 500 chars
+text name filters=trim|lower           // With filters
+text bio? filters=max:500              // Optional, max 500 chars
 ```
 
 ### int / decimal
@@ -80,7 +80,7 @@ decimal price filters=min:0.01
 
 ### bool
 ```xs
-bool is_active?=true                   # Defaults to true
+bool is_active?=true                   // Defaults to true
 bool confirmed?=false
 ```
 
@@ -93,25 +93,25 @@ email contact filters=trim|lower {
 
 ### password
 ```xs
-password secret filters=min:8          # Minimum 8 characters
+password secret filters=min:8          // Minimum 8 characters
 ```
 
 ### timestamp / date
 ```xs
-timestamp created_at?=now              # Defaults to current time
+timestamp created_at?=now              // Defaults to current time
 date birth_date
 ```
 
 ### uuid
 ```xs
 uuid session_id
-uuid user_id { table = "user" }        # Foreign key reference
+uuid user_id { table = "user" }        // Foreign key reference
 ```
 
 ### json
 ```xs
-json metadata                          # Any JSON structure
-json settings?={}                      # Default empty object
+json metadata                          // Any JSON structure
+json settings?={}                      // Default empty object
 ```
 
 ### enum
@@ -140,8 +140,8 @@ object address {
 
 ### Arrays
 ```xs
-text[] tags filters=trim|lower         # Array of trimmed lowercase strings
-int[1:10] scores filters=min:0|max:100 # 1-10 integers between 0-100
+text[] tags filters=trim|lower         // Array of trimmed lowercase strings
+int[1:10] scores filters=min:0|max:100 // 1-10 integers between 0-100
 object[] items {
   schema {
     int id
@@ -212,19 +212,19 @@ input {
 
 ```xs
 input {
-  # Required, cannot be null
+  // Required, cannot be null
   text required_field
 
-  # Required, can be null (must provide, can send null)
+  // Required, can be null (must provide, can send null)
   text? nullable_field
 
-  # Optional, cannot be null (can omit, but if sent must have value)
+  // Optional, cannot be null (can omit, but if sent must have value)
   text optional_field?
 
-  # Optional, can be null (can omit or send null)
+  // Optional, can be null (can omit or send null)
   text? nullable_optional?
 
-  # Optional with default
+  // Optional with default
   text with_default?="hello"
 }
 ```

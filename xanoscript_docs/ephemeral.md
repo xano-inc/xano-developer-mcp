@@ -116,8 +116,8 @@ One-time operation with setup and cleanup hooks.
 ```xs
 function "$main" {
   input {
-    json args                   # Runtime arguments
-    json pre                    # Result from $pre
+    json args                   // Runtime arguments
+    json pre                    // Result from $pre
   }
   stack {
     db.query authors {

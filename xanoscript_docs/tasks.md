@@ -222,7 +222,7 @@ task "risky_sync" {
           url = "https://external-api.com/data"
           method = "GET"
         } as $data
-        # Process data...
+        // Process data...
       }
       catch {
         util.send_email {

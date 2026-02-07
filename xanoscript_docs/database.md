@@ -35,7 +35,7 @@ db.query "product" {
 
 ### Where Operators
 ```xs
-# Comparison
+// Comparison
 $db.product.price == 100
 $db.product.price != 0
 $db.product.price > 50
@@ -43,32 +43,32 @@ $db.product.price >= 50
 $db.product.price < 100
 $db.product.price <= 100
 
-# Null-safe (ignore if value is null)
+// Null-safe (ignore if value is null)
 $db.product.category ==? $input.category
 $db.product.price >=? $input.min_price
 
-# String matching
-$db.product.name includes "phone"       # Contains substring
-$db.product.tags contains "featured"    # Array contains value
+// String matching
+$db.product.name includes "phone"       // Contains substring
+$db.product.tags contains "featured"    // Array contains value
 $db.product.tags not contains "hidden"
 
-# Array overlap
+// Array overlap
 $db.product.tags overlaps ["a", "b"]
 $db.product.tags not overlaps ["x", "y"]
 
-# Combining conditions
+// Combining conditions
 $db.product.is_active == true && $db.product.price > 0
 $db.product.category == "electronics" || $db.product.featured == true
 ```
 
 ### Return Types
 ```xs
-# List (default)
+// List (default)
 db.query "product" {
   return = { type: "list" }
 } as $products
 
-# With pagination
+// With pagination
 db.query "product" {
   return = {
     type: "list",
@@ -76,19 +76,19 @@ db.query "product" {
   }
 } as $products
 
-# Single record
+// Single record
 db.query "product" {
   where = $db.product.sku == $input.sku
   return = { type: "single" }
 } as $product
 
-# Count
+// Count
 db.query "product" {
   where = $db.product.is_active == true
   return = { type: "count" }
 } as $count
 
-# Exists
+// Exists
 db.query "product" {
   where = $db.product.email == $input.email
   return = { type: "exists" }
@@ -98,9 +98,9 @@ db.query "product" {
 ### Sorting
 ```xs
 db.query "product" {
-  sort = { created_at: "desc" }         # Descending
-  sort = { name: "asc" }                # Ascending
-  sort = { id: "rand" }                 # Random
+  sort = { created_at: "desc" }         // Descending
+  sort = { name: "asc" }                // Ascending
+  sort = { id: "rand" }                 // Random
 } as $products
 ```
 
@@ -110,7 +110,7 @@ db.query "comment" {
   join = {
     post: {
       table: "post",
-      type: "inner",                    # inner, left, right
+      type: "inner",                    // inner, left, right
       where: $db.comment.post_id == $db.post.id
     }
   }
@@ -279,7 +279,7 @@ Delete all records from a table.
 
 ```xs
 db.truncate "temp_data" {
-  reset = true                          # Reset auto-increment
+  reset = true                          // Reset auto-increment
 }
 ```
 
@@ -293,7 +293,7 @@ Execute raw SQL (use sparingly).
 db.direct_query {
   sql = "SELECT * FROM users WHERE email = ? AND status = ?"
   arg = [$input.email, "active"]
-  response_type = "list"                # list or single
+  response_type = "list"                // list or single
 } as $results
 ```
 
@@ -339,9 +339,9 @@ Filters for use in `where` clauses:
 
 ### String/Text
 ```xs
-$db.name|to_lower                       # Case conversion
-$db.name|concat:" "                     # Concatenation
-$db.text|substr:0:100                   # Substring
+$db.name|to_lower                       // Case conversion
+$db.name|concat:" "                     // Concatenation
+$db.text|substr:0:100                   // Substring
 ```
 
 ### Numeric
@@ -363,8 +363,8 @@ $db.created_at|timestamp_subtract_hours:24
 
 ### Geographic
 ```xs
-$db.location|distance:$input.point      # Distance in meters
-$db.location|within:$input.point:1000   # Within radius
+$db.location|distance:$input.point      // Distance in meters
+$db.location|within:$input.point:1000   // Within radius
 ```
 
 ### Vector (AI/ML)
@@ -385,7 +385,7 @@ $db.content|search_rank:$input.query
 Connect to external databases:
 
 ```xs
-# PostgreSQL
+// PostgreSQL
 db.external.postgres.direct_query {
   connection_string = $env.EXTERNAL_PG_URL
   sql = "SELECT * FROM users WHERE id = ?"
@@ -393,13 +393,13 @@ db.external.postgres.direct_query {
   response_type = "single"
 } as $user
 
-# MySQL
+// MySQL
 db.external.mysql.direct_query { ... }
 
-# MS SQL
+// MS SQL
 db.external.mssql.direct_query { ... }
 
-# Oracle
+// Oracle
 db.external.oracle.direct_query { ... }
 ```
 

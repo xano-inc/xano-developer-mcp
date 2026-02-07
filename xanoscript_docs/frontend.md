@@ -11,10 +11,10 @@ Static frontend development and Lovable/Supabase migration.
 ### Directory Structure
 ```
 static/
-├── index.html              # Main entry point
+├── index.html              // Main entry point
 ├── css/
 ├── js/
-│   └── api.js              # Centralized API calls
+│   └── api.js              // Centralized API calls
 └── assets/
 ```
 

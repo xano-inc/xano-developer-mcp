@@ -10,9 +10,9 @@ Database table definitions in XanoScript.
 
 ```xs
 table "<name>" {
-  auth = false                    # true if used for authentication
+  auth = false                    // true if used for authentication
   schema {
-    int id                        # Primary key (required)
+    int id                        // Primary key (required)
     text name filters=trim
     timestamp created_at?=now
   }
@@ -72,10 +72,10 @@ schema {
 ### Optional & Defaults
 ```xs
 schema {
-  text nickname?                   # Optional, no default
-  timestamp created_at?=now        # Optional, defaults to current time
-  bool is_active?=true             # Optional, defaults to true
-  int status?=0                    # Optional, defaults to 0
+  text nickname?                   // Optional, no default
+  timestamp created_at?=now        // Optional, defaults to current time
+  bool is_active?=true             // Optional, defaults to true
+  int status?=0                    // Optional, defaults to 0
 }
 ```
 
@@ -139,7 +139,7 @@ schema {
 ### Vector Fields
 ```xs
 schema {
-  vector embedding              # For AI/ML embeddings
+  vector embedding              // For AI/ML embeddings
 }
 ```
 

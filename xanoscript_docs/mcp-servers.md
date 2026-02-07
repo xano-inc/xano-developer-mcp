@@ -147,18 +147,18 @@ mcp_server "CRM" {
 ### By Domain
 ```
 mcp_servers/
-├── support.xs          # Customer support tools
-├── ecommerce.xs        # Store management
-├── analytics.xs        # Reporting and metrics
-└── admin.xs            # Administrative functions
+├── support.xs          // Customer support tools
+├── ecommerce.xs        // Store management
+├── analytics.xs        // Reporting and metrics
+└── admin.xs            // Administrative functions
 ```
 
 ### By Access Level
 ```
 mcp_servers/
-├── public.xs           # Public-facing tools
-├── authenticated.xs    # Requires auth
-└── admin.xs            # Admin-only tools
+├── public.xs           // Public-facing tools
+├── authenticated.xs    // Requires auth
+└── admin.xs            // Admin-only tools
 ```
 
 ---

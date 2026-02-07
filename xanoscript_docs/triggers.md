@@ -34,11 +34,11 @@ table_trigger "<name>" {
   tags = ["tag1", "tag2"]
 
   input {
-    # Define input parameters
+    // Define input parameters
   }
 
   stack {
-    # Logic to execute when triggered
+    // Logic to execute when triggered
   }
 
   history = 100
@@ -118,11 +118,11 @@ realtime_trigger "<name>" {
   tags = ["tag1", "tag2"]
 
   input {
-    # Define input parameters
+    // Define input parameters
   }
 
   stack {
-    # Logic to execute when triggered
+    // Logic to execute when triggered
   }
 
   response = $result
@@ -211,11 +211,11 @@ workspace_trigger "<name>" {
   tags = ["tag1", "tag2"]
 
   input {
-    # Define input parameters
+    // Define input parameters
   }
 
   stack {
-    # Logic to execute when triggered
+    // Logic to execute when triggered
   }
 
   history = 100
@@ -292,11 +292,11 @@ agent_trigger "<name>" {
   tags = ["tag1", "tag2"]
 
   input {
-    # Define input parameters
+    // Define input parameters
   }
 
   stack {
-    # Logic to execute when triggered
+    // Logic to execute when triggered
   }
 
   response = $result
@@ -383,11 +383,11 @@ mcp_server_trigger "<name>" {
   tags = ["tag1", "tag2"]
 
   input {
-    # Define input parameters
+    // Define input parameters
   }
 
   stack {
-    # Logic to execute when triggered
+    // Logic to execute when triggered
   }
 
   response = $result
