@@ -16,6 +16,8 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 | `mcp_server` | `mcp_servers/**/*.xs` | MCP server definitions |
 | `addon` | `addons/*.xs` | Subqueries for related data |
 
+**Important:** Each `.xs` file must contain exactly one definition. You cannot define multiple tables, functions, queries, or other constructs in a single file.
+
 ## Workspace Structure
 
 ```
