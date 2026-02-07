@@ -9,15 +9,16 @@ Reusable subqueries for fetching related data in database queries.
 ## Quick Reference
 
 ```xs
-addon "<name>" {
-  description = "What this addon fetches"
+addon <name> {
   input {
     <type> <name>
   }
+
   stack {
-    // Query logic
+    db.query <tableName> {
+      return = {type: "<return_type>"}
+    }
   }
-  response = $result
 }
 ```
 
@@ -25,21 +26,20 @@ addon "<name>" {
 
 ## Basic Structure
 
-Addons define reusable data fetching logic that can be attached to query results.
+Addons define reusable data fetching logic that can be attached to query results. The stack can only contain a `db.query` block.
 
 ```xs
-addon "comment_count" {
-  description = "Count of comments for a post"
+addon comment_count {
   input {
     int post_id
   }
+
   stack {
-    db.query "comment" {
+    db.query comment {
       where = $db.comment.post_id == $input.post_id
-      return = { type: "count" }
-    } as $count
+      return = {type: "count"}
+    }
   }
-  response = $count
 }
 ```
 
@@ -50,12 +50,12 @@ addon "comment_count" {
 ### In db.query
 
 ```xs
-db.query "post" {
+db.query post {
   where = $db.post.author_id == $auth.id
   addon = [
     {
       name: "comment_count",
-      input: { post_id: $output.id },
+      input: {post_id: $output.id},
       as: "items.comment_count"
     }
   ]
@@ -79,22 +79,22 @@ db.query "post" {
 ### Multiple Addons
 
 ```xs
-db.query "post" {
+db.query post {
   where = $db.post.is_published == true
   addon = [
     {
       name: "comment_count",
-      input: { post_id: $output.id },
+      input: {post_id: $output.id},
       as: "items.comments"
     },
     {
       name: "like_count",
-      input: { post_id: $output.id },
+      input: {post_id: $output.id},
       as: "items.likes"
     },
     {
       name: "author_details",
-      input: { user_id: $output.author_id },
+      input: {user_id: $output.author_id},
       as: "items.author"
     }
   ]
@@ -108,103 +108,75 @@ db.query "post" {
 ### Related List
 
 ```xs
-addon "recent_comments" {
-  description = "Get recent comments for a post"
+addon recent_comments {
   input {
     int post_id
     int limit?=5
   }
+
   stack {
-    db.query "comment" {
+    db.query comment {
       where = $db.comment.post_id == $input.post_id
-      sort = { created_at: "desc" }
+      sort = {created_at: "desc"}
       return = {
         type: "list",
-        paging: { per_page: $input.limit }
+        paging: {per_page: $input.limit}
       }
-    } as $comments
+    }
   }
-  response = $comments.items
 }
 ```
 
-### Aggregation
+### Count
 
 ```xs
-addon "order_stats" {
-  description = "Order statistics for a user"
+addon order_count {
   input {
     int user_id
   }
+
   stack {
-    db.query "order" {
+    db.query order {
       where = $db.order.user_id == $input.user_id
-    } as $orders
-
-    var $stats {
-      value = {
-        total_orders: $orders|count,
-        total_spent: $orders|map:$$.total|sum,
-        avg_order: $orders|map:$$.total|avg
-      }
+      return = {type: "count"}
     }
   }
-  response = $stats
 }
 ```
 
-### Nested Object
+### Boolean Check (Exists)
 
 ```xs
-addon "full_address" {
-  description = "Get formatted address for a user"
+addon has_premium {
   input {
     int user_id
   }
+
   stack {
-    db.get "address" {
-      field_name = "user_id"
-      field_value = $input.user_id
-    } as $address
-
-    conditional {
-      if ($address != null) {
-        var $formatted {
-          value = {
-            street: $address.street,
-            city: $address.city,
-            state: $address.state,
-            zip: $address.zip,
-            full: $address.street ~ ", " ~ $address.city ~ ", " ~ $address.state ~ " " ~ $address.zip
-          }
-        }
-      }
-      else {
-        var $formatted { value = null }
-      }
-    }
-  }
-  response = $formatted
-}
-```
-
-### Boolean Check
-
-```xs
-addon "has_premium" {
-  description = "Check if user has premium subscription"
-  input {
-    int user_id
-  }
-  stack {
-    db.query "subscription" {
+    db.query subscription {
       where = $db.subscription.user_id == $input.user_id
             && $db.subscription.status == "active"
             && $db.subscription.expires_at > now
-      return = { type: "exists" }
-    } as $has_premium
+      return = {type: "exists"}
+    }
   }
-  response = $has_premium
+}
+```
+
+### Single Record
+
+```xs
+addon author_details {
+  input {
+    int user_id
+  }
+
+  stack {
+    db.query user {
+      where = $db.user.id == $input.user_id
+      return = {type: "single"}
+    }
+  }
 }
 ```
 
@@ -215,8 +187,8 @@ addon "has_premium" {
 Call an addon directly from a function or API.
 
 ```xs
-addon.call "comment_count" {
-  input = { post_id: $input.post_id }
+addon.call comment_count {
+  input = {post_id: $input.post_id}
 } as $count
 ```
 
@@ -224,16 +196,16 @@ addon.call "comment_count" {
 
 ```xs
 // Get stats for single record
-addon.call "order_stats" {
-  input = { user_id: $auth.id }
-} as $my_stats
+addon.call order_count {
+  input = {user_id: $auth.id}
+} as $my_order_count
 
 // Conditional addon call
 conditional {
   if ($input.include_stats) {
-    addon.call "detailed_stats" {
-      input = { entity_id: $entity.id }
-    } as $stats
+    addon.call order_count {
+      input = {user_id: $entity.id}
+    } as $count
   }
 }
 ```
@@ -245,9 +217,9 @@ conditional {
 Use `dbAddonAttr` for computed fields in queries.
 
 ```xs
-db.query "product" {
+db.query product {
   eval = {
-    discount_price: dbAddonAttr("calculate_discount", { product_id: $db.product.id })
+    discount_price: dbAddonAttr("calculate_discount", {product_id: $db.product.id})
   }
 } as $products
 ```
@@ -263,7 +235,7 @@ addons/
 ├── comment_count.xs
 ├── like_count.xs
 ├── author_details.xs
-├── order_stats.xs
+├── order_count.xs
 └── has_premium.xs
 ```
 
@@ -279,7 +251,6 @@ addons/
 
 1. **Keep addons focused** - One purpose per addon
 2. **Use input parameters** - Make addons reusable
-3. **Handle null cases** - Return sensible defaults
-4. **Cache expensive addons** - Use Redis for slow queries
-5. **Limit nested queries** - Avoid N+1 query patterns
-6. **Document inputs** - Add descriptions to input fields
+3. **Use appropriate return types** - `list`, `single`, `count`, `exists`
+4. **Limit nested queries** - Avoid N+1 query patterns
+5. **Document inputs** - Add descriptions to input fields
