@@ -9,7 +9,7 @@ HTTP endpoint definitions in XanoScript.
 ## Quick Reference
 
 ```xs
-query "<name>" verb=<METHOD> {
+query "endpoint-path" verb=<METHOD> {
   api_group = "<GroupName>"     // Required: API group for organization
   description = "What this endpoint does"
   auth = "<table>"              // Optional: require authentication
@@ -19,9 +19,9 @@ query "<name>" verb=<METHOD> {
 }
 ```
 
-### Query Name (Required)
+### Query Name (Required, Non-Empty)
 
-The query name is **required** and cannot be empty. It defines the endpoint path after the API group canonical.
+The query name is **required** and **must be a non-empty string**. Empty names (`query "" verb=...`) are invalid. The name defines the endpoint path after the API group canonical.
 
 **Full URL path structure:**
 ```
