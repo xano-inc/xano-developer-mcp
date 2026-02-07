@@ -222,28 +222,6 @@ const DOCS_MAP: Record<string, string> = {
 // Path Resolution
 // =============================================================================
 
-function getPackageVersion(): string {
-  try {
-    const possiblePaths = [
-      join(__dirname, "..", "package.json"),
-      join(__dirname, "..", "..", "package.json"),
-    ];
-
-    for (const p of possiblePaths) {
-      try {
-        const packageJson = readFileSync(p, "utf-8");
-        return JSON.parse(packageJson).version || "unknown";
-      } catch {
-        continue;
-      }
-    }
-
-    return "unknown";
-  } catch {
-    return "unknown";
-  }
-}
-
 function getDocsPath(): string {
   const possiblePaths = [
     join(__dirname, "..", "api_docs"),
@@ -608,16 +586,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: [],
         },
       },
-      {
-        name: "mcp_version",
-        description:
-          "Get the version of the Xano Developer MCP server. Useful for debugging and support.",
-        inputSchema: {
-          type: "object",
-          properties: {},
-          required: [],
-        },
-      },
     ],
   };
 });
@@ -751,19 +719,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         {
           type: "text",
           text: documentation,
-        },
-      ],
-    };
-  }
-
-  if (request.params.name === "mcp_version") {
-    const version = getPackageVersion();
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Xano Developer MCP version: ${version}`,
         },
       ],
     };
