@@ -284,8 +284,5 @@ The tool will:
 
 1. **Get API specs first** - Use `get_xano_api_specifications` before coding
 2. **Centralize API calls** - Single `api.js` file
-3. **Handle errors** - Show user-friendly messages
-4. **Store tokens securely** - localStorage for web, secure storage for mobile
-5. **Validate before submit** - Client-side validation before API calls
-6. **Use loading states** - Show progress during API calls
-7. **Test incrementally** - Migrate one feature at a time
+3. **Store tokens securely** - localStorage for web, secure storage for mobile
+4. **Test incrementally** - Migrate one feature at a time

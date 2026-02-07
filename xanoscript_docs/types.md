@@ -268,19 +268,12 @@ input {
 
 ## Validation with Preconditions
 
-For complex validation beyond filters:
+For complex validation beyond filters, use preconditions. For complete error handling reference, use `xanoscript_docs({ keyword: "syntax" })`.
 
 ```xs
-stack {
-  precondition ($input.start_date < $input.end_date) {
-    error_type = "inputerror"
-    error = "Start date must be before end date"
-  }
-
-  precondition ($input.password == $input.confirm_password) {
-    error_type = "inputerror"
-    error = "Passwords must match"
-  }
+precondition ($input.start_date < $input.end_date) {
+  error_type = "inputerror"
+  error = "Start date must be before end date"
 }
 ```
 
@@ -290,8 +283,5 @@ stack {
 
 1. **Always specify types** - Never leave inputs untyped
 2. **Use filters first** - Prefer declarative filters over stack validation
-3. **Add descriptions** - Document every field's purpose
-4. **Mark sensitive data** - Use `sensitive = true` for PII/credentials
-5. **Use defaults sparingly** - Make requirements explicit
-6. **Validate at boundaries** - Validate user input, trust internal calls
-7. **Limit nesting depth** - Keep object schemas 2-3 levels max
+3. **Mark sensitive data** - Use `sensitive = true` for PII/credentials
+4. **Validate at boundaries** - Validate user input, trust internal calls

@@ -62,19 +62,14 @@ tool "get_user_by_email" {
 
 ## Input Block
 
-Same as functions, but descriptions are especially important:
+For complete type reference, use `xanoscript_docs({ keyword: "input" })`. For tools, input `description` fields are sent to the AI, so write them clearly:
 
 ```xs
 input {
-  int order_id {
-    description = "The unique order ID to look up"
-  }
+  int order_id { description = "The unique order ID to look up" }
   enum status {
     description = "New status to set"
     values = ["pending", "processing", "shipped", "delivered"]
-  }
-  text reason? {
-    description = "Optional reason for the status change"
   }
 }
 ```
@@ -299,7 +294,4 @@ tool "cancel_order" {
 2. **Describe all inputs** - Help AI construct valid requests
 3. **Use enums for fixed options** - Reduces AI errors
 4. **Keep tools focused** - One task per tool
-5. **Handle errors gracefully** - Return clear error messages
-6. **Validate inputs** - Use filters and preconditions
-7. **Limit response size** - Don't return huge datasets
-8. **Use composition** - Call other tools for complex operations
+5. **Limit response size** - Don't return huge datasets

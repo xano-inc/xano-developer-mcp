@@ -324,6 +324,4 @@ agent "Research Assistant" {
 3. **Limit max_steps** - Prevent infinite loops (3-10 typical)
 4. **Don't repeat tool descriptions** - They're auto-injected
 5. **Use environment variables** - Never hardcode API keys
-6. **Keep prompts focused** - One task per agent
-7. **Test with xano-free first** - Free for development
-8. **Use structured outputs** - When you need consistent JSON
+6. **Test with xano-free first** - Free for development

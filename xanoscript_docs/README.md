@@ -91,17 +91,20 @@ This helps AI tools apply the correct documentation based on the file being edit
 
 ## Documentation Index
 
-1. [Syntax Reference](syntax.md) - Expressions, operators, filters
-2. [Types & Inputs](types.md) - Data types, validation, input blocks
-3. [Tables](tables.md) - Database schema definitions
-4. [Functions](functions.md) - Reusable function stacks
-5. [APIs](apis.md) - HTTP endpoint definitions
-6. [Tasks](tasks.md) - Scheduled jobs
-7. [Database Operations](database.md) - Query, add, edit, delete
-8. [Agents](agents.md) - AI agent configuration
-9. [Tools](tools.md) - AI tools for agents
-10. [MCP Servers](mcp-servers.md) - Model Context Protocol servers
-11. [Testing](testing.md) - Unit tests and mocking
-12. [Integrations](integrations.md) - Cloud services, Redis, security
-13. [Frontend](frontend.md) - Static frontend development
-14. [Ephemeral](ephemeral.md) - Temporary environments
+Use `xanoscript_docs({ keyword: "<keyword>" })` to retrieve documentation.
+
+| Topic | Keyword | Description |
+|-------|---------|-------------|
+| Syntax Reference | `syntax` | Expressions, operators, filters |
+| Types & Inputs | `input` | Data types, validation, input blocks |
+| Tables | `table` | Database schema definitions |
+| Functions | `function` | Reusable function stacks |
+| APIs | `api_query` | HTTP endpoint definitions |
+| Tasks | `task` | Scheduled jobs |
+| Database Operations | `db_query` | Query, add, edit, delete |
+| Agents | `agent` | AI agent configuration |
+| Tools | `tool` | AI tools for agents |
+| MCP Servers | `mcp_server` | Model Context Protocol servers |
+| Testing | `testing` | Unit tests and mocking |
+| Frontend | `frontend` | Static frontend development |
+| Ephemeral | `ephemeral` | Temporary environments

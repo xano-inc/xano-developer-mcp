@@ -182,9 +182,6 @@ The MCP protocol handles:
 ## Best Practices
 
 1. **Clear naming** - Server name should indicate its purpose
-2. **Memorable canonical IDs** - Use descriptive, stable identifiers
-3. **Comprehensive instructions** - Guide AI on server's overall purpose
-4. **Logical tool grouping** - Group related tools in one server
-5. **Use tags** - Organize servers by category
-6. **Keep focused** - One domain per server (support, analytics, etc.)
-7. **Document internally** - Use description for team documentation
+2. **Comprehensive instructions** - Guide AI on server's overall purpose
+3. **Logical tool grouping** - Group related tools in one server
+4. **Keep focused** - One domain per server (support, analytics, etc.)

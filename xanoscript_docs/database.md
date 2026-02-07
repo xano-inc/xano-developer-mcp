@@ -411,7 +411,4 @@ db.external.oracle.direct_query { ... }
 2. **Use db.get for single lookups** - Simpler than db.query with single return
 3. **Use db.patch for dynamic updates** - Accepts variable data
 4. **Use transactions for atomicity** - Ensure all-or-nothing operations
-5. **Add indexes** - Index fields used in where clauses
-6. **Use null-safe operators** - `==?` for optional filters
-7. **Paginate results** - Never return unbounded lists
-8. **Validate before delete** - Check ownership/permissions
+5. **Use null-safe operators** - `==?` for optional filters

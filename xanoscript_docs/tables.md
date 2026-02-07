@@ -264,7 +264,4 @@ table "order" {
 2. **Use `auth = true`** only for authentication tables (typically just `user`)
 3. **Add indexes** for fields used in WHERE clauses and JOINs
 4. **Use appropriate types** - `email` for emails, `password` for credentials
-5. **Mark sensitive fields** - Set `sensitive = true` for PII
-6. **Use filters** - Apply `trim`, `lower` for consistency
-7. **Default timestamps** - Use `?=now` for created_at fields
-8. **Document with descriptions** - Add descriptions for non-obvious fields
+5. **Default timestamps** - Use `?=now` for created_at fields

@@ -38,61 +38,28 @@ The query name can include slashes for nested paths:
 
 ### API Groups (Required)
 
-Every API endpoint **must** belong to an API group. API groups organize related endpoints together.
-
-**Two requirements for API groups:**
-1. Each `query` definition **must** include an `api_group` property specifying which group it belongs to
-2. API groups are organized as folders within `apis/`, each with an `api_group.xs` file
-
-- API groups appear as top-level folders under `apis/`
-- Each group **must** have an `api_group.xs` file that defines the group
-- The group contains `.xs` files defining individual endpoints
-- The group name becomes part of the endpoint URL path
-- You cannot create endpoints directly in the `apis/` root folder
-
-#### Defining an API Group
-
-Create an `api_group.xs` file in the group folder:
+Every endpoint must belong to an API group. Each group is a folder with an `api_group.xs` file:
 
 ```xs
 api_group "users" {
-  canonical = "users"                # Required: the URL path segment
-  description = "User management endpoints"
+  canonical = "users"                # Required: URL path segment
+  description = "User management"    # Optional
 }
 ```
-
-#### API Group Properties
-
-| Property | Required | Description |
-|----------|----------|-------------|
-| `canonical` | **Yes** | The URL path segment for this group. You cannot access a Xano API without it. |
-| `description` | No | What this API group contains |
-
-```xs
-api_group "events" {
-  canonical = "events-api"           # Required: URL will use /events-api
-  description = "Event management"
-}
-```
-
-> **Important:** The `canonical` property is required. It defines the base path for all endpoints in this group.
 
 ### File Structure
 ```
 apis/
-├── users/                      # API group folder
-│   ├── api_group.xs            # Required: defines the group (canonical = "users")
+├── users/
+│   ├── api_group.xs            # Defines group (canonical = "users")
 │   ├── list.xs                 # GET /users/list
-│   ├── create.xs               # POST /users/create
 │   └── by-id.xs                # GET/PATCH/DELETE /users/{id}
-└── products/                   # Another API group
-    ├── api_group.xs            # Required: defines the group (canonical = "products")
+└── products/
+    ├── api_group.xs            # Defines group (canonical = "products")
     └── search.xs               # GET /products/search
 ```
 
-> **URL Path:** The full endpoint URL is always `/<canonical>/<query name>`. For example, if `api_group.xs` has `canonical = "users"` and a query has `query "profile" verb=GET`, the endpoint URL is `/users/profile`.
-
-> **Note:** Files placed directly in `apis/` without a group folder are invalid. Each API group folder must contain an `api_group.xs` file.
+Full URL: `/<canonical>/<query name>` (e.g., `/users/profile`)
 
 ---
 
@@ -354,33 +321,11 @@ stack {
 
 ## Error Handling
 
-### Preconditions
-```xs
-stack {
-  precondition ($input.amount > 0) {
-    error_type = "inputerror"
-    error = "Amount must be positive"
-  }
+For complete error handling reference, use `xanoscript_docs({ keyword: "syntax" })`.
 
-  precondition ($user != null) {
-    error_type = "notfound"
-    error = "User not found"
-  }
-
-  precondition ($user.id == $auth.id) {
-    error_type = "accessdenied"
-    error = "Not authorized"
-  }
-}
-```
-
-### Error Types
 | Type | HTTP Status |
 |------|-------------|
-| `inputerror` | 400 Bad Request |
-| `accessdenied` | 403 Forbidden |
-| `notfound` | 404 Not Found |
-| `standard` | 500 Internal Server Error |
+| `inputerror` | 400 | `accessdenied` | 403 | `notfound` | 404 | `standard` | 500 |
 
 ---
 
@@ -404,13 +349,8 @@ When using `return = { type: "list", paging: {...} }`:
 
 ## Best Practices
 
-1. **Always set canonical** - Every `api_group` requires a `canonical` property
-2. **Always name queries** - Every `query` requires a non-empty name
-3. **RESTful design** - Use appropriate HTTP methods
-4. **Consistent naming** - Use lowercase, hyphens for multi-word paths
-5. **Authenticate sensitive operations** - Always auth for writes
-6. **Validate inputs** - Use filters and preconditions
-7. **Return appropriate errors** - Use correct error types
-8. **Paginate lists** - Never return unbounded lists
-9. **Document with description** - Explain what endpoint does
-10. **Group related endpoints** - Organize by resource in api groups
+1. **RESTful design** - Use appropriate HTTP methods for operations
+2. **Consistent naming** - Use lowercase, hyphens for multi-word paths
+3. **Authenticate writes** - Always require auth for POST/PATCH/DELETE
+4. **Paginate lists** - Never return unbounded result sets
+5. **Group by resource** - Organize endpoints in logical api groups

@@ -325,11 +325,8 @@ function "calculate_discount" {
 
 ## Best Practices
 
-1. **Test happy paths** - Verify expected behavior works
-2. **Test edge cases** - Empty arrays, null values, boundaries
-3. **Test error cases** - Invalid inputs, missing data
-4. **Use mocks** - Isolate from external dependencies
-5. **Descriptive test names** - Explain what's being tested
-6. **One assertion focus** - Each test verifies one behavior
-7. **Keep tests independent** - No shared state between tests
-8. **Test at boundaries** - Min/max values, length limits
+1. **Test happy paths, edge cases, and errors** - Cover expected, boundary, and failure scenarios
+2. **Use mocks** - Isolate from external dependencies
+3. **Descriptive test names** - Explain what's being tested
+4. **One assertion focus** - Each test verifies one behavior
+5. **Keep tests independent** - No shared state between tests

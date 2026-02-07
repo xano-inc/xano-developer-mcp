@@ -325,9 +325,6 @@ publish_ephemeral_service name="migration" directory="ephemeral/my-job" mode="jo
 
 1. **Keep isolated** - Self-contained with own tables/functions
 2. **Seed test data** - Use `items` in table definitions
-3. **Use environment variables** - Store config in workspace `env`
-4. **Handle cleanup** - Use `$post` for notifications/cleanup
-5. **Validate in $pre** - Check preconditions before main logic
-6. **Use preconditions** - Verify expected outcomes in jobs
-7. **Name clearly** - Indicate purpose: `auth-test`, `data-migration`
-8. **Set end dates** - Use `ends_on` for temporary schedules
+3. **Handle cleanup** - Use `$post` for notifications/cleanup
+4. **Validate in $pre** - Check preconditions before main logic
+5. **Name clearly** - Indicate purpose: `auth-test`, `data-migration`

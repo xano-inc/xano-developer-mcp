@@ -244,11 +244,8 @@ task "risky_sync" {
 
 ## Best Practices
 
-1. **Use descriptive names** - Indicate what and when: `daily_cleanup`, `hourly_sync`
-2. **Add descriptions** - Explain the purpose and schedule
-3. **Handle errors** - Use try_catch for external dependencies
-4. **Log important events** - Use debug.log for tracking
-5. **Use appropriate frequency** - Don't run more often than needed
-6. **Consider timezone** - Schedule uses UTC (+0000)
-7. **Batch operations** - Process in chunks for large datasets
-8. **Set end dates** - Use ends_on for temporary schedules
+1. **Descriptive names** - Indicate what and when: `daily_cleanup`, `hourly_sync`
+2. **Handle errors** - Use try_catch for external dependencies
+3. **Consider timezone** - Schedule uses UTC (+0000)
+4. **Batch operations** - Process in chunks for large datasets
+5. **Set end dates** - Use ends_on for temporary schedules

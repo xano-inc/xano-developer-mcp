@@ -63,20 +63,13 @@ Reference with path: `function.run "math/add" { ... }`
 
 ## Input Block
 
-See [types.md](types.md) for complete type reference.
+For complete type and filter reference, use `xanoscript_docs({ keyword: "input" })`.
 
 ```xs
 input {
   text name filters=trim
   int age? filters=min:0
   email contact filters=lower { sensitive = true }
-  object address? {
-    schema {
-      text street
-      text city
-      text zip
-    }
-  }
 }
 ```
 
@@ -158,49 +151,8 @@ stack {
 ```
 
 ### Error Handling
-```xs
-stack {
-  try_catch {
-    try {
-      function.run "risky_operation" { input = {} } as $result
-    }
-    catch {
-      debug.log { value = "Operation failed" }
-      var $result { value = null }
-    }
-    finally {
-      debug.log { value = "Cleanup complete" }
-    }
-  }
-}
-```
 
-### Throwing Errors
-```xs
-stack {
-  precondition ($input.amount > 0) {
-    error_type = "inputerror"
-    error = "Amount must be positive"
-  }
-
-  throw {
-    name = "ValidationError"
-    value = "Custom error message"
-  }
-}
-```
-
-### Early Return
-```xs
-stack {
-  conditional {
-    if ($input.skip) {
-      return { value = null }
-    }
-  }
-  # Continue processing...
-}
-```
+For complete error handling reference (preconditions, try-catch, throw, early return), use `xanoscript_docs({ keyword: "syntax" })`.
 
 ---
 
@@ -345,8 +297,5 @@ function "validate_email_unique" {
 1. **Single responsibility** - Each function does one thing well
 2. **Descriptive names** - Use verb_noun format: `calculate_total`, `validate_user`
 3. **Organize in folders** - Group related functions: `utils/`, `auth/`, `orders/`
-4. **Validate inputs** - Use filters and preconditions
-5. **Handle errors** - Use try_catch for external calls
-6. **Document purpose** - Add description field
-7. **Return early** - Use return for guard clauses
-8. **Keep stacks shallow** - Avoid deeply nested conditionals
+4. **Return early** - Use return for guard clauses
+5. **Keep stacks shallow** - Avoid deeply nested conditionals

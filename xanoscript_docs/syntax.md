@@ -312,3 +312,73 @@ Used in `db.query` where clauses:
 $db.created_at|timestamp_add_days:7
 $db.created_at|timestamp_subtract_hours:24
 ```
+
+---
+
+## Error Handling
+
+### Preconditions
+
+Validate conditions and throw typed errors:
+
+```xs
+precondition ($input.amount > 0) {
+  error_type = "inputerror"
+  error = "Amount must be positive"
+}
+
+precondition ($user != null) {
+  error_type = "notfound"
+  error = "User not found"
+}
+
+precondition ($user.id == $auth.id) {
+  error_type = "accessdenied"
+  error = "Not authorized"
+}
+```
+
+### Error Types
+
+| Type | HTTP Status | Use Case |
+|------|-------------|----------|
+| `inputerror` | 400 Bad Request | Invalid input data |
+| `accessdenied` | 403 Forbidden | Authorization failure |
+| `notfound` | 404 Not Found | Resource doesn't exist |
+| `standard` | 500 Internal Server Error | General errors |
+
+### Throwing Errors
+
+```xs
+throw {
+  name = "ValidationError"
+  value = "Custom error message"
+}
+```
+
+### Try-Catch
+
+```xs
+try_catch {
+  try {
+    function.run "risky_operation" { input = {} } as $result
+  }
+  catch {
+    debug.log { value = "Operation failed" }
+    var $result { value = null }
+  }
+  finally {
+    debug.log { value = "Cleanup complete" }
+  }
+}
+```
+
+### Early Return
+
+```xs
+conditional {
+  if ($input.skip) {
+    return { value = null }
+  }
+}
+```
