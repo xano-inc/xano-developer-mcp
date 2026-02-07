@@ -1,0 +1,297 @@
+---
+applyTo: "functions/**/*.xs, apis/**/*.xs, tools/**/*.xs, agents/**/*.xs"
+---
+
+# Types & Inputs
+
+Reference for XanoScript data types, input blocks, and validation.
+
+## Quick Reference
+
+### Primitive Types
+| Type | Description | Example |
+|------|-------------|---------|
+| `int` | 32-bit integer | `int user_id` |
+| `decimal` | Floating-point | `decimal price` |
+| `text` | UTF-8 string | `text name filters=trim` |
+| `bool` | Boolean | `bool is_active?=true` |
+| `email` | Validated email | `email contact filters=lower` |
+| `password` | Hashed credential | `password secret` |
+| `uuid` | UUID string | `uuid session_id` |
+| `timestamp` | Epoch ms or ISO | `timestamp created_at` |
+| `date` | YYYY-MM-DD | `date birth_date` |
+| `json` | JSON object/array | `json metadata` |
+
+### Special Types
+| Type | Description |
+|------|-------------|
+| `vector` | Numeric array for embeddings |
+| `enum` | Restricted value set |
+| `object` | Nested schema |
+| `file` / `image` / `video` / `audio` / `attachment` | File resources |
+| `geo_point` / `geo_polygon` / `geo_linestring` | Geographic data |
+
+### Modifiers
+| Syntax | Meaning |
+|--------|---------|
+| `text?` | Nullable (can be null) |
+| `text name?` | Optional (not required) |
+| `text name?="default"` | Optional with default |
+| `text[]` | Array of type |
+| `text[1:10]` | Array with size constraints |
+
+---
+
+## Input Block
+
+Define parameters for functions, APIs, and tools:
+
+```xs
+input {
+  text username filters=trim {
+    description = "User's login name"
+  }
+  int age? filters=min:0 {
+    description = "Optional age"
+  }
+  text role?="user" {
+    description = "Role, defaults to 'user'"
+  }
+}
+```
+
+Access inputs in stack: `$input.username`, `$input.age`
+
+---
+
+## Type Details
+
+### text
+```xs
+text name filters=trim|lower           # With filters
+text bio? filters=max:500              # Optional, max 500 chars
+```
+
+### int / decimal
+```xs
+int quantity filters=min:0|max:100
+decimal price filters=min:0.01
+```
+
+### bool
+```xs
+bool is_active?=true                   # Defaults to true
+bool confirmed?=false
+```
+
+### email
+```xs
+email contact filters=trim|lower {
+  sensitive = true
+}
+```
+
+### password
+```xs
+password secret filters=min:8          # Minimum 8 characters
+```
+
+### timestamp / date
+```xs
+timestamp created_at?=now              # Defaults to current time
+date birth_date
+```
+
+### uuid
+```xs
+uuid session_id
+uuid user_id { table = "user" }        # Foreign key reference
+```
+
+### json
+```xs
+json metadata                          # Any JSON structure
+json settings?={}                      # Default empty object
+```
+
+### enum
+```xs
+enum status {
+  values = ["pending", "active", "cancelled"]
+  description = "Order status"
+}
+
+enum priority?="medium" {
+  values = ["low", "medium", "high"]
+}
+```
+
+### object (Nested Schema)
+```xs
+object address {
+  schema {
+    text street filters=trim
+    text city filters=trim
+    text zip filters=trim
+    text country?="US"
+  }
+}
+```
+
+### Arrays
+```xs
+text[] tags filters=trim|lower         # Array of trimmed lowercase strings
+int[1:10] scores filters=min:0|max:100 # 1-10 integers between 0-100
+object[] items {
+  schema {
+    int id
+    text name
+  }
+}
+```
+
+### File Types
+```xs
+image photo {
+  description = "Profile photo"
+}
+attachment document
+video recording
+audio clip
+file generic_file
+```
+
+### Geographic Types
+```xs
+geo_point location
+geo_polygon boundary
+geo_linestring path
+geo_multipoint points
+```
+
+---
+
+## Input Filters
+
+Filters validate and transform input values. Chain with `|`.
+
+### String Filters
+| Filter | Description |
+|--------|-------------|
+| `trim` | Remove leading/trailing whitespace |
+| `lower` | Convert to lowercase |
+| `upper` | Convert to uppercase |
+| `min:<n>` | Minimum length |
+| `max:<n>` | Maximum length |
+| `ok:<chars>` | Allow only specified characters |
+| `prevent:<str>` | Block specific substrings |
+| `startsWith:<prefix>` | Require prefix |
+| `alphaOk` | Allow only letters |
+| `digitOk` | Allow only digits |
+
+### Numeric Filters
+| Filter | Description |
+|--------|-------------|
+| `min:<n>` | Minimum value |
+| `max:<n>` | Maximum value |
+
+### Examples
+```xs
+input {
+  text username filters=trim|lower|min:3|max:20|alphaOk
+  email contact filters=trim|lower
+  int age filters=min:0|max:150
+  text hex_code filters=ok:abcdef0123456789
+  text[] tags filters=trim|lower|max:50
+}
+```
+
+---
+
+## Nullable vs Optional
+
+```xs
+input {
+  # Required, cannot be null
+  text required_field
+
+  # Required, can be null (must provide, can send null)
+  text? nullable_field
+
+  # Optional, cannot be null (can omit, but if sent must have value)
+  text optional_field?
+
+  # Optional, can be null (can omit or send null)
+  text? nullable_optional?
+
+  # Optional with default
+  text with_default?="hello"
+}
+```
+
+---
+
+## Foreign Key References
+
+Link input to a table for validation:
+
+```xs
+input {
+  int user_id {
+    table = "user"
+    description = "References user table"
+  }
+  uuid post_id {
+    table = "post"
+  }
+}
+```
+
+---
+
+## Sensitive Fields
+
+Mark fields for log masking:
+
+```xs
+input {
+  password api_key {
+    sensitive = true
+  }
+  text ssn {
+    sensitive = true
+  }
+}
+```
+
+---
+
+## Validation with Preconditions
+
+For complex validation beyond filters:
+
+```xs
+stack {
+  precondition ($input.start_date < $input.end_date) {
+    error_type = "inputerror"
+    error = "Start date must be before end date"
+  }
+
+  precondition ($input.password == $input.confirm_password) {
+    error_type = "inputerror"
+    error = "Passwords must match"
+  }
+}
+```
+
+---
+
+## Best Practices
+
+1. **Always specify types** - Never leave inputs untyped
+2. **Use filters first** - Prefer declarative filters over stack validation
+3. **Add descriptions** - Document every field's purpose
+4. **Mark sensitive data** - Use `sensitive = true` for PII/credentials
+5. **Use defaults sparingly** - Make requirements explicit
+6. **Validate at boundaries** - Validate user input, trust internal calls
+7. **Limit nesting depth** - Keep object schemas 2-3 levels max

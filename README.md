@@ -148,31 +148,88 @@ validate_xanoscript({
 
 ### 3. `xanoscript_docs`
 
-Retrieves XanoScript programming language documentation.
+Retrieves XanoScript programming language documentation with context-aware support.
 
 **Parameters:**
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `keyword` | string | No | Documentation topic to retrieve |
+| `topic` | string | No | Specific documentation topic to retrieve |
+| `file_path` | string | No | File path being edited for context-aware docs (e.g., `apis/users/create.xs`) |
+| `mode` | string | No | `full` (default) or `quick_reference` for compact syntax cheatsheet |
 
-**Supported Keywords:**
+**Available Topics:**
 
-| Category | Keywords |
-|----------|----------|
-| Core Concepts | `function`, `api_query`, `table`, `task`, `tool`, `agent`, `mcp_server` |
-| Language Reference | `syntax`, `expressions`, `input`, `db_query`, `query_filter` |
-| Workflows | `workflow`, `function_workflow`, `api_workflow`, `table_workflow`, `task_workflow` |
-| Special Topics | `frontend`, `lovable`, `testing`, `tips`, `ephemeral` |
+| Topic | Description |
+|-------|-------------|
+| `readme` | XanoScript overview, workspace structure, and quick reference |
+| `syntax` | Expressions, operators, and filters for all XanoScript code |
+| `types` | Data types, input blocks, and validation |
+| `tables` | Database schema definitions with indexes and relationships |
+| `functions` | Reusable function stacks with inputs and responses |
+| `apis` | HTTP endpoint definitions with authentication and CRUD patterns |
+| `tasks` | Scheduled and cron jobs |
+| `database` | All db.* operations: query, get, add, edit, patch, delete |
+| `agents` | AI agent configuration with LLM providers and tools |
+| `tools` | AI tools for agents and MCP servers |
+| `mcp-servers` | MCP server definitions exposing tools |
+| `testing` | Unit tests, mocks, and assertions |
+| `integrations` | Cloud storage, Redis, security, and external APIs |
+| `frontend` | Static frontend development and deployment |
+| `ephemeral` | Temporary test environments |
 
-**Aliases:** The tool supports keyword aliases for convenience:
-- `api`, `apis`, `query`, `endpoint` → `api_query`
-- `func` → `function`
-- `db` → `db_query`
+**Examples:**
+```
+// Get overview
+xanoscript_docs()
+
+// Get specific topic
+xanoscript_docs({ topic: "functions" })
+
+// Context-aware: get all docs relevant to file being edited
+xanoscript_docs({ file_path: "apis/users/create.xs" })
+
+// Compact quick reference (uses less context)
+xanoscript_docs({ topic: "database", mode: "quick_reference" })
+```
+
+### 4. `init_workspace`
+
+Get comprehensive instructions for initializing a local Xano development workspace.
+
+**Parameters:** None
+
+**Returns:** Documentation on:
+- Directory structure for local development
+- File naming conventions
+- Registry format for tracking changes
+- Workflows for pulling/pushing XanoScript files via the Headless API
 
 **Example:**
 ```
-xanoscript_docs({ keyword: "function" })
+init_workspace()
 ```
+
+## MCP Resources
+
+The server also exposes XanoScript documentation as MCP resources for direct access:
+
+| Resource URI | Description |
+|--------------|-------------|
+| `xanoscript://docs/readme` | Overview and quick reference |
+| `xanoscript://docs/syntax` | Expressions, operators, and filters |
+| `xanoscript://docs/types` | Data types and validation |
+| `xanoscript://docs/tables` | Database schema definitions |
+| `xanoscript://docs/functions` | Reusable function stacks |
+| `xanoscript://docs/apis` | HTTP endpoint definitions |
+| `xanoscript://docs/tasks` | Scheduled and cron jobs |
+| `xanoscript://docs/database` | Database operations |
+| `xanoscript://docs/agents` | AI agent configuration |
+| `xanoscript://docs/tools` | AI tools for agents |
+| `xanoscript://docs/mcp-servers` | MCP server definitions |
+| `xanoscript://docs/testing` | Unit tests and mocks |
+| `xanoscript://docs/integrations` | External service integrations |
+| `xanoscript://docs/frontend` | Static frontend development |
+| `xanoscript://docs/ephemeral` | Temporary test environments |
 
 ## npm Scripts
 
@@ -189,19 +246,24 @@ xanoscript_docs({ keyword: "function" })
 xano-developer-mcp/
 ├── src/
 │   ├── index.ts              # Main MCP server implementation
-│   └── xanoscript.d.ts       # TypeScript declarations
+│   ├── xanoscript.d.ts       # TypeScript declarations
+│   └── templates/
+│       ├── init-workspace.ts # Workspace initialization template
+│       └── xanoscript-index.ts
 ├── dist/                      # Compiled JavaScript output
 ├── scripts/
 │   └── sync-xanoscript-docs.ts  # Documentation sync script
-├── api_docs/                  # Xano API documentation (16 markdown files)
+├── api_docs/                  # Xano Headless API documentation (16 markdown files)
 │   ├── index.md
 │   ├── workspace.md
 │   ├── table.md
 │   └── ...
 ├── xanoscript_docs/           # XanoScript language documentation
 │   ├── version.json
-│   ├── function_guideline.md
-│   ├── function_examples.md
+│   ├── README.md
+│   ├── syntax.md
+│   ├── functions.md
+│   ├── apis.md
 │   └── ...
 ├── package.json
 └── tsconfig.json
@@ -211,8 +273,9 @@ xano-developer-mcp/
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `@modelcontextprotocol/sdk` | 1.26.0 | Official MCP SDK |
-| `@xano/xanoscript-language-server` | 11.6.3 | XanoScript parser and validation |
+| `@modelcontextprotocol/sdk` | ^1.26.0 | Official MCP SDK |
+| `@xano/xanoscript-language-server` | ^11.6.3 | XanoScript parser and validation |
+| `minimatch` | ^10.1.2 | Glob pattern matching for context-aware docs |
 
 ## How It Works
 
@@ -229,7 +292,11 @@ Xano Developer MCP Server
     │
     ├─► validate_xanoscript → Parses code with XanoScript language server
     │
-    └─► xanoscript_docs → Reads external XanoScript documentation
+    ├─► xanoscript_docs → Context-aware docs from /xanoscript_docs/*.md
+    │
+    ├─► init_workspace → Returns workspace setup instructions
+    │
+    └─► MCP Resources → Direct access to documentation files
 ```
 
 ## Authentication
@@ -238,16 +305,6 @@ The MCP server itself does not require authentication. However, when using the d
 
 ## Development
 
-### Syncing Documentation
-
-If the XanoScript documentation source changes, regenerate the mapping:
-
-```bash
-npm run sync-docs
-```
-
-This scans the xanoscript-ai-documentation directory and updates the documentation mapping in the server.
-
 ### Building
 
 ```bash
@@ -255,6 +312,14 @@ npm run build
 ```
 
 Compiles TypeScript to JavaScript in the `dist/` directory.
+
+### Documentation Structure
+
+The XanoScript documentation uses a file-based structure in `xanoscript_docs/`. The documentation mapping is configured in `src/index.ts` via the `XANOSCRIPT_DOCS_V2` constant, which defines:
+
+- **file**: The markdown file containing the documentation
+- **applyTo**: Glob patterns for context-aware matching (e.g., `apis/**/*.xs`)
+- **description**: Human-readable description of the topic
 
 ## License
 

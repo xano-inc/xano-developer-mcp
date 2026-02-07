@@ -1,1 +1,107 @@
-# xanoscript-ai-documentation
+# XanoScript Documentation
+
+XanoScript is the declarative scripting language for [Xano](https://xano.com), a no-code/low-code backend platform. Use it to define database schemas, API endpoints, functions, scheduled tasks, and AI agents.
+
+## Quick Reference
+
+| Construct | File Location | Purpose |
+|-----------|---------------|---------|
+| `table` | `tables/*.xs` | Database schema definition |
+| `function` | `functions/**/*.xs` | Reusable logic blocks |
+| `query` | `apis/<group>/*.xs` | HTTP API endpoints |
+| `task` | `tasks/*.xs` | Scheduled/cron jobs |
+| `agent` | `agents/**/*.xs` | AI-powered agents |
+| `tool` | `tools/**/*.xs` | Tools for AI agents |
+| `mcp_server` | `mcp_servers/**/*.xs` | MCP server definitions |
+| `addon` | `addons/*.xs` | Subqueries for related data |
+
+## Workspace Structure
+
+```
+project/
+├── tables/              # Database table schemas
+├── functions/           # Reusable functions (supports subfolders)
+├── apis/
+│   └── <api-group>/     # API endpoints grouped by domain
+├── tasks/               # Scheduled jobs
+├── agents/              # AI agents
+├── tools/               # AI tools
+├── mcp_servers/         # MCP server definitions
+├── addons/              # Query addons
+├── static/              # Frontend files (HTML, CSS, JS)
+└── ephemeral/           # Temporary test environments
+```
+
+## Environment Variables
+
+Access with `$env.<name>`. Built-in variables:
+
+| Variable | Description |
+|----------|-------------|
+| `$env.$remote_ip` | Client IP address |
+| `$env.$http_headers` | Request headers array |
+| `$env.$request_uri` | Request URI |
+| `$env.$request_method` | HTTP method (GET, POST, etc.) |
+| `$env.$request_querystring` | Query string |
+| `$env.$datasource` | Current datasource |
+| `$env.$branch` | Current branch |
+
+Custom environment variables are set in the Xano dashboard and accessed as `$env.MY_VAR`.
+
+## Core Syntax Patterns
+
+### Block Structure
+```xs
+<construct> "<name>" {
+  input { ... }      # Parameters (optional)
+  stack { ... }      # Logic
+  response = $var    # Output
+}
+```
+
+### Variable Access
+```xs
+$input.field        # Input parameters
+$var.field          # Stack variables
+$auth.id            # Authenticated user ID
+$env.MY_VAR         # Environment variable
+$db.table.field     # Database field reference (in queries)
+$this               # Current item in loops/maps
+```
+
+### Filters (Pipe Syntax)
+```xs
+$value|trim|lower                    # Chain filters
+$input.name|strlen                   # Get length
+$array|first                         # First element
+($a + $b)|round:2                    # Math with precision
+```
+
+## File Frontmatter
+
+Documentation files use frontmatter to specify which file patterns they apply to:
+
+```markdown
+---
+applyTo: "functions/**/*.xs"
+---
+```
+
+This helps AI tools apply the correct documentation based on the file being edited.
+
+## Documentation Index
+
+1. [Syntax Reference](syntax.md) - Expressions, operators, filters
+2. [Types & Inputs](types.md) - Data types, validation, input blocks
+3. [Tables](tables.md) - Database schema definitions
+4. [Functions](functions.md) - Reusable function stacks
+5. [APIs](apis.md) - HTTP endpoint definitions
+6. [Tasks](tasks.md) - Scheduled jobs
+7. [Database Operations](database.md) - Query, add, edit, delete
+8. [Agents](agents.md) - AI agent configuration
+9. [Tools](tools.md) - AI tools for agents
+10. [MCP Servers](mcp-servers.md) - Model Context Protocol servers
+11. [Testing](testing.md) - Unit tests and mocking
+12. [Integrations](integrations.md) - Cloud services, Redis, security
+13. [Frontend](frontend.md) - Static frontend development
+14. [Ephemeral](ephemeral.md) - Temporary environments
