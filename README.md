@@ -212,21 +212,17 @@ xanoscript_docs({ file_path: "apis/users/create.xs" })
 xanoscript_docs({ topic: "database", mode: "quick_reference" })
 ```
 
-### 4. `init_workspace`
+### 4. `mcp_version`
 
-Get comprehensive instructions for initializing a local Xano development workspace.
+Get the current version of the Xano Developer MCP server.
 
 **Parameters:** None
 
-**Returns:** Documentation on:
-- Directory structure for local development
-- File naming conventions
-- Registry format for tracking changes
-- Workflows for pulling/pushing XanoScript files via the Headless API
+**Returns:** The version string from package.json.
 
 **Example:**
 ```
-init_workspace()
+mcp_version()
 ```
 
 ## MCP Resources
@@ -276,7 +272,6 @@ xano-developer-mcp/
 │   ├── index.ts              # Main MCP server implementation
 │   ├── xanoscript.d.ts       # TypeScript declarations
 │   └── templates/
-│       ├── init-workspace.ts # Workspace initialization template
 │       └── xanoscript-index.ts
 ├── dist/                      # Compiled JavaScript output
 ├── scripts/
@@ -322,7 +317,7 @@ Xano Developer MCP Server
     │
     ├─► xanoscript_docs → Context-aware docs from /xanoscript_docs/*.md
     │
-    ├─► init_workspace → Returns workspace setup instructions
+    ├─► mcp_version → Returns server version from package.json
     │
     └─► MCP Resources → Direct access to documentation files
 ```

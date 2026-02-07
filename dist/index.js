@@ -8,7 +8,6 @@ import { dirname, join } from "path";
 import { minimatch } from "minimatch";
 import { xanoscriptParser } from "@xano/xanoscript-language-server/parser/parser.js";
 import { getSchemeFromContent } from "@xano/xanoscript-language-server/utils.js";
-import { generateInitWorkspaceTemplate } from "./templates/init-workspace.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf-8"));
@@ -132,69 +131,6 @@ const XANOSCRIPT_DOCS_V2 = {
         file: "streaming.md",
         applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
         description: "Streaming data from files, requests, and responses",
-    },
-};
-const XANO_OBJECT_TYPES = {
-    function: {
-        path: "functions",
-        endpoint: "function",
-        extension: ".xs",
-        hasXanoscript: true,
-    },
-    table: {
-        path: "tables",
-        endpoint: "table",
-        extension: ".xs",
-        hasXanoscript: true,
-    },
-    task: {
-        path: "tasks",
-        endpoint: "task",
-        extension: ".xs",
-        hasXanoscript: true,
-    },
-    api_group: {
-        path: "apis",
-        endpoint: "api-group",
-        extension: ".xs",
-        hasXanoscript: true,
-        supportsNesting: true,
-    },
-    tool: {
-        path: "tools",
-        endpoint: "tool",
-        extension: ".xs",
-        hasXanoscript: true,
-    },
-    agent: {
-        path: "agents",
-        endpoint: "agent",
-        extension: ".xs",
-        hasXanoscript: true,
-    },
-    middleware: {
-        path: "middlewares",
-        endpoint: "middleware",
-        extension: ".xs",
-        hasXanoscript: true,
-    },
-    addon: {
-        path: "addons",
-        endpoint: "addon",
-        extension: ".xs",
-        hasXanoscript: true,
-    },
-    mcp_server: {
-        path: "mcp_servers",
-        endpoint: "mcp-server",
-        extension: ".xs",
-        hasXanoscript: true,
-    },
-    realtime_channel: {
-        path: "realtime",
-        endpoint: "realtime-channel",
-        extension: ".xs",
-        hasXanoscript: true,
     },
 };
 // =============================================================================
@@ -383,17 +319,6 @@ function readXanoscriptDocsV2(args) {
     }
 }
 // =============================================================================
-// Init Workspace Documentation
-// =============================================================================
-function generateInitWorkspaceDoc() {
-    const objectTypes = Object.entries(XANO_OBJECT_TYPES).map(([type, config]) => ({
-        type,
-        path: config.path,
-        endpoint: config.endpoint,
-    }));
-    return generateInitWorkspaceTemplate(objectTypes);
-}
-// =============================================================================
 // MCP Server Setup
 // =============================================================================
 const server = new Server({
@@ -507,11 +432,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 },
             },
             {
-                name: "init_workspace",
-                description: "Get comprehensive instructions for initializing a local Xano development workspace. " +
-                    "Returns documentation on directory structure, file naming conventions, registry format for tracking changes, " +
-                    "and workflows for pulling/pushing XanoScript files via the Headless API. " +
-                    "Use this when setting up local development for Xano projects.",
+                name: "mcp_version",
+                description: "Get the current version of the Xano Developer MCP server. " +
+                    "Returns the version string from package.json.",
                 inputSchema: {
                     type: "object",
                     properties: {},
@@ -619,13 +542,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             ],
         };
     }
-    if (request.params.name === "init_workspace") {
-        const documentation = generateInitWorkspaceDoc();
+    if (request.params.name === "mcp_version") {
         return {
             content: [
                 {
                     type: "text",
-                    text: documentation,
+                    text: SERVER_VERSION,
                 },
             ],
         };
