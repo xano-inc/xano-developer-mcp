@@ -30,6 +30,7 @@ ${formatRow("function", "Custom reusable functions in `functions/`")}
 ${formatRow("api_query", "HTTP API endpoints in `apis/`")}
 ${formatRow("table", "Database table schemas in `tables/`")}
 ${formatRow("task", "Scheduled background tasks in `tasks/`")}
+${formatRow("triggers", "Event-driven handlers in `triggers/`")}
 ${formatRow("tool", "AI-callable tools in `tools/`")}
 ${formatRow("agent", "AI agents in `agents/`")}
 ${formatRow("mcp_server", "MCP servers in `mcp_servers/`")}

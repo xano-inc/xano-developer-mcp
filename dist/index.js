@@ -47,6 +47,11 @@ const XANOSCRIPT_DOCS_V2 = {
         applyTo: ["tasks/*.xs"],
         description: "Scheduled and cron jobs",
     },
+    triggers: {
+        file: "triggers.md",
+        applyTo: ["triggers/**/*.xs"],
+        description: "Event-driven handlers (table, realtime, workspace, agent, MCP)",
+    },
     database: {
         file: "database.md",
         applyTo: ["functions/**/*.xs", "apis/**/*.xs", "tasks/*.xs", "tools/**/*.xs"],

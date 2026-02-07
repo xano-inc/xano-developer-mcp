@@ -10,6 +10,7 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 | `function` | `functions/**/*.xs` | Reusable logic blocks |
 | `query` | `apis/<group>/*.xs` | HTTP API endpoints |
 | `task` | `tasks/*.xs` | Scheduled/cron jobs |
+| `*_trigger` | `triggers/**/*.xs` | Event-driven handlers |
 | `agent` | `agents/**/*.xs` | AI-powered agents |
 | `tool` | `tools/**/*.xs` | Tools for AI agents |
 | `mcp_server` | `mcp_servers/**/*.xs` | MCP server definitions |
@@ -24,6 +25,7 @@ project/
 ├── apis/
 │   └── <api-group>/     # API endpoints grouped by domain
 ├── tasks/               # Scheduled jobs
+├── triggers/            # Event-driven handlers
 ├── agents/              # AI agents
 ├── tools/               # AI tools
 ├── mcp_servers/         # MCP server definitions
@@ -101,6 +103,7 @@ Use `xanoscript_docs({ keyword: "<keyword>" })` to retrieve documentation.
 | Functions | `function` | Reusable function stacks |
 | APIs | `api_query` | HTTP endpoint definitions |
 | Tasks | `task` | Scheduled jobs |
+| Triggers | `trigger` | Event-driven handlers (table, realtime, workspace, agent, MCP) |
 | Database Operations | `db_query` | Query, add, edit, delete |
 | Agents | `agent` | AI agent configuration |
 | Tools | `tool` | AI tools for agents |
