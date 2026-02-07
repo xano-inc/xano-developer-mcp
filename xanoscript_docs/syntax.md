@@ -382,3 +382,270 @@ conditional {
   }
 }
 ```
+
+---
+
+## System Variables
+
+Built-in variables available in the execution context.
+
+### Request Context
+
+| Variable | Description |
+|----------|-------------|
+| `$remote_ip` | Client IP address |
+| `$remote_port` | Client port number |
+| `$remote_host` | Remote hostname |
+| `$request_method` | HTTP method (GET, POST, etc.) |
+| `$request_uri` | Full request URI |
+| `$request_querystring` | Query string portion |
+| `$http_headers` | Request headers object |
+| `$request_auth_token` | Authorization token (if present) |
+
+### System Context
+
+| Variable | Description |
+|----------|-------------|
+| `$datasource` | Current data source name |
+| `$branch` | Current branch name |
+| `$tenant` | Tenant ID (multi-tenant apps) |
+| `$api_baseurl` | API base URL |
+| `$webflow` | Webflow context (if applicable) |
+
+### Access via $env
+
+```xs
+// Request variables accessed through $env
+var $client_ip { value = $env.$remote_ip }
+var $method { value = $env.$request_method }
+var $headers { value = $env.$http_headers }
+var $current_branch { value = $env.$branch }
+```
+
+---
+
+## Additional Operators
+
+### Nullish Coalescing
+
+Return right operand when left is null (not just falsy):
+
+```xs
+$value ?? "default"              // Returns "default" only if $value is null
+$value || "default"              // Returns "default" if $value is null, 0, "", or false
+```
+
+```xs
+// Difference example
+var $count { value = 0 }
+$count ?? 10                     // Returns 0 (not null)
+$count || 10                     // Returns 10 (0 is falsy)
+```
+
+### Database Filter Operators
+
+Additional operators for `db.query` where clauses:
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `@>` | JSON contains | `$db.meta @> {"type": "featured"}` |
+| `~` | Regex match | `$db.name ~ "^test"` |
+| `!~` | Regex not match | `$db.name !~ "^draft"` |
+| `not in` | Not in list | `$db.status not in ["deleted", "hidden"]` |
+| `not between` | Not in range | `$db.price not between 0:10` |
+| `not contains` | Array not contains | `$db.tags not contains "spam"` |
+| `not includes` | String not includes | `$db.title not includes "test"` |
+| `not overlaps` | Arrays don't overlap | `$db.tags not overlaps ["hidden", "draft"]` |
+| `not ilike` | Case-insensitive not like | `$db.name not ilike "%test%"` |
+
+```xs
+db.query "product" {
+  where = $db.product.status not in ["deleted", "archived"]
+        && $db.product.metadata @> {"featured": true}
+        && $db.product.sku ~ "^SKU-[0-9]+"
+} as $products
+```
+
+---
+
+## Additional Filters
+
+### Text Domain Functions
+
+Functional equivalents for string operations:
+
+```xs
+text.contains("hello world", "world")        // true
+text.starts_with("hello", "he")              // true
+text.ends_with("hello", "lo")                // true
+text.icontains("Hello World", "WORLD")       // true (case-insensitive)
+text.istarts_with("Hello", "HE")             // true
+text.iends_with("Hello", "LO")               // true
+```
+
+### Object Domain Functions
+
+Functional equivalents for object operations:
+
+```xs
+object.keys({a: 1, b: 2})                    // ["a", "b"]
+object.values({a: 1, b: 2})                  // [1, 2]
+object.entries({a: 1, b: 2})                 // [{key: "a", value: 1}, {key: "b", value: 2}]
+```
+
+### Math Domain Functions
+
+Functional equivalents for math operations:
+
+```xs
+math.add(5, 3)                               // 8
+math.sub(10, 4)                              // 6
+math.mul(3, 4)                               // 12
+math.div(20, 5)                              // 4
+math.mod(10, 3)                              // 1
+```
+
+### Bitwise Operations
+
+```xs
+// As filters
+5|bitwise_and:3                              // 1
+5|bitwise_or:3                               // 7
+5|bitwise_xor:3                              // 6
+5|bitwise_not                                // -6
+
+// As functions
+math.bitwise.and(5, 3)                       // 1
+math.bitwise.or(5, 3)                        // 7
+math.bitwise.xor(5, 3)                       // 6
+```
+
+### Logical NOT Filter
+
+```xs
+true|not                                     // false
+false|not                                    // true
+$condition|not                               // Inverts boolean
+```
+
+### Array Filtering
+
+| Filter | Description | Example |
+|--------|-------------|---------|
+| `filter_empty` | Remove empty values | `$arr\|filter_empty` |
+| `filter_empty_text` | Remove empty strings | `$arr\|filter_empty_text` |
+| `filter_empty_array` | Remove empty arrays | `$arr\|filter_empty_array` |
+| `filter_empty_object` | Remove empty objects | `$arr\|filter_empty_object` |
+| `filter_null` | Remove null values | `$arr\|filter_null` |
+| `filter_zero` | Remove zero values | `$arr\|filter_zero` |
+| `filter_false` | Remove false values | `$arr\|filter_false` |
+
+```xs
+[1, null, "", 0, "text", false]|filter_empty      // [1, "text"]
+["a", "", "b", ""]|filter_empty_text              // ["a", "b"]
+```
+
+### Array Fill Operations
+
+```xs
+|fill:5:"x"                                  // ["x", "x", "x", "x", "x"]
+["a", "b"]|fill_keys:{"a": 1, "b": 2}        // {a: 1, b: 2}
+```
+
+### Deep Merge & Comparison
+
+```xs
+{a: {b: 1}}|merge_recursive:{a: {c: 2}}      // {a: {b: 1, c: 2}}
+[1, 2, 3]|diff_assoc:[2]                     // Associative diff
+[1, 2, 3]|intersect_assoc:[2, 3, 4]          // Associative intersect
+```
+
+### Encoding Filters
+
+| Filter | Description | Example |
+|--------|-------------|---------|
+| `list_encodings` | List available encodings | `\|list_encodings` |
+| `detect_encoding` | Detect string encoding | `$text\|detect_encoding` |
+| `to_utf8` | Convert to UTF-8 | `$text\|to_utf8` |
+| `from_utf8` | Convert from UTF-8 | `$text\|from_utf8:"ISO-8859-1"` |
+| `convert_encoding` | Convert encodings | `$text\|convert_encoding:"UTF-8":"ISO-8859-1"` |
+
+```xs
+// CSV parsing (alternative to csv_decode)
+$csv_text|csv_parse                          // Parse CSV string
+$data|csv_create                             // Create CSV string
+
+// Query string
+"a=1&b=2"|querystring_parse                  // {a: "1", b: "2"}
+```
+
+### String Escape Filters
+
+| Filter | Description |
+|--------|-------------|
+| `addslashes` | Escape quotes and backslashes |
+| `escape` | HTML escape |
+| `text_escape` | Escape for text output |
+| `text_unescape` | Unescape text |
+| `regex_quote` | Escape regex special characters |
+
+```xs
+"Hello \"World\""|addslashes                 // "Hello \\\"World\\\""
+"<script>"|escape                            // "&lt;script&gt;"
+"^test$"|regex_quote                         // "\^test\$"
+```
+
+### Trigonometry Examples
+
+```xs
+// Radians and degrees
+90|deg2rad                                   // 1.5707963...
+1.5707963|rad2deg                            // 90
+
+// Trig functions (input in radians)
+0|sin                                        // 0
+0|cos                                        // 1
+0.785398|tan                                 // ~1 (45 degrees)
+
+// Inverse trig
+0|asin                                       // 0
+1|acos                                       // 0
+1|atan                                       // 0.785398...
+
+// Hyperbolic
+0|sinh                                       // 0
+0|cosh                                       // 1
+0|tanh                                       // 0
+```
+
+### DB Query Timestamp Filters
+
+Extended timestamp operations for database queries:
+
+```xs
+$db.created_at|timestamp_year                // Extract year
+$db.created_at|timestamp_month               // Extract month (1-12)
+$db.created_at|timestamp_week                // Extract week number
+$db.created_at|timestamp_day_of_month        // Day of month (1-31)
+$db.created_at|timestamp_day_of_week         // Day of week (0-6)
+$db.created_at|timestamp_day_of_year         // Day of year (1-366)
+$db.created_at|timestamp_hour                // Hour (0-23)
+$db.created_at|timestamp_minute              // Minute (0-59)
+
+// Epoch variants
+$db.created_at|timestamp_epoch_seconds       // Seconds since epoch
+$db.created_at|timestamp_epoch_ms            // Milliseconds since epoch
+```
+
+### Vector Operations (AI/ML)
+
+Additional vector similarity functions:
+
+```xs
+$db.embedding|l1_distance_manhattan:$input.vector    // L1/Manhattan distance
+$db.embedding|negative_inner_product:$input.vector   // Negative inner product
+$db.embedding|inner_product:$input.vector            // Inner product
+
+// Geo covers (for polygon containment)
+$db.boundary|covers:$input.point                     // Polygon covers point
+```

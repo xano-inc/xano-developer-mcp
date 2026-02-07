@@ -292,6 +292,176 @@ function "validate_email_unique" {
 
 ---
 
+## Async Operations
+
+### await
+
+Wait for an asynchronous operation to complete.
+
+```xs
+stack {
+  api.request {
+    url = "https://api.example.com/data"
+    method = "GET"
+    async = true
+  } as $request
+
+  await $request as $response
+}
+```
+
+### group (Parallel Execution)
+
+Execute multiple operations in parallel and wait for all to complete.
+
+```xs
+stack {
+  group {
+    api.request {
+      url = "https://api.example.com/users"
+      method = "GET"
+    } as $users
+
+    api.request {
+      url = "https://api.example.com/products"
+      method = "GET"
+    } as $products
+
+    api.request {
+      url = "https://api.example.com/orders"
+      method = "GET"
+    } as $orders
+  }
+
+  // All three requests complete before continuing
+  var $combined {
+    value = {
+      users: $users.body,
+      products: $products.body,
+      orders: $orders.body
+    }
+  }
+}
+```
+
+### Parallel Database Queries
+
+```xs
+stack {
+  group {
+    db.query "user" {
+      where = $db.user.is_active == true
+      return = { type: "count" }
+    } as $active_users
+
+    db.query "order" {
+      where = $db.order.created_at >= $input.start_date
+      return = { type: "count" }
+    } as $order_count
+
+    db.query "product" {
+      where = $db.product.stock == 0
+      return = { type: "count" }
+    } as $out_of_stock
+  }
+
+  response = {
+    active_users: $active_users,
+    orders: $order_count,
+    out_of_stock: $out_of_stock
+  }
+}
+```
+
+---
+
+## Advanced Loop Patterns
+
+### remove (In-Loop Deletion)
+
+Remove the current element during foreach iteration.
+
+```xs
+stack {
+  var $items { value = $input.items }
+
+  foreach ($items) {
+    each as $item {
+      conditional {
+        if ($item.expired == true) {
+          remove
+        }
+      }
+    }
+  }
+
+  // $items now excludes expired items
+}
+```
+
+### as (Variable Aliasing)
+
+Alias loop variables for clearer access.
+
+```xs
+foreach ($orders) {
+  each as $order {
+    // $order available here
+    foreach ($order.items) {
+      each as $item {
+        // Both $order and $item available
+        db.add "order_item" {
+          data = {
+            order_id: $order.id,
+            product_id: $item.product_id,
+            quantity: $item.quantity
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### Loop Control
+
+```xs
+foreach ($items) {
+  each as $item {
+    conditional {
+      if ($item.skip) {
+        continue                              // Skip to next iteration
+      }
+    }
+
+    conditional {
+      if ($item.stop) {
+        break                                 // Exit loop entirely
+      }
+    }
+
+    // Process item
+  }
+}
+```
+
+### Loop with Index
+
+```xs
+foreach ($items) {
+  each as $item, $index {
+    db.add "item" {
+      data = {
+        value: $item,
+        position: $index
+      }
+    }
+  }
+}
+```
+
+---
+
 ## Best Practices
 
 1. **Single responsibility** - Each function does one thing well
@@ -299,3 +469,5 @@ function "validate_email_unique" {
 3. **Organize in folders** - Group related functions: `utils/`, `auth/`, `orders/`
 4. **Return early** - Use return for guard clauses
 5. **Keep stacks shallow** - Avoid deeply nested conditionals
+6. **Use group for parallel calls** - Improves performance for independent operations
+7. **Use remove sparingly** - Consider filtering arrays instead

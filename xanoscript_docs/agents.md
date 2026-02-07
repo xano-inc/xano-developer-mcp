@@ -317,6 +317,89 @@ agent "Research Assistant" {
 
 ---
 
+## External MCP Tools
+
+Integrate external MCP (Model Context Protocol) servers to extend agent capabilities.
+
+### ai.external.mcp.tool.list
+
+List available tools from an external MCP server.
+
+```xs
+ai.external.mcp.tool.list {
+  server_url = "https://mcp.example.com"
+  api_key = $env.MCP_API_KEY
+} as $tools
+
+// $tools = [
+//   { name: "search_web", description: "Search the web", inputSchema: {...} },
+//   { name: "fetch_page", description: "Fetch webpage content", inputSchema: {...} }
+// ]
+```
+
+### ai.external.mcp.tool.run
+
+Execute a tool on an external MCP server.
+
+```xs
+ai.external.mcp.tool.run {
+  server_url = "https://mcp.example.com"
+  api_key = $env.MCP_API_KEY
+  tool_name = "search_web"
+  arguments = { query: "latest AI news" }
+} as $result
+```
+
+### ai.external.mcp.server_details
+
+Get metadata about an external MCP server.
+
+```xs
+ai.external.mcp.server_details {
+  server_url = "https://mcp.example.com"
+  api_key = $env.MCP_API_KEY
+} as $details
+
+// $details = {
+//   name: "Web Tools",
+//   version: "1.0.0",
+//   capabilities: ["tools", "resources"],
+//   tools: [...]
+// }
+```
+
+### Using External Tools in Agents
+
+```xs
+agent "Research Agent" {
+  canonical = "research-v1"
+  llm = {
+    type: "openai"
+    api_key: "{{ $env.OPENAI_API_KEY }}"
+    model: "gpt-5"
+    system_prompt: """
+      You are a research assistant with access to web search
+      and document analysis tools. Use them to find and analyze information.
+    """
+    prompt: "{{ $args.query }}"
+    max_steps: 8
+  }
+  tools = [
+    { name: "search_web" },
+    { name: "fetch_page" },
+    { name: "summarize_document" }
+  ]
+  external_mcp_servers = [
+    {
+      url: "{{ $env.WEB_MCP_URL }}",
+      api_key: "{{ $env.WEB_MCP_KEY }}"
+    }
+  ]
+}
+```
+
+---
+
 ## Best Practices
 
 1. **Clear system prompts** - Define persona, capabilities, and constraints
@@ -325,3 +408,4 @@ agent "Research Assistant" {
 4. **Don't repeat tool descriptions** - They're auto-injected
 5. **Use environment variables** - Never hardcode API keys
 6. **Test with xano-free first** - Free for development
+7. **Validate external MCP servers** - Check server_details before using

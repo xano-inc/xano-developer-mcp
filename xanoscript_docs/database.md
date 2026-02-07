@@ -405,6 +405,164 @@ db.external.oracle.direct_query { ... }
 
 ---
 
+## Bulk Operations
+
+Perform batch operations on multiple records efficiently.
+
+### db.bulk.add
+
+Insert multiple records in a single operation.
+
+```xs
+db.bulk.add "product" {
+  data = [
+    { name: "Product A", price: 10.00, sku: "SKU-A" },
+    { name: "Product B", price: 20.00, sku: "SKU-B" },
+    { name: "Product C", price: 30.00, sku: "SKU-C" }
+  ]
+} as $inserted
+```
+
+### db.bulk.update
+
+Update multiple records matching conditions.
+
+```xs
+db.bulk.update "product" {
+  where = $db.product.category_id == $input.category_id
+  data = {
+    is_featured: true,
+    updated_at: now
+  }
+} as $count
+```
+
+### db.bulk.patch
+
+Patch multiple records with variable data.
+
+```xs
+var $updates { value = { updated_at: now } }
+
+conditional {
+  if ($input.discount != null) {
+    var.update $updates { value = $updates|set:"discount":$input.discount }
+  }
+}
+
+db.bulk.patch "product" {
+  where = $db.product.category_id == $input.category_id
+  data = $updates
+} as $count
+```
+
+### db.bulk.delete
+
+Delete multiple records matching conditions.
+
+```xs
+db.bulk.delete "temp_session" {
+  where = $db.temp_session.expires_at < now
+} as $deleted_count
+```
+
+### Bulk with Transaction
+
+```xs
+db.transaction {
+  stack {
+    db.bulk.delete "order_item" {
+      where = $db.order_item.order_id == $input.order_id
+    }
+
+    db.bulk.add "order_item" {
+      data = $input.items|map:{
+        order_id: $input.order_id,
+        product_id: $$.product_id,
+        quantity: $$.quantity
+      }
+    }
+  }
+}
+```
+
+---
+
+## Advanced Features
+
+### db.set_datasource
+
+Switch to a different data source within a function.
+
+```xs
+db.set_datasource {
+  name = "analytics_db"
+}
+
+db.query "metrics" {
+  where = $db.metrics.date >= $input.start_date
+} as $metrics
+
+db.set_datasource {
+  name = "default"
+}
+```
+
+### db.schema
+
+Get schema information for a table.
+
+```xs
+db.schema {
+  table = "user"
+} as $schema
+
+// $schema contains:
+// - columns: array of column definitions
+// - indexes: array of index definitions
+// - constraints: array of constraints
+```
+
+### Transaction Isolation Levels
+
+```xs
+db.transaction {
+  isolation = "serializable"      // serializable, repeatable_read, read_committed
+  stack {
+    // Operations run with specified isolation
+  }
+}
+```
+
+### Deadlock Handling
+
+```xs
+try_catch {
+  try {
+    db.transaction {
+      stack {
+        db.edit "inventory" { ... }
+        db.edit "order" { ... }
+      }
+    }
+  }
+  catch {
+    conditional {
+      if ($error.name == "DeadlockError") {
+        // Retry logic
+        util.sleep { value = 100 }
+        function.run "retry_transaction" { input = $input }
+      }
+      else {
+        throw { name = $error.name, value = $error.message }
+      }
+    }
+  }
+}
+```
+
+---
+
 ## Best Practices
 
 1. **Use db.query for searches** - Flexible filtering and pagination
@@ -412,3 +570,5 @@ db.external.oracle.direct_query { ... }
 3. **Use db.patch for dynamic updates** - Accepts variable data
 4. **Use transactions for atomicity** - Ensure all-or-nothing operations
 5. **Use null-safe operators** - `==?` for optional filters
+6. **Use bulk operations for batch processing** - More efficient than loops
+7. **Handle deadlocks gracefully** - Implement retry logic for concurrent writes

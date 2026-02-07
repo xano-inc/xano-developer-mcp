@@ -98,6 +98,41 @@ const XANOSCRIPT_DOCS_V2 = {
         applyTo: ["ephemeral/**/*.xs"],
         description: "Temporary test environments",
     },
+    addons: {
+        file: "addons.md",
+        applyTo: ["addons/*.xs", "functions/**/*.xs", "apis/**/*.xs"],
+        description: "Reusable subqueries for fetching related data",
+    },
+    debugging: {
+        file: "debugging.md",
+        applyTo: ["**/*.xs"],
+        description: "Logging, inspecting, and debugging XanoScript execution",
+    },
+    performance: {
+        file: "performance.md",
+        applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
+        description: "Performance optimization best practices",
+    },
+    realtime: {
+        file: "realtime.md",
+        applyTo: ["functions/**/*.xs", "apis/**/*.xs", "triggers/**/*.xs"],
+        description: "Real-time channels and events for push updates",
+    },
+    schema: {
+        file: "schema.md",
+        applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
+        description: "Runtime schema parsing and validation",
+    },
+    security: {
+        file: "security.md",
+        applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
+        description: "Security best practices for authentication and authorization",
+    },
+    streaming: {
+        file: "streaming.md",
+        applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
+        description: "Streaming data from files, requests, and responses",
+    },
 };
 const XANO_OBJECT_TYPES = {
     function: {

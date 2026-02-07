@@ -105,19 +105,52 @@ This helps AI tools apply the correct documentation based on the file being edit
 
 Use `xanoscript_docs({ keyword: "<keyword>" })` to retrieve documentation.
 
+### Core Language
 | Topic | Keyword | Description |
 |-------|---------|-------------|
-| Syntax Reference | `syntax` | Expressions, operators, filters |
+| Syntax Reference | `syntax` | Expressions, operators, filters, system variables |
 | Types & Inputs | `input` | Data types, validation, input blocks |
+| Functions | `function` | Reusable function stacks, async, loops |
+| Schema | `schema` | Runtime schema parsing and validation |
+
+### Data
+| Topic | Keyword | Description |
+|-------|---------|-------------|
 | Tables | `table` | Database schema definitions |
-| Functions | `function` | Reusable function stacks |
+| Database Operations | `db_query` | Query, add, edit, delete, bulk operations |
+| Addons | `addon` | Reusable subqueries for related data |
+| Streaming | `streaming` | Stream processing for large files |
+
+### APIs & Endpoints
+| Topic | Keyword | Description |
+|-------|---------|-------------|
 | APIs | `api_query` | HTTP endpoint definitions |
 | Tasks | `task` | Scheduled jobs |
-| Triggers | `trigger` | Event-driven handlers (table, realtime, workspace, agent, MCP) |
-| Database Operations | `db_query` | Query, add, edit, delete |
+| Triggers | `trigger` | Event-driven handlers |
+| Realtime | `realtime` | Push events and channels |
+
+### AI & Agents
+| Topic | Keyword | Description |
+|-------|---------|-------------|
 | Agents | `agent` | AI agent configuration |
 | Tools | `tool` | AI tools for agents |
 | MCP Servers | `mcp_server` | Model Context Protocol servers |
+
+### Integrations
+| Topic | Keyword | Description |
+|-------|---------|-------------|
+| Integrations | `integrations` | Cloud storage, search, Redis, zip, Lambda |
+
+### Development
+| Topic | Keyword | Description |
+|-------|---------|-------------|
 | Testing | `testing` | Unit tests and mocking |
+| Debugging | `debugging` | Logging and inspection tools |
 | Frontend | `frontend` | Static frontend development |
-| Ephemeral | `ephemeral` | Temporary environments
+| Ephemeral | `ephemeral` | Temporary environments |
+
+### Best Practices
+| Topic | Keyword | Description |
+|-------|---------|-------------|
+| Performance | `performance` | Query optimization, caching, parallelism |
+| Security | `security` | Authentication, authorization, encryption |

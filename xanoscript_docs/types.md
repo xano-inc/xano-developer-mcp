@@ -176,35 +176,80 @@ geo_multipoint points
 Filters validate and transform input values. Chain with `|`.
 
 ### String Filters
-| Filter | Description |
-|--------|-------------|
-| `trim` | Remove leading/trailing whitespace |
-| `lower` | Convert to lowercase |
-| `upper` | Convert to uppercase |
-| `min:<n>` | Minimum length |
-| `max:<n>` | Maximum length |
-| `ok:<chars>` | Allow only specified characters |
-| `prevent:<str>` | Block specific substrings |
-| `startsWith:<prefix>` | Require prefix |
-| `alphaOk` | Allow only letters |
-| `digitOk` | Allow only digits |
+| Filter | Description | Example |
+|--------|-------------|---------|
+| `trim` | Remove leading/trailing whitespace | `text name filters=trim` |
+| `lower` | Convert to lowercase | `text email filters=lower` |
+| `upper` | Convert to uppercase | `text code filters=upper` |
+| `min:<n>` | Minimum length | `text name filters=min:2` |
+| `max:<n>` | Maximum length | `text bio filters=max:500` |
+| `ok:<chars>` | Allow only specified characters | `text hex filters=ok:0123456789abcdef` |
+| `prevent:<str>` | Block specific substrings | `text name filters=prevent:admin` |
+| `startsWith:<prefix>` | Require prefix | `text sku filters=startsWith:SKU-` |
+| `endsWith:<suffix>` | Require suffix | `text file filters=endsWith:.pdf` |
+| `alphaOk` | Allow only letters (a-zA-Z) | `text name filters=alphaOk` |
+| `digitOk` | Allow only digits (0-9) | `text code filters=digitOk` |
+| `alphaNumOk` | Allow letters and digits | `text username filters=alphaNumOk` |
+| `pattern:<regex>` | Match regex pattern | `text phone filters=pattern:^\+?[0-9]+$` |
 
 ### Numeric Filters
-| Filter | Description |
-|--------|-------------|
-| `min:<n>` | Minimum value |
-| `max:<n>` | Maximum value |
+| Filter | Description | Example |
+|--------|-------------|---------|
+| `min:<n>` | Minimum value | `int age filters=min:0` |
+| `max:<n>` | Maximum value | `int age filters=max:150` |
+| `between:<a>:<b>` | Value between a and b | `int score filters=between:0:100` |
 
-### Examples
+### Array Filters
+| Filter | Description | Example |
+|--------|-------------|---------|
+| `min:<n>` | Minimum array length | `text[] tags filters=min:1` |
+| `max:<n>` | Maximum array length | `text[] tags filters=max:10` |
+| `unique` | Remove duplicates | `int[] ids filters=unique` |
+
+### Character Set Filters
+
 ```xs
 input {
-  text username filters=trim|lower|min:3|max:20|alphaOk
-  email contact filters=trim|lower
-  int age filters=min:0|max:150
-  text hex_code filters=ok:abcdef0123456789
-  text[] tags filters=trim|lower|max:50
+  // Allow only specific characters
+  text hex_code filters=ok:0123456789abcdef
+
+  // Allow letters only
+  text name filters=alphaOk
+
+  // Allow digits only
+  text pin filters=digitOk
+
+  // Combine: letters, digits, and underscore
+  text username filters=ok:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_
 }
 ```
+
+### Pattern Validation
+
+```xs
+input {
+  // Phone number pattern
+  text phone filters=pattern:^\+?[1-9]\d{1,14}$
+
+  // Postal code pattern
+  text zip filters=pattern:^\d{5}(-\d{4})?$
+
+  // Custom ID format
+  text product_id filters=pattern:^[A-Z]{2}-\d{4}$
+}
+```
+
+### Combined Examples
+```xs
+input {
+  text username filters=trim|lower|min:3|max:20|alphaNumOk
+  email contact filters=trim|lower
+  int age filters=min:0|max:150
+  text hex_code filters=ok:abcdef0123456789|min:6|max:6
+  text[] tags filters=trim|lower|max:50|unique
+  text phone filters=trim|pattern:^\+?[0-9\s-]+$
+  int quantity filters=min:1|max:100
+}
 
 ---
 

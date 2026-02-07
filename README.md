@@ -180,6 +180,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `functions` | Reusable function stacks with inputs and responses |
 | `apis` | HTTP endpoint definitions with authentication and CRUD patterns |
 | `tasks` | Scheduled and cron jobs |
+| `triggers` | Event-driven handlers (table, realtime, workspace, agent, MCP) |
 | `database` | All db.* operations: query, get, add, edit, patch, delete |
 | `agents` | AI agent configuration with LLM providers and tools |
 | `tools` | AI tools for agents and MCP servers |
@@ -188,6 +189,13 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `integrations` | Cloud storage, Redis, security, and external APIs |
 | `frontend` | Static frontend development and deployment |
 | `ephemeral` | Temporary test environments |
+| `addons` | Reusable subqueries for fetching related data |
+| `debugging` | Logging, inspecting, and debugging XanoScript execution |
+| `performance` | Performance optimization best practices |
+| `realtime` | Real-time channels and events for push updates |
+| `schema` | Runtime schema parsing and validation |
+| `security` | Security best practices for authentication and authorization |
+| `streaming` | Streaming data from files, requests, and responses |
 
 **Examples:**
 ```
@@ -234,6 +242,7 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/functions` | Reusable function stacks |
 | `xanoscript://docs/apis` | HTTP endpoint definitions |
 | `xanoscript://docs/tasks` | Scheduled and cron jobs |
+| `xanoscript://docs/triggers` | Event-driven handlers |
 | `xanoscript://docs/database` | Database operations |
 | `xanoscript://docs/agents` | AI agent configuration |
 | `xanoscript://docs/tools` | AI tools for agents |
@@ -242,6 +251,13 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/integrations` | External service integrations |
 | `xanoscript://docs/frontend` | Static frontend development |
 | `xanoscript://docs/ephemeral` | Temporary test environments |
+| `xanoscript://docs/addons` | Reusable subqueries for related data |
+| `xanoscript://docs/debugging` | Logging and debugging tools |
+| `xanoscript://docs/performance` | Performance optimization |
+| `xanoscript://docs/realtime` | Real-time channels and events |
+| `xanoscript://docs/schema` | Runtime schema parsing |
+| `xanoscript://docs/security` | Security best practices |
+| `xanoscript://docs/streaming` | Data streaming operations |
 
 ## npm Scripts
 

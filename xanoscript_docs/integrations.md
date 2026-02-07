@@ -4,7 +4,7 @@ applyTo: "functions/**/*.xs, apis/**/*.xs, tasks/*.xs"
 
 # Integrations
 
-Cloud services, Redis, storage, and security operations.
+Cloud services, Redis, storage, archives, and security operations.
 
 ## Quick Reference
 
@@ -28,6 +28,8 @@ Cloud services, Redis, storage, and security operations.
 | Redis | `redis.*` |
 | Storage | `storage.*` |
 | Security | `security.*` |
+| Zip/Archive | `zip.*` |
+| Lambda | `api.lambda` |
 
 ---
 
@@ -150,8 +152,9 @@ cloud.google.storage.sign_url {
 
 ## Elasticsearch
 
+### Search Query
+
 ```xs
-# Search
 cloud.elasticsearch.query {
   auth_type = "API Key"
   key_id = $env.ES_KEY_ID
@@ -163,8 +166,12 @@ cloud.elasticsearch.query {
   size = 10
   sort = [{ field: "price", order: "asc" }]
 } as $results
+```
 
-# Document operations
+### Document Operations
+
+```xs
+// Get document
 cloud.elasticsearch.document {
   auth_type = "API Key"
   key_id = $env.ES_KEY_ID
@@ -174,6 +181,188 @@ cloud.elasticsearch.document {
   method = "GET"
   doc_id = "product-123"
 } as $doc
+
+// Index document
+cloud.elasticsearch.document {
+  auth_type = "API Key"
+  key_id = $env.ES_KEY_ID
+  access_key = $env.ES_ACCESS_KEY
+  base_url = "https://my-cluster.es.io"
+  index = "products"
+  method = "PUT"
+  doc_id = "product-123"
+  body = {
+    name: "Product Name",
+    category: "electronics",
+    price: 99.99
+  }
+}
+
+// Delete document
+cloud.elasticsearch.document {
+  auth_type = "API Key"
+  key_id = $env.ES_KEY_ID
+  access_key = $env.ES_ACCESS_KEY
+  base_url = "https://my-cluster.es.io"
+  index = "products"
+  method = "DELETE"
+  doc_id = "product-123"
+}
+```
+
+### Bulk Operations
+
+```xs
+cloud.elasticsearch.bulk {
+  auth_type = "API Key"
+  key_id = $env.ES_KEY_ID
+  access_key = $env.ES_ACCESS_KEY
+  base_url = "https://my-cluster.es.io"
+  index = "products"
+  operations = [
+    { action: "index", id: "1", doc: { name: "Product 1" } },
+    { action: "update", id: "2", doc: { price: 29.99 } },
+    { action: "delete", id: "3" }
+  ]
+} as $result
+```
+
+### Advanced Search
+
+```xs
+cloud.elasticsearch.query {
+  auth_type = "API Key"
+  key_id = $env.ES_KEY_ID
+  access_key = $env.ES_ACCESS_KEY
+  base_url = "https://my-cluster.es.io"
+  index = "products"
+  return_type = "search"
+  query = {
+    bool: {
+      must: [
+        { match: { name: $input.search } }
+      ],
+      filter: [
+        { range: { price: { gte: $input.min_price, lte: $input.max_price } } },
+        { term: { is_active: true } }
+      ]
+    }
+  }
+  aggregations = {
+    categories: { terms: { field: "category.keyword" } },
+    avg_price: { avg: { field: "price" } }
+  }
+  size = 20
+  from = $input.offset
+} as $results
+```
+
+---
+
+## AWS OpenSearch
+
+```xs
+cloud.aws.opensearch.query {
+  region = "us-east-1"
+  access_key = $env.AWS_ACCESS_KEY
+  secret_key = $env.AWS_SECRET_KEY
+  endpoint = "https://search-domain.us-east-1.es.amazonaws.com"
+  index = "logs"
+  query = {
+    bool: {
+      must: [
+        { match: { level: "error" } }
+      ],
+      filter: [
+        { range: { timestamp: { gte: "now-24h" } } }
+      ]
+    }
+  }
+  size = 100
+} as $logs
+
+// Index document
+cloud.aws.opensearch.document {
+  region = "us-east-1"
+  access_key = $env.AWS_ACCESS_KEY
+  secret_key = $env.AWS_SECRET_KEY
+  endpoint = "https://search-domain.us-east-1.es.amazonaws.com"
+  index = "logs"
+  method = "PUT"
+  doc_id = $log_id
+  body = $log_data
+}
+```
+
+---
+
+## Algolia
+
+### Search
+
+```xs
+cloud.algolia.search {
+  app_id = $env.ALGOLIA_APP_ID
+  api_key = $env.ALGOLIA_API_KEY
+  index = "products"
+  query = $input.search
+  filters = "category:electronics AND price<100"
+  facets = ["category", "brand"]
+  hitsPerPage = 20
+  page = $input.page
+} as $results
+```
+
+### Manage Records
+
+```xs
+// Add/update record
+cloud.algolia.save_object {
+  app_id = $env.ALGOLIA_APP_ID
+  api_key = $env.ALGOLIA_ADMIN_KEY
+  index = "products"
+  object = {
+    objectID: $product.id|to_text,
+    name: $product.name,
+    category: $product.category,
+    price: $product.price
+  }
+}
+
+// Batch save
+cloud.algolia.save_objects {
+  app_id = $env.ALGOLIA_APP_ID
+  api_key = $env.ALGOLIA_ADMIN_KEY
+  index = "products"
+  objects = $products|map:{
+    objectID: $$.id|to_text,
+    name: $$.name,
+    category: $$.category
+  }
+}
+
+// Delete record
+cloud.algolia.delete_object {
+  app_id = $env.ALGOLIA_APP_ID
+  api_key = $env.ALGOLIA_ADMIN_KEY
+  index = "products"
+  objectID = $input.product_id|to_text
+}
+```
+
+### Configure Index
+
+```xs
+cloud.algolia.set_settings {
+  app_id = $env.ALGOLIA_APP_ID
+  api_key = $env.ALGOLIA_ADMIN_KEY
+  index = "products"
+  settings = {
+    searchableAttributes: ["name", "description", "category"],
+    attributesForFaceting: ["category", "brand", "filterOnly(is_active)"],
+    ranking: ["typo", "geo", "words", "filters", "proximity", "attribute", "exact", "custom"]
+  }
+}
 ```
 
 ---
@@ -410,10 +599,190 @@ api.request {
 
 ---
 
+## Zip/Archive Operations
+
+Create, modify, and extract ZIP archives.
+
+### Create Archive
+
+```xs
+zip.create_archive {
+  filename = "export.zip"
+} as $archive
+
+// Add files
+zip.add_to_archive {
+  archive = $archive
+  files = [
+    { path: "data/users.json", content: $users|json_encode },
+    { path: "data/orders.json", content: $orders|json_encode },
+    { path: "readme.txt", content: "Export generated on " ~ now|format_timestamp:"Y-m-d" }
+  ]
+}
+
+storage.create_file_resource {
+  filename = "export.zip"
+  filedata = $archive
+} as $file
+```
+
+### Add to Existing Archive
+
+```xs
+zip.add_to_archive {
+  archive = $input.zip_file
+  files = [
+    { path: "additional/data.json", content: $data|json_encode }
+  ]
+} as $updated_archive
+```
+
+### Delete from Archive
+
+```xs
+zip.delete_from_archive {
+  archive = $input.zip_file
+  paths = ["old_file.txt", "deprecated/"]
+} as $cleaned_archive
+```
+
+### Extract Archive
+
+```xs
+zip.extract {
+  archive = $input.zip_file
+  target_path = "extracted/"
+} as $extracted_files
+
+// $extracted_files = [
+//   { path: "data/users.json", content: "..." },
+//   { path: "readme.txt", content: "..." }
+// ]
+```
+
+### View Contents
+
+```xs
+zip.view_contents {
+  archive = $input.zip_file
+} as $contents
+
+// $contents = [
+//   { path: "data/users.json", size: 1234, compressed_size: 456 },
+//   { path: "readme.txt", size: 100, compressed_size: 80 }
+// ]
+```
+
+### Full Example: Export & Download
+
+```xs
+query "export_data" {
+  input {
+    int[] user_ids
+  }
+  stack {
+    // Fetch data
+    db.query "user" {
+      where = $db.user.id in $input.user_ids
+    } as $users
+
+    db.query "order" {
+      where = $db.order.user_id in $input.user_ids
+    } as $orders
+
+    // Create archive
+    zip.create_archive {
+      filename = "user_export_" ~ now|format_timestamp:"Y-m-d" ~ ".zip"
+    } as $archive
+
+    zip.add_to_archive {
+      archive = $archive
+      files = [
+        { path: "users.json", content: $users|json_encode },
+        { path: "orders.json", content: $orders|json_encode },
+        { path: "manifest.json", content: {
+          exported_at: now,
+          user_count: $users|count,
+          order_count: $orders|count
+        }|json_encode }
+      ]
+    }
+
+    storage.create_file_resource {
+      filename = "export.zip"
+      filedata = $archive
+    } as $download
+  }
+  response = { download_url: $download.url }
+}
+```
+
+---
+
+## Lambda Integration
+
+Invoke AWS Lambda functions or other serverless functions.
+
+### api.lambda
+
+```xs
+api.lambda {
+  provider = "aws"
+  region = "us-east-1"
+  access_key = $env.AWS_ACCESS_KEY
+  secret_key = $env.AWS_SECRET_KEY
+  function_name = "process-image"
+  payload = {
+    image_url: $input.image_url,
+    operations: ["resize", "compress"]
+  }
+  invocation_type = "RequestResponse"
+} as $result
+```
+
+### Invocation Types
+
+| Type | Description |
+|------|-------------|
+| `RequestResponse` | Synchronous, wait for response |
+| `Event` | Asynchronous, fire and forget |
+| `DryRun` | Validate without executing |
+
+### Async Lambda
+
+```xs
+// Fire and forget
+api.lambda {
+  provider = "aws"
+  region = "us-east-1"
+  access_key = $env.AWS_ACCESS_KEY
+  secret_key = $env.AWS_SECRET_KEY
+  function_name = "send-notification"
+  payload = { user_id: $user.id, message: "Welcome!" }
+  invocation_type = "Event"
+}
+```
+
+### With Timeout
+
+```xs
+api.lambda {
+  provider = "aws"
+  region = "us-east-1"
+  access_key = $env.AWS_ACCESS_KEY
+  secret_key = $env.AWS_SECRET_KEY
+  function_name = "heavy-processing"
+  payload = $input.data
+  timeout = 60000
+} as $result
+```
+
+---
+
 ## Utilities
 
 ```xs
-# Template engine (Twig)
+// Template engine (Twig)
 util.template_engine {
   value = """
     Hello {{ $var.name }}!
@@ -423,10 +792,10 @@ util.template_engine {
   """
 } as $rendered
 
-# IP lookup
+// IP lookup
 util.ip_lookup { value = $env.$remote_ip } as $location
 
-# Geo distance
+// Geo distance
 util.geo_distance {
   latitude_1 = 40.71
   longitude_1 = -74.00
@@ -434,6 +803,6 @@ util.geo_distance {
   longitude_2 = -118.24
 } as $distance_km
 
-# Sleep
+// Sleep
 util.sleep { value = 5 }
 ```

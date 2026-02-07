@@ -53,8 +53,15 @@ ${formatRow("task_workflow", "AI workflow for creating tasks")}
 
 | Keyword | Aliases | Description |
 |---------|---------|-------------|
+${formatRow("addons", "Reusable subqueries for related data")}
+${formatRow("debugging", "Logging and debugging tools")}
 ${formatRow("frontend", "Frontend development with Xano")}
 ${formatRow("lovable", "Building from Lovable-generated websites")}
+${formatRow("performance", "Performance optimization best practices")}
+${formatRow("realtime", "Real-time channels and events")}
+${formatRow("schema", "Runtime schema parsing and validation")}
+${formatRow("security", "Security best practices")}
+${formatRow("streaming", "Streaming data from files and responses")}
 ${formatRow("testing", "Unit testing XanoScript code")}
 ${formatRow("tips", "Tips and tricks")}
 ${formatRow("ephemeral", "Ephemeral environment setup")}
