@@ -4,6 +4,16 @@
 
 import type { TopicDoc, EndpointDoc, ExampleDoc, PatternDoc, DetailLevel } from "./types.js";
 
+/**
+ * Base URL information included with any topic that has endpoints
+ */
+const BASE_URL_INFO = `## Base URL
+\`\`\`
+https://<your-instance-subdomain>.xano.io/api:meta/<endpoint>
+\`\`\`
+Authorization: \`Bearer <your-access-token>\`
+`;
+
 function formatParameter(param: NonNullable<EndpointDoc["parameters"]>[0]): string {
   const required = param.required ? " (required)" : "";
   const defaultVal = param.default !== undefined ? ` [default: ${param.default}]` : "";
@@ -141,6 +151,7 @@ export function formatDocumentation(
   // Endpoints
   if (doc.endpoints?.length) {
     sections.push("");
+    sections.push(BASE_URL_INFO);
     sections.push("## Endpoints");
     for (const ep of doc.endpoints) {
       sections.push("");
