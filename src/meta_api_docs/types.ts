@@ -83,7 +83,7 @@ export interface TopicDoc {
 
 export type DetailLevel = "overview" | "detailed" | "examples";
 
-export interface ApiDocsArgs {
+export interface MetaApiDocsArgs {
   topic: string;
   detail_level?: DetailLevel;
   include_schemas?: boolean;

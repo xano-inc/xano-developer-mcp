@@ -197,7 +197,7 @@ export function formatDocumentation(
   if (doc.related_topics?.length) {
     sections.push("");
     sections.push("## Related Topics");
-    sections.push(`Use \`api_docs\` with topic: ${doc.related_topics.join(", ")}`);
+    sections.push(`Use \`meta_api_docs\` with topic: ${doc.related_topics.join(", ")}`);
   }
 
   return sections.join("\n");

@@ -194,7 +194,7 @@ Get the current version of the Xano Developer MCP server.
 mcp_version()
 ```
 
-### 5. `api_docs`
+### 5. `meta_api_docs`
 
 Get documentation for Xano's Meta API. Use this to understand how to programmatically manage Xano workspaces, databases, APIs, functions, agents, and more.
 
@@ -230,16 +230,16 @@ Get documentation for Xano's Meta API. Use this to understand how to programmati
 **Examples:**
 ```
 // Get overview of Meta API
-api_docs({ topic: "start" })
+meta_api_docs({ topic: "start" })
 
 // Get detailed table documentation
-api_docs({ topic: "table", detail_level: "detailed" })
+meta_api_docs({ topic: "table", detail_level: "detailed" })
 
 // Get examples without schemas (smaller context)
-api_docs({ topic: "api", detail_level: "examples", include_schemas: false })
+meta_api_docs({ topic: "api", detail_level: "examples", include_schemas: false })
 
 // Step-by-step workflow guides
-api_docs({ topic: "workflows" })
+meta_api_docs({ topic: "workflows" })
 ```
 
 ## MCP Resources
@@ -287,7 +287,7 @@ xano-developer-mcp/
 ├── src/
 │   ├── index.ts              # Main MCP server implementation
 │   ├── xanoscript.d.ts       # TypeScript declarations
-│   ├── api_docs/             # Meta API documentation
+│   ├── meta_api_docs/             # Meta API documentation
 │   │   ├── index.ts          # API docs tool handler
 │   │   ├── types.ts          # Type definitions
 │   │   ├── format.ts         # Documentation formatter
@@ -327,7 +327,7 @@ Xano Developer MCP Server
     │
     ├─► xanoscript_docs → Context-aware docs from /xanoscript_docs/*.md
     │
-    ├─► api_docs → Meta API documentation with detail levels
+    ├─► meta_api_docs → Meta API documentation with detail levels
     │
     ├─► mcp_version → Returns server version from package.json
     │
@@ -357,7 +357,7 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
   - **applyTo**: Glob patterns for context-aware matching (e.g., `apis/**/*.xs`)
   - **description**: Human-readable description of the topic
 
-**Meta API Documentation** (`src/api_docs/`):
+**Meta API Documentation** (`src/meta_api_docs/`):
 - TypeScript modules with structured documentation
 - Supports parameterized output (detail levels, schema inclusion)
 - Better for AI consumption due to context efficiency

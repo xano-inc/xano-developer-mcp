@@ -8,7 +8,7 @@ import { dirname, join } from "path";
 import { minimatch } from "minimatch";
 import { xanoscriptParser } from "@xano/xanoscript-language-server/parser/parser.js";
 import { getSchemeFromContent } from "@xano/xanoscript-language-server/utils.js";
-import { apiDocsToolDefinition, handleApiDocs } from "./api_docs/index.js";
+import { metaApiDocsToolDefinition, handleMetaApiDocs } from "./meta_api_docs/index.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf-8"));
@@ -366,7 +366,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     required: [],
                 },
             },
-            apiDocsToolDefinition,
+            metaApiDocsToolDefinition,
         ],
     };
 });
@@ -465,21 +465,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             ],
         };
     }
-    if (request.params.name === "api_docs") {
+    if (request.params.name === "meta_api_docs") {
         const args = request.params.arguments;
         if (!args?.topic) {
             return {
                 content: [
                     {
                         type: "text",
-                        text: "Error: 'topic' parameter is required. Use api_docs with topic='start' for overview.",
+                        text: "Error: 'topic' parameter is required. Use meta_api_docs with topic='start' for overview.",
                     },
                 ],
                 isError: true,
             };
         }
         try {
-            const documentation = handleApiDocs({
+            const documentation = handleMetaApiDocs({
                 topic: args.topic,
                 detail_level: args.detail_level,
                 include_schemas: args.include_schemas,

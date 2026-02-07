@@ -2,10 +2,10 @@
  * Xano Meta API Documentation Index
  *
  * This module exports all documentation topics and provides
- * the api_docs tool handler for the MCP server.
+ * the meta_api_docs tool handler for the MCP server.
  */
 
-import type { TopicDoc, DetailLevel, ApiDocsArgs } from "./types.js";
+import type { TopicDoc, DetailLevel, MetaApiDocsArgs } from "./types.js";
 import { formatDocumentation } from "./format.js";
 
 // Import all topic documentation
@@ -67,9 +67,9 @@ export function getTopicDescriptions(): string {
 }
 
 /**
- * Handler for the api_docs tool
+ * Handler for the meta_api_docs tool
  */
-export function handleApiDocs(args: ApiDocsArgs): string {
+export function handleMetaApiDocs(args: MetaApiDocsArgs): string {
   const { topic, detail_level = "detailed", include_schemas = true } = args;
 
   // Validate topic
@@ -85,8 +85,8 @@ export function handleApiDocs(args: ApiDocsArgs): string {
 /**
  * Tool definition for MCP server
  */
-export const apiDocsToolDefinition = {
-  name: "api_docs",
+export const metaApiDocsToolDefinition = {
+  name: "meta_api_docs",
   description: `Get documentation for Xano's Meta API. Use this to understand how to programmatically manage Xano workspaces, databases, APIs, functions, agents, and more.
 
 ## Topics
