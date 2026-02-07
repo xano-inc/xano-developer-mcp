@@ -19,6 +19,14 @@ import { generateInitWorkspaceTemplate } from "./templates/init-workspace.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf-8"));
+const SERVER_VERSION: string = pkg.version;
+
+if (process.argv.includes("--version") || process.argv.includes("-v")) {
+  console.log(SERVER_VERSION);
+  process.exit(0);
+}
+
 // =============================================================================
 // XanoScript Documentation v2 Configuration
 // =============================================================================
@@ -435,7 +443,7 @@ function generateInitWorkspaceDoc(): string {
 const server = new Server(
   {
     name: "xano-developer-mcp",
-    version: "1.0.0",
+    version: SERVER_VERSION,
     description:
       "MCP server for Xano Headless API documentation and XanoScript code validation",
   },
