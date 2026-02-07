@@ -18,6 +18,157 @@ Event-driven handlers that execute in response to system events. Triggers allow 
 
 ---
 
+## Predefined Input Blocks
+
+Each trigger type has a **predefined read-only input block**. These input structures are automatically provided by the system and **cannot be modified**. When creating a trigger, use the predefined input block as-is.
+
+### Table Trigger Input
+
+```xs
+input {
+  json new
+  json old
+  enum action {
+    values = ["insert", "update", "delete", "truncate"]
+  }
+
+  text datasource
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `new` | json | The new record data (after insert/update) |
+| `old` | json | The old record data (before update/delete) |
+| `action` | enum | The action that triggered: `insert`, `update`, `delete`, or `truncate` |
+| `datasource` | text | The datasource name where the change occurred |
+
+### Agent Trigger Input
+
+```xs
+input {
+  object toolset {
+    schema {
+      int id
+      text name
+      text instructions
+    }
+  }
+
+  object[] tools {
+    schema {
+      int id
+      text name
+      text instructions
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `toolset` | object | The toolset configuration with id, name, and instructions |
+| `tools` | object[] | Array of available tools with their id, name, and instructions |
+
+### MCP Server Trigger Input
+
+```xs
+input {
+  object toolset {
+    schema {
+      int id
+      text name
+      text instructions
+    }
+  }
+
+  object[] tools {
+    schema {
+      int id
+      text name
+      text instructions
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `toolset` | object | The toolset configuration with id, name, and instructions |
+| `tools` | object[] | Array of available tools with their id, name, and instructions |
+
+### Workspace Trigger Input
+
+```xs
+input {
+  object to_branch {
+    schema {
+      int id
+      text label
+    }
+  }
+
+  object from_branch {
+    schema {
+      int id
+      text label
+    }
+  }
+
+  enum action {
+    values = ["branch_live", "branch_merge", "branch_new"]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `to_branch` | object | The target branch with id and label |
+| `from_branch` | object | The source branch with id and label |
+| `action` | enum | The branch action: `branch_live`, `branch_merge`, or `branch_new` |
+
+### Realtime Trigger Input
+
+```xs
+input {
+  enum action {
+    values = ["message", "join"]
+  }
+
+  text channel
+  object client {
+    schema {
+      json extras
+      object permissions {
+        schema {
+          int dbo_id
+          text row_id
+        }
+      }
+    }
+  }
+
+  object options {
+    schema {
+      bool authenticated
+      text channel
+    }
+  }
+
+  json payload
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `action` | enum | The event type: `message` or `join` |
+| `channel` | text | The channel name |
+| `client` | object | Client information including extras and permissions |
+| `options` | object | Channel options including authentication status |
+| `payload` | json | The message payload data |
+
+---
+
 ## Table Trigger
 
 Executes when database table records are inserted, updated, deleted, or truncated.
@@ -33,8 +184,14 @@ table_trigger "<name>" {
   description = "Description of this trigger"
   tags = ["tag1", "tag2"]
 
+  // Predefined input block - read-only, do not modify
   input {
-    // Define input parameters
+    json new
+    json old
+    enum action {
+      values = ["insert", "update", "delete", "truncate"]
+    }
+    text datasource
   }
 
   stack {
@@ -50,7 +207,7 @@ table_trigger "<name>" {
 | Clause | Description |
 |--------|-------------|
 | `table` | The database table name to monitor |
-| `input` | Input parameter definitions |
+| `input` | Predefined input block (read-only) |
 | `stack` | Logic to execute when triggered |
 
 ### Optional Clauses
@@ -83,15 +240,24 @@ table_trigger "audit_user_changes" {
   description = "Log all changes to user records"
   datasources = ["main_db"]
 
+  // Input block is predefined and read-only - do not modify
   input {
+    json new
+    json old
+    enum action {
+      values = ["insert", "update", "delete", "truncate"]
+    }
+    text datasource
   }
 
   stack {
     db.add "audit_log" {
       data = {
         table_name: "user",
-        action: $trigger.action,
-        record_id: $trigger.record.id,
+        action: $input.action,
+        old_data: $input.old,
+        new_data: $input.new,
+        datasource: $input.datasource,
         timestamp: now
       }
     }
@@ -117,8 +283,30 @@ realtime_trigger "<name>" {
   description = "Description of this trigger"
   tags = ["tag1", "tag2"]
 
+  // Predefined input block - read-only, do not modify
   input {
-    // Define input parameters
+    enum action {
+      values = ["message", "join"]
+    }
+    text channel
+    object client {
+      schema {
+        json extras
+        object permissions {
+          schema {
+            int dbo_id
+            text row_id
+          }
+        }
+      }
+    }
+    object options {
+      schema {
+        bool authenticated
+        text channel
+      }
+    }
+    json payload
   }
 
   stack {
@@ -136,7 +324,7 @@ realtime_trigger "<name>" {
 | Clause | Description |
 |--------|-------------|
 | `channel` | The real-time channel to monitor |
-| `input` | Input parameter definitions |
+| `input` | Predefined input block (read-only) |
 | `stack` | Logic to execute when triggered |
 | `response` | Value to return to the client |
 
@@ -166,21 +354,43 @@ realtime_trigger "chat_message_handler" {
   active = true
   description = "Handle chat room messages and joins"
 
+  // Input block is predefined and read-only - do not modify
   input {
-    text message filters=trim
+    enum action {
+      values = ["message", "join"]
+    }
+    text channel
+    object client {
+      schema {
+        json extras
+        object permissions {
+          schema {
+            int dbo_id
+            text row_id
+          }
+        }
+      }
+    }
+    object options {
+      schema {
+        bool authenticated
+        text channel
+      }
+    }
+    json payload
   }
 
   stack {
     conditional {
-      if ($trigger.action == "join") {
+      if ($input.action == "join") {
         var $welcome { value = "Welcome to the chat!" }
       }
       else {
         db.add "chat_message" {
           data = {
-            channel: "chat_room",
+            channel: $input.channel,
             user_id: $auth.id,
-            message: $input.message,
+            message: $input.payload.message,
             timestamp: now
           }
         }
@@ -210,8 +420,23 @@ workspace_trigger "<name>" {
   description = "Description of this trigger"
   tags = ["tag1", "tag2"]
 
+  // Predefined input block - read-only, do not modify
   input {
-    // Define input parameters
+    object to_branch {
+      schema {
+        int id
+        text label
+      }
+    }
+    object from_branch {
+      schema {
+        int id
+        text label
+      }
+    }
+    enum action {
+      values = ["branch_live", "branch_merge", "branch_new"]
+    }
   }
 
   stack {
@@ -226,7 +451,7 @@ workspace_trigger "<name>" {
 
 | Clause | Description |
 |--------|-------------|
-| `input` | Input parameter definitions |
+| `input` | Predefined input block (read-only) |
 | `stack` | Logic to execute when triggered |
 
 ### Optional Clauses
@@ -256,7 +481,23 @@ workspace_trigger "branch_notification" {
   description = "Send notifications on branch events"
   tags = ["devops", "notifications"]
 
+  // Input block is predefined and read-only - do not modify
   input {
+    object to_branch {
+      schema {
+        int id
+        text label
+      }
+    }
+    object from_branch {
+      schema {
+        int id
+        text label
+      }
+    }
+    enum action {
+      values = ["branch_live", "branch_merge", "branch_new"]
+    }
   }
 
   stack {
@@ -265,8 +506,8 @@ workspace_trigger "branch_notification" {
       api_key = $env.RESEND_API_KEY
       to = "team@example.com"
       from = "system@example.com"
-      subject = "Branch Event: " ~ $trigger.action
-      message = "Branch '" ~ $trigger.branch_name ~ "' event: " ~ $trigger.action
+      subject = "Branch Event: " ~ $input.action
+      message = "Branch '" ~ $input.from_branch.label ~ "' -> '" ~ $input.to_branch.label ~ "' event: " ~ $input.action
     }
   }
 
@@ -291,8 +532,22 @@ agent_trigger "<name>" {
   docs = "Extended documentation for the trigger"
   tags = ["tag1", "tag2"]
 
+  // Predefined input block - read-only, do not modify
   input {
-    // Define input parameters
+    object toolset {
+      schema {
+        int id
+        text name
+        text instructions
+      }
+    }
+    object[] tools {
+      schema {
+        int id
+        text name
+        text instructions
+      }
+    }
   }
 
   stack {
@@ -310,7 +565,7 @@ agent_trigger "<name>" {
 | Clause | Description |
 |--------|-------------|
 | `agent` | The AI agent name this trigger handles |
-| `input` | Input parameter definitions |
+| `input` | Predefined input block (read-only) |
 | `stack` | Logic to execute when triggered |
 | `response` | Value to return |
 
@@ -341,21 +596,31 @@ agent_trigger "assistant_handler" {
   description = "Handle customer assistant agent connections"
   docs = "This trigger initializes the customer context when the agent connects"
 
+  // Input block is predefined and read-only - do not modify
   input {
-    text session_id filters=trim
+    object toolset {
+      schema {
+        int id
+        text name
+        text instructions
+      }
+    }
+    object[] tools {
+      schema {
+        int id
+        text name
+        text instructions
+      }
+    }
   }
 
   stack {
-    db.get "customer" {
-      field_name = "session_id"
-      field_value = $input.session_id
-    } as $customer
-
+    // Access toolset and tools information from the predefined input
     var $context {
       value = {
-        customer_name: $customer.name,
-        customer_tier: $customer.tier,
-        history: $customer.support_history
+        toolset_name: $input.toolset.name,
+        toolset_instructions: $input.toolset.instructions,
+        available_tools: $input.tools
       }
     }
   }
@@ -382,8 +647,22 @@ mcp_server_trigger "<name>" {
   description = "Description of this trigger"
   tags = ["tag1", "tag2"]
 
+  // Predefined input block - read-only, do not modify
   input {
-    // Define input parameters
+    object toolset {
+      schema {
+        int id
+        text name
+        text instructions
+      }
+    }
+    object[] tools {
+      schema {
+        int id
+        text name
+        text instructions
+      }
+    }
   }
 
   stack {
@@ -401,7 +680,7 @@ mcp_server_trigger "<name>" {
 | Clause | Description |
 |--------|-------------|
 | `mcp_server` | The MCP server name this trigger handles |
-| `input` | Input parameter definitions |
+| `input` | Predefined input block (read-only) |
 | `stack` | Logic to execute when triggered |
 | `response` | Value to return to the MCP client |
 
@@ -431,25 +710,31 @@ mcp_server_trigger "database_tool_handler" {
   description = "Handle database tool calls from MCP clients"
   tags = ["mcp", "database"]
 
+  // Input block is predefined and read-only - do not modify
   input {
-    text operation filters=trim
-    object params
+    object toolset {
+      schema {
+        int id
+        text name
+        text instructions
+      }
+    }
+    object[] tools {
+      schema {
+        int id
+        text name
+        text instructions
+      }
+    }
   }
 
   stack {
-    conditional {
-      if ($input.operation == "query") {
-        db.query $input.params.table {
-          where = $input.params.where
-        } as $result
-      }
-      elseif ($input.operation == "insert") {
-        db.add $input.params.table {
-          data = $input.params.data
-        } as $result
-      }
-      else {
-        var $result { value = {error: "Unknown operation"} }
+    // Access toolset and tools information from the predefined input
+    var $result {
+      value = {
+        server: $input.toolset.name,
+        instructions: $input.toolset.instructions,
+        tool_count: count($input.tools)
       }
     }
   }
@@ -471,7 +756,14 @@ table_trigger "safe_audit" {
   table = "sensitive_data"
   actions = {insert: true, update: true, delete: true, truncate: false}
 
+  // Input block is predefined and read-only
   input {
+    json new
+    json old
+    enum action {
+      values = ["insert", "update", "delete", "truncate"]
+    }
+    text datasource
   }
 
   stack {
@@ -479,7 +771,9 @@ table_trigger "safe_audit" {
       try {
         db.add "audit_log" {
           data = {
-            action: $trigger.action,
+            action: $input.action,
+            new_data: $input.new,
+            old_data: $input.old,
             timestamp: now
           }
         }
@@ -499,19 +793,26 @@ table_trigger "conditional_notification" {
   table = "order"
   actions = {insert: true, update: false, delete: false, truncate: false}
 
+  // Input block is predefined and read-only
   input {
+    json new
+    json old
+    enum action {
+      values = ["insert", "update", "delete", "truncate"]
+    }
+    text datasource
   }
 
   stack {
     conditional {
-      if ($trigger.record.total > 1000) {
+      if ($input.new.total > 1000) {
         util.send_email {
           service_provider = "resend"
           api_key = $env.RESEND_API_KEY
           to = "sales@example.com"
           from = "system@example.com"
           subject = "High Value Order"
-          message = "Order #" ~ $trigger.record.id ~ " for $" ~ $trigger.record.total
+          message = "Order #" ~ $input.new.id ~ " for $" ~ $input.new.total
         }
       }
     }
@@ -523,10 +824,11 @@ table_trigger "conditional_notification" {
 
 ## Best Practices
 
-1. **Use descriptive names** - Indicate the event and action: `user_audit_log`, `chat_message_handler`
-2. **Handle errors gracefully** - Use try_catch to prevent trigger failures from affecting the main operation
-3. **Keep triggers lightweight** - Offload heavy processing to functions or tasks
-4. **Set appropriate history** - Use `history = false` for high-frequency triggers to save storage
-5. **Use tags** - Organize triggers with meaningful tags for easier management
-6. **Document with description** - Always provide a description explaining the trigger's purpose
-7. **Test thoroughly** - Triggers execute automatically, so ensure they handle edge cases
+1. **Use predefined input blocks as-is** - Each trigger type has a read-only input block that cannot be modified; use the exact structure provided
+2. **Use descriptive names** - Indicate the event and action: `user_audit_log`, `chat_message_handler`
+3. **Handle errors gracefully** - Use try_catch to prevent trigger failures from affecting the main operation
+4. **Keep triggers lightweight** - Offload heavy processing to functions or tasks
+5. **Set appropriate history** - Use `history = false` for high-frequency triggers to save storage
+6. **Use tags** - Organize triggers with meaningful tags for easier management
+7. **Document with description** - Always provide a description explaining the trigger's purpose
+8. **Test thoroughly** - Triggers execute automatically, so ensure they handle edge cases
