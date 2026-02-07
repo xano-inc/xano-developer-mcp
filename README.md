@@ -39,6 +39,18 @@ Add to your Claude Desktop configuration file:
 }
 ```
 
+## Checking Your Version
+
+```bash
+npx @xano/developer-mcp --version
+```
+
+If installed from source:
+
+```bash
+node dist/index.js --version
+```
+
 ## Installation from Source
 
 ### Prerequisites
