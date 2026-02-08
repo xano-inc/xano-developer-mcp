@@ -594,10 +594,12 @@ api.request {
   url = "https://api.example.com/data"
   method = "POST"
   params = { key: "value" }
-  headers = []|push:("Authorization: Bearer " ~ $env.API_KEY)
+  headers = ["Content-Type: application/json", "Authorization: Bearer " ~ $env.API_KEY]
   timeout = 30
 } as $api_result
 ```
+
+> **Note:** The `headers` parameter expects an array of text strings, where each string contains the header name and value separated by a colon (e.g., `["Content-Type: application/json", "X-Custom-Header: value"]`).
 
 ### Response Structure
 

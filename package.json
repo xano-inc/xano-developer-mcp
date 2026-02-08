@@ -1,6 +1,6 @@
 {
   "name": "@xano/developer-mcp",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "MCP server for Xano Headless API documentation and XanoScript code validation",
   "type": "module",
   "main": "dist/index.js",
