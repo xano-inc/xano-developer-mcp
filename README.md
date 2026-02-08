@@ -7,6 +7,7 @@ A Model Context Protocol (MCP) server that provides AI assistants with comprehen
 This MCP server acts as a bridge between AI models and Xano's developer ecosystem, offering:
 
 - **Meta API Documentation** - Programmatically manage Xano workspaces, databases, APIs, functions, and more
+- **Run API Documentation** - Runtime execution, session management, and XanoScript execution
 - **XanoScript Documentation** - Language reference with context-aware docs based on file type
 - **Code Validation** - Syntax checking with the official XanoScript language server
 - **Workflow Guides** - Step-by-step guides for common development tasks
@@ -181,6 +182,45 @@ xanoscript_docs({ file_path: "apis/users/create.xs" })
 xanoscript_docs({ topic: "database", mode: "quick_reference" })
 ```
 
+### 3. `run_api_docs`
+
+Get documentation for Xano's Run API. Use this to understand runtime execution, session management, and XanoScript execution.
+
+**Important:** The Run API uses a fixed base URL: `https://app.dev.xano.com/api:run/<endpoint>` (NOT your Xano instance URL)
+
+**Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `topic` | string | Yes | Documentation topic to retrieve |
+| `detail_level` | string | No | `overview`, `detailed` (default), or `examples` |
+| `include_schemas` | boolean | No | Include JSON schemas for requests/responses (default: true) |
+
+**Available Topics:**
+
+| Topic | Description |
+|-------|-------------|
+| `start` | Getting started with the Run API |
+| `run` | Execute XanoScript code and API endpoints |
+| `session` | Session management for stateful execution |
+| `history` | Execution history and debugging |
+| `data` | Data operations and variable management |
+| `workflows` | Step-by-step workflow guides |
+
+**Examples:**
+```
+// Get overview of Run API
+run_api_docs({ topic: "start" })
+
+// Get detailed run endpoint documentation
+run_api_docs({ topic: "run", detail_level: "detailed" })
+
+// Get examples without schemas (smaller context)
+run_api_docs({ topic: "session", detail_level: "examples", include_schemas: false })
+
+// Step-by-step workflow guides
+run_api_docs({ topic: "workflows" })
+```
+
 ### 4. `mcp_version`
 
 Get the current version of the Xano Developer MCP server.
@@ -287,9 +327,13 @@ xano-developer-mcp/
 ├── src/
 │   ├── index.ts              # Main MCP server implementation
 │   ├── xanoscript.d.ts       # TypeScript declarations
-│   ├── meta_api_docs/             # Meta API documentation
+│   ├── meta_api_docs/        # Meta API documentation
 │   │   ├── index.ts          # API docs tool handler
 │   │   ├── types.ts          # Type definitions
+│   │   ├── format.ts         # Documentation formatter
+│   │   └── topics/           # Individual topic modules
+│   ├── run_api_docs/         # Run API documentation
+│   │   ├── index.ts          # Run API tool handler
 │   │   ├── format.ts         # Documentation formatter
 │   │   └── topics/           # Individual topic modules
 │   ├── xanoscript_docs/      # XanoScript language documentation
@@ -328,6 +372,8 @@ Xano Developer MCP Server
     ├─► xanoscript_docs → Context-aware docs from /xanoscript_docs/*.md
     │
     ├─► meta_api_docs → Meta API documentation with detail levels
+    │
+    ├─► run_api_docs → Run API documentation for runtime execution
     │
     ├─► mcp_version → Returns server version from package.json
     │
