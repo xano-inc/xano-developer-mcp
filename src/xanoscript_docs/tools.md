@@ -74,6 +74,25 @@ input {
 }
 ```
 
+### Empty Input Blocks
+
+**CRITICAL:** When a tool has no input parameters, the input block braces MUST be on separate lines. `input {}` on a single line will cause parsing errors.
+
+```xs
+// CORRECT - braces on separate lines
+tool "get_system_status" {
+  description = "Get current system status"
+  instructions = "Use this to check if the system is healthy"
+  input {
+  }
+  stack { ... }
+  response = $status
+}
+
+// WRONG - causes parsing errors
+input {}
+```
+
 ---
 
 ## Tool-Specific Statements

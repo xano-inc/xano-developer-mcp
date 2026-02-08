@@ -60,14 +60,16 @@ input {
 }
 ```
 
-**Empty Input Blocks:** When an input block has no parameters, the braces must be on separate lines:
+### Empty Input Blocks
+
+**CRITICAL:** When an input block has no parameters, the braces MUST be on separate lines. This is a strict syntax requirement - `input {}` on a single line will cause parsing errors.
 
 ```xs
-// Correct
+// CORRECT - braces on separate lines
 input {
 }
 
-// Incorrect - will cause errors
+// WRONG - causes parsing errors
 input {}
 ```
 

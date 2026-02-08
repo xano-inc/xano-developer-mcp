@@ -84,6 +84,30 @@ query "products" verb=GET {
 
 ---
 
+## Input Block
+
+For complete type and filter reference, use `xanoscript_docs({ keyword: "input" })`.
+
+### Empty Input Blocks
+
+**CRITICAL:** When an endpoint has no input parameters, the input block braces MUST be on separate lines. `input {}` on a single line will cause parsing errors.
+
+```xs
+// CORRECT - braces on separate lines
+query "health" verb=GET {
+  api_group = "System"
+  input {
+  }
+  stack { ... }
+  response = { status: "ok" }
+}
+
+// WRONG - causes parsing errors
+input {}
+```
+
+---
+
 ## Authentication
 
 ### Public Endpoint (default)

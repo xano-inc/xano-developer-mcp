@@ -19,6 +19,15 @@ function "<name>" {
   }
   response = $result
 }
+
+// Function with no inputs - IMPORTANT: braces must be on separate lines
+function "<name>" {
+  description = "..."
+  input {
+  }
+  stack { ... }
+  response = $result
+}
 ```
 
 ### Calling Functions
@@ -70,6 +79,33 @@ input {
   text name filters=trim
   int age? filters=min:0
   email contact filters=lower { sensitive = true }
+}
+```
+
+### Empty Input Blocks
+
+**CRITICAL:** When a function has no input parameters, the input block braces MUST be on separate lines. This is a syntax requirement.
+
+```xs
+// CORRECT - braces on separate lines
+function "get_all_users" {
+  description = "Returns all users"
+  input {
+  }
+  stack {
+    db.query "user" {} as $users
+  }
+  response = $users
+}
+
+// WRONG - will cause parsing errors
+function "get_all_users" {
+  description = "Returns all users"
+  input {}    // <-- ERROR: braces must be on separate lines
+  stack {
+    db.query "user" {} as $users
+  }
+  response = $users
 }
 ```
 
