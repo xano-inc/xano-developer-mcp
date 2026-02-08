@@ -498,6 +498,13 @@ foreach ($items) {
 
 ---
 
+## Naming Rules
+
+- Function names **cannot start with `/`** (use subfolders instead: `utils/format`)
+- Use descriptive verb_noun format: `calculate_total`, `validate_user`
+
+---
+
 ## Best Practices
 
 1. **Single responsibility** - Each function does one thing well

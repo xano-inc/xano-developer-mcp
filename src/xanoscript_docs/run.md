@@ -52,6 +52,15 @@ run.job "Job Name" {
 run.job "Random Dad Joke" {
   main = {
     name: "fetch_dad_joke"
+  }
+}
+```
+
+### With Empty Input (Alternative)
+```xs
+run.job "Random Dad Joke" {
+  main = {
+    name: "fetch_dad_joke"
     input: {}
   }
 }
@@ -117,6 +126,15 @@ run.service "email proxy"
 ```
 
 ### Basic Example
+```xs
+run.service "Random Dad Joke" {
+  pre = {
+    name: "fetch_dad_joke"
+  }
+}
+```
+
+### With Empty Input (Alternative)
 ```xs
 run.service "Random Dad Joke" {
   pre = {

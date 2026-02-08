@@ -1,6 +1,6 @@
 {
   "name": "@xano/developer-mcp",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "MCP server for Xano Headless API documentation and XanoScript code validation",
   "type": "module",
   "main": "dist/index.js",
@@ -40,7 +40,7 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@xano/xanoscript-language-server": "^11.6.3",
+    "@xano/xanoscript-language-server": "^11.6.5",
     "minimatch": "^10.1.2"
   },
   "devDependencies": {

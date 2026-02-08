@@ -152,6 +152,17 @@ $db.post.date >=? $input.start_date
 | `intersect` | `[1,2,3]\|intersect:[2,3,4]` | `[2,3]` |
 | `join` | `["a","b"]\|join:","` | `"a,b"` |
 | `range` | `\|range:1:5` | `[1,2,3,4,5]` |
+| `..` | `(1..5)` | `[1,2,3,4,5]` |
+
+### Range Operator
+
+Generate numeric ranges with the `..` operator:
+
+```xs
+(1..5)                                      // [1,2,3,4,5]
+(0..10)                                     // [0,1,2,3,4,5,6,7,8,9,10]
+($start..$end)                              // Dynamic range with variables
+```
 
 ### Functional Operations
 ```xs
