@@ -60,7 +60,7 @@ agent "Customer Support" {
 ai.agent.run "Customer Support" {
   args = {}|set:"user_message":$input.message
   allow_tool_execution = true
-} as $response
+} as $agent_result
 ```
 
 ---

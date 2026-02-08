@@ -80,6 +80,8 @@ $db.table.field     // Database field reference (in queries)
 $this               // Current item in loops/maps
 ```
 
+**Note:** `$response` is a reserved word and cannot be used as a variable name.
+
 ### Comments
 ```xs
 // Single-line comment

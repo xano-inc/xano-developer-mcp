@@ -192,8 +192,8 @@ tool "get_weather" {
   }
   response = {
     city: $input.city,
-    temperature: $weather.temp,
-    conditions: $weather.conditions
+    temperature: $weather.response.result.temp,
+    conditions: $weather.response.result.conditions
   }
 }
 ```

@@ -587,6 +587,8 @@ util.send_email {
 
 ## External APIs
 
+Make HTTP requests to external APIs.
+
 ```xs
 api.request {
   url = "https://api.example.com/data"
@@ -594,7 +596,47 @@ api.request {
   params = { key: "value" }
   headers = []|push:("Authorization: Bearer " ~ $env.API_KEY)
   timeout = 30
-} as $response
+} as $api_result
+```
+
+### Response Structure
+
+The `api.request` statement returns an object with both request and response details:
+
+```json
+{
+  "request": {
+    "url": "",       // The URL that was requested
+    "method": "",    // HTTP method used (GET, POST, etc.)
+    "headers": [],   // Array of request headers sent
+    "params": []     // Parameters sent with the request
+  },
+  "response": {
+    "headers": [],   // Array of response headers received
+    "result": "",    // Response body (can be any format: JSON, string, null, boolean, etc.)
+    "status": 200    // HTTP status code
+  }
+}
+```
+
+### Accessing Response Data
+
+```xs
+api.request {
+  url = "https://api.example.com/users"
+  method = "GET"
+} as $api_result
+
+// Access the response body
+var $data { value = $api_result.response.result }
+
+// Check status code
+if ($api_result.response.status != 200) {
+  precondition { false } with { message = "API request failed" }
+}
+
+// Access a specific header
+var $content_type { value = $api_result.response.headers|first }
 ```
 
 ---

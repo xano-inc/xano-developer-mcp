@@ -174,9 +174,9 @@ task "sync_exchange_rates" {
       url = "https://api.exchangerate.com/latest"
       method = "GET"
       headers = []|push:("Authorization: Bearer " ~ $env.EXCHANGE_API_KEY)
-    } as $response
+    } as $rates_data
 
-    foreach ($response.rates|entries) {
+    foreach ($rates_data.response.result.rates|entries) {
       each as $rate {
         db.add_or_edit "exchange_rate" {
           field_name = "currency"

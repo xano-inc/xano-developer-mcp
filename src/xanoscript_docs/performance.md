@@ -278,7 +278,7 @@ var $products { value = $all_products|filter:$$.is_active && $$.price > 0 }
 api.request {
   url = "https://api.example.com/users"
   params = { fields: "id,name,email" }
-} as $response
+} as $result
 ```
 
 ---

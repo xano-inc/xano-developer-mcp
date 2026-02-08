@@ -342,7 +342,7 @@ stack {
     async = true
   } as $request
 
-  await $request as $response
+  await $request as $result
 }
 ```
 
@@ -372,9 +372,9 @@ stack {
   // All three requests complete before continuing
   var $combined {
     value = {
-      users: $users.body,
-      products: $products.body,
-      orders: $orders.body
+      users: $users.response.result,
+      products: $products.response.result,
+      orders: $orders.response.result
     }
   }
 }
