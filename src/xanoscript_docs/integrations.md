@@ -633,8 +633,9 @@ api.request {
 var $data { value = $api_result.response.result }
 
 // Check status code
-if ($api_result.response.status != 200) {
-  precondition { false } with { message = "API request failed" }
+precondition ($api_result.response.status == 200) {
+  error_type = "standard"
+  error = "API request failed"
 }
 
 // Access a specific header
