@@ -355,31 +355,40 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `build` | `tsc` | Compile TypeScript to JavaScript |
 | `start` | `node dist/index.js` | Run the MCP server |
 | `dev` | `tsc && node dist/index.js` | Build and run in development |
+| `test` | `vitest run` | Run unit tests |
+| `test:watch` | `vitest` | Run tests in watch mode |
+| `test:coverage` | `vitest run --coverage` | Run tests with coverage report |
 
 ## Project Structure
 
 ```
 xano-developer-mcp/
 ├── src/
-│   ├── index.ts              # Main MCP server implementation
-│   ├── xanoscript.d.ts       # TypeScript declarations
-│   ├── meta_api_docs/        # Meta API documentation
-│   │   ├── index.ts          # API docs tool handler
-│   │   ├── types.ts          # Type definitions
-│   │   ├── format.ts         # Documentation formatter
-│   │   └── topics/           # Individual topic modules
-│   ├── run_api_docs/         # Run API documentation
-│   │   ├── index.ts          # Run API tool handler
-│   │   ├── format.ts         # Documentation formatter
-│   │   └── topics/           # Individual topic modules
-│   ├── xanoscript_docs/      # XanoScript language documentation
-│   │   ├── version.json
-│   │   ├── README.md
-│   │   ├── syntax.md
-│   │   └── ...
-│   └── templates/
-│       └── xanoscript-index.ts
-├── dist/                      # Compiled JavaScript output
+│   ├── index.ts                        # Main MCP server implementation
+│   ├── xanoscript.ts                   # XanoScript documentation logic
+│   ├── xanoscript.test.ts              # Tests for xanoscript module
+│   ├── xanoscript-language-server.d.ts # TypeScript declarations
+│   ├── meta_api_docs/                  # Meta API documentation
+│   │   ├── index.ts                    # API docs tool handler
+│   │   ├── index.test.ts               # Tests for index
+│   │   ├── types.ts                    # Type definitions
+│   │   ├── types.test.ts               # Tests for types
+│   │   ├── format.ts                   # Documentation formatter
+│   │   ├── format.test.ts              # Tests for formatter
+│   │   └── topics/                     # Individual topic modules
+│   ├── run_api_docs/                   # Run API documentation
+│   │   ├── index.ts                    # Run API tool handler
+│   │   ├── index.test.ts               # Tests for index
+│   │   ├── format.ts                   # Documentation formatter
+│   │   ├── format.test.ts              # Tests for formatter
+│   │   └── topics/                     # Individual topic modules
+│   └── xanoscript_docs/                # XanoScript language documentation
+│       ├── version.json
+│       ├── README.md
+│       ├── syntax.md
+│       └── ...
+├── dist/                               # Compiled JavaScript output
+├── vitest.config.ts                    # Test configuration
 ├── package.json
 └── tsconfig.json
 ```
@@ -391,6 +400,15 @@ xano-developer-mcp/
 | `@modelcontextprotocol/sdk` | ^1.26.0 | Official MCP SDK |
 | `@xano/xanoscript-language-server` | ^11.6.3 | XanoScript parser and validation |
 | `minimatch` | ^10.1.2 | Glob pattern matching for context-aware docs |
+
+### Dev Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `typescript` | ^5.9.0 | TypeScript compiler |
+| `vitest` | ^3.0.0 | Fast unit test framework |
+| `@types/node` | ^22.0.0 | Node.js type definitions |
+| `@types/minimatch` | ^5.1.2 | Minimatch type definitions |
 
 ## How It Works
 
@@ -443,6 +461,69 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
 - TypeScript modules with structured documentation
 - Supports parameterized output (detail levels, schema inclusion)
 - Better for AI consumption due to context efficiency
+
+## Testing
+
+The project uses [Vitest](https://vitest.dev/) as its test framework with comprehensive unit tests.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode (re-runs on file changes)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Coverage
+
+| Module | Test File | Description |
+|--------|-----------|-------------|
+| `xanoscript.ts` | `xanoscript.test.ts` | Core XanoScript documentation logic including file path matching and quick reference extraction |
+| `meta_api_docs/index.ts` | `meta_api_docs/index.test.ts` | Meta API documentation handler and topic management |
+| `meta_api_docs/format.ts` | `meta_api_docs/format.test.ts` | Documentation formatting for endpoints, examples, and patterns |
+| `meta_api_docs/types.ts` | `meta_api_docs/types.test.ts` | Type structure validation |
+| `run_api_docs/index.ts` | `run_api_docs/index.test.ts` | Run API documentation handler |
+| `run_api_docs/format.ts` | `run_api_docs/format.test.ts` | Run API formatting with correct base URL |
+
+### Test Structure
+
+Tests are co-located with source files using the `.test.ts` suffix:
+
+```
+src/
+├── xanoscript.ts
+├── xanoscript.test.ts          # Tests for xanoscript.ts
+├── meta_api_docs/
+│   ├── index.ts
+│   ├── index.test.ts           # Tests for index.ts
+│   ├── format.ts
+│   ├── format.test.ts          # Tests for format.ts
+│   └── ...
+└── run_api_docs/
+    ├── index.ts
+    ├── index.test.ts           # Tests for index.ts
+    └── ...
+```
+
+### Writing Tests
+
+Tests use Vitest's API which is compatible with Jest:
+
+```typescript
+import { describe, it, expect } from "vitest";
+import { myFunction } from "./myModule.js";
+
+describe("myFunction", () => {
+  it("should return expected result", () => {
+    expect(myFunction("input")).toBe("expected");
+  });
+});
+```
 
 ## License
 
