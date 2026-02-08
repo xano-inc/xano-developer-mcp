@@ -2,7 +2,7 @@
  * Type definitions for Xano Meta API documentation
  */
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export interface ParameterDoc {
   name: string;

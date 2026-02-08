@@ -15,6 +15,7 @@ import { minimatch } from "minimatch";
 import { xanoscriptParser } from "@xano/xanoscript-language-server/parser/parser.js";
 import { getSchemeFromContent } from "@xano/xanoscript-language-server/utils.js";
 import { metaApiDocsToolDefinition, handleMetaApiDocs } from "./meta_api_docs/index.js";
+import { runApiDocsToolDefinition, handleRunApiDocs } from "./run_api_docs/index.js";
 import type { MetaApiDocsArgs } from "./meta_api_docs/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -443,6 +444,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       metaApiDocsToolDefinition,
+      runApiDocsToolDefinition,
     ],
   };
 });
@@ -604,6 +606,53 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           {
             type: "text",
             text: `Error retrieving API documentation: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+
+  if (request.params.name === "run_api_docs") {
+    const args = request.params.arguments as {
+      topic?: string;
+      detail_level?: string;
+      include_schemas?: boolean;
+    } | undefined;
+
+    if (!args?.topic) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Error: 'topic' parameter is required. Use run_api_docs with topic='start' for overview.",
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    try {
+      const documentation = handleRunApiDocs(
+        args.topic,
+        args.detail_level,
+        args.include_schemas
+      );
+      return {
+        content: [
+          {
+            type: "text",
+            text: documentation,
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error retrieving Run API documentation: ${errorMessage}`,
           },
         ],
         isError: true,
