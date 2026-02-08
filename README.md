@@ -1,6 +1,14 @@
 # Xano Developer MCP
 
-A Model Context Protocol (MCP) server that provides AI assistants with comprehensive documentation and tools for developing applications on the Xano Headless API platform.
+[![npm version](https://img.shields.io/npm/v/@xano/developer-mcp.svg)](https://www.npmjs.com/package/@xano/developer-mcp)
+
+An MCP server that provides AI assistants with comprehensive documentation and tools for developing applications on [Xano](https://xano.com).
+
+[Xano](https://xano.com) is the fastest way to build a scalable backend for your app — no code required. Build APIs, manage databases, and deploy instantly.
+
+**Xano Resources:** [Website](https://xano.com) | [Documentation](https://docs.xano.com/) | [Blog](https://www.xano.com/blog/) | [Community](https://community.xano.com/)
+
+**Available on npm:** [@xano/developer-mcp](https://www.npmjs.com/package/@xano/developer-mcp)
 
 ## Overview
 
@@ -21,6 +29,20 @@ claude mcp add xano-developer -- npx -y @xano/developer-mcp
 ```
 
 That's it! The MCP server will be automatically installed and configured.
+
+### Install via npm
+
+You can also install the package globally from npm:
+
+```bash
+npm install -g @xano/developer-mcp
+```
+
+Then add to Claude Code:
+
+```bash
+claude mcp add xano-developer -- xano-developer-mcp
+```
 
 ### Claude Desktop
 
