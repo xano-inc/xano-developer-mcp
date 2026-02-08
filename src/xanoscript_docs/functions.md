@@ -72,7 +72,7 @@ Reference with path: `function.run "math/add" { ... }`
 
 ## Input Block
 
-For complete type and filter reference, use `xanoscript_docs({ keyword: "input" })`.
+For complete type and filter reference, use `xanoscript_docs({ topic: "types" })`.
 
 ```xs
 input {
@@ -188,7 +188,7 @@ stack {
 
 ### Error Handling
 
-For complete error handling reference (preconditions, try-catch, throw, early return), use `xanoscript_docs({ keyword: "syntax" })`.
+For complete error handling reference (preconditions, try-catch, throw, early return), use `xanoscript_docs({ topic: "syntax" })`.
 
 ---
 

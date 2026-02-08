@@ -1,77 +1,78 @@
 /**
  * Template for xanoscript_docs index documentation
  * Edit this file to update the XanoScript documentation index
+ *
+ * NOTE: This template is currently unused. The actual documentation is served
+ * directly from the XANOSCRIPT_DOCS_V2 config in index.ts.
  */
 
 export interface XanoscriptIndexParams {
   version: string;
-  aliasLookup: Record<string, string[]>;
 }
 
 export function generateXanoscriptIndexTemplate(params: XanoscriptIndexParams): string {
-  const { version, aliasLookup } = params;
-
-  const formatRow = (keyword: string, description: string) => {
-    const aliases = aliasLookup[keyword]?.slice(0, 3).join(", ") || "";
-    return `| \`${keyword}\` | ${aliases ? aliases : "-"} | ${description} |`;
-  };
+  const { version } = params;
 
   return `# XanoScript Documentation Index
 Version: ${version}
 
-Use \`xanoscript_docs\` with a keyword to retrieve documentation.
+Use \`xanoscript_docs({ topic: "<topic>" })\` to retrieve documentation.
 
-## Core Concepts
-These return guidelines + examples for writing XanoScript code.
+## Core Language
+| Topic | Description |
+|-------|-------------|
+| \`syntax\` | Expressions, operators, filters, system variables |
+| \`types\` | Data types, validation, input blocks |
+| \`functions\` | Reusable function stacks, async, loops |
+| \`schema\` | Runtime schema parsing and validation |
 
-| Keyword | Aliases | Description |
-|---------|---------|-------------|
-${formatRow("function", "Custom reusable functions in `functions/`")}
-${formatRow("api_query", "HTTP API endpoints in `apis/`")}
-${formatRow("table", "Database table schemas in `tables/`")}
-${formatRow("task", "Scheduled background tasks in `tasks/`")}
-${formatRow("triggers", "Event-driven handlers in `triggers/`")}
-${formatRow("tool", "AI-callable tools in `tools/`")}
-${formatRow("agent", "AI agents in `agents/`")}
-${formatRow("mcp_server", "MCP servers in `mcp_servers/`")}
+## Data
+| Topic | Description |
+|-------|-------------|
+| \`tables\` | Database schema definitions with indexes and relationships |
+| \`database\` | All db.* operations: query, get, add, edit, patch, delete |
+| \`addons\` | Reusable subqueries for fetching related data |
+| \`streaming\` | Streaming data from files, requests, and responses |
 
-## Language Reference
-Core syntax and operators.
+## APIs & Endpoints
+| Topic | Description |
+|-------|-------------|
+| \`apis\` | HTTP endpoint definitions with authentication and CRUD patterns |
+| \`tasks\` | Scheduled and cron jobs |
+| \`triggers\` | Event-driven handlers (table, realtime, workspace, agent, MCP) |
+| \`realtime\` | Real-time channels and events for push updates |
 
-| Keyword | Aliases | Description |
-|---------|---------|-------------|
-${formatRow("syntax", "Complete XanoScript syntax (stack, var, conditional, foreach, etc.)")}
-${formatRow("expressions", "Pipe operators and filters (string, math, array, date)")}
-${formatRow("input", "Input definition syntax (types, filters, validation)")}
-${formatRow("db_query", "Database query patterns (query, add, edit, delete)")}
-${formatRow("query_filter", "WHERE clause and filter syntax")}
+## AI & Agents
+| Topic | Description |
+|-------|-------------|
+| \`agents\` | AI agent configuration with LLM providers and tools |
+| \`tools\` | AI tools for agents and MCP servers |
+| \`mcp-servers\` | MCP server definitions exposing tools |
 
-## Development Workflows
-AI agent development strategies and phases.
+## Integrations
+| Topic | Description |
+|-------|-------------|
+| \`integrations\` | Cloud storage, Redis, security, and external APIs |
 
-| Keyword | Aliases | Description |
-|---------|---------|-------------|
-${formatRow("workflow", "Overall XanoScript development workflow")}
-${formatRow("function_workflow", "AI workflow for creating functions")}
-${formatRow("api_workflow", "AI workflow for creating API endpoints")}
-${formatRow("table_workflow", "AI workflow for creating tables")}
-${formatRow("task_workflow", "AI workflow for creating tasks")}
+## Configuration
+| Topic | Description |
+|-------|-------------|
+| \`workspace\` | Workspace-level settings: environment variables, preferences, realtime |
+| \`branch\` | Branch-level settings: middleware, history retention, visual styling |
+| \`middleware\` | Request/response interceptors for functions, queries, tasks, and tools |
 
-## Specialized Topics
+## Development
+| Topic | Description |
+|-------|-------------|
+| \`testing\` | Unit tests, mocks, and assertions |
+| \`debugging\` | Logging, inspecting, and debugging XanoScript execution |
+| \`frontend\` | Static frontend development and deployment |
+| \`run\` | Run job and service configurations for the Xano Job Runner |
 
-| Keyword | Aliases | Description |
-|---------|---------|-------------|
-${formatRow("addons", "Reusable subqueries for related data")}
-${formatRow("debugging", "Logging and debugging tools")}
-${formatRow("frontend", "Frontend development with Xano")}
-${formatRow("lovable", "Building from Lovable-generated websites")}
-${formatRow("performance", "Performance optimization best practices")}
-${formatRow("realtime", "Real-time channels and events")}
-${formatRow("schema", "Runtime schema parsing and validation")}
-${formatRow("security", "Security best practices")}
-${formatRow("streaming", "Streaming data from files and responses")}
-${formatRow("testing", "Unit testing XanoScript code")}
-${formatRow("tips", "Tips and tricks")}
-${formatRow("run", "Run job and service configurations")}
+## Best Practices
+| Topic | Description |
+|-------|-------------|
+| \`performance\` | Performance optimization best practices |
+| \`security\` | Security best practices for authentication and authorization |
 `;
 }

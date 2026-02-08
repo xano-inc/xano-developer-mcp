@@ -15,6 +15,10 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 | `tool` | `tools/**/*.xs` | Tools for AI agents |
 | `mcp_server` | `mcp_servers/**/*.xs` | MCP server definitions |
 | `addon` | `addons/*.xs` | Subqueries for related data |
+| `middleware` | `middleware/**/*.xs` | Request/response interceptors |
+| `branch` | `branch.xs` | Branch-level configuration |
+| `workspace` | `workspace.xs` | Workspace-level configuration |
+| `realtime_channel` | Configuration | Realtime channel settings |
 
 **Important:** Each `.xs` file must contain exactly one definition. You cannot define multiple tables, functions, queries, or other constructs in a single file.
 
@@ -22,6 +26,8 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 
 ```
 project/
+├── workspace.xs         // Workspace configuration (env vars, preferences)
+├── branch.xs            // Branch configuration (middleware, history)
 ├── tables/              // Database table schemas
 ├── functions/           // Reusable functions (supports subfolders)
 ├── apis/
@@ -31,6 +37,7 @@ project/
 ├── agents/              // AI agents
 ├── tools/               // AI tools
 ├── mcp_servers/         // MCP server definitions
+├── middleware/          // Request/response interceptors
 ├── addons/              // Query addons
 ├── static/              // Frontend files (HTML, CSS, JS)
 └── run/                 // Job and service configurations
@@ -103,54 +110,61 @@ This helps AI tools apply the correct documentation based on the file being edit
 
 ## Documentation Index
 
-Use `xanoscript_docs({ keyword: "<keyword>" })` to retrieve documentation.
+Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
 ### Core Language
-| Topic | Keyword | Description |
-|-------|---------|-------------|
-| Syntax Reference | `syntax` | Expressions, operators, filters, system variables |
-| Types & Inputs | `input` | Data types, validation, input blocks |
-| Functions | `function` | Reusable function stacks, async, loops |
-| Schema | `schema` | Runtime schema parsing and validation |
+| Topic | Description |
+|-------|-------------|
+| `syntax` | Expressions, operators, filters, system variables |
+| `types` | Data types, validation, input blocks |
+| `functions` | Reusable function stacks, async, loops |
+| `schema` | Runtime schema parsing and validation |
 
 ### Data
-| Topic | Keyword | Description |
-|-------|---------|-------------|
-| Tables | `table` | Database schema definitions |
-| Database Operations | `db_query` | Query, add, edit, delete, bulk operations |
-| Addons | `addon` | Reusable subqueries for related data |
-| Streaming | `streaming` | Stream processing for large files |
+| Topic | Description |
+|-------|-------------|
+| `tables` | Database schema definitions with indexes and relationships |
+| `database` | All db.* operations: query, get, add, edit, patch, delete |
+| `addons` | Reusable subqueries for fetching related data |
+| `streaming` | Streaming data from files, requests, and responses |
 
 ### APIs & Endpoints
-| Topic | Keyword | Description |
-|-------|---------|-------------|
-| APIs | `api_query` | HTTP endpoint definitions |
-| Tasks | `task` | Scheduled jobs |
-| Triggers | `trigger` | Event-driven handlers |
-| Realtime | `realtime` | Push events and channels |
+| Topic | Description |
+|-------|-------------|
+| `apis` | HTTP endpoint definitions with authentication and CRUD patterns |
+| `tasks` | Scheduled and cron jobs |
+| `triggers` | Event-driven handlers (table, realtime, workspace, agent, MCP) |
+| `realtime` | Real-time channels and events for push updates |
 
 ### AI & Agents
-| Topic | Keyword | Description |
-|-------|---------|-------------|
-| Agents | `agent` | AI agent configuration |
-| Tools | `tool` | AI tools for agents |
-| MCP Servers | `mcp_server` | Model Context Protocol servers |
+| Topic | Description |
+|-------|-------------|
+| `agents` | AI agent configuration with LLM providers and tools |
+| `tools` | AI tools for agents and MCP servers |
+| `mcp-servers` | MCP server definitions exposing tools |
 
 ### Integrations
-| Topic | Keyword | Description |
-|-------|---------|-------------|
-| Integrations | `integrations` | Cloud storage, search, Redis, zip, Lambda |
+| Topic | Description |
+|-------|-------------|
+| `integrations` | Cloud storage, Redis, security, and external APIs |
+
+### Configuration
+| Topic | Description |
+|-------|-------------|
+| `workspace` | Workspace-level settings: environment variables, preferences, realtime |
+| `branch` | Branch-level settings: middleware, history retention, visual styling |
+| `middleware` | Request/response interceptors for functions, queries, tasks, and tools |
 
 ### Development
-| Topic | Keyword | Description |
-|-------|---------|-------------|
-| Testing | `testing` | Unit tests and mocking |
-| Debugging | `debugging` | Logging and inspection tools |
-| Frontend | `frontend` | Static frontend development |
-| Run | `run` | Job and service configurations |
+| Topic | Description |
+|-------|-------------|
+| `testing` | Unit tests, mocks, and assertions |
+| `debugging` | Logging, inspecting, and debugging XanoScript execution |
+| `frontend` | Static frontend development and deployment |
+| `run` | Run job and service configurations for the Xano Job Runner |
 
 ### Best Practices
-| Topic | Keyword | Description |
-|-------|---------|-------------|
-| Performance | `performance` | Query optimization, caching, parallelism |
-| Security | `security` | Authentication, authorization, encryption |
+| Topic | Description |
+|-------|-------------|
+| `performance` | Performance optimization best practices |
+| `security` | Security best practices for authentication and authorization |

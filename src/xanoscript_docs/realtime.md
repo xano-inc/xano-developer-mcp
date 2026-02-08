@@ -42,11 +42,123 @@ api.realtime_event {
 
 ---
 
+## Realtime Channel Configuration
+
+Define channel settings at the workspace level using `realtime_channel`.
+
+```xs
+realtime_channel "<channel_pattern>" {
+  description = "Channel description"
+  active = true
+
+  public_messaging = {
+    active: true,
+    auth: false
+  }
+
+  private_messaging = {
+    active: true,
+    auth: true
+  }
+
+  settings = {
+    anonymous_clients: false,
+    nested_channels: true,
+    message_history: 100,
+    auth_channel: true,
+    presence: true
+  }
+}
+```
+
+### Channel Configuration Options
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `description` | text | Human-readable channel description |
+| `active` | boolean | Enable/disable the channel |
+
+### Messaging Options
+
+| Setting | Type | Description |
+|---------|------|-------------|
+| `public_messaging.active` | boolean | Allow public messages |
+| `public_messaging.auth` | boolean | Require authentication for public messages |
+| `private_messaging.active` | boolean | Allow private messages |
+| `private_messaging.auth` | boolean | Require authentication for private messages |
+
+### Settings Options
+
+| Setting | Type | Values | Description |
+|---------|------|--------|-------------|
+| `anonymous_clients` | boolean | true/false | Allow unauthenticated clients |
+| `nested_channels` | boolean | true/false | Allow sub-channel patterns |
+| `message_history` | number | 0, 25, 50, 100, 250, 1000 | Messages to retain |
+| `auth_channel` | boolean | true/false | Require channel-level auth |
+| `presence` | boolean | true/false | Track client presence |
+
+### Example Configurations
+
+```xs
+// Chat room channel with presence
+realtime_channel "room:*" {
+  description = "Chat room channels"
+  active = true
+
+  public_messaging = { active: true, auth: true }
+  private_messaging = { active: true, auth: true }
+
+  settings = {
+    anonymous_clients: false,
+    nested_channels: false,
+    message_history: 100,
+    auth_channel: true,
+    presence: true
+  }
+}
+
+// Global announcements (read-only for clients)
+realtime_channel "announcements" {
+  description = "System-wide announcements"
+  active = true
+
+  public_messaging = { active: true, auth: false }
+  private_messaging = { active: false, auth: false }
+
+  settings = {
+    anonymous_clients: true,
+    nested_channels: false,
+    message_history: 25,
+    auth_channel: false,
+    presence: false
+  }
+}
+
+// User-specific notifications
+realtime_channel "user:*" {
+  description = "User notification channels"
+  active = true
+
+  public_messaging = { active: false, auth: false }
+  private_messaging = { active: true, auth: true }
+
+  settings = {
+    anonymous_clients: false,
+    nested_channels: false,
+    message_history: 50,
+    auth_channel: true,
+    presence: false
+  }
+}
+```
+
+---
+
 ## Channel Patterns
 
 ### Public Channels
 
-Available to all authenticated clients.
+Accessible to all authenticated clients. When you send to a public channel, all clients currently subscribed to that channel receive the message.
 
 ```xs
 // Global announcements

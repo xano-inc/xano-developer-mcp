@@ -86,7 +86,7 @@ query "products" verb=GET {
 
 ## Input Block
 
-For complete type and filter reference, use `xanoscript_docs({ keyword: "input" })`.
+For complete type and filter reference, use `xanoscript_docs({ topic: "types" })`.
 
 ### Empty Input Blocks
 
@@ -345,11 +345,14 @@ stack {
 
 ## Error Handling
 
-For complete error handling reference, use `xanoscript_docs({ keyword: "syntax" })`.
+For complete error handling reference, use `xanoscript_docs({ topic: "syntax" })`.
 
 | Type | HTTP Status |
 |------|-------------|
-| `inputerror` | 400 | `accessdenied` | 403 | `notfound` | 404 | `standard` | 500 |
+| `inputerror` | 400 |
+| `accessdenied` | 403 |
+| `notfound` | 404 |
+| `standard` | 500 |
 
 ---
 

@@ -268,10 +268,10 @@ const response = await fetch(
 For writing XanoScript code, use:
 
 - \`xanoscript_docs()\` - Full documentation index
-- \`xanoscript_docs({ keyword: "function" })\` - Function syntax
-- \`xanoscript_docs({ keyword: "table" })\` - Table schema syntax
-- \`xanoscript_docs({ keyword: "api_query" })\` - API endpoint syntax
-- \`xanoscript_docs({ keyword: "syntax" })\` - Language reference
+- \`xanoscript_docs({ topic: "functions" })\` - Function syntax
+- \`xanoscript_docs({ topic: "tables" })\` - Table schema syntax
+- \`xanoscript_docs({ topic: "apis" })\` - API endpoint syntax
+- \`xanoscript_docs({ topic: "syntax" })\` - Language reference
 
 ## Validating XanoScript
 

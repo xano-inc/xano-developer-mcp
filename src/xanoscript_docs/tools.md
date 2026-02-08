@@ -62,7 +62,7 @@ tool "get_user_by_email" {
 
 ## Input Block
 
-For complete type reference, use `xanoscript_docs({ keyword: "input" })`. For tools, input `description` fields are sent to the AI, so write them clearly:
+For complete type reference, use `xanoscript_docs({ topic: "types" })`. For tools, input `description` fields are sent to the AI, so write them clearly:
 
 ```xs
 input {

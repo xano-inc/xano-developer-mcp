@@ -155,6 +155,21 @@ const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
     applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
     description: "Streaming data from files, requests, and responses",
   },
+  middleware: {
+    file: "middleware.md",
+    applyTo: ["middleware/**/*.xs"],
+    description: "Request/response interceptors for functions, queries, tasks, and tools",
+  },
+  branch: {
+    file: "branch.md",
+    applyTo: ["branch.xs"],
+    description: "Branch-level settings: middleware, history retention, visual styling",
+  },
+  workspace: {
+    file: "workspace.md",
+    applyTo: ["workspace.xs"],
+    description: "Workspace-level settings: environment variables, preferences, realtime",
+  },
 };
 
 // =============================================================================

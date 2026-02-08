@@ -62,7 +62,13 @@ input {
 
 ### Empty Input Blocks
 
-**CRITICAL:** When an input block has no parameters, the braces MUST be on separate lines. This is a strict syntax requirement - `input {}` on a single line will cause parsing errors.
+**SYNTAX REQUIREMENT:** When an input block has no parameters, the braces MUST be on separate lines.
+
+**Why:** The XanoScript parser requires whitespace between braces to distinguish empty input blocks from inline objects.
+
+**Impact:** Using `input {}` on a single line will cause:
+- Syntax error during compilation
+- Function/API/tool will fail to deploy
 
 ```xs
 // CORRECT - braces on separate lines
@@ -107,6 +113,21 @@ email contact filters=trim|lower {
 ### password
 ```xs
 password secret filters=min:8          // Minimum 8 characters
+```
+
+#### Password Complexity Filters
+| Filter | Description | Example |
+|--------|-------------|---------|
+| `min:<n>` | Minimum total length | `password pwd filters=min:8` |
+| `minAlpha:<n>` | Minimum letters (a-zA-Z) | `password pwd filters=minAlpha:2` |
+| `minLowerAlpha:<n>` | Minimum lowercase letters | `password pwd filters=minLowerAlpha:1` |
+| `minUpperAlpha:<n>` | Minimum uppercase letters | `password pwd filters=minUpperAlpha:1` |
+| `minDigit:<n>` | Minimum digits (0-9) | `password pwd filters=minDigit:1` |
+| `minSymbol:<n>` | Minimum special characters | `password pwd filters=minSymbol:1` |
+
+```xs
+// Strong password: 8+ chars, 1 upper, 1 lower, 1 digit, 1 symbol
+password strong_pwd filters=min:8|minUpperAlpha:1|minLowerAlpha:1|minDigit:1|minSymbol:1
 ```
 
 ### timestamp / date
@@ -199,10 +220,8 @@ Filters validate and transform input values. Chain with `|`.
 | `ok:<chars>` | Allow only specified characters | `text hex filters=ok:0123456789abcdef` |
 | `prevent:<str>` | Block specific substrings | `text name filters=prevent:admin` |
 | `startsWith:<prefix>` | Require prefix | `text sku filters=startsWith:SKU-` |
-| `endsWith:<suffix>` | Require suffix | `text file filters=endsWith:.pdf` |
 | `alphaOk` | Allow only letters (a-zA-Z) | `text name filters=alphaOk` |
 | `digitOk` | Allow only digits (0-9) | `text code filters=digitOk` |
-| `alphaNumOk` | Allow letters and digits | `text username filters=alphaNumOk` |
 | `pattern:<regex>` | Match regex pattern | `text phone filters=pattern:^\+?[0-9]+$` |
 
 ### Numeric Filters
@@ -210,14 +229,12 @@ Filters validate and transform input values. Chain with `|`.
 |--------|-------------|---------|
 | `min:<n>` | Minimum value | `int age filters=min:0` |
 | `max:<n>` | Maximum value | `int age filters=max:150` |
-| `between:<a>:<b>` | Value between a and b | `int score filters=between:0:100` |
 
 ### Array Filters
 | Filter | Description | Example |
 |--------|-------------|---------|
 | `min:<n>` | Minimum array length | `text[] tags filters=min:1` |
 | `max:<n>` | Maximum array length | `text[] tags filters=max:10` |
-| `unique` | Remove duplicates | `int[] ids filters=unique` |
 
 ### Character Set Filters
 
@@ -255,11 +272,11 @@ input {
 ### Combined Examples
 ```xs
 input {
-  text username filters=trim|lower|min:3|max:20|alphaNumOk
+  text username filters=trim|lower|min:3|max:20|ok:abcdefghijklmnopqrstuvwxyz0123456789_
   email contact filters=trim|lower
   int age filters=min:0|max:150
   text hex_code filters=ok:abcdef0123456789|min:6|max:6
-  text[] tags filters=trim|lower|max:50|unique
+  text[] tags filters=trim|lower|max:50
   text phone filters=trim|pattern:^\+?[0-9\s-]+$
   int quantity filters=min:1|max:100
 }
@@ -326,7 +343,7 @@ input {
 
 ## Validation with Preconditions
 
-For complex validation beyond filters, use preconditions. For complete error handling reference, use `xanoscript_docs({ keyword: "syntax" })`.
+For complex validation beyond filters, use preconditions. For complete error handling reference, use `xanoscript_docs({ topic: "syntax" })`.
 
 ```xs
 precondition ($input.start_date < $input.end_date) {
