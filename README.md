@@ -158,7 +158,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `testing` | Unit tests, mocks, and assertions |
 | `integrations` | Cloud storage, Redis, security, and external APIs |
 | `frontend` | Static frontend development and deployment |
-| `ephemeral` | Temporary test environments |
+| `run` | Run job and service configurations |
 | `addons` | Reusable subqueries for fetching related data |
 | `debugging` | Logging, inspecting, and debugging XanoScript execution |
 | `performance` | Performance optimization best practices |
@@ -303,7 +303,7 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/testing` | Unit tests and mocks |
 | `xanoscript://docs/integrations` | External service integrations |
 | `xanoscript://docs/frontend` | Static frontend development |
-| `xanoscript://docs/ephemeral` | Temporary test environments |
+| `xanoscript://docs/run` | Run job and service configurations |
 | `xanoscript://docs/addons` | Reusable subqueries for related data |
 | `xanoscript://docs/debugging` | Logging and debugging tools |
 | `xanoscript://docs/performance` | Performance optimization |

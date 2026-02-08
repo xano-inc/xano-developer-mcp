@@ -94,10 +94,10 @@ const XANOSCRIPT_DOCS_V2 = {
         applyTo: ["static/**/*"],
         description: "Static frontend development and deployment",
     },
-    ephemeral: {
-        file: "ephemeral.md",
-        applyTo: ["ephemeral/**/*.xs"],
-        description: "Temporary test environments",
+    run: {
+        file: "run.md",
+        applyTo: ["run/**/*.xs"],
+        description: "Run job and service configurations for the Xano Job Runner",
     },
     addons: {
         file: "addons.md",

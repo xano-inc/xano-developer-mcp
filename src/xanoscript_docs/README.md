@@ -33,7 +33,7 @@ project/
 ├── mcp_servers/         // MCP server definitions
 ├── addons/              // Query addons
 ├── static/              // Frontend files (HTML, CSS, JS)
-└── ephemeral/           // Temporary test environments
+└── run/                 // Job and service configurations
 ```
 
 ## Environment Variables
@@ -147,7 +147,7 @@ Use `xanoscript_docs({ keyword: "<keyword>" })` to retrieve documentation.
 | Testing | `testing` | Unit tests and mocking |
 | Debugging | `debugging` | Logging and inspection tools |
 | Frontend | `frontend` | Static frontend development |
-| Ephemeral | `ephemeral` | Temporary environments |
+| Run | `run` | Job and service configurations |
 
 ### Best Practices
 | Topic | Keyword | Description |

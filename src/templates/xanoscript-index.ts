@@ -72,6 +72,6 @@ ${formatRow("security", "Security best practices")}
 ${formatRow("streaming", "Streaming data from files and responses")}
 ${formatRow("testing", "Unit testing XanoScript code")}
 ${formatRow("tips", "Tips and tricks")}
-${formatRow("ephemeral", "Ephemeral environment setup")}
+${formatRow("run", "Run job and service configurations")}
 `;
 }
