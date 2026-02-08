@@ -1,14 +1,28 @@
-# Xano Developer MCP
+<div align="center">
+
+# 🚀 Xano Developer MCP
+
+**Supercharge your AI with the power of Xano**
 
 [![npm version](https://img.shields.io/npm/v/@xano/developer-mcp.svg)](https://www.npmjs.com/package/@xano/developer-mcp)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-An MCP server that provides AI assistants with comprehensive documentation and tools for developing applications on [Xano](https://xano.com).
+---
 
-[Xano](https://xano.com) is the fastest way to build a scalable backend for your app — no code required. Build APIs, manage databases, and deploy instantly.
+🤖 **AI-Powered** · 📚 **Comprehensive Docs** · ⚡ **Instant Setup** · 🔧 **Built-in Tools**
 
-**Xano Resources:** [Website](https://xano.com) | [Documentation](https://docs.xano.com/) | [Blog](https://www.xano.com/blog/) | [Community](https://community.xano.com/)
+---
 
-**Available on npm:** [@xano/developer-mcp](https://www.npmjs.com/package/@xano/developer-mcp)
+</div>
+
+An MCP server that gives AI assistants superpowers for developing on [Xano](https://xano.com) — complete with documentation, code validation, and workflow guides.
+
+> 💡 **What's Xano?** The fastest way to build a scalable backend for your app — no code required. Build APIs, manage databases, and deploy instantly.
+
+### 🔗 Quick Links
+
+| 🌐 [Website](https://xano.com) | 📖 [Docs](https://docs.xano.com/) | 📝 [Blog](https://www.xano.com/blog/) | 💬 [Community](https://community.xano.com/) | 📦 [npm](https://www.npmjs.com/package/@xano/developer-mcp) |
+|:---:|:---:|:---:|:---:|:---:|
 
 ## Overview
 
