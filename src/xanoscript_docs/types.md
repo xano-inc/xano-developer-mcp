@@ -60,6 +60,17 @@ input {
 }
 ```
 
+**Empty Input Blocks:** When an input block has no parameters, the braces must be on separate lines:
+
+```xs
+// Correct
+input {
+}
+
+// Incorrect - will cause errors
+input {}
+```
+
 Access inputs in stack: `$input.username`, `$input.age`
 
 ---
