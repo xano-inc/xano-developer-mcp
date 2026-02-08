@@ -11,12 +11,17 @@ import {
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
-import { minimatch } from "minimatch";
 import { xanoscriptParser } from "@xano/xanoscript-language-server/parser/parser.js";
 import { getSchemeFromContent } from "@xano/xanoscript-language-server/utils.js";
 import { metaApiDocsToolDefinition, handleMetaApiDocs } from "./meta_api_docs/index.js";
 import { runApiDocsToolDefinition, handleRunApiDocs } from "./run_api_docs/index.js";
 import type { MetaApiDocsArgs } from "./meta_api_docs/types.js";
+import {
+  XANOSCRIPT_DOCS_V2,
+  readXanoscriptDocsV2,
+  getXanoscriptDocsVersion,
+  getTopicDescriptions,
+} from "./xanoscript.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,149 +33,6 @@ if (process.argv.includes("--version") || process.argv.includes("-v")) {
   console.log(SERVER_VERSION);
   process.exit(0);
 }
-
-// =============================================================================
-// XanoScript Documentation v2 Configuration
-// =============================================================================
-
-interface DocConfig {
-  file: string;
-  applyTo: string[];
-  description: string;
-}
-
-const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
-  readme: {
-    file: "README.md",
-    applyTo: [],
-    description: "XanoScript overview, workspace structure, and quick reference",
-  },
-  syntax: {
-    file: "syntax.md",
-    applyTo: ["**/*.xs"],
-    description: "Expressions, operators, and filters for all XanoScript code",
-  },
-  types: {
-    file: "types.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "tools/**/*.xs", "agents/**/*.xs"],
-    description: "Data types, input blocks, and validation",
-  },
-  tables: {
-    file: "tables.md",
-    applyTo: ["tables/*.xs"],
-    description: "Database schema definitions with indexes and relationships",
-  },
-  functions: {
-    file: "functions.md",
-    applyTo: ["functions/**/*.xs"],
-    description: "Reusable function stacks with inputs and responses",
-  },
-  apis: {
-    file: "apis.md",
-    applyTo: ["apis/**/*.xs"],
-    description: "HTTP endpoint definitions with authentication and CRUD patterns",
-  },
-  tasks: {
-    file: "tasks.md",
-    applyTo: ["tasks/*.xs"],
-    description: "Scheduled and cron jobs",
-  },
-  triggers: {
-    file: "triggers.md",
-    applyTo: ["triggers/**/*.xs"],
-    description: "Event-driven handlers (table, realtime, workspace, agent, MCP)",
-  },
-  database: {
-    file: "database.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "tasks/*.xs", "tools/**/*.xs"],
-    description: "All db.* operations: query, get, add, edit, patch, delete",
-  },
-  agents: {
-    file: "agents.md",
-    applyTo: ["agents/**/*.xs"],
-    description: "AI agent configuration with LLM providers and tools",
-  },
-  tools: {
-    file: "tools.md",
-    applyTo: ["tools/**/*.xs"],
-    description: "AI tools for agents and MCP servers",
-  },
-  "mcp-servers": {
-    file: "mcp-servers.md",
-    applyTo: ["mcp_servers/**/*.xs"],
-    description: "MCP server definitions exposing tools",
-  },
-  testing: {
-    file: "testing.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
-    description: "Unit tests, mocks, and assertions",
-  },
-  integrations: {
-    file: "integrations.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "tasks/*.xs"],
-    description: "Cloud storage, Redis, security, and external APIs",
-  },
-  frontend: {
-    file: "frontend.md",
-    applyTo: ["static/**/*"],
-    description: "Static frontend development and deployment",
-  },
-  run: {
-    file: "run.md",
-    applyTo: ["run/**/*.xs"],
-    description: "Run job and service configurations for the Xano Job Runner",
-  },
-  addons: {
-    file: "addons.md",
-    applyTo: ["addons/*.xs", "functions/**/*.xs", "apis/**/*.xs"],
-    description: "Reusable subqueries for fetching related data",
-  },
-  debugging: {
-    file: "debugging.md",
-    applyTo: ["**/*.xs"],
-    description: "Logging, inspecting, and debugging XanoScript execution",
-  },
-  performance: {
-    file: "performance.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
-    description: "Performance optimization best practices",
-  },
-  realtime: {
-    file: "realtime.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "triggers/**/*.xs"],
-    description: "Real-time channels and events for push updates",
-  },
-  schema: {
-    file: "schema.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
-    description: "Runtime schema parsing and validation",
-  },
-  security: {
-    file: "security.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
-    description: "Security best practices for authentication and authorization",
-  },
-  streaming: {
-    file: "streaming.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
-    description: "Streaming data from files, requests, and responses",
-  },
-  middleware: {
-    file: "middleware.md",
-    applyTo: ["middleware/**/*.xs"],
-    description: "Request/response interceptors for functions, queries, tasks, and tools",
-  },
-  branch: {
-    file: "branch.md",
-    applyTo: ["branch.xs"],
-    description: "Branch-level settings: middleware, history retention, visual styling",
-  },
-  workspace: {
-    file: "workspace.md",
-    applyTo: ["workspace.xs"],
-    description: "Workspace-level settings: environment variables, preferences, realtime",
-  },
-};
 
 // =============================================================================
 // Path Resolution
@@ -195,135 +57,6 @@ function getXanoscriptDocsPath(): string {
 }
 
 const XANOSCRIPT_DOCS_PATH = getXanoscriptDocsPath();
-
-// =============================================================================
-// Documentation Helpers
-// =============================================================================
-
-function getXanoscriptDocsVersion(): string {
-  try {
-    const versionFile = readFileSync(
-      join(XANOSCRIPT_DOCS_PATH, "version.json"),
-      "utf-8"
-    );
-    return JSON.parse(versionFile).version || "unknown";
-  } catch {
-    return "unknown";
-  }
-}
-
-// =============================================================================
-// XanoScript Documentation v2 Functions
-// =============================================================================
-
-/**
- * Get list of topics that apply to a given file path based on applyTo patterns
- */
-function getDocsForFilePath(filePath: string): string[] {
-  const matches: string[] = [];
-
-  for (const [topic, config] of Object.entries(XANOSCRIPT_DOCS_V2)) {
-    if (topic === "readme") continue; // Don't auto-include readme
-
-    for (const pattern of config.applyTo) {
-      if (minimatch(filePath, pattern)) {
-        matches.push(topic);
-        break;
-      }
-    }
-  }
-
-  // Always include syntax as foundation (if not already matched)
-  if (!matches.includes("syntax")) {
-    matches.unshift("syntax");
-  }
-
-  return matches;
-}
-
-/**
- * Extract just the Quick Reference section from a doc
- */
-function extractQuickReference(content: string, topic: string): string {
-  const lines = content.split("\n");
-  const startIdx = lines.findIndex((l) => l.startsWith("## Quick Reference"));
-
-  if (startIdx === -1) {
-    // Fallback: return first 50 lines or up to first ## section
-    const firstSection = lines.findIndex((l, i) => i > 0 && l.startsWith("## "));
-    return lines.slice(0, firstSection > 0 ? firstSection : 50).join("\n");
-  }
-
-  // Find the next ## section after Quick Reference
-  let endIdx = lines.findIndex((l, i) => i > startIdx && l.startsWith("## "));
-  if (endIdx === -1) endIdx = lines.length;
-
-  // Include topic header for context
-  const header = `# ${topic}\n\n`;
-  return header + lines.slice(startIdx, endIdx).join("\n");
-}
-
-/**
- * Read XanoScript documentation with new v2 structure
- */
-function readXanoscriptDocsV2(args?: {
-  topic?: string;
-  file_path?: string;
-  mode?: "full" | "quick_reference";
-}): string {
-  const mode = args?.mode || "full";
-  const version = getXanoscriptDocsVersion();
-
-  try {
-    // Default: return README
-    if (!args?.topic && !args?.file_path) {
-      const readme = readFileSync(join(XANOSCRIPT_DOCS_PATH, "README.md"), "utf-8");
-      return `${readme}\n\n---\nDocumentation version: ${version}`;
-    }
-
-    // Context-aware: return docs matching file pattern
-    if (args?.file_path) {
-      const topics = getDocsForFilePath(args.file_path);
-
-      if (topics.length === 0) {
-        return `No documentation found for file pattern: ${args.file_path}\n\nAvailable topics: ${Object.keys(XANOSCRIPT_DOCS_V2).join(", ")}`;
-      }
-
-      const docs = topics.map((t) => {
-        const config = XANOSCRIPT_DOCS_V2[t];
-        const content = readFileSync(join(XANOSCRIPT_DOCS_PATH, config.file), "utf-8");
-        return mode === "quick_reference"
-          ? extractQuickReference(content, t)
-          : content;
-      });
-
-      const header = `# XanoScript Documentation for: ${args.file_path}\n\nMatched topics: ${topics.join(", ")}\nMode: ${mode}\nVersion: ${version}\n\n---\n\n`;
-      return header + docs.join("\n\n---\n\n");
-    }
-
-    // Topic-based: return specific doc
-    if (args?.topic) {
-      const config = XANOSCRIPT_DOCS_V2[args.topic];
-
-      if (!config) {
-        const availableTopics = Object.keys(XANOSCRIPT_DOCS_V2).join(", ");
-        return `Error: Unknown topic "${args.topic}".\n\nAvailable topics: ${availableTopics}`;
-      }
-
-      const content = readFileSync(join(XANOSCRIPT_DOCS_PATH, config.file), "utf-8");
-      const doc = mode === "quick_reference"
-        ? extractQuickReference(content, args.topic)
-        : content;
-
-      return `${doc}\n\n---\nDocumentation version: ${version}`;
-    }
-
-    return "Error: Invalid parameters";
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return `Error reading XanoScript documentation: ${errorMessage}`;
-  }
-}
 
 // =============================================================================
 // MCP Server Setup
@@ -377,7 +110,7 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
   }
 
   const content = readFileSync(join(XANOSCRIPT_DOCS_PATH, config.file), "utf-8");
-  const version = getXanoscriptDocsVersion();
+  const version = getXanoscriptDocsVersion(XANOSCRIPT_DOCS_PATH);
 
   return {
     contents: [
@@ -424,11 +157,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             topic: {
               type: "string",
-              description:
-                "Documentation topic. Available: " +
-                Object.entries(XANOSCRIPT_DOCS_V2)
-                  .map(([k, v]) => `${k} (${v.description.split(".")[0]})`)
-                  .join(", "),
+              description: "Documentation topic. Available: " + getTopicDescriptions(),
             },
             file_path: {
               type: "string",
@@ -464,6 +193,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
+interface ParserDiagnostic {
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  message: string;
+  source: string;
+}
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "validate_xanoscript") {
     const args = request.params.arguments as {
@@ -498,7 +236,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      const diagnostics = parser.errors.map((error) => {
+      const diagnostics: ParserDiagnostic[] = parser.errors.map((error: { token?: { startOffset: number; endOffset: number }; message: string; name?: string }) => {
         const startOffset = error.token?.startOffset ?? 0;
         const endOffset = error.token?.endOffset ?? 5;
 
@@ -520,7 +258,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       });
 
-      const errorMessages = diagnostics.map((d, i) => {
+      const errorMessages = diagnostics.map((d: ParserDiagnostic, i: number) => {
         const location = `Line ${d.range.start.line + 1}, Column ${d.range.start.character + 1}`;
         return `${i + 1}. [${location}] ${d.message}`;
       });
@@ -534,7 +272,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         ],
         isError: true,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       return {
@@ -558,7 +296,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       | undefined;
 
-    const documentation = readXanoscriptDocsV2(args);
+    const documentation = readXanoscriptDocsV2(XANOSCRIPT_DOCS_PATH, args);
 
     return {
       content: [
@@ -614,7 +352,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           },
         ],
       };
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         content: [
@@ -661,7 +399,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           },
         ],
       };
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         content: [

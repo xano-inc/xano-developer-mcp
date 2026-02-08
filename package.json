@@ -14,6 +14,9 @@
     "build": "tsc && cp -r src/xanoscript_docs dist/",
     "start": "node dist/index.js",
     "dev": "tsc && node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -43,6 +46,7 @@
   "devDependencies": {
     "@types/minimatch": "^5.1.2",
     "@types/node": "^22.0.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "vitest": "^3.0.0"
   }
 }
