@@ -5,14 +5,41 @@
 import type { TopicDoc, EndpointDoc, ExampleDoc, PatternDoc, DetailLevel } from "./types.js";
 
 /**
- * Base URL information included with any topic that has endpoints
+ * Configuration for documentation formatting
  */
-const BASE_URL_INFO = `## Base URL
+export interface FormatConfig {
+  baseUrlInfo: string;
+  toolName: string;
+}
+
+/**
+ * Default config for Meta API
+ */
+export const META_API_CONFIG: FormatConfig = {
+  baseUrlInfo: `## Base URL
 \`\`\`
 https://<your-instance-subdomain>.xano.io/api:meta/<endpoint>
 \`\`\`
 Authorization: \`Bearer <your-access-token>\`
-`;
+`,
+  toolName: "meta_api_docs",
+};
+
+/**
+ * Config for Run API
+ */
+export const RUN_API_CONFIG: FormatConfig = {
+  baseUrlInfo: `## Base URL
+\`\`\`
+https://app.dev.xano.com/api:run/<endpoint>
+\`\`\`
+
+**Important:** This is a fixed URL - NOT your Xano instance URL. All Run API requests go to this central endpoint.
+
+Authorization: \`Bearer <your-access-token>\`
+`,
+  toolName: "run_api_docs",
+};
 
 function formatParameter(param: NonNullable<EndpointDoc["parameters"]>[0]): string {
   const required = param.required ? " (required)" : "";
@@ -132,7 +159,8 @@ function formatPattern(pattern: PatternDoc): string {
 export function formatDocumentation(
   doc: TopicDoc,
   detailLevel: DetailLevel = "detailed",
-  includeSchemas: boolean = true
+  includeSchemas: boolean = true,
+  config: FormatConfig = META_API_CONFIG
 ): string {
   const sections: string[] = [];
 
@@ -151,7 +179,7 @@ export function formatDocumentation(
   // Include base URL info if topic has endpoints or patterns (workflows)
   if (doc.endpoints?.length || doc.patterns?.length) {
     sections.push("");
-    sections.push(BASE_URL_INFO);
+    sections.push(config.baseUrlInfo);
   }
 
   // Endpoints
@@ -197,7 +225,7 @@ export function formatDocumentation(
   if (doc.related_topics?.length) {
     sections.push("");
     sections.push("## Related Topics");
-    sections.push(`Use \`meta_api_docs\` with topic: ${doc.related_topics.join(", ")}`);
+    sections.push(`Use \`${config.toolName}\` with topic: ${doc.related_topics.join(", ")}`);
   }
 
   return sections.join("\n");
