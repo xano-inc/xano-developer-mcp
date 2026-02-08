@@ -15,16 +15,10 @@ Define job and service configurations for the Xano Job Runner.
 
 ### Directory Structure
 ```
-run/
-├── my-job/
-│   ├── run.xs
-│   ├── tables/
-│   └── functions/
-└── my-service/
-    ├── run.xs
-    ├── tables/
-    ├── functions/
-    └── apis/
+run.xs
+tables/
+functions/
+apis/
 ```
 
 ---
@@ -203,12 +197,11 @@ function "process_data" {
 ## Complete Job Example
 
 ```
-run/data-migration/
-├── run.xs
-├── tables/
-│   └── users.xs
-└── functions/
-    └── migrate_users.xs
+run.xs
+tables/
+└── users.xs
+functions/
+└── migrate_users.xs
 ```
 
 ### run.xs
@@ -275,14 +268,13 @@ function "migrate_users" {
 ## Complete Service Example
 
 ```
-run/event-tracker/
-├── run.xs
-├── tables/
-│   └── event.xs
-└── apis/
-    ├── api_group.xs
-    ├── list.xs
-    └── add.xs
+run.xs
+tables/
+└── event.xs
+apis/
+├── api_group.xs
+├── list.xs
+└── add.xs
 ```
 
 ### run.xs
