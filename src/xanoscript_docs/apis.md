@@ -12,7 +12,7 @@ HTTP endpoint definitions in XanoScript.
 query "endpoint-path" verb=<METHOD> {
   api_group = "<GroupName>"     // Required: API group for organization
   description = "What this endpoint does"
-  auth = "<table>"              // Optional: require authentication
+  auth = "<table>"              // Optional: table with auth = true (usually "user")
   input { ... }
   stack { ... }
   response = $result
@@ -150,10 +150,12 @@ query "status" verb=GET {
 
 ### Authenticated Endpoint
 
+The `auth` attribute references a table that has `auth = true` in its definition (see [tables.md](tables.md)). This is typically the `user` table. While multiple auth tables are supported, it's recommended to use a single auth table and control access levels with a role flag or RBAC pattern.
+
 ```xs
 query "profile" verb=GET {
   api_group = "Users"
-  auth = "user"                 // Requires valid JWT
+  auth = "user"                 // Must reference a table with auth = true
   stack {
     db.get "user" {
       field_name = "id"
@@ -166,6 +168,7 @@ query "profile" verb=GET {
 
 When `auth` is set:
 
+- The referenced table must have `auth = true` in its table definition
 - Endpoint requires Bearer token in `Authorization` header
 - `$auth.id` contains authenticated user's ID
 - Invalid/missing token returns 401
