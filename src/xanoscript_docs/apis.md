@@ -63,14 +63,14 @@ api_group Authentication {
 }
 ```
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `canonical` | text | Yes | URL path segment, must be unique at the instance level |
-| `description` | text | No | Human-readable description |
-| `active` | bool | No | Whether the group accepts external requests (default: `true`) |
-| `swagger` | object | No | Swagger documentation settings. `token` protects access (stored plain text) |
-| `tags` | list | No | Tags for organization and filtering |
-| `history` | int | No | Max number of statements recorded per request for debugging |
+| Property      | Type   | Required | Description                                                                 |
+| ------------- | ------ | -------- | --------------------------------------------------------------------------- |
+| `canonical`   | text   | Yes      | URL path segment, must be unique at the instance level                      |
+| `description` | text   | No       | Human-readable description                                                  |
+| `active`      | bool   | No       | Whether the group accepts external requests (default: `true`)               |
+| `swagger`     | object | No       | Swagger documentation settings. `token` protects access (stored plain text) |
+| `tags`        | list   | No       | Tags for organization and filtering                                         |
+| `history`     | int    | No       | Max number of statements recorded per request for debugging                 |
 
 **Canonical uniqueness:** A Xano instance can host multiple workspaces. The `canonical` is used to route requests between workspaces and must be **unique at the instance level**, not just within your workspace. Use a descriptive, project-specific prefix to avoid collisions (e.g., `myapp-users` instead of `users`). A generic name like `user` is likely to conflict with another workspace's canonical on the same instance.
 
@@ -177,21 +177,26 @@ When `auth` is set:
 
 ## Path Parameters
 
-Use `{param}` in the path:
+Use `{param}` in the path and capture its value in the input block:
 
 ```xs
 query "users/{user_id}" verb=GET {
-  api_group = "Users"
+  api_group = "Authentication"
   auth = "user"
+
   input {
-    int user_id { table = "user" }
+    int user_id {
+      table = "user"
+    }
   }
+
   stack {
     db.get "user" {
       field_name = "id"
       field_value = $input.user_id
     } as $user
   }
+
   response = $user
 }
 ```
@@ -288,13 +293,17 @@ query "products/{product_id}" verb=PATCH {
 
     conditional {
       if ($input.name != null) {
-        var.update $updates { value = $updates|set:"name":$input.name }
+        var.update $updates.name { value = $input.name }
       }
     }
     conditional {
       if ($input.price != null) {
-        var.update $updates { value = $updates|set:"price":$input.price }
+        var.update $updates.price { value = $input.price }
       }
+    }
+
+    precondition (($updates|is_empty) == false) {
+      error = "No updates provided"
     }
 
     db.patch "product" {
