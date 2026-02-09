@@ -89,7 +89,7 @@ branch "production" {
 
 ## History Configuration
 
-Control how many historical executions are retained for debugging and auditing.
+Control how many statements from the execution trace are retained per request. Execution traces are kept for 24 hours; this setting limits how many stack statements are recorded in each trace.
 
 ### Syntax
 
@@ -112,23 +112,23 @@ branch "production" {
 
 | Value | Description |
 |-------|-------------|
-| `false` | Disable history (no retention) |
-| `10` | Keep last 10 executions |
-| `100` | Keep last 100 executions |
-| `1000` | Keep last 1000 executions |
-| `10000` | Keep last 10000 executions |
-| `"all"` | Keep all executions (use with caution) |
+| `false` | Disable history (no statements recorded) |
+| `10` | Record up to 10 statements per trace |
+| `100` | Record up to 100 statements per trace |
+| `1000` | Record up to 1000 statements per trace |
+| `10000` | Record up to 10000 statements per trace |
+| `"all"` | Record all statements (use with caution) |
 
 ### History Targets
 
 | Target | Description |
 |--------|-------------|
-| `function` | Function execution history |
-| `query` | API endpoint request history |
-| `task` | Scheduled task execution history |
-| `tool` | AI tool invocation history |
-| `trigger` | Trigger execution history |
-| `middleware` | Middleware execution history |
+| `function` | Statement limit for function traces |
+| `query` | Statement limit for API endpoint traces |
+| `task` | Statement limit for scheduled task traces |
+| `tool` | Statement limit for AI tool traces |
+| `trigger` | Statement limit for trigger traces |
+| `middleware` | Statement limit for middleware traces |
 
 ---
 
