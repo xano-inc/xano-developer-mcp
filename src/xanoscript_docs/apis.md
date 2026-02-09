@@ -24,16 +24,19 @@ query "endpoint-path" verb=<METHOD> {
 The query name is **required** and **must be a non-empty string**. Empty names (`query "" verb=...`) are invalid. The name defines the endpoint path after the API group canonical.
 
 **Full URL path structure:**
+
 ```
 /<api_group canonical>/<query name>
 ```
 
 The query name can include slashes for nested paths:
+
 - `query "list" verb=GET` → `/<canonical>/list`
 - `query "users/{id}" verb=GET` → `/<canonical>/users/{id}`
 - `query "admin/reports/daily" verb=GET` → `/<canonical>/admin/reports/daily`
 
 ### HTTP Methods
+
 `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
 
 ### API Groups (Required)
@@ -41,25 +44,50 @@ The query name can include slashes for nested paths:
 Every endpoint must belong to an API group. Each group is a folder with an `api_group.xs` file:
 
 ```xs
+// Minimal definition
 api_group "users" {
-  canonical = "users"                // Required: URL path segment
+  canonical = "myapp-users"          // Required: URL path segment (unique at instance level)
   description = "User management"    // Optional
 }
 ```
 
+**Full definition with all options:**
+
+```xs
+api_group Authentication {
+  active = false                     // Disable group (cannot be externally invoked)
+  canonical = "plmgzl-s"            // Required: unique at instance level
+  swagger = {token: "cbO83nMTt7BVgq3QcQgKikDfHeo"}  // Protect Swagger docs behind a token (plain text)
+  tags = ["auth", "security", "encrypted"]           // Tags for organization
+  history = 100                      // Request history: up to 100 statements per request
+}
+```
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `canonical` | text | Yes | URL path segment, must be unique at the instance level |
+| `description` | text | No | Human-readable description |
+| `active` | bool | No | Whether the group accepts external requests (default: `true`) |
+| `swagger` | object | No | Swagger documentation settings. `token` protects access (stored plain text) |
+| `tags` | list | No | Tags for organization and filtering |
+| `history` | int | No | Max number of statements recorded per request for debugging |
+
+**Canonical uniqueness:** A Xano instance can host multiple workspaces. The `canonical` is used to route requests between workspaces and must be **unique at the instance level**, not just within your workspace. Use a descriptive, project-specific prefix to avoid collisions (e.g., `myapp-users` instead of `users`). A generic name like `user` is likely to conflict with another workspace's canonical on the same instance.
+
 ### File Structure
+
 ```
 apis/
 ├── users/
-│   ├── api_group.xs            // Defines group (canonical = "users")
-│   ├── list.xs                 // GET /users/list
-│   └── by-id.xs                // GET/PATCH/DELETE /users/{id}
+│   ├── api_group.xs            // Defines group (canonical = "myapp-users")
+│   ├── list.xs                 // GET /myapp-users/list
+│   └── by-id.xs                // GET/PATCH/DELETE /myapp-users/{id}
 └── products/
-    ├── api_group.xs            // Defines group (canonical = "products")
-    └── search.xs               // GET /products/search
+    ├── api_group.xs            // Defines group (canonical = "myapp-products")
+    └── search.xs               // GET /myapp-products/search
 ```
 
-Full URL: `/<canonical>/<query name>` (e.g., `/users/profile`)
+Full URL: `/<canonical>/<query name>` (e.g., `/myapp-users/profile`)
 
 ---
 
@@ -111,6 +139,7 @@ input {}
 ## Authentication
 
 ### Public Endpoint (default)
+
 ```xs
 query "status" verb=GET {
   api_group = "System"
@@ -120,6 +149,7 @@ query "status" verb=GET {
 ```
 
 ### Authenticated Endpoint
+
 ```xs
 query "profile" verb=GET {
   api_group = "Users"
@@ -135,6 +165,7 @@ query "profile" verb=GET {
 ```
 
 When `auth` is set:
+
 - Endpoint requires Bearer token in `Authorization` header
 - `$auth.id` contains authenticated user's ID
 - Invalid/missing token returns 401
@@ -167,6 +198,7 @@ query "users/{user_id}" verb=GET {
 ## CRUD Examples
 
 ### List (GET)
+
 ```xs
 query "products" verb=GET {
   api_group = "Products"
@@ -187,6 +219,7 @@ query "products" verb=GET {
 ```
 
 ### Create (POST)
+
 ```xs
 query "products" verb=POST {
   api_group = "Products"
@@ -213,6 +246,7 @@ query "products" verb=POST {
 ```
 
 ### Read (GET with ID)
+
 ```xs
 query "products/{product_id}" verb=GET {
   api_group = "Products"
@@ -235,6 +269,7 @@ query "products/{product_id}" verb=GET {
 ```
 
 ### Update (PATCH)
+
 ```xs
 query "products/{product_id}" verb=PATCH {
   api_group = "Products"
@@ -270,6 +305,7 @@ query "products/{product_id}" verb=PATCH {
 ```
 
 ### Delete (DELETE)
+
 ```xs
 query "products/{product_id}" verb=DELETE {
   api_group = "Products"
@@ -292,11 +328,13 @@ query "products/{product_id}" verb=DELETE {
 ## Response Types
 
 ### JSON (default)
+
 ```xs
 response = $data
 ```
 
 ### HTML
+
 ```xs
 stack {
   util.set_header {
@@ -316,6 +354,7 @@ response = $html
 ```
 
 ### Streaming
+
 ```xs
 stack {
   api.stream { value = $processed_data }
@@ -347,12 +386,12 @@ stack {
 
 For complete error handling reference, use `xanoscript_docs({ topic: "syntax" })`.
 
-| Type | HTTP Status |
-|------|-------------|
-| `inputerror` | 400 |
-| `accessdenied` | 403 |
-| `notfound` | 404 |
-| `standard` | 500 |
+| Type           | HTTP Status |
+| -------------- | ----------- |
+| `inputerror`   | 400         |
+| `accessdenied` | 403         |
+| `notfound`     | 404         |
+| `standard`     | 500         |
 
 ---
 
@@ -381,3 +420,4 @@ When using `return = { type: "list", paging: {...} }`:
 3. **Authenticate writes** - Always require auth for POST/PATCH/DELETE
 4. **Paginate lists** - Never return unbounded result sets
 5. **Group by resource** - Organize endpoints in logical api groups
+6. **Use specific canonicals** - Prefix canonicals to avoid instance-level collisions (e.g., `myapp-users` not `users`)

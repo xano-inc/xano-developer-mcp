@@ -346,65 +346,28 @@ stack {
 }
 ```
 
-### group (Parallel Execution)
+### group (Organizational Block)
 
-Execute multiple operations in parallel and wait for all to complete.
+Group related statements together for readability. The `group` block is purely organizational — it does **not** create parallel execution or a new scope.
 
 ```xs
 stack {
+  // Use group to visually organize related initialization
   group {
-    api.request {
-      url = "https://api.example.com/users"
-      method = "GET"
-    } as $users
+    stack {
+      var $total {
+        value = 0
+      }
 
-    api.request {
-      url = "https://api.example.com/products"
-      method = "GET"
-    } as $products
-
-    api.request {
-      url = "https://api.example.com/orders"
-      method = "GET"
-    } as $orders
-  }
-
-  // All three requests complete before continuing
-  var $combined {
-    value = {
-      users: $users.response.result,
-      products: $products.response.result,
-      orders: $orders.response.result
+      var $count {
+        value = 0
+      }
     }
   }
-}
-```
 
-### Parallel Database Queries
-
-```xs
-stack {
-  group {
-    db.query "user" {
-      where = $db.user.is_active == true
-      return = { type: "count" }
-    } as $active_users
-
-    db.query "order" {
-      where = $db.order.created_at >= $input.start_date
-      return = { type: "count" }
-    } as $order_count
-
-    db.query "product" {
-      where = $db.product.stock == 0
-      return = { type: "count" }
-    } as $out_of_stock
-  }
-
-  response = {
-    active_users: $active_users,
-    orders: $order_count,
-    out_of_stock: $out_of_stock
+  // Variables from the group are accessible here
+  var $average {
+    value = $total / $count
   }
 }
 ```
@@ -512,5 +475,5 @@ foreach ($items) {
 3. **Organize in folders** - Group related functions: `utils/`, `auth/`, `orders/`
 4. **Return early** - Use return for guard clauses
 5. **Keep stacks shallow** - Avoid deeply nested conditionals
-6. **Use group for parallel calls** - Improves performance for independent operations
+6. **Use group for organization** - Visually group related statements for readability
 7. **Use remove sparingly** - Consider filtering arrays instead
