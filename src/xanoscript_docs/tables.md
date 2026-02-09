@@ -23,9 +23,11 @@ table "<name>" {
 ```
 
 ### Field Types
+
 `int`, `text`, `email`, `password`, `decimal`, `bool`, `timestamp`, `date`, `uuid`, `vector`, `json`, `image`, `video`, `audio`, `attachment`, `enum`
 
 ### Index Types
+
 `primary`, `btree`, `btree|unique`, `gin`
 
 ---
@@ -58,6 +60,7 @@ table "user" {
 ## Schema Fields
 
 ### Basic Fields
+
 ```xs
 schema {
   int id
@@ -70,6 +73,7 @@ schema {
 ```
 
 ### Optional & Defaults
+
 ```xs
 schema {
   text nickname?                   // Optional, no default
@@ -80,6 +84,7 @@ schema {
 ```
 
 ### With Filters
+
 ```xs
 schema {
   text name filters=trim
@@ -90,6 +95,7 @@ schema {
 ```
 
 ### With Metadata
+
 ```xs
 schema {
   text ssn {
@@ -104,6 +110,7 @@ schema {
 ```
 
 ### Foreign Keys
+
 ```xs
 schema {
   int user_id {
@@ -117,6 +124,7 @@ schema {
 ```
 
 ### Enum Fields
+
 ```xs
 schema {
   enum status {
@@ -129,6 +137,7 @@ schema {
 ```
 
 ### JSON Fields
+
 ```xs
 schema {
   json metadata
@@ -137,17 +146,24 @@ schema {
 ```
 
 ### Vector Fields
+
 ```xs
 schema {
-  vector embedding              // For AI/ML embeddings
+  vector embedding              // Required vector field
+  vector? embeddings? {         // Optional vector field with explicit size
+    size = 768
+  }
 }
 ```
+
+The `size` parameter specifies the vector dimensions (must match your embedding model's output). Pair with a vector index for similarity search (see [Vector Index](#vector-index) below).
 
 ---
 
 ## Indexes
 
 ### Primary Key
+
 ```xs
 index = [
   {type: "primary", field: [{name: "id"}]}
@@ -155,6 +171,7 @@ index = [
 ```
 
 ### B-tree Index
+
 ```xs
 index = [
   {type: "btree", field: [{name: "email", op: "asc"}]}
@@ -163,6 +180,7 @@ index = [
 ```
 
 ### Unique Index
+
 ```xs
 index = [
   {type: "btree|unique", field: [{name: "email"}]}
@@ -171,6 +189,7 @@ index = [
 ```
 
 ### Composite Index
+
 ```xs
 index = [
   {type: "btree", field: [{name: "user_id"}, {name: "created_at", op: "desc"}]}
@@ -178,6 +197,7 @@ index = [
 ```
 
 ### GIN Index (for JSON/arrays)
+
 ```xs
 index = [
   {type: "gin", field: [{name: "tags", op: "jsonb_path_op"}]}
@@ -185,11 +205,35 @@ index = [
 ]
 ```
 
+### Full-Text Search Index
+
+```xs
+index = [
+  {
+    name : "search_content"
+    lang : "english"
+    type : "search"
+    field: [{name: "searchable_content", op: "A"}]
+  }
+]
+```
+
+### Vector Index
+
+```xs
+index = [
+  {type: "vector", field: [{name: "embeddings", op: "vector_cosine_ops"}]}
+]
+```
+
+Required for vector similarity searches via `cosine_distance` in `db.query`. PostgreSQL vector indexes only support ascending scans, so queries must sort by distance `asc` to use the index. Sorting `desc` will bypass the index and trigger a full table scan. See [database.md](database.md) for query usage.
+
 ---
 
 ## Complete Examples
 
 ### User Table (with auth)
+
 ```xs
 table "user" {
   auth = true
@@ -212,6 +256,7 @@ table "user" {
 ```
 
 ### Product Table
+
 ```xs
 table "product" {
   auth = false
@@ -235,6 +280,7 @@ table "product" {
 ```
 
 ### Order with Foreign Keys
+
 ```xs
 table "order" {
   auth = false

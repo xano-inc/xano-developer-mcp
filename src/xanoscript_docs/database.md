@@ -8,17 +8,17 @@ Complete reference for XanoScript database operations.
 
 ## Quick Reference
 
-| Operation | Purpose | Returns |
-|-----------|---------|---------|
-| `db.query` | Query multiple records | List/single/count/exists |
-| `db.get` | Get single record by field | Record or null |
-| `db.has` | Check if record exists | Boolean |
-| `db.add` | Insert new record | Created record |
-| `db.edit` | Update record (inline data) | Updated record |
-| `db.patch` | Update record (variable data) | Updated record |
-| `db.add_or_edit` | Upsert record | Record |
-| `db.del` | Delete record | None |
-| `db.truncate` | Delete all records | None |
+| Operation        | Purpose                       | Returns                  |
+| ---------------- | ----------------------------- | ------------------------ |
+| `db.query`       | Query multiple records        | List/single/count/exists |
+| `db.get`         | Get single record by field    | Record or null           |
+| `db.has`         | Check if record exists        | Boolean                  |
+| `db.add`         | Insert new record             | Created record           |
+| `db.edit`        | Update record (inline data)   | Updated record           |
+| `db.patch`       | Update record (variable data) | Updated record           |
+| `db.add_or_edit` | Upsert record                 | Record                   |
+| `db.del`         | Delete record                 | None                     |
+| `db.truncate`    | Delete all records            | None                     |
 
 ---
 
@@ -27,6 +27,7 @@ Complete reference for XanoScript database operations.
 Query multiple records with filters, sorting, and pagination.
 
 ### Basic Query
+
 ```xs
 db.query "product" {
   where = $db.product.is_active == true
@@ -34,6 +35,7 @@ db.query "product" {
 ```
 
 ### Where Operators
+
 ```xs
 // Comparison
 $db.product.price == 100
@@ -62,13 +64,14 @@ $db.product.category == "electronics" || $db.product.featured == true
 ```
 
 ### Return Types
+
 ```xs
-// List (default)
+// returns an array of products (default)
 db.query "product" {
   return = { type: "list" }
 } as $products
 
-// With pagination
+// Returns a paginated list of products
 db.query "product" {
   return = {
     type: "list",
@@ -76,19 +79,19 @@ db.query "product" {
   }
 } as $products
 
-// Single record
+// Returns a single record
 db.query "product" {
   where = $db.product.sku == $input.sku
   return = { type: "single" }
 } as $product
 
-// Count
+// Returns a count (number)
 db.query "product" {
   where = $db.product.is_active == true
   return = { type: "count" }
 } as $count
 
-// Exists
+// Returns a boolean indicating existence
 db.query "product" {
   where = $db.product.email == $input.email
   return = { type: "exists" }
@@ -96,6 +99,7 @@ db.query "product" {
 ```
 
 ### Sorting
+
 ```xs
 db.query "product" {
   sort = { created_at: "desc" }         // Descending
@@ -105,6 +109,7 @@ db.query "product" {
 ```
 
 ### Joins
+
 ```xs
 db.query "comment" {
   join = {
@@ -114,11 +119,15 @@ db.query "comment" {
       where: $db.comment.post_id == $db.post.id
     }
   }
+  eval = {
+    post_title: $db.post.title
+  }
   where = $db.post.author_id == $auth.id
 } as $comments
 ```
 
 ### Eval (Computed Fields)
+
 ```xs
 db.query "order" {
   join = {
@@ -132,6 +141,7 @@ db.query "order" {
 ```
 
 ### Addons (Related Data)
+
 ```xs
 db.query "post" {
   where = $db.post.author_id == $auth.id
@@ -140,6 +150,30 @@ db.query "post" {
   ]
 } as $posts
 ```
+
+### Vector Search (Similarity)
+
+Search by vector similarity using embeddings. Requires a `vector` column with a `vector` index on the table (see [tables.md](tables.md)).
+
+```xs
+// Embeddings from an LLM engine
+var $embeddings {
+  value = [0.345, 0.1553, ...]
+}
+
+db.query agent_message {
+  sort = {distance: "asc"}
+  eval = {
+    distance: $db.agent_message.embeddings|cosine_distance:$embeddings
+  }
+  return = {
+    type  : "list"
+    paging: {page: 1, per_page: 5, metadata: false}
+  }
+} as $search_results
+```
+
+The `cosine_distance` filter computes the distance between the row's vector and the provided embeddings. Sort by `distance` ascending (smallest distance = most similar) — this ordering is required to leverage the PostgreSQL vector index.
 
 ---
 
@@ -338,6 +372,7 @@ db.transaction {
 Filters for use in `where` clauses:
 
 ### String/Text
+
 ```xs
 $db.name|to_lower                       // Case conversion
 $db.name|concat:" "                     // Concatenation
@@ -345,6 +380,7 @@ $db.text|substr:0:100                   // Substring
 ```
 
 ### Numeric
+
 ```xs
 $db.price|round:2
 $db.price|floor
@@ -354,6 +390,7 @@ $db.price|mul:1.1
 ```
 
 ### Timestamp
+
 ```xs
 $db.created_at|timestamp_year
 $db.created_at|timestamp_month
@@ -362,18 +399,21 @@ $db.created_at|timestamp_subtract_hours:24
 ```
 
 ### Geographic
+
 ```xs
 $db.location|distance:$input.point      // Distance in meters
 $db.location|within:$input.point:1000   // Within radius
 ```
 
 ### Vector (AI/ML)
+
 ```xs
 $db.embedding|cosine_similarity:$input.vector
 $db.embedding|l2_distance_euclidean:$input.vector
 ```
 
 ### Full-Text Search
+
 ```xs
 $db.content|search_rank:$input.query
 ```
