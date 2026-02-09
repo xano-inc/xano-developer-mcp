@@ -15,7 +15,9 @@ import { xanoscriptParser } from "@xano/xanoscript-language-server/parser/parser
 import { getSchemeFromContent } from "@xano/xanoscript-language-server/utils.js";
 import { metaApiDocsToolDefinition, handleMetaApiDocs } from "./meta_api_docs/index.js";
 import { runApiDocsToolDefinition, handleRunApiDocs } from "./run_api_docs/index.js";
+import { cliDocsToolDefinition, handleCliDocs } from "./cli_docs/index.js";
 import type { MetaApiDocsArgs } from "./meta_api_docs/types.js";
+import type { CliDocsArgs } from "./cli_docs/types.js";
 import {
   XANOSCRIPT_DOCS_V2,
   readXanoscriptDocsV2,
@@ -189,6 +191,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       metaApiDocsToolDefinition,
       runApiDocsToolDefinition,
+      cliDocsToolDefinition,
     ],
   };
 });
@@ -406,6 +409,51 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           {
             type: "text",
             text: `Error retrieving Run API documentation: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+
+  if (request.params.name === "cli_docs") {
+    const args = request.params.arguments as {
+      topic?: string;
+      detail_level?: string;
+    } | undefined;
+
+    if (!args?.topic) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Error: 'topic' parameter is required. Use cli_docs with topic='start' for overview.",
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    try {
+      const documentation = handleCliDocs({
+        topic: args.topic,
+        detail_level: args.detail_level as CliDocsArgs["detail_level"],
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: documentation,
+          },
+        ],
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error retrieving CLI documentation: ${errorMessage}`,
           },
         ],
         isError: true,

@@ -30,6 +30,7 @@ This MCP server acts as a bridge between AI models and Xano's developer ecosyste
 
 - **Meta API Documentation** - Programmatically manage Xano workspaces, databases, APIs, functions, and more
 - **Run API Documentation** - Runtime execution, session management, and XanoScript execution
+- **CLI Documentation** - Command-line interface for local development, code sync, and execution
 - **XanoScript Documentation** - Language reference with context-aware docs based on file type
 - **Code Validation** - Syntax checking with the official XanoScript language server
 - **Workflow Guides** - Step-by-step guides for common development tasks
@@ -318,6 +319,48 @@ meta_api_docs({ topic: "api", detail_level: "examples", include_schemas: false }
 meta_api_docs({ topic: "workflows" })
 ```
 
+### 6. `cli_docs`
+
+Get documentation for the Xano CLI. The CLI is **optional but recommended** for local development workflows. Not all users will have it installed.
+
+- **npm:** https://www.npmjs.com/package/@xano/cli
+- **GitHub:** https://github.com/xano-inc/cli
+
+Use this tool to understand CLI commands for local development, code synchronization, and XanoScript execution.
+
+**Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `topic` | string | Yes | Documentation topic to retrieve |
+| `detail_level` | string | No | `overview`, `detailed` (default), or `examples` |
+
+**Available Topics:**
+
+| Topic | Description |
+|-------|-------------|
+| `start` | Getting started with the CLI - installation and setup |
+| `profile` | Profile management - credentials and multi-environment setup |
+| `workspace` | Workspace operations - pull/push code sync |
+| `function` | Function management - list, get, create, edit |
+| `run` | Run API commands - execute code, manage projects/sessions |
+| `static_host` | Static hosting - deploy frontend builds |
+| `integration` | CLI + Meta API integration guide - when to use each |
+
+**Examples:**
+```
+// Get CLI setup guide
+cli_docs({ topic: "start" })
+
+// Learn when to use CLI vs Meta API
+cli_docs({ topic: "integration" })
+
+// Get workspace sync commands
+cli_docs({ topic: "workspace", detail_level: "detailed" })
+
+// Profile management with examples
+cli_docs({ topic: "profile", detail_level: "examples" })
+```
+
 ## MCP Resources
 
 The server also exposes XanoScript documentation as MCP resources for direct access:
@@ -382,6 +425,11 @@ xano-developer-mcp/
 │   │   ├── format.ts                   # Documentation formatter
 │   │   ├── format.test.ts              # Tests for formatter
 │   │   └── topics/                     # Individual topic modules
+│   ├── cli_docs/                       # Xano CLI documentation
+│   │   ├── index.ts                    # CLI docs tool handler
+│   │   ├── types.ts                    # Type definitions
+│   │   ├── format.ts                   # Documentation formatter
+│   │   └── topics/                     # Individual topic modules
 │   └── xanoscript_docs/                # XanoScript language documentation
 │       ├── version.json
 │       ├── README.md
@@ -428,6 +476,8 @@ Xano Developer MCP Server
     ├─► meta_api_docs → Meta API documentation with detail levels
     │
     ├─► run_api_docs → Run API documentation for runtime execution
+    │
+    ├─► cli_docs → CLI documentation for local development workflows
     │
     ├─► mcp_version → Returns server version from package.json
     │
