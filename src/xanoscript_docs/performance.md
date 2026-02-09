@@ -12,7 +12,7 @@ Best practices for building fast, efficient XanoScript applications.
 |------|----------------|
 | Database | Indexes, query optimization, pagination |
 | Caching | Redis, response caching |
-| Loops | Bulk operations, parallel execution |
+| Loops | Bulk operations, efficient iteration |
 | Filters | Efficient data transformations |
 
 ---
@@ -212,34 +212,25 @@ conditional {
 
 ---
 
-## Parallel Execution
+## Organizing with Group
 
-### Use Group for Independent Operations
-
-```xs
-// Execute in parallel
-group {
-  db.query "user" { return = { type: "count" } } as $user_count
-  db.query "order" { return = { type: "count" } } as $order_count
-  db.query "product" { return = { type: "count" } } as $product_count
-}
-
-// All counts available after group completes
-response = {
-  users: $user_count,
-  orders: $order_count,
-  products: $product_count
-}
-```
-
-### Parallel API Calls
+The `group` statement is an organizational block for visually grouping related statements. It does **not** create parallel execution or a new scope — variables declared inside a group are accessible outside it.
 
 ```xs
+// Use group to organize related variable initialization
 group {
-  api.request { url = "https://api1.example.com/data" } as $data1
-  api.request { url = "https://api2.example.com/data" } as $data2
-  api.request { url = "https://api3.example.com/data" } as $data3
+  stack {
+    var $total {
+      value = 0
+    }
+
+    var $count {
+      value = 0
+    }
+  }
 }
+
+// $total and $count are accessible here
 ```
 
 ---
@@ -401,7 +392,7 @@ conditional {
 4. **Avoid N+1 queries** - Use joins or batch fetching
 5. **Use bulk operations** - For batch inserts/updates
 6. **Cache expensive operations** - Redis with appropriate TTL
-7. **Execute in parallel** - Group independent operations
+7. **Use group for organization** - Group related statements for readability
 8. **Filter early** - In database, not application code
 9. **Stream large responses** - Don't load into memory
 10. **Monitor performance** - Log slow operations
