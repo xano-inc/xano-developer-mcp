@@ -516,6 +516,8 @@ security.create_auth_token {
 } as $token
 ```
 
+**Note:** The `extras` parameter is required even if empty (`extras = { }`).
+
 ### Encryption
 ```xs
 # Encrypt

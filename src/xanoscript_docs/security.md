@@ -33,6 +33,17 @@ security.create_auth_token {
 } as $token
 ```
 
+**Note:** The `extras` parameter is required even if you don't need to store additional claims. Use an empty object if no extras are needed:
+
+```xs
+security.create_auth_token {
+  table = "user"
+  id = $user.id
+  extras = { }
+  expiration = 86400
+} as $token
+```
+
 ### Token Verification
 
 ```xs
