@@ -408,7 +408,7 @@ $db.location|within:$input.point:1000   // Within radius
 ### Vector (AI/ML)
 
 ```xs
-$db.embedding|cosine_similarity:$input.vector
+$db.embedding|cosine_distance:$input.vector
 $db.embedding|l2_distance_euclidean:$input.vector
 ```
 

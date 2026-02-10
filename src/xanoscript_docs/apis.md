@@ -116,22 +116,24 @@ query "products" verb=GET {
 
 For complete type and filter reference, use `xanoscript_docs({ topic: "types" })`.
 
-### Empty Input Blocks
+### Empty and Single-Input Blocks
 
-**CRITICAL:** When an endpoint has no input parameters, the input block braces MUST be on separate lines. `input {}` on a single line will cause parsing errors.
+Empty input blocks and single-input blocks can be written as one-liners. When there are two or more inputs, each must be on its own line.
 
 ```xs
-// CORRECT - braces on separate lines
+// OK - empty input
 query "health" verb=GET {
   api_group = "System"
-  input {
-  }
+  input {}
   stack { ... }
   response = { status: "ok" }
 }
 
-// WRONG - causes parsing errors
-input {}
+// OK - single input as one-liner
+input { text query filters=trim }
+
+// WRONG - multiple inputs on one line will cause parsing errors
+input { text query filters=trim int limit }
 ```
 
 ---

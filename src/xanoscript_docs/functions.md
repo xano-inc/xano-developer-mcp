@@ -19,7 +19,9 @@ function "<name>" {
   }
   response = $result
 }
+```
 
+```xs
 // Function with no inputs - IMPORTANT: braces must be on separate lines
 function "<name>" {
   description = "..."
@@ -31,6 +33,7 @@ function "<name>" {
 ```
 
 ### Calling Functions
+
 ```xs
 function.run "<name>" {
   input = { key: value }
@@ -55,7 +58,9 @@ function "calculate_total" {
 ```
 
 ### With Subfolders
+
 Functions can be organized in subfolders:
+
 ```
 functions/
 ├── math/
@@ -82,31 +87,25 @@ input {
 }
 ```
 
-### Empty Input Blocks
+### Empty and Single-Input Blocks
 
-**CRITICAL:** When a function has no input parameters, the input block braces MUST be on separate lines. This is a syntax requirement.
+Empty input blocks and single-input blocks can be written as one-liners. However, when there are two or more inputs, each must be on its own line.
 
 ```xs
-// CORRECT - braces on separate lines
-function "get_all_users" {
-  description = "Returns all users"
-  input {
-  }
-  stack {
-    db.query "user" {} as $users
-  }
-  response = $users
+// OK - empty input as one-liner
+input {}
+
+// OK - single input as one-liner
+input { email email_input? filters=trim|lower }
+
+// OK - multiple inputs on separate lines
+input {
+  email email_input? filters=trim|lower
+  text name
 }
 
-// WRONG - will cause parsing errors
-function "get_all_users" {
-  description = "Returns all users"
-  input {}    // <-- ERROR: braces must be on separate lines
-  stack {
-    db.query "user" {} as $users
-  }
-  response = $users
-}
+// WRONG - multiple inputs on one line will cause parsing errors
+input { email email_input? filters=trim|lower text name }
 ```
 
 ---
@@ -116,6 +115,7 @@ function "get_all_users" {
 Contains the function logic using control flow, variables, and operations.
 
 ### Variables
+
 ```xs
 stack {
   var $counter { value = 0 }
@@ -127,6 +127,7 @@ stack {
 ```
 
 ### Conditionals
+
 ```xs
 stack {
   conditional {
@@ -144,6 +145,7 @@ stack {
 ```
 
 ### Loops
+
 ```xs
 stack {
   // For loop (count-based)
@@ -170,6 +172,7 @@ stack {
 ```
 
 ### Switch
+
 ```xs
 stack {
   switch ($input.status) {
@@ -208,6 +211,7 @@ response = null                      // No return value
 ## Calling Functions
 
 ### Basic Call
+
 ```xs
 function.run "calculate_total" {
   input = { quantity: 5, price: 10.50 }
@@ -215,6 +219,7 @@ function.run "calculate_total" {
 ```
 
 ### With Variables
+
 ```xs
 function.run "process_order" {
   input = {
@@ -226,6 +231,7 @@ function.run "process_order" {
 ```
 
 ### Nested Calls
+
 ```xs
 stack {
   function.run "validate_user" {
@@ -245,6 +251,7 @@ stack {
 ## Complete Examples
 
 ### Utility Function
+
 ```xs
 function "utils/format_currency" {
   description = "Format number as currency string"
@@ -265,6 +272,7 @@ function "utils/format_currency" {
 ```
 
 ### Data Processing
+
 ```xs
 function "process_order" {
   input {
@@ -305,6 +313,7 @@ function "process_order" {
 ```
 
 ### Validation Function
+
 ```xs
 function "validate_email_unique" {
   input {

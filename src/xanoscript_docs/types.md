@@ -60,23 +60,25 @@ input {
 }
 ```
 
-### Empty Input Blocks
+### Empty and Single-Input Blocks
 
-**SYNTAX REQUIREMENT:** When an input block has no parameters, the braces MUST be on separate lines.
-
-**Why:** The XanoScript parser requires whitespace between braces to distinguish empty input blocks from inline objects.
-
-**Impact:** Using `input {}` on a single line will cause:
-- Syntax error during compilation
-- Function/API/tool will fail to deploy
+Empty input blocks and single-input blocks can be written as one-liners. When there are two or more inputs, each must be on its own line.
 
 ```xs
-// CORRECT - braces on separate lines
+// OK - empty input as one-liner
+input {}
+
+// OK - single input as one-liner
+input { email email_input? filters=trim|lower }
+
+// OK - multiple inputs on separate lines
 input {
+  email email_input? filters=trim|lower
+  text name
 }
 
-// WRONG - causes parsing errors
-input {}
+// WRONG - multiple inputs on one line will cause parsing errors
+input { email email_input? filters=trim|lower text name }
 ```
 
 Access inputs in stack: `$input.username`, `$input.age`

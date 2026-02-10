@@ -74,23 +74,25 @@ input {
 }
 ```
 
-### Empty Input Blocks
+### Empty and Single-Input Blocks
 
-**CRITICAL:** When a tool has no input parameters, the input block braces MUST be on separate lines. `input {}` on a single line will cause parsing errors.
+Empty input blocks and single-input blocks can be written as one-liners. When there are two or more inputs, each must be on its own line.
 
 ```xs
-// CORRECT - braces on separate lines
+// OK - empty input
 tool "get_system_status" {
   description = "Get current system status"
   instructions = "Use this to check if the system is healthy"
-  input {
-  }
+  input {}
   stack { ... }
   response = $status
 }
 
-// WRONG - causes parsing errors
-input {}
+// OK - single input as one-liner
+input { text query filters=trim }
+
+// WRONG - multiple inputs on one line will cause parsing errors
+input { text query filters=trim int limit }
 ```
 
 ---
