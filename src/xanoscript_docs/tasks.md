@@ -17,13 +17,14 @@ task "<name>" {
 ```
 
 ### Common Frequencies
-| Interval | Seconds |
-|----------|---------|
-| 1 minute | 60 |
-| 5 minutes | 300 |
-| 1 hour | 3600 |
-| Daily | 86400 |
-| Weekly | 604800 |
+
+| Interval  | Seconds |
+| --------- | ------- |
+| 1 minute  | 60      |
+| 5 minutes | 300     |
+| 1 hour    | 3600    |
+| Daily     | 86400   |
+| Weekly    | 604800  |
 
 ---
 
@@ -57,11 +58,13 @@ task "daily_cleanup" {
 ## Schedule Configuration
 
 ### Single Event
+
 ```xs
 schedule = [{starts_on: 2025-06-15 09:00:00+0000, freq: 86400}]
 ```
 
 ### With End Date
+
 ```xs
 schedule = [{
   starts_on: 2025-01-01 08:00:00+0000,
@@ -71,6 +74,7 @@ schedule = [{
 ```
 
 ### Multiple Schedules
+
 ```xs
 schedule = [
   {starts_on: 2025-01-01 09:00:00+0000, freq: 86400},
@@ -83,6 +87,7 @@ schedule = [
 ## Common Patterns
 
 ### Data Aggregation
+
 ```xs
 task "hourly_stats" {
   description = "Aggregate hourly statistics"
@@ -106,6 +111,7 @@ task "hourly_stats" {
 ```
 
 ### Cleanup Job
+
 ```xs
 task "cleanup_temp_files" {
   description = "Delete temporary files older than 24 hours"
@@ -131,6 +137,7 @@ task "cleanup_temp_files" {
 ```
 
 ### Notification Job
+
 ```xs
 task "daily_digest" {
   description = "Send daily digest emails"
@@ -166,6 +173,7 @@ task "daily_digest" {
 ```
 
 ### External API Sync
+
 ```xs
 task "sync_exchange_rates" {
   description = "Sync currency exchange rates every hour"

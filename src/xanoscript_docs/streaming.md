@@ -8,32 +8,35 @@ Stream data from files, requests, and to API responses.
 
 ## Quick Reference
 
-| Operation | Purpose | Input |
-|-----------|---------|-------|
-| `stream.from_csv` | Parse CSV stream | File or string |
-| `stream.from_jsonl` | Parse JSONL stream | File or string |
-| `stream.from_request` | Stream HTTP request body | Request |
-| `api.stream` | Stream response to client | Data |
+| Operation             | Purpose                   | Input          |
+| --------------------- | ------------------------- | -------------- |
+| `stream.from_csv`     | Parse CSV stream          | File or string |
+| `stream.from_jsonl`   | Parse JSONL stream        | File or string |
+| `stream.from_request` | Stream HTTP request body  | Request        |
+| `api.stream`          | Stream response to client | Data           |
 
 ---
 
 ## stream.from_csv
 
-Parse CSV data as a stream, processing rows one at a time without loading entire file into memory.
+Parse CSV data as a stream. Returns a stream value (like a generator) that is then iterated with `foreach`.
 
 ```xs
 stream.from_csv {
   value = $input.csv_file
-  headers = true
-  delimiter = ","
-  enclosure = "\""
-} as $row {
-  // Process each row
-  db.add "import_record" {
-    data = {
-      name: $row.name,
-      email: $row.email,
-      created_at: now
+  separator = ","
+  enclosure = '"'
+  escape_char = '"'
+} as $stream
+
+foreach ($stream) {
+  each as $row {
+    db.add "import_record" {
+      data = {
+        name: $row.name,
+        email: $row.email,
+        created_at: now
+      }
     }
   }
 }
@@ -41,13 +44,13 @@ stream.from_csv {
 
 ### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `value` | file/text | required | CSV file or string |
-| `headers` | bool | `true` | First row contains headers |
-| `delimiter` | text | `,` | Field delimiter |
-| `enclosure` | text | `"` | Field enclosure character |
-| `escape` | text | `\` | Escape character |
+| Parameter     | Type      | Default  | Description                |
+| ------------- | --------- | -------- | -------------------------- |
+| `value`       | file/text | required | CSV file or string         |
+| `headers`     | bool      | `true`   | First row contains headers |
+| `separator`   | text      | `,`      | Field separator            |
+| `enclosure`   | text      | `"`      | Field enclosure character  |
+| `escape_char` | text      | `"`      | Escape character           |
 
 ### With Custom Headers
 
@@ -55,10 +58,14 @@ stream.from_csv {
 stream.from_csv {
   value = $input.file
   headers = false
-} as $row {
-  // Access by index: $row.0, $row.1, etc.
-  var $name { value = $row.0 }
-  var $email { value = $row.1 }
+} as $stream
+
+foreach ($stream) {
+  each as $row {
+    // Access by index: $row.0, $row.1, etc.
+    var $name { value = $row.0 }
+    var $email { value = $row.1 }
+  }
 }
 ```
 
@@ -66,18 +73,21 @@ stream.from_csv {
 
 ## stream.from_jsonl
 
-Parse JSON Lines (newline-delimited JSON) as a stream.
+Parse JSON Lines (newline-delimited JSON) as a stream. Returns a stream value iterated with `foreach`.
 
 ```xs
 stream.from_jsonl {
   value = $input.jsonl_file
-} as $record {
-  // Each $record is a parsed JSON object
-  db.add "event" {
-    data = {
-      event_type: $record.type,
-      payload: $record.data,
-      timestamp: $record.ts
+} as $stream
+
+foreach ($stream) {
+  each as $record {
+    db.add "event" {
+      data = {
+        event_type: $record.type,
+        payload: $record.data,
+        timestamp: $record.ts
+      }
     }
   }
 }
@@ -85,9 +95,9 @@ stream.from_jsonl {
 
 ### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `value` | file/text | required | JSONL file or string |
+| Parameter | Type      | Default  | Description          |
+| --------- | --------- | -------- | -------------------- |
+| `value`   | file/text | required | JSONL file or string |
 
 ### Example JSONL Format
 
@@ -101,24 +111,27 @@ stream.from_jsonl {
 
 ## stream.from_request
 
-Stream the incoming HTTP request body for large uploads.
+Stream the incoming HTTP request body for large uploads. Returns a stream value iterated with `foreach`.
 
 ```xs
 stream.from_request {
   format = "jsonl"
-} as $record {
-  // Process streamed data
-  db.add "log" { data = $record }
+} as $stream
+
+foreach ($stream) {
+  each as $record {
+    db.add "log" { data = $record }
+  }
 }
 ```
 
 ### Parameters
 
-| Parameter | Type | Options | Description |
-|-----------|------|---------|-------------|
-| `format` | text | `jsonl`, `csv`, `raw` | Body format |
-| `headers` | bool | `true` (csv) | CSV has headers |
-| `delimiter` | text | `,` (csv) | CSV delimiter |
+| Parameter   | Type | Options               | Description     |
+| ----------- | ---- | --------------------- | --------------- |
+| `format`    | text | `jsonl`, `csv`, `raw` | Body format     |
+| `headers`   | bool | `true` (csv)          | CSV has headers |
+| `separator` | text | `,` (csv)             | CSV separator   |
 
 ### Raw Chunks
 
@@ -126,11 +139,14 @@ stream.from_request {
 stream.from_request {
   format = "raw"
   chunk_size = 8192
-} as $chunk {
-  // Process raw bytes
-  storage.append_file {
-    pathname = "uploads/large_file.bin"
-    data = $chunk
+} as $stream
+
+foreach ($stream) {
+  each as $chunk {
+    storage.append_file {
+      pathname = "uploads/large_file.bin"
+      data = $chunk
+    }
   }
 }
 ```
@@ -207,12 +223,12 @@ query "live_updates" {
 
 ### Parameters
 
-| Parameter | Type | Options | Description |
-|-----------|------|---------|-------------|
-| `format` | text | `jsonl`, `csv`, `sse`, `raw` | Stream format |
-| `value` | stream | optional | Data source for jsonl/csv |
-| `headers` | text[] | optional | CSV column headers |
-| `filename` | text | optional | Suggested download filename |
+| Parameter  | Type   | Options                      | Description                 |
+| ---------- | ------ | ---------------------------- | --------------------------- |
+| `format`   | text   | `jsonl`, `csv`, `sse`, `raw` | Stream format               |
+| `value`    | stream | optional                     | Data source for jsonl/csv   |
+| `headers`  | text[] | optional                     | CSV column headers          |
+| `filename` | text   | optional                     | Suggested download filename |
 
 ---
 
@@ -222,31 +238,35 @@ query "live_updates" {
 
 ```xs
 function "import_large_csv" {
-  input {
-    file csv_file
-  }
+  input { file csv_file }
   stack {
     var $processed { value = 0 }
     var $errors { value = [] }
 
     stream.from_csv {
       value = $input.csv_file
-      headers = true
-    } as $row {
-      try_catch {
-        try {
-          db.add "record" {
-            data = {
-              name: $row.name|trim,
-              email: $row.email|trim|lower,
-              created_at: now
+      separator = ","
+      enclosure = '"'
+      escape_char = '"'
+    } as $stream
+
+    foreach ($stream) {
+      each as $row {
+        try_catch {
+          try {
+            db.add "record" {
+              data = {
+                name: $row.name|trim,
+                email: $row.email|trim|lower,
+                created_at: now
+              }
             }
+            math.add $processed { value = 1 }
           }
-          math.add $processed { value = 1 }
-        }
-        catch {
-          var.update $errors {
-            value = $errors|push:{ row: $processed, error: $error.message }
+          catch {
+            var.update $errors {
+              value = $errors|push:{ row: $processed, error: $error.message }
+            }
           }
         }
       }
@@ -260,26 +280,28 @@ function "import_large_csv" {
 
 ```xs
 function "etl_events" {
-  input {
-    file events_file
-  }
+  input { file events_file }
   stack {
     stream.from_jsonl {
       value = $input.events_file
-    } as $event {
-      // Transform
-      var $transformed {
-        value = {
-          event_type: $event.type|to_lower,
-          user_id: $event.user_id|to_int,
-          metadata: $event.data|json_encode,
-          occurred_at: $event.timestamp|to_timestamp
-        }
-      }
+    } as $stream
 
-      // Load
-      db.add "processed_event" {
-        data = $transformed
+    foreach ($stream) {
+      each as $event {
+        // Transform
+        var $transformed {
+          value = {
+            event_type: $event.type|to_lower,
+            user_id: $event.user_id|to_int,
+            metadata: $event.data|json_encode,
+            occurred_at: $event.timestamp|to_timestamp
+          }
+        }
+
+        // Load
+        db.add "processed_event" {
+          data = $transformed
+        }
       }
     }
   }
