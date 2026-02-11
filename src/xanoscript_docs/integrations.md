@@ -506,18 +506,6 @@ security.check_password {
 } as $is_valid
 ```
 
-### Auth Tokens
-```xs
-security.create_auth_token {
-  table = "user"
-  id = $user.id
-  extras = { role: $user.role }
-  expiration = 86400
-} as $token
-```
-
-**Note:** The `extras` parameter is required even if empty (`extras = { }`).
-
 ### Encryption
 ```xs
 # Encrypt
