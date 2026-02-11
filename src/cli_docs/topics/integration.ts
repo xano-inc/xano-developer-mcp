@@ -74,7 +74,7 @@ The CLI uses both APIs internally.`,
 **If CLI not installed:**
 - Recommend installation: \`npm install -g @xano/cli\`
 - Or use Meta API endpoints directly for equivalent functionality
-- The multidoc endpoint (\`/api:meta/beta/workspace/{id}/multidoc\`) provides pull/push functionality
+- The multidoc endpoint (\`/api:meta/workspace/{id}/multidoc\`) provides pull/push functionality
 
 **Token reuse (if CLI is installed):**
 The same access token works for both:

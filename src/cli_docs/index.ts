@@ -12,6 +12,7 @@ import { formatDocumentation } from "./format.js";
 import { startDoc } from "./topics/start.js";
 import { profileDoc } from "./topics/profile.js";
 import { workspaceDoc } from "./topics/workspace.js";
+import { branchDoc } from "./topics/branch.js";
 import { functionDoc } from "./topics/function.js";
 import { runDoc } from "./topics/run.js";
 import { staticHostDoc } from "./topics/static_host.js";
@@ -24,6 +25,7 @@ export const topics: Record<string, TopicDoc> = {
   start: startDoc,
   profile: profileDoc,
   workspace: workspaceDoc,
+  branch: branchDoc,
   function: functionDoc,
   run: runDoc,
   static_host: staticHostDoc,
