@@ -45,19 +45,9 @@ project/
 
 ## Environment Variables
 
-Access with `$env.<name>`. Built-in variables:
+Access with `$env.<name>`. Common built-in variables include `$env.$remote_ip`, `$env.$http_headers`, `$env.$request_method`, `$env.$datasource`, and `$env.$branch`. Custom environment variables are set in the Xano dashboard and accessed as `$env.MY_VAR`.
 
-| Variable                    | Description                   |
-| --------------------------- | ----------------------------- |
-| `$env.$remote_ip`           | Client IP address             |
-| `$env.$http_headers`        | Request headers array         |
-| `$env.$request_uri`         | Request URI                   |
-| `$env.$request_method`      | HTTP method (GET, POST, etc.) |
-| `$env.$request_querystring` | Query string                  |
-| `$env.$datasource`          | Current datasource            |
-| `$env.$branch`              | Current branch                |
-
-Custom environment variables are set in the Xano dashboard and accessed as `$env.MY_VAR`.
+For the complete list of system variables, see `xanoscript_docs({ topic: "syntax" })`.
 
 ## Core Syntax Patterns
 

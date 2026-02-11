@@ -276,16 +276,7 @@ api.request {
 
 ## Rate Limiting
 
-### Protect Endpoints
-
-```xs
-redis.ratelimit {
-  key = "api:" ~ $auth.id
-  max = 100
-  ttl = 60
-  error = "Rate limit exceeded. Try again in 1 minute."
-}
-```
+For basic rate limiting setup, see `xanoscript_docs({ topic: "security" })`. Below are performance-focused patterns.
 
 ### Tiered Limits
 

@@ -74,27 +74,6 @@ input {
 }
 ```
 
-### Empty and Single-Input Blocks
-
-Empty input blocks and single-input blocks can be written as one-liners. When there are two or more inputs, each must be on its own line.
-
-```xs
-// OK - empty input
-tool "get_system_status" {
-  description = "Get current system status"
-  instructions = "Use this to check if the system is healthy"
-  input {}
-  stack { ... }
-  response = $status
-}
-
-// OK - single input as one-liner
-input { text query filters=trim }
-
-// WRONG - multiple inputs on one line will cause parsing errors
-input { text query filters=trim int limit }
-```
-
 ---
 
 ## Tool-Specific Statements
@@ -274,6 +253,8 @@ tool "get_order_with_items" {
 ---
 
 ## Error Handling
+
+For complete error handling reference (preconditions, try-catch, throw, error types), see `xanoscript_docs({ topic: "syntax" })`.
 
 ```xs
 tool "cancel_order" {

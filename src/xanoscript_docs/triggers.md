@@ -43,34 +43,9 @@ input {
 | `action` | enum | The action that triggered: `insert`, `update`, `delete`, or `truncate` |
 | `datasource` | text | The datasource name where the change occurred |
 
-### Agent Trigger Input
+### Agent Trigger Input / MCP Server Trigger Input
 
-```xs
-input {
-  object toolset {
-    schema {
-      int id
-      text name
-      text instructions
-    }
-  }
-
-  object[] tools {
-    schema {
-      int id
-      text name
-      text instructions
-    }
-  }
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `toolset` | object | The toolset configuration with id, name, and instructions |
-| `tools` | object[] | Array of available tools with their id, name, and instructions |
-
-### MCP Server Trigger Input
+Agent triggers and MCP server triggers share the same input schema:
 
 ```xs
 input {
