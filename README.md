@@ -40,7 +40,7 @@ This MCP server acts as a bridge between AI models and Xano's developer ecosyste
 ### Claude Code (Recommended)
 
 ```bash
-claude mcp add xano-developer -- npx -y @xano/developer-mcp
+claude mcp add xano -- npx -y @xano/developer-mcp
 ```
 
 That's it! The MCP server will be automatically installed and configured.
