@@ -50,6 +50,79 @@ When you pull, the CLI splits these into individual \`.xs\` files organized by t
       examples: ["xano workspace:list", "xano workspace:list -p production"]
     },
     {
+      name: "workspace:get",
+      description: "Get details of a specific workspace",
+      usage: "xano workspace:get [workspace_id] [options]",
+      args: [
+        { name: "workspace_id", required: false, description: "Workspace ID (uses profile workspace if not provided)" }
+      ],
+      flags: [
+        { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: [
+        "xano workspace:get 123",
+        "xano workspace:get --output json",
+        "xano workspace:get 456 -p production -o json"
+      ]
+    },
+    {
+      name: "workspace:create",
+      description: "Create a new workspace via the Xano Metadata API",
+      usage: "xano workspace:create --name <name> [options]",
+      flags: [
+        { name: "name", short: "n", type: "string", required: true, description: "Name of the workspace" },
+        { name: "description", short: "d", type: "string", required: false, description: "Description for the workspace" },
+        { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: [
+        'xano workspace:create --name "my-workspace"',
+        'xano workspace:create --name "my-app" --description "My application workspace"',
+        'xano workspace:create -n "new-project" -d "New project workspace" -o json'
+      ]
+    },
+    {
+      name: "workspace:edit",
+      description: "Edit an existing workspace via the Xano Metadata API",
+      usage: "xano workspace:edit [workspace_id] [options]",
+      args: [
+        { name: "workspace_id", required: false, description: "Workspace ID to edit (uses profile workspace if not provided)" }
+      ],
+      flags: [
+        { name: "name", short: "n", type: "string", required: false, description: "New name for the workspace" },
+        { name: "description", short: "d", type: "string", required: false, description: "New description for the workspace" },
+        { name: "swagger", type: "boolean", required: false, description: "Enable or disable swagger documentation (--swagger or --no-swagger)" },
+        { name: "require-token", type: "boolean", required: false, description: "Require token for documentation access (--require-token or --no-require-token)" },
+        { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: [
+        'xano workspace:edit 123 --name "new-name"',
+        'xano workspace:edit --name "updated-workspace" --description "Updated description"',
+        "xano workspace:edit 123 --swagger --require-token",
+        "xano workspace:edit 123 --no-swagger -o json"
+      ]
+    },
+    {
+      name: "workspace:delete",
+      description: "Delete a workspace via the Xano Metadata API. Cannot delete workspaces with active tenants.",
+      usage: "xano workspace:delete <workspace_id> [options]",
+      args: [
+        { name: "workspace_id", required: true, description: "Workspace ID to delete" }
+      ],
+      flags: [
+        { name: "force", short: "f", type: "boolean", required: false, default: "false", description: "Skip confirmation prompt" },
+        { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: [
+        "xano workspace:delete 123",
+        "xano workspace:delete 123 --force",
+        "xano workspace:delete 123 -f -o json"
+      ]
+    },
+    {
       name: "workspace:pull",
       description: "Download workspace code to local directory",
       usage: "xano workspace:pull <directory> [options]",
