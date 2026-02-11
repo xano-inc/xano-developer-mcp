@@ -6,7 +6,7 @@ export const workspaceDoc: TopicDoc = {
   description: `Workspaces are the top-level container for all Xano resources. Each workspace contains databases, APIs, functions, tasks, agents, and more.
 
 ## Key Operations
-- List/get workspaces
+- Create/list/get/update/delete workspaces
 - Export/import workspace data
 - Generate workspace context for AI
 - Get OpenAPI specifications
@@ -16,7 +16,9 @@ export const workspaceDoc: TopicDoc = {
 - Export before making major changes (backup)
 - Check branch before modifying (prod vs dev)
 - \`export-schema\` is lighter than \`export\` (schema only vs full data)
-- OpenAPI spec useful for understanding available endpoints`,
+- OpenAPI spec useful for understanding available endpoints
+- \`deleteWorkspace\` requires user confirmation - workspaces with active tenants cannot be deleted
+- Workspace creation is limited by the package tier`,
 
   endpoints: [
     {
@@ -39,6 +41,38 @@ export const workspaceDoc: TopicDoc = {
       description: "Get details of a specific workspace.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
+      ]
+    },
+    {
+      method: "POST",
+      path: "/workspace",
+      tool_name: "addWorkspace",
+      description: "Create a new workspace. Respects the instance workspace limit based on the package tier.",
+      parameters: [
+        { name: "name", type: "string", required: true, description: "Name of the workspace" },
+        { name: "description", type: "string", description: "Description for the workspace" }
+      ]
+    },
+    {
+      method: "PUT",
+      path: "/workspace/{workspace_id}",
+      tool_name: "updateWorkspace",
+      description: "Update an existing workspace's settings.",
+      parameters: [
+        { name: "workspace_id", type: "integer", required: true, in: "path", description: "ID of the workspace to update" },
+        { name: "name", type: "string", description: "New name for the workspace" },
+        { name: "description", type: "string", description: "New description for the workspace" },
+        { name: "swagger", type: "boolean", description: "Enable or disable swagger documentation" },
+        { name: "documentation.require_token", type: "boolean", description: "Whether to require a token for documentation access" }
+      ]
+    },
+    {
+      method: "DELETE",
+      path: "/workspace/{workspace_id}",
+      tool_name: "deleteWorkspace",
+      description: "Delete a workspace and all its data permanently. Cannot delete a workspace that has active tenants.",
+      parameters: [
+        { name: "workspace_id", type: "integer", required: true, in: "path", description: "ID of the workspace to delete" }
       ]
     },
     {
@@ -149,6 +183,15 @@ export const workspaceDoc: TopicDoc = {
         id: { type: "integer", description: "Unique workspace ID" },
         name: { type: "string", description: "Workspace name" },
         description: { type: "string", description: "Workspace description" },
+        swagger: { type: "boolean", description: "Whether swagger documentation is enabled" },
+        documentation: {
+          type: "object",
+          properties: {
+            link: { type: "string", description: "Link to the documentation" },
+            require_token: { type: "boolean", description: "Whether a token is required for documentation access" }
+          }
+        },
+        branch: { type: "string", description: "Current branch label" },
         created_at: { type: "string", format: "date-time" },
         updated_at: { type: "string", format: "date-time" }
       }
