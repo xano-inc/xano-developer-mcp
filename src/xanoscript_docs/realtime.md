@@ -261,54 +261,7 @@ api.realtime_event {
 
 ## Realtime Triggers
 
-Handle events from connected clients.
-
-### Basic Realtime Trigger
-
-```xs
-realtime_trigger "on_presence" {
-  channel = "room:*"
-  event = "join"
-  stack {
-    // $input contains event data
-    // $channel contains matched channel
-    db.add "presence" {
-      data = {
-        user_id: $auth.id,
-        room_id: $input.room_id,
-        joined_at: now
-      }
-    }
-
-    // Notify room members
-    api.realtime_event {
-      channel = $channel
-      event = "user_joined"
-      data = { user_id: $auth.id }
-    }
-  }
-}
-```
-
-### Channel Pattern Matching
-
-```xs
-realtime_trigger "document_cursor" {
-  channel = "document:*"               // Wildcard match
-  event = "cursor_move"
-  stack {
-    // Broadcast cursor position to other viewers
-    api.realtime_event {
-      channel = $channel
-      event = "cursor_update"
-      data = {
-        user_id: $auth.id,
-        position: $input.position
-      }
-    }
-  }
-}
-```
+Handle events from connected clients using `realtime_trigger`. For complete trigger syntax, input schemas, and configuration options, see `xanoscript_docs({ topic: "triggers" })`.
 
 ---
 

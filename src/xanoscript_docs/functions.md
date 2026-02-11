@@ -87,27 +87,6 @@ input {
 }
 ```
 
-### Empty and Single-Input Blocks
-
-Empty input blocks and single-input blocks can be written as one-liners. However, when there are two or more inputs, each must be on its own line.
-
-```xs
-// OK - empty input as one-liner
-input {}
-
-// OK - single input as one-liner
-input { email email_input? filters=trim|lower }
-
-// OK - multiple inputs on separate lines
-input {
-  email email_input? filters=trim|lower
-  text name
-}
-
-// WRONG - multiple inputs on one line will cause parsing errors
-input { email email_input? filters=trim|lower text name }
-```
-
 ---
 
 ## Stack Block
