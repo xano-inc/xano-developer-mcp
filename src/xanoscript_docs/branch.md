@@ -222,10 +222,11 @@ Branch configuration files are typically named `branch.xs` and placed at the wor
 
 ```
 project/
-├── branch.xs              // Branch configuration
-├── tables/
-├── functions/
-└── apis/
+├── branch.xs              # Branch configuration
+├── workspace/
+├── table/
+├── function/
+└── api/
 ```
 
 ---

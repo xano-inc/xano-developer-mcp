@@ -4,44 +4,80 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 
 ## Quick Reference
 
-| Construct          | File Location         | Purpose                       |
-| ------------------ | --------------------- | ----------------------------- |
-| `table`            | `tables/*.xs`         | Database schema definition    |
-| `function`         | `functions/**/*.xs`   | Reusable logic blocks         |
-| `query`            | `apis/<group>/*.xs`   | HTTP API endpoints            |
-| `task`             | `tasks/*.xs`          | Scheduled/cron jobs           |
-| `*_trigger`        | `triggers/**/*.xs`    | Event-driven handlers         |
-| `agent`            | `agents/**/*.xs`      | AI-powered agents             |
-| `tool`             | `tools/**/*.xs`       | Tools for AI agents           |
-| `mcp_server`       | `mcp_servers/**/*.xs` | MCP server definitions        |
-| `addon`            | `addons/*.xs`         | Subqueries for related data   |
-| `middleware`       | `middleware/**/*.xs`  | Request/response interceptors |
-| `branch`           | `branch.xs`           | Branch-level configuration    |
-| `workspace`        | `workspace.xs`        | Workspace-level configuration |
-| `realtime_channel` | Configuration         | Realtime channel settings     |
+| Construct           | File Location                        | Purpose                       |
+| ------------------- | ------------------------------------ | ----------------------------- |
+| `workspace`         | `workspace/{name}.xs`                | Workspace-level configuration |
+| `workspace_trigger` | `workspace/trigger/{name}.xs`        | Workspace event handlers      |
+| `table`             | `table/{name}.xs`                    | Database schema definition    |
+| `table_trigger`     | `table/trigger/{name}.xs`            | Table event handlers          |
+| `api_group`         | `api/{group}/api_group.xs`           | API group definition          |
+| `query`             | `api/{group}/{endpoint}_{verb}.xs`   | HTTP API endpoints            |
+| `function`          | `function/{name}.xs`                 | Reusable logic blocks         |
+| `task`              | `task/{name}.xs`                     | Scheduled/cron jobs           |
+| `agent`             | `agent/{name}.xs`                    | AI-powered agents             |
+| `agent_trigger`     | `agent/trigger/{name}.xs`            | Agent event handlers          |
+| `tool`              | `tool/{name}.xs`                     | Tools for AI agents           |
+| `mcp_server`        | `mcp_server/{name}.xs`               | MCP server definitions        |
+| `mcp_server_trigger`| `mcp_server/trigger/{name}.xs`       | MCP server event handlers     |
+| `addon`             | `addon/{name}.xs`                    | Subqueries for related data   |
+| `middleware`        | `middleware/{name}.xs`               | Request/response interceptors |
+| `branch`            | `branch.xs`                          | Branch-level configuration    |
+| `realtime_channel`  | Configuration                        | Realtime channel settings     |
+
+**Naming convention:** All folder and file names use `snake_case` (e.g., `user_profile.xs`, `get_all_users_get.xs`).
 
 **Important:** Each `.xs` file must contain exactly one definition. You cannot define multiple tables, functions, queries, or other constructs in a single file.
 
 ## Workspace Structure
 
+After pulling from Xano, files are organized using `snake_case` naming:
+
 ```
 project/
-├── workspace.xs         // Workspace configuration (env vars, preferences)
-├── branch.xs            // Branch configuration (middleware, history)
-├── tables/              // Database table schemas
-├── functions/           // Reusable functions (supports subfolders)
-├── apis/
-│   └── <api-group>/     // API endpoints grouped by domain
-├── tasks/               // Scheduled jobs
-├── triggers/            // Event-driven handlers
-├── agents/              // AI agents
-├── tools/               // AI tools
-├── mcp_servers/         // MCP server definitions
-├── middleware/          // Request/response interceptors
-├── addons/              // Query addons
-├── static/              // Frontend files (HTML, CSS, JS)
-└── run/                 // Job and service configurations
+├── branch.xs                        # Branch configuration
+├── workspace/
+│   ├── my_workspace.xs              # Workspace configuration
+│   └── trigger/
+│       └── on_deploy.xs             # Workspace triggers
+├── api/
+│   └── users/                       # API group folder
+│       ├── api_group.xs             # API group definition
+│       ├── get_all_get.xs           # GET /users
+│       ├── get_one_get.xs           # GET /users/:id
+│       ├── create_post.xs           # POST /users
+│       └── nested/
+│           └── profile_get.xs       # Nested endpoint: GET /users/nested/profile
+├── function/
+│   └── validate_token.xs            # Reusable functions
+├── task/
+│   └── daily_cleanup.xs             # Scheduled jobs
+├── table/
+│   ├── users.xs                     # Table schema
+│   └── trigger/
+│       └── on_user_create.xs        # Table triggers
+├── agent/
+│   ├── support_bot.xs               # AI agents
+│   └── trigger/
+│       └── on_message.xs            # Agent triggers
+├── tool/
+│   └── search_docs.xs               # AI tools
+├── mcp_server/
+│   ├── my_server.xs                 # MCP server definitions
+│   └── trigger/
+│       └── on_connect.xs            # MCP server triggers
+├── middleware/
+│   └── auth_check.xs                # Request/response interceptors
+├── addon/
+│   └── user_posts.xs                # Query addons
+├── static/                          # Frontend files (HTML, CSS, JS)
+└── run/                             # Job and service configurations
 ```
+
+**Key conventions:**
+- All folders and files use `snake_case` naming
+- API endpoints include the HTTP verb suffix (e.g., `create_post.xs`, `get_one_get.xs`)
+- Triggers are nested under `{type}/trigger/` folders
+- Nested API paths become nested folders (e.g., `/users/nested/profile` → `api/users/nested/profile_get.xs`)
 
 ## Environment Variables
 
@@ -100,7 +136,7 @@ Documentation files use frontmatter to specify which file patterns they apply to
 
 ```markdown
 ---
-applyTo: "functions/**/*.xs"
+applyTo: "function/**/*.xs"
 ---
 ```
 

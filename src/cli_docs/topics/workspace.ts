@@ -19,17 +19,60 @@ function: refresh_token
 ...
 \`\`\`
 
-When you pull, the CLI splits these into individual \`.xs\` files organized by type.`,
+When you pull, the CLI splits these into individual \`.xs\` files organized by type.
+
+## Directory Structure
+
+After \`workspace:pull\`, files are organized using snake_case naming:
+
+\`\`\`
+./xano-code/
+├── workspace/
+│   ├── my_workspace.xs           # Workspace configuration
+│   └── trigger/
+│       └── on_deploy.xs          # Workspace triggers
+├── api/
+│   └── users/                    # API group folder (snake_case)
+│       ├── api_group.xs          # API group definition
+│       ├── get_all.xs            # GET /users
+│       ├── get_one_get.xs        # GET /users/:id
+│       ├── create_post.xs        # POST /users
+│       └── nested/
+│           └── profile_get.xs    # GET /users/nested/profile
+├── function/
+│   └── validate_token.xs         # Reusable functions
+├── task/
+│   └── daily_cleanup.xs          # Scheduled tasks
+├── table/
+│   ├── users.xs                  # Table schema
+│   └── trigger/
+│       └── on_user_create.xs     # Table triggers
+├── agent/
+│   ├── support_bot.xs            # AI agents
+│   └── trigger/
+│       └── on_message.xs         # Agent triggers
+└── mcp_server/
+    ├── my_server.xs              # MCP server definitions
+    └── trigger/
+        └── on_connect.xs         # MCP server triggers
+\`\`\``,
 
   ai_hints: `**Key concepts:**
 - \`pull\` downloads workspace code and splits into organized .xs files
 - \`push\` combines .xs files and uploads to Xano
-- Files are organized by type: functions/, apis/, tasks/, etc.
+- Files use snake_case naming for folders and filenames
+- API endpoints are nested under their API group folder
 
 **Typical workflow:**
 1. \`xano workspace:pull ./xano-code\` - download
-2. Edit .xs files with your editor/IDE
-3. \`xano workspace:push ./xano-code\` - deploy
+2. Navigate to \`api/{group}/\` for API endpoints, \`function/\` for functions, etc.
+3. Edit .xs files with your editor/IDE
+4. \`xano workspace:push ./xano-code\` - deploy
+
+**File naming:**
+- All folders and files use snake_case (e.g., \`my_function.xs\`, \`user_profile/\`)
+- API endpoints include verb suffix (e.g., \`create_post.xs\`, \`get_one_get.xs\`)
+- Triggers are nested under \`{type}/trigger/\` folders
 
 **Version control:**
 - The pulled directory structure is git-friendly
@@ -165,13 +208,14 @@ When you pull, the CLI splits these into individual \`.xs\` files organized by t
       description: "Edit Xano code locally with your preferred tools",
       steps: [
         "Pull workspace: `xano workspace:pull ./code`",
-        "Edit .xs files in your IDE",
+        "Navigate to organized folders: `api/{group}/`, `function/`, `table/`, etc.",
+        "Edit .xs files in your IDE (files use snake_case naming)",
         "Validate changes: Use xanoscript_docs MCP tool",
         "Push changes: `xano workspace:push ./code`",
         "Test in Xano dashboard or via API"
       ],
       example: `xano workspace:pull ./my-app
-# Edit files...
+# Files organized: api/users/create_post.xs, function/validate_token.xs, etc.
 xano workspace:push ./my-app`
     },
     {

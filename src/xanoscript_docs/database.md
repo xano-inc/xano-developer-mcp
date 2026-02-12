@@ -1,5 +1,5 @@
 ---
-applyTo: "functions/**/*.xs, apis/**/*.xs, tasks/*.xs, tools/**/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs, task/**/*.xs, tool/**/*.xs"
 ---
 
 # Database Operations

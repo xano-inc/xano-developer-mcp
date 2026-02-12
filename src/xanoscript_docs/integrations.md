@@ -1,5 +1,5 @@
 ---
-applyTo: "functions/**/*.xs, apis/**/*.xs, tasks/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs, task/**/*.xs"
 ---
 
 # Integrations

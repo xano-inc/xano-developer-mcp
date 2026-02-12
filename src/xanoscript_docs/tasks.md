@@ -1,5 +1,5 @@
 ---
-applyTo: "tasks/*.xs"
+applyTo: "task/**/*.xs"
 ---
 
 # Tasks

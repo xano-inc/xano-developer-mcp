@@ -1,5 +1,5 @@
 ---
-applyTo: "triggers/**/*.xs"
+applyTo: "*/trigger/**/*.xs"
 ---
 
 # Triggers

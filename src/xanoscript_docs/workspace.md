@@ -175,11 +175,12 @@ Workspace configuration is stored in `workspace.xs` at the root of your project.
 
 ```
 project/
-├── workspace.xs           // Workspace configuration
-├── branch.xs              // Branch configuration
-├── tables/
-├── functions/
-└── apis/
+├── branch.xs              # Branch configuration
+├── workspace/
+│   └── my_workspace.xs    # Workspace configuration
+├── table/
+├── function/
+└── api/
 ```
 
 ---

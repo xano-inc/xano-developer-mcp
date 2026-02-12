@@ -1,5 +1,5 @@
 ---
-applyTo: "functions/**/*.xs"
+applyTo: "function/**/*.xs"
 ---
 
 # Functions
@@ -62,7 +62,7 @@ function "calculate_total" {
 Functions can be organized in subfolders:
 
 ```
-functions/
+function/
 ├── math/
 │   ├── add.xs
 │   └── multiply.xs

@@ -1,5 +1,5 @@
 ---
-applyTo: "agents/**/*.xs"
+applyTo: "agent/**/*.xs"
 ---
 
 # Agents
@@ -186,7 +186,7 @@ agent "Classifier" {
 
 ## Tools
 
-Reference tools by name from `tools/` directory:
+Reference tools by name from `tool/` directory:
 
 ```xs
 tools = [

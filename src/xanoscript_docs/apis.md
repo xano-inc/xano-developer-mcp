@@ -1,5 +1,5 @@
 ---
-applyTo: "apis/**/*.xs"
+applyTo: "api/**/*.xs"
 ---
 
 # APIs
@@ -77,15 +77,17 @@ api_group Authentication {
 ### File Structure
 
 ```
-apis/
+api/
 ├── users/
-│   ├── api_group.xs            // Defines group (canonical = "myapp-users")
-│   ├── list.xs                 // GET /myapp-users/list
-│   └── by-id.xs                // GET/PATCH/DELETE /myapp-users/{id}
+│   ├── api_group.xs            # Defines group (canonical = "myapp-users")
+│   ├── list_get.xs             # GET /myapp-users/list
+│   └── by_id_get.xs            # GET /myapp-users/{id}
 └── products/
-    ├── api_group.xs            // Defines group (canonical = "myapp-products")
-    └── search.xs               // GET /myapp-products/search
+    ├── api_group.xs            # Defines group (canonical = "myapp-products")
+    └── search_get.xs           # GET /myapp-products/search
 ```
+
+**Naming convention:** Endpoint files use `{name}_{verb}.xs` format (e.g., `list_get.xs`, `create_post.xs`).
 
 Full URL: `/<canonical>/<query name>` (e.g., `/myapp-users/profile`)
 

@@ -1,5 +1,5 @@
 ---
-applyTo: "functions/**/*.xs, apis/**/*.xs, triggers/**/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs, */trigger/**/*.xs"
 ---
 
 # Realtime

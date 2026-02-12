@@ -1,5 +1,5 @@
 ---
-applyTo: "tools/**/*.xs"
+applyTo: "tool/**/*.xs"
 ---
 
 # Tools

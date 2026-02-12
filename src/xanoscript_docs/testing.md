@@ -1,5 +1,5 @@
 ---
-applyTo: "functions/**/*.xs, apis/**/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs"
 ---
 
 # Testing

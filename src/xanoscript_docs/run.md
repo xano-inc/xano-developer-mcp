@@ -16,9 +16,9 @@ Define job and service configurations for the Xano Job Runner.
 ### Directory Structure
 ```
 run.xs
-tables/
-functions/
-apis/
+table/
+function/
+api/
 ```
 
 ---
@@ -216,9 +216,9 @@ function "process_data" {
 
 ```
 run.xs
-tables/
+table/
 └── users.xs
-functions/
+function/
 └── migrate_users.xs
 ```
 
@@ -235,7 +235,7 @@ run.job "Data Migration" {
 }
 ```
 
-### tables/users.xs
+### table/users.xs
 ```xs
 table users {
   auth = false
@@ -255,7 +255,7 @@ table users {
 }
 ```
 
-### functions/migrate_users.xs
+### function/migrate_users.xs
 ```xs
 function "migrate_users" {
   input {
@@ -287,12 +287,13 @@ function "migrate_users" {
 
 ```
 run.xs
-tables/
+table/
 └── event.xs
-apis/
-├── api_group.xs
-├── list.xs
-└── add.xs
+api/
+└── events/
+    ├── api_group.xs
+    ├── list_get.xs
+    └── add_post.xs
 ```
 
 ### run.xs
@@ -306,7 +307,7 @@ run.service "Event Tracker" {
 }
 ```
 
-### tables/event.xs
+### table/event.xs
 ```xs
 table event {
   auth = false
@@ -322,7 +323,7 @@ table event {
 }
 ```
 
-### apis/list.xs
+### api/events/list_get.xs
 ```xs
 query list verb=GET {
   api_group = "events"

@@ -1,5 +1,5 @@
 ---
-applyTo: "mcp_servers/**/*.xs"
+applyTo: "mcp_server/**/*.xs"
 ---
 
 # MCP Servers
@@ -52,7 +52,7 @@ mcp_server "Customer Support" {
 
 ## Tools Block
 
-Reference tools from `tools/` directory by name:
+Reference tools from `tool/` directory by name:
 
 ```xs
 tools = [
@@ -62,7 +62,7 @@ tools = [
 ]
 ```
 
-Tool names must exactly match `.xs` file names in `tools/`.
+Tool names must exactly match `.xs` file names in `tool/`.
 
 ---
 
@@ -146,19 +146,19 @@ mcp_server "CRM" {
 
 ### By Domain
 ```
-mcp_servers/
-├── support.xs          // Customer support tools
-├── ecommerce.xs        // Store management
-├── analytics.xs        // Reporting and metrics
-└── admin.xs            // Administrative functions
+mcp_server/
+├── support.xs          # Customer support tools
+├── ecommerce.xs        # Store management
+├── analytics.xs        # Reporting and metrics
+└── admin.xs            # Administrative functions
 ```
 
 ### By Access Level
 ```
-mcp_servers/
-├── public.xs           // Public-facing tools
-├── authenticated.xs    // Requires auth
-└── admin.xs            // Admin-only tools
+mcp_server/
+├── public.xs           # Public-facing tools
+├── authenticated.xs    # Requires auth
+└── admin.xs            # Admin-only tools
 ```
 
 ---

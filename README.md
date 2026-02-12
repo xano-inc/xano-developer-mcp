@@ -198,7 +198,7 @@ console.log(overview.documentation);
 const syntaxDocs = xanoscriptDocs({ topic: 'syntax' });
 
 // Get context-aware docs for a file path
-const apiDocs = xanoscriptDocs({ file_path: 'apis/users/create.xs' });
+const apiDocs = xanoscriptDocs({ file_path: 'api/users/create_post.xs' });
 
 // Get compact quick reference
 const quickRef = xanoscriptDocs({ topic: 'database', mode: 'quick_reference' });
@@ -326,7 +326,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `topic` | string | No | Specific documentation topic to retrieve |
-| `file_path` | string | No | File path being edited for context-aware docs (e.g., `apis/users/create.xs`) |
+| `file_path` | string | No | File path being edited for context-aware docs (e.g., `api/users/create_post.xs`) |
 | `mode` | string | No | `full` (default) or `quick_reference` for compact syntax cheatsheet |
 
 **Available Topics:**
@@ -366,7 +366,7 @@ xanoscript_docs()
 xanoscript_docs({ topic: "functions" })
 
 // Context-aware: get all docs relevant to file being edited
-xanoscript_docs({ file_path: "apis/users/create.xs" })
+xanoscript_docs({ file_path: "api/users/create_post.xs" })
 
 // Compact quick reference (uses less context)
 xanoscript_docs({ topic: "database", mode: "quick_reference" })
@@ -667,7 +667,7 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
 - Markdown files for XanoScript language reference
 - Configured in `src/index.ts` via `XANOSCRIPT_DOCS_V2` with:
   - **file**: The markdown file containing the documentation
-  - **applyTo**: Glob patterns for context-aware matching (e.g., `apis/**/*.xs`)
+  - **applyTo**: Glob patterns for context-aware matching (e.g., `api/**/*.xs`)
   - **description**: Human-readable description of the topic
 
 **Meta API Documentation** (`src/meta_api_docs/`):

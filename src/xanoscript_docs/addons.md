@@ -1,5 +1,5 @@
 ---
-applyTo: "addons/*.xs, functions/**/*.xs, apis/**/*.xs"
+applyTo: "addon/**/*.xs, function/**/*.xs, api/**/*.xs"
 ---
 
 # Addons
@@ -231,7 +231,7 @@ db.query product {
 ### File Structure
 
 ```
-addons/
+addon/
 ├── comment_count.xs
 ├── like_count.xs
 ├── author_details.xs
