@@ -15,7 +15,7 @@
 
 </div>
 
-An MCP server that gives AI assistants superpowers for developing on [Xano](https://xano.com) — complete with documentation, code validation, and workflow guides.
+An MCP server and standalone library that gives AI assistants superpowers for developing on [Xano](https://xano.com) — complete with documentation, code validation, and workflow guides. Use it as an MCP server or import the tools directly in your own applications.
 
 > 💡 **What's Xano?** The fastest way to build a scalable backend for your app — no code required. Build APIs, manage databases, and deploy instantly.
 
@@ -143,6 +143,159 @@ claude mcp add xano-developer node /path/to/xano-developer-mcp/dist/index.js
     }
   }
 }
+```
+
+## Library Usage
+
+In addition to using this package as an MCP server, you can import and use the tools directly in your own applications.
+
+### Installation
+
+```bash
+npm install @xano/developer-mcp
+```
+
+### Importing Tools
+
+```typescript
+import {
+  validateXanoscript,
+  xanoscriptDocs,
+  metaApiDocs,
+  runApiDocs,
+  cliDocs,
+  mcpVersion
+} from '@xano/developer-mcp';
+```
+
+### Validate XanoScript Code
+
+```typescript
+import { validateXanoscript } from '@xano/developer-mcp';
+
+const result = validateXanoscript({ code: 'var:result = 1 + 2' });
+
+if (result.valid) {
+  console.log('Code is valid!');
+} else {
+  console.log('Validation errors:');
+  result.errors.forEach(error => {
+    console.log(`  Line ${error.range.start.line + 1}: ${error.message}`);
+  });
+}
+```
+
+### Get XanoScript Documentation
+
+```typescript
+import { xanoscriptDocs } from '@xano/developer-mcp';
+
+// Get overview (README)
+const overview = xanoscriptDocs();
+console.log(overview.documentation);
+
+// Get specific topic
+const syntaxDocs = xanoscriptDocs({ topic: 'syntax' });
+
+// Get context-aware docs for a file path
+const apiDocs = xanoscriptDocs({ file_path: 'apis/users/create.xs' });
+
+// Get compact quick reference
+const quickRef = xanoscriptDocs({ topic: 'database', mode: 'quick_reference' });
+```
+
+### Get Meta API Documentation
+
+```typescript
+import { metaApiDocs } from '@xano/developer-mcp';
+
+// Get overview
+const overview = metaApiDocs({ topic: 'start' });
+
+// Get detailed documentation with examples
+const workspaceDocs = metaApiDocs({
+  topic: 'workspace',
+  detail_level: 'examples',
+  include_schemas: true
+});
+
+console.log(workspaceDocs.documentation);
+```
+
+### Get Run API Documentation
+
+```typescript
+import { runApiDocs } from '@xano/developer-mcp';
+
+const sessionDocs = runApiDocs({
+  topic: 'session',
+  detail_level: 'detailed'
+});
+
+console.log(sessionDocs.documentation);
+```
+
+### Get CLI Documentation
+
+```typescript
+import { cliDocs } from '@xano/developer-mcp';
+
+const cliSetup = cliDocs({ topic: 'start' });
+console.log(cliSetup.documentation);
+```
+
+### Get Package Version
+
+```typescript
+import { mcpVersion } from '@xano/developer-mcp';
+
+const { version } = mcpVersion();
+console.log(`Using version ${version}`);
+```
+
+### Available Exports
+
+| Export | Description |
+|--------|-------------|
+| `validateXanoscript` | Validate XanoScript code and get detailed error information |
+| `xanoscriptDocs` | Get XanoScript language documentation |
+| `metaApiDocs` | Get Meta API documentation |
+| `runApiDocs` | Get Run API documentation |
+| `cliDocs` | Get CLI documentation |
+| `mcpVersion` | Get the package version |
+| `toolDefinitions` | MCP tool definitions (for building custom MCP servers) |
+| `handleTool` | Tool dispatcher function (for building custom MCP servers) |
+
+### TypeScript Support
+
+Full TypeScript support with exported types:
+
+```typescript
+import type {
+  ValidateXanoscriptArgs,
+  ValidationResult,
+  ParserDiagnostic,
+  XanoscriptDocsArgs,
+  MetaApiDocsArgs,
+  RunApiDocsArgs,
+  CliDocsArgs,
+  ToolResult
+} from '@xano/developer-mcp';
+```
+
+### Package Entry Points
+
+The package provides multiple entry points:
+
+```typescript
+// Main library entry (recommended)
+import { validateXanoscript } from '@xano/developer-mcp';
+
+// Tools module directly
+import { validateXanoscript } from '@xano/developer-mcp/tools';
+
+// Server module (for extending the MCP server)
+import '@xano/developer-mcp/server';
 ```
 
 ## Available Tools
@@ -407,12 +560,22 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 ```
 xano-developer-mcp/
 ├── src/
-│   ├── index.ts                        # Main MCP server implementation
+│   ├── index.ts                        # MCP server entry point
+│   ├── lib.ts                          # Library entry point (for npm imports)
 │   ├── xanoscript.ts                   # XanoScript documentation logic
 │   ├── xanoscript.test.ts              # Tests for xanoscript module
 │   ├── xanoscript-language-server.d.ts # TypeScript declarations
+│   ├── tools/                          # Standalone tool modules
+│   │   ├── index.ts                    # Unified tool exports
+│   │   ├── types.ts                    # Common types (ToolResult)
+│   │   ├── validate_xanoscript.ts      # XanoScript validation tool
+│   │   ├── xanoscript_docs.ts          # XanoScript docs tool
+│   │   ├── mcp_version.ts              # Version tool
+│   │   ├── meta_api_docs.ts            # Meta API docs tool wrapper
+│   │   ├── run_api_docs.ts             # Run API docs tool wrapper
+│   │   └── cli_docs.ts                 # CLI docs tool wrapper
 │   ├── meta_api_docs/                  # Meta API documentation
-│   │   ├── index.ts                    # API docs tool handler
+│   │   ├── index.ts                    # API docs handler
 │   │   ├── index.test.ts               # Tests for index
 │   │   ├── types.ts                    # Type definitions
 │   │   ├── types.test.ts               # Tests for types
@@ -420,13 +583,13 @@ xano-developer-mcp/
 │   │   ├── format.test.ts              # Tests for formatter
 │   │   └── topics/                     # Individual topic modules
 │   ├── run_api_docs/                   # Run API documentation
-│   │   ├── index.ts                    # Run API tool handler
+│   │   ├── index.ts                    # Run API handler
 │   │   ├── index.test.ts               # Tests for index
 │   │   ├── format.ts                   # Documentation formatter
 │   │   ├── format.test.ts              # Tests for formatter
 │   │   └── topics/                     # Individual topic modules
 │   ├── cli_docs/                       # Xano CLI documentation
-│   │   ├── index.ts                    # CLI docs tool handler
+│   │   ├── index.ts                    # CLI docs handler
 │   │   ├── types.ts                    # Type definitions
 │   │   ├── format.ts                   # Documentation formatter
 │   │   └── topics/                     # Individual topic modules
@@ -486,7 +649,7 @@ Xano Developer MCP Server
 
 ## Authentication
 
-The MCP server itself does not require authentication. However, when using the documented APIs to interact with actual Xano services, you will need appropriate Xano Headless API credentials.
+The MCP server and library functions do not require authentication. However, when using the documented APIs (Meta API, Run API) to interact with actual Xano services, you will need appropriate Xano API credentials. See the `meta_api_docs` and `run_api_docs` tools for authentication details.
 
 ## Development
 

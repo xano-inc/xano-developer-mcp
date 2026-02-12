@@ -1,9 +1,28 @@
 {
   "name": "@xano/developer-mcp",
   "version": "1.0.31",
-  "description": "MCP server for Xano Headless API documentation and XanoScript code validation",
+  "description": "MCP server and library for Xano development - XanoScript validation, Meta API, Run API, and CLI documentation",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/lib.js",
+  "module": "dist/lib.js",
+  "types": "dist/lib.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "import": "./dist/lib.js",
+      "default": "./dist/lib.js"
+    },
+    "./server": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./tools": {
+      "types": "./dist/tools/index.d.ts",
+      "import": "./dist/tools/index.js",
+      "default": "./dist/tools/index.js"
+    }
+  },
   "bin": {
     "xano-developer-mcp": "./dist/index.js"
   },
