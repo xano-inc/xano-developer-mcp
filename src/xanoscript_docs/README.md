@@ -142,18 +142,35 @@ applyTo: "function/**/*.xs"
 
 This helps AI tools apply the correct documentation based on the file being edited.
 
+## Getting Started
+
+For common patterns and quick examples, use:
+```
+xanoscript_docs({ topic: "quickstart" })
+```
+
+This includes:
+- Variable declaration patterns
+- Conditional logic (if/elseif/else)
+- API requests with error handling
+- Database CRUD operations
+- Common mistakes to avoid
+
+---
+
 ## Documentation Index
 
 Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
 ### Core Language
 
-| Topic       | Description                                       |
-| ----------- | ------------------------------------------------- |
-| `syntax`    | Expressions, operators, filters, system variables |
-| `types`     | Data types, validation, input blocks              |
-| `functions` | Reusable function stacks, async, loops            |
-| `schema`    | Runtime schema parsing and validation             |
+| Topic        | Description                                          |
+| ------------ | ---------------------------------------------------- |
+| `quickstart` | Common patterns, quick examples, mistakes to avoid   |
+| `syntax`     | Expressions, operators, filters, system variables    |
+| `types`      | Data types, validation, input blocks                 |
+| `functions`  | Reusable function stacks, async, loops               |
+| `schema`     | Runtime schema parsing and validation                |
 
 ### Data
 
@@ -210,3 +227,47 @@ Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 | ------------- | ------------------------------------------------------------ |
 | `performance` | Performance optimization best practices                      |
 | `security`    | Security best practices for authentication and authorization |
+
+---
+
+## Example Implementations
+
+Common integration patterns you can reference:
+
+### External API Integrations
+- **OpenAI/ChatGPT**: Use `api.request` with POST to `/v1/chat/completions`
+- **Stripe**: Use `api.request` with form-encoded params for payments
+- **SendGrid/Resend**: Use `api.request` or `util.send_email` for emails
+- **Slack/Discord**: Use `api.request` with webhook URLs
+- **Twilio**: Use `api.request` with Basic auth for SMS
+
+### Common Pattern: API Integration Function
+
+```xs
+function "call_external_api" {
+  input {
+    text endpoint
+    object payload
+  }
+  stack {
+    api.request {
+      url = $env.API_BASE_URL ~ $input.endpoint
+      method = "POST"
+      params = $input.payload
+      headers = [
+        "Content-Type: application/json",
+        "Authorization: Bearer " ~ $env.API_KEY
+      ]
+      timeout = 30
+    } as $api_result
+
+    precondition ($api_result.response.status >= 200 && $api_result.response.status < 300) {
+      error_type = "standard"
+      error = "API error: " ~ ($api_result.response.status|to_text)
+    }
+  }
+  response = $api_result.response.result
+}
+```
+
+For more patterns, see `xanoscript_docs({ topic: "quickstart" })` or `xanoscript_docs({ topic: "integrations" })`.

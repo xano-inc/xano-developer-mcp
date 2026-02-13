@@ -40,6 +40,11 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
     applyTo: ["**/*.xs"],
     description: "Expressions, operators, and filters for all XanoScript code",
   },
+  quickstart: {
+    file: "quickstart.md",
+    applyTo: ["**/*.xs"],
+    description: "Common patterns, quick reference, and common mistakes to avoid",
+  },
   types: {
     file: "types.md",
     applyTo: ["functions/**/*.xs", "apis/**/*.xs", "tools/**/*.xs", "agents/**/*.xs"],

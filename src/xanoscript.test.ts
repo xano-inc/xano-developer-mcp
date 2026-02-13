@@ -21,6 +21,7 @@ describe("xanoscript module", () => {
       const expectedTopics = [
         "readme",
         "syntax",
+        "quickstart",
         "types",
         "tables",
         "functions",
@@ -163,9 +164,10 @@ describe("xanoscript module", () => {
       expect(result).not.toContain("readme");
     });
 
-    it("should put syntax first if not already matched", () => {
+    it("should include syntax and quickstart for .xs files", () => {
       const result = getDocsForFilePath("some/random/file.xs");
-      expect(result[0]).toBe("syntax");
+      expect(result).toContain("syntax");
+      expect(result).toContain("quickstart");
     });
   });
 

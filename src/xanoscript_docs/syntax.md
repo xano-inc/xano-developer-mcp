@@ -21,12 +21,67 @@ Complete reference for XanoScript expressions, operators, and filters.
 | Filter | Purpose | Example |
 |--------|---------|---------|
 | `trim` | Remove whitespace | `$s\|trim` |
-| `lower` / `upper` | Case conversion | `$s\|to_lower` |
+| `to_lower` / `to_upper` | Case conversion | `$s\|to_lower` |
 | `first` / `last` | Array endpoints | `$arr\|first` |
 | `count` | Array/object length | `$arr\|count` |
 | `get` | Object property | `$obj\|get:"key"` |
 | `set` | Set property | `$obj\|set:"key":"val"` |
 | `json_encode` / `json_decode` | JSON conversion | `$obj\|json_encode` |
+| `to_text` / `to_int` | Type conversion | `$num\|to_text` |
+
+> **Note:** There is no `default` filter. Use conditional blocks or `first_notnull`/`first_notempty` instead.
+
+### String Concatenation with Filters
+
+When concatenating strings that use filters, wrap each filtered expression in parentheses:
+
+```xs
+// ✅ Correct - parentheses around filtered expressions
+var $message {
+  value = ($status|to_text) ~ ": " ~ ($data|json_encode)
+}
+
+// ❌ Incorrect - missing parentheses causes parse error
+var $message {
+  value = $status|to_text ~ ": " ~ $data|json_encode
+}
+```
+
+---
+
+## Conditional Blocks
+
+Use `conditional` blocks for if/elseif/else logic:
+
+```xs
+conditional {
+  if (`$status == "success"`) {
+    var $message { value = "All good!" }
+  }
+  elseif (`$status == "pending"`) {
+    var $message { value = "Please wait..." }
+  }
+  else {
+    var $message { value = "Unknown status" }
+  }
+}
+```
+
+> **Important:** Use `elseif` (one word), not `else if` or `else { if (...) }`. Nested `if` inside `else` blocks is not supported.
+
+### Conditional as Expression
+
+Use conditional blocks inline to return values:
+
+```xs
+var $tier_limit {
+  value = conditional {
+    if ($auth.tier == "premium") { 1000 }
+    elseif ($auth.tier == "pro") { 500 }
+    else { 100 }
+  }
+}
+```
 
 ---
 
@@ -431,6 +486,32 @@ var $client_ip { value = $env.$remote_ip }
 var $method { value = $env.$request_method }
 var $headers { value = $env.$http_headers }
 var $current_branch { value = $env.$branch }
+
+// Custom environment variables (set in Xano dashboard)
+var $api_key { value = $env.MY_API_KEY }
+```
+
+### $env Limitations
+
+> **Important:** `$env` variables cannot be used in `run.job` or `run.service` input blocks. Input values must be constants.
+
+```xs
+// ❌ Invalid - $env not allowed in run.job input
+run.job "my_job" {
+  input {
+    text api_key = $env.API_KEY    // Error!
+  }
+}
+
+// ✅ Valid - access $env inside the stack instead
+run.job "my_job" {
+  input {
+    text api_key                   // No default value
+  }
+  stack {
+    var $key { value = $env.API_KEY }
+  }
+}
 ```
 
 ---
