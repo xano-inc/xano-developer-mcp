@@ -254,3 +254,13 @@ addon/
 3. **Use appropriate return types** - `list`, `single`, `count`, `exists`
 4. **Limit nested queries** - Avoid N+1 query patterns
 5. **Document inputs** - Add descriptions to input fields
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `database` | db.query with addon usage |
+| `apis` | Using addons in API responses |
+| `functions` | Calling addons from functions |

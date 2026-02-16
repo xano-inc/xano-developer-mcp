@@ -185,3 +185,13 @@ The MCP protocol handles:
 2. **Comprehensive instructions** - Guide AI on server's overall purpose
 3. **Logical tool grouping** - Group related tools in one server
 4. **Keep focused** - One domain per server (support, analytics, etc.)
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `tools` | AI tool definitions used by MCP servers |
+| `agents` | AI agent configuration |
+| `triggers` | MCP server triggers for connection events |

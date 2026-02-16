@@ -366,3 +366,13 @@ query list verb=GET {
 3. **Keep self-contained** - Include all required tables and functions
 4. **Seed test data** - Use `items` in table definitions for testing
 5. **Validate inputs** - Use preconditions in functions for input validation
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `functions` | Function stacks run by jobs |
+| `tasks` | Scheduled task definitions |
+| `tables` | Database tables accessed by jobs |

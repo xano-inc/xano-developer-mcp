@@ -1,0 +1,236 @@
+{
+  "version": "1.0.0",
+  "description": "Machine-readable index for XanoScript documentation",
+
+  "topics": {
+    "cheatsheet": {
+      "file": "cheatsheet.md",
+      "purpose": "Quick reference for 20 most common operations",
+      "priority": 1,
+      "aliases": ["quick", "common", "basics", "start"]
+    },
+    "quickstart": {
+      "file": "quickstart.md",
+      "purpose": "Common patterns and mistakes to avoid",
+      "priority": 2,
+      "aliases": ["start", "getting-started", "patterns", "mistakes"]
+    },
+    "syntax": {
+      "file": "syntax.md",
+      "purpose": "Operators, filters, expressions, error handling",
+      "priority": 3,
+      "aliases": ["filters", "operators", "expressions"]
+    },
+    "types": {
+      "file": "types.md",
+      "purpose": "Data types, validation, input blocks",
+      "priority": 4,
+      "aliases": ["validation", "input", "data-types"]
+    },
+    "database": {
+      "file": "database.md",
+      "purpose": "All db.* operations",
+      "priority": 5,
+      "aliases": ["db", "crud", "query", "sql"]
+    },
+    "tables": {
+      "file": "tables.md",
+      "purpose": "Table schema definitions",
+      "aliases": ["schema", "fields", "indexes"]
+    },
+    "apis": {
+      "file": "apis.md",
+      "purpose": "HTTP endpoint definitions",
+      "aliases": ["endpoints", "http", "rest", "query"]
+    },
+    "functions": {
+      "file": "functions.md",
+      "purpose": "Reusable function stacks",
+      "aliases": ["fn", "reusable", "stack"]
+    },
+    "triggers": {
+      "file": "triggers.md",
+      "purpose": "Event-driven handlers",
+      "aliases": ["events", "hooks", "handlers"]
+    },
+    "agents": {
+      "file": "agents.md",
+      "purpose": "AI agent configuration",
+      "aliases": ["ai", "llm", "chatbot"]
+    },
+    "tools": {
+      "file": "tools.md",
+      "purpose": "AI tools for agents",
+      "aliases": ["ai-tools", "agent-tools"]
+    },
+    "integrations": {
+      "file": "integrations.md",
+      "purpose": "External service integrations (index)",
+      "aliases": ["external", "services", "cloud"]
+    },
+    "integrations/cloud-storage": {
+      "file": "integrations/cloud-storage.md",
+      "purpose": "AWS S3, Azure Blob, GCP Storage",
+      "aliases": ["s3", "azure", "gcp", "files", "upload"]
+    },
+    "integrations/search": {
+      "file": "integrations/search.md",
+      "purpose": "Elasticsearch, Algolia",
+      "aliases": ["elasticsearch", "algolia", "full-text"]
+    },
+    "integrations/redis": {
+      "file": "integrations/redis.md",
+      "purpose": "Caching, rate limiting, queues",
+      "aliases": ["cache", "rate-limit", "queue"]
+    },
+    "integrations/external-apis": {
+      "file": "integrations/external-apis.md",
+      "purpose": "api.request patterns",
+      "aliases": ["http", "api", "request", "fetch"]
+    },
+    "integrations/utilities": {
+      "file": "integrations/utilities.md",
+      "purpose": "Email, Zip, Lambda",
+      "aliases": ["email", "zip", "lambda", "archive"]
+    },
+    "security": {
+      "file": "security.md",
+      "purpose": "Authentication, authorization, security patterns",
+      "aliases": ["auth", "authorization", "permissions"]
+    },
+    "performance": {
+      "file": "performance.md",
+      "purpose": "Optimization best practices",
+      "aliases": ["optimization", "speed", "caching"]
+    },
+    "mcp-servers": {
+      "file": "mcp-servers.md",
+      "purpose": "MCP server configuration",
+      "aliases": ["mcp", "model-context-protocol"]
+    },
+    "tasks": {
+      "file": "tasks.md",
+      "purpose": "Scheduled job definitions",
+      "aliases": ["scheduled", "jobs", "cron"]
+    },
+    "streaming": {
+      "file": "streaming.md",
+      "purpose": "Streaming data handling",
+      "aliases": ["stream", "large-files"]
+    },
+    "realtime": {
+      "file": "realtime.md",
+      "purpose": "Real-time channel configuration",
+      "aliases": ["websocket", "channels", "pubsub"]
+    },
+    "middleware": {
+      "file": "middleware.md",
+      "purpose": "Request interceptors",
+      "aliases": ["interceptors", "hooks"]
+    },
+    "testing": {
+      "file": "testing.md",
+      "purpose": "Unit testing",
+      "aliases": ["tests", "unit-tests"]
+    },
+    "debugging": {
+      "file": "debugging.md",
+      "purpose": "Logging and debugging",
+      "aliases": ["logs", "debug", "trace"]
+    }
+  },
+
+  "filters": {
+    "trim": { "file": "syntax.md", "category": "string" },
+    "ltrim": { "file": "syntax.md", "category": "string" },
+    "rtrim": { "file": "syntax.md", "category": "string" },
+    "to_lower": { "file": "syntax.md", "category": "string" },
+    "to_upper": { "file": "syntax.md", "category": "string" },
+    "capitalize": { "file": "syntax.md", "category": "string" },
+    "substr": { "file": "syntax.md", "category": "string" },
+    "split": { "file": "syntax.md", "category": "string" },
+    "replace": { "file": "syntax.md", "category": "string" },
+    "contains": { "file": "syntax.md", "category": "string" },
+    "strlen": { "file": "syntax.md", "category": "string" },
+    "first": { "file": "syntax.md", "category": "array" },
+    "last": { "file": "syntax.md", "category": "array" },
+    "count": { "file": "syntax.md", "category": "array" },
+    "map": { "file": "syntax.md", "category": "array" },
+    "filter": { "file": "syntax.md", "category": "array" },
+    "find": { "file": "syntax.md", "category": "array" },
+    "reduce": { "file": "syntax.md", "category": "array" },
+    "push": { "file": "syntax.md", "category": "array" },
+    "pop": { "file": "syntax.md", "category": "array" },
+    "join": { "file": "syntax.md", "category": "array" },
+    "sort": { "file": "syntax.md", "category": "array" },
+    "unique": { "file": "syntax.md", "category": "array" },
+    "get": { "file": "syntax.md", "category": "object" },
+    "set": { "file": "syntax.md", "category": "object" },
+    "has": { "file": "syntax.md", "category": "object" },
+    "keys": { "file": "syntax.md", "category": "object" },
+    "values": { "file": "syntax.md", "category": "object" },
+    "to_int": { "file": "syntax.md", "category": "type" },
+    "to_text": { "file": "syntax.md", "category": "type" },
+    "to_bool": { "file": "syntax.md", "category": "type" },
+    "to_decimal": { "file": "syntax.md", "category": "type" },
+    "json_encode": { "file": "syntax.md", "category": "type" },
+    "json_decode": { "file": "syntax.md", "category": "type" },
+    "round": { "file": "syntax.md", "category": "math" },
+    "abs": { "file": "syntax.md", "category": "math" },
+    "ceil": { "file": "syntax.md", "category": "math" },
+    "floor": { "file": "syntax.md", "category": "math" },
+    "add": { "file": "syntax.md", "category": "math" },
+    "subtract": { "file": "syntax.md", "category": "math" }
+  },
+
+  "constructs": {
+    "table": { "file": "tables.md", "triggers": "triggers.md" },
+    "function": { "file": "functions.md", "testing": "testing.md" },
+    "query": { "file": "apis.md", "auth": "security.md" },
+    "api_group": { "file": "apis.md" },
+    "task": { "file": "tasks.md" },
+    "agent": { "file": "agents.md", "tools": "tools.md" },
+    "tool": { "file": "tools.md", "mcp": "mcp-servers.md" },
+    "mcp_server": { "file": "mcp-servers.md", "triggers": "triggers.md" },
+    "table_trigger": { "file": "triggers.md", "section": "table-trigger" },
+    "realtime_trigger": { "file": "triggers.md", "section": "realtime-trigger" },
+    "workspace_trigger": { "file": "triggers.md", "section": "workspace-trigger" },
+    "agent_trigger": { "file": "triggers.md", "section": "agent-trigger" },
+    "mcp_server_trigger": { "file": "triggers.md", "section": "mcp-server-trigger" },
+    "addon": { "file": "addons.md" },
+    "middleware": { "file": "middleware.md" },
+    "realtime_channel": { "file": "realtime.md" }
+  },
+
+  "operations": {
+    "db.query": { "file": "database.md" },
+    "db.get": { "file": "database.md" },
+    "db.has": { "file": "database.md" },
+    "db.add": { "file": "database.md" },
+    "db.edit": { "file": "database.md" },
+    "db.patch": { "file": "database.md" },
+    "db.del": { "file": "database.md" },
+    "db.truncate": { "file": "database.md" },
+    "api.request": { "file": "integrations/external-apis.md" },
+    "function.run": { "file": "functions.md" },
+    "redis.get": { "file": "integrations/redis.md" },
+    "redis.set": { "file": "integrations/redis.md" },
+    "storage.s3_put": { "file": "integrations/cloud-storage.md" },
+    "storage.s3_get": { "file": "integrations/cloud-storage.md" }
+  },
+
+  "tasks": {
+    "authentication": ["security.md", "apis.md"],
+    "authorization": ["security.md"],
+    "rate_limiting": ["security.md", "integrations/redis.md"],
+    "error_handling": ["syntax.md", "quickstart.md"],
+    "pagination": ["database.md", "apis.md"],
+    "file_upload": ["integrations/cloud-storage.md", "streaming.md"],
+    "caching": ["performance.md", "integrations/redis.md"],
+    "search": ["integrations/search.md"],
+    "email": ["integrations/utilities.md"],
+    "scheduled_jobs": ["tasks.md"],
+    "realtime": ["realtime.md", "triggers.md"],
+    "ai_agents": ["agents.md", "tools.md", "mcp-servers.md"]
+  }
+}

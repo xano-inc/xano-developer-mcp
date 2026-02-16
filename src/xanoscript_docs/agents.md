@@ -6,6 +6,10 @@ applyTo: "agent/**/*.xs"
 
 AI-powered agents that use LLMs to perform tasks autonomously.
 
+> **TL;DR:** Define with `agent "name" { llm = { type: "provider", system_prompt: "...", prompt: "..." } tools = [...] }`. Providers: `xano-free`, `openai`, `anthropic`, `google-genai`. Tools give agents capabilities.
+
+---
+
 ## Quick Reference
 
 ```xs
@@ -409,3 +413,14 @@ agent "Research Agent" {
 5. **Use environment variables** - Never hardcode API keys
 6. **Test with xano-free first** - Free for development
 7. **Validate external MCP servers** - Check server_details before using
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `tools` | Functions that agents can execute |
+| `mcp-servers` | MCP server configuration |
+| `triggers` | Agent triggers for events |
+| `security` | API key management |

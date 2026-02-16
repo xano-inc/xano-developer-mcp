@@ -6,6 +6,21 @@ applyTo: "function/**/*.xs, api/**/*.xs"
 
 Best practices for building secure XanoScript applications.
 
+> **TL;DR:** Always check `$auth.id` for protected endpoints. Use `security.create_auth_token` for JWT. Validate all inputs with `filters=`. Hash passwords with `password` type. Use `$env.SECRET_NAME` for secrets.
+
+## Section Index
+
+- [Authentication](#authentication) (L24) - Tokens, sessions, MFA
+- [Authorization](#authorization) (L186) - Role checks, ownership
+- [Input Validation](#input-validation) (L277) - Type enforcement, sanitization
+- [Data Protection](#data-protection) (L339) - Encryption, hashing, secrets
+- [Rate Limiting](#rate-limiting--abuse-prevention) (L427) - API limits, abuse prevention
+- [Security Headers](#security-headers) (L486) - CORS configuration
+- [Audit Logging](#audit-logging) (L504) - Security event tracking
+- [Best Practices Summary](#best-practices-summary) (L545) - Quick checklist
+
+---
+
 ## Quick Reference
 
 | Area | Key Practices |
@@ -550,3 +565,14 @@ function.run "audit_log" {
 8. **Log security events** - Audit trail for compliance
 9. **Use HTTPS** - Always (handled by platform)
 10. **Rotate tokens** - Implement refresh token flow
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `apis` | Endpoint authentication |
+| `types` | Input validation |
+| `middleware` | Request interceptors |
+| `integrations/redis` | Rate limiting |

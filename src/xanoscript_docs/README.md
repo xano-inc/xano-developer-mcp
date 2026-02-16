@@ -177,69 +177,69 @@ Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
 ### Core Language
 
-| Topic        | Description                                          |
-| ------------ | ---------------------------------------------------- |
-| `quickstart` | Common patterns, quick examples, mistakes to avoid   |
-| `syntax`     | Expressions, operators, filters, system variables    |
-| `types`      | Data types, validation, input blocks                 |
-| `functions`  | Reusable function stacks, async, loops               |
-| `schema`     | Runtime schema parsing and validation                |
+| Topic        | Description                                          | Key Sections |
+| ------------ | ---------------------------------------------------- | ------------ |
+| `quickstart` | Common patterns, quick examples, mistakes to avoid   | Patterns, Common Mistakes |
+| `syntax`     | Expressions, operators, filters, system variables    | Filters (L179-275), Error Handling (L411-477) |
+| `types`      | Data types, validation, input blocks                 | Validation Filters, Input Blocks |
+| `functions`  | Reusable function stacks, async, loops               | Loops, Async Patterns |
+| `schema`     | Runtime schema parsing and validation                | parse.object, parse.array |
 
 ### Data
 
-| Topic       | Description                                                |
-| ----------- | ---------------------------------------------------------- |
-| `tables`    | Database schema definitions with indexes and relationships |
-| `database`  | All db.\* operations: query, get, add, edit, patch, delete |
-| `addons`    | Reusable subqueries for fetching related data              |
-| `streaming` | Streaming data from files, requests, and responses         |
+| Topic       | Description                                                | Key Sections |
+| ----------- | ---------------------------------------------------------- | ------------ |
+| `tables`    | Database schema definitions with indexes and relationships | Indexes, Foreign Keys |
+| `database`  | All db.\* operations: query, get, add, edit, patch, delete | Decision Tree (L11), Bulk Ops (L450-529) |
+| `addons`    | Reusable subqueries for fetching related data              | Usage Patterns |
+| `streaming` | Streaming data from files, requests, and responses         | File Streams, API Streams |
 
 ### APIs & Endpoints
 
-| Topic      | Description                                                     |
-| ---------- | --------------------------------------------------------------- |
-| `apis`     | HTTP endpoint definitions with authentication and CRUD patterns |
-| `tasks`    | Scheduled and cron jobs                                         |
-| `triggers` | Event-driven handlers (table, realtime, workspace, agent, MCP)  |
-| `realtime` | Real-time channels and events for push updates                  |
+| Topic      | Description                                                     | Key Sections |
+| ---------- | --------------------------------------------------------------- | ------------ |
+| `apis`     | HTTP endpoint definitions with authentication and CRUD patterns | Decision Tree (L9), CRUD Examples (L220-350) |
+| `tasks`    | Scheduled and cron jobs                                         | Cron Syntax, Input Handling |
+| `triggers` | Event-driven handlers (table, realtime, workspace, agent, MCP)  | Predefined Inputs, Event Types |
+| `realtime` | Real-time channels and events for push updates                  | Channels, Events |
 
 ### AI & Agents
 
-| Topic         | Description                                         |
-| ------------- | --------------------------------------------------- |
-| `agents`      | AI agent configuration with LLM providers and tools |
-| `tools`       | AI tools for agents and MCP servers                 |
-| `mcp-servers` | MCP server definitions exposing tools               |
+| Topic         | Description                                         | Key Sections |
+| ------------- | --------------------------------------------------- | ------------ |
+| `agents`      | AI agent configuration with LLM providers and tools | LLM Config, Tool Binding |
+| `tools`       | AI tools for agents and MCP servers                 | Tool Schema, Parameters |
+| `mcp-servers` | MCP server definitions exposing tools               | Server Config, Tool Exposure |
 
 ### Integrations
 
-| Topic          | Description                                       |
-| -------------- | ------------------------------------------------- |
-| `integrations` | Cloud storage, Redis, security, and external APIs |
+| Topic          | Description                                       | Sub-topics |
+| -------------- | ------------------------------------------------- | ---------- |
+| `integrations` | Cloud storage, Redis, security, and external APIs | cloud-storage, search, redis, external-apis, utilities |
 
 ### Configuration
 
-| Topic        | Description                                                            |
-| ------------ | ---------------------------------------------------------------------- |
-| `workspace`  | Workspace-level settings: environment variables, preferences, realtime |
-| `branch`     | Branch-level settings: middleware, history retention, visual styling   |
-| `middleware` | Request/response interceptors for functions, queries, tasks, and tools |
+| Topic        | Description                                                            | Key Sections |
+| ------------ | ---------------------------------------------------------------------- | ------------ |
+| `workspace`  | Workspace-level settings: environment variables, preferences, realtime | Env Variables, Preferences |
+| `branch`     | Branch-level settings: middleware, history retention, visual styling   | Middleware Config, History |
+| `middleware` | Request/response interceptors for functions, queries, tasks, and tools | Pre/Post Hooks |
 
 ### Development
 
-| Topic       | Description                                                |
-| ----------- | ---------------------------------------------------------- |
-| `testing`   | Unit tests, mocks, and assertions                          |
-| `debugging` | Logging, inspecting, and debugging XanoScript execution    |
-| `frontend`  | Static frontend development and deployment                 |
-| `run`       | Run job and service configurations for the Xano Job Runner |
+| Topic       | Description                                                | Key Sections |
+| ----------- | ---------------------------------------------------------- | ------------ |
+| `testing`   | Unit tests, mocks, and assertions                          | Test Syntax, Assertions |
+| `debugging` | Logging, inspecting, and debugging XanoScript execution    | debug.log, Inspection |
+| `frontend`  | Static frontend development and deployment                 | File Structure |
+| `run`       | Run job and service configurations for the Xano Job Runner | Jobs, Services |
 
 ### Best Practices
 
-| Topic         | Description                                                  |
-| ------------- | ------------------------------------------------------------ |
-| `performance` | Performance optimization best practices                      |
-| `security`    | Security best practices for authentication and authorization |
+| Topic         | Description                                                  | Key Sections |
+| ------------- | ------------------------------------------------------------ | ------------ |
+| `performance` | Performance optimization best practices                      | Caching, Query Optimization |
+| `security`    | Security best practices for authentication and authorization | Auth Patterns, Token Handling |
 
 ---
 

@@ -6,6 +6,8 @@ applyTo: "**/*.xs"
 
 Essential patterns for XanoScript development. Use this as a quick reference for frequently-used code patterns.
 
+> **TL;DR:** Quick reference for common patterns. Key rules: use `text` not `string`, `elseif` not `else if`, `params` not `body` for api.request, parentheses around filters in expressions.
+
 ## Quick Reference
 
 ### Reserved Variable Names
@@ -180,67 +182,21 @@ input {
 
 ### Quick Filter Reference
 
-> **Full reference:** For the complete list of filters with examples, see `xanoscript_docs({ topic: "syntax" })`.
+The most common filters at a glance:
 
-**String Filters:**
-```xs
-$s|trim                    // Remove whitespace
-$s|to_lower                // Lowercase
-$s|to_upper                // Uppercase
-$s|substr:1:3              // Substring from index 1, length 3
-$s|split:","               // Split by delimiter → array
-$s|replace:"old":"new"     // Replace text
-$s|contains:"text"         // Check if contains → bool
-$s|strlen                  // String length
-```
+| Filter | Example | Result |
+|--------|---------|--------|
+| `trim` | `" hello "|trim` | `"hello"` |
+| `lower` | `"HELLO"|lower` | `"hello"` |
+| `first` | `[1,2,3]|first` | `1` |
+| `count` | `[1,2,3]|count` | `3` |
+| `to_int` | `"42"|to_int` | `42` |
+| `json_encode` | `{a:1}|json_encode` | `"{\"a\":1}"` |
+| `get` | `$obj|get:"key":"default"` | value or default |
 
-**Array Filters:**
-```xs
-$arr|first                 // First element
-$arr|last                  // Last element
-$arr|count                 // Array length
-$arr|push:$item            // Add to end
-$arr|pop                   // Remove & return last
-$arr|join:","              // Join to string
-$arr|map:$$.name           // Transform elements
-$arr|filter:$$.active      // Filter elements
-$arr|find:$$.id == 5       // Find first match
-```
+**Null handling:** `$val ?? "default"` or `$val|first_notnull:"default"`
 
-**Object Filters:**
-```xs
-$obj|get:"key"             // Get property value
-$obj|get:"key":"default"   // With default if missing
-$obj|set:"key":"value"     // Set property
-$obj|has:"key"             // Check if key exists → bool
-$obj|keys                  // Get all keys → array
-$obj|values                // Get all values → array
-```
-
-**Type Conversion:**
-```xs
-$val|to_text               // Convert to string
-$val|to_int                // Convert to integer
-$val|to_decimal            // Convert to decimal
-$val|to_bool               // Convert to boolean
-$val|json_encode           // Object → JSON string
-$str|json_decode           // JSON string → object
-```
-
-**Null Handling:**
-```xs
-$val|first_notnull:"default"   // Default if null
-$val|first_notempty:"default"  // Default if empty
-$val ?? "default"               // Nullish coalescing (same as first_notnull)
-```
-
-**Encoding:**
-```xs
-$s|url_encode              // URL encode
-$s|url_decode              // URL decode
-$s|base64_encode           // Base64 encode
-$s|base64_decode           // Base64 decode
-```
+> **Full reference:** See `xanoscript_docs({ topic: "syntax" })` for all 100+ filters organized by category (string, array, object, type, date, encoding).
 
 ---
 
@@ -264,37 +220,15 @@ precondition ($input.email|contains:"@") {
 
 ### 2. Database CRUD
 
-> **Full reference:** For all db.* operations including transactions, see `xanoscript_docs({ topic: "database" })`.
+| Operation | Use Case | Example |
+|-----------|----------|---------|
+| `db.get` | Single record by ID | `db.get "users" { field_name = "id" field_value = 1 } as $user` |
+| `db.query` | Filtered list | `db.query "users" { where = $db.users.active == true } as $users` |
+| `db.add` | Insert | `db.add "users" { data = { name: "John" } } as $new` |
+| `db.edit` | Update | `db.edit "users" { field_name = "id" field_value = 1 data = { name: "Jane" } }` |
+| `db.delete` | Delete | `db.delete "users" { field_name = "id" field_value = 1 }` |
 
-```xs
-// Create
-db.add "user" {
-  data = { name: $input.name, email: $input.email }
-} as $new_user
-
-// Read one
-db.get "user" {
-  where = $db.user.id == $input.id
-} as $user
-
-// Read many
-db.query "user" {
-  where = $db.user.is_active == true
-  order = [{ field: created_at, direction: desc }]
-  paging = { limit: 10, offset: 0 }
-} as $users
-
-// Update
-db.edit "user" {
-  where = $db.user.id == $input.id
-  data = { name: $input.name }
-}
-
-// Delete
-db.delete "user" {
-  where = $db.user.id == $input.id
-}
-```
+> **Full reference:** See `xanoscript_docs({ topic: "database" })` for joins, bulk operations, transactions, and more.
 
 ### 3. Optional Field Handling
 

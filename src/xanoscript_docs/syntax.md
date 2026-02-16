@@ -6,6 +6,62 @@ applyTo: "**/*.xs"
 
 Complete reference for XanoScript expressions, operators, and filters.
 
+> **TL;DR:** XanoScript uses `|` for filters (`$text|trim`), `~` for string concat, and standard operators (`==`, `!=`, `&&`, `||`). Filters are chainable. Error handling uses `precondition`, `try_catch`, and `throw`.
+
+## Section Index
+
+| Section | Contents |
+|---------|----------|
+| [Operators](#quick-reference) | Comparison, logical, math, null-safe |
+| [Conditional Blocks](#conditional-blocks) | `conditional`, `if`/`elseif`/`else` |
+| [Expressions](#expressions) | Backtick syntax, comparisons |
+| [Math Filters](#math-filters) | `add`, `subtract`, `round`, `abs`, `ceil`, `floor` |
+| [String Filters](#string-filters) | `trim`, `to_lower`, `to_upper`, `substr`, `split`, `replace` |
+| [Array Filters](#array-filters) | `first`, `last`, `count`, `map`, `filter`, `reduce` |
+| [Object Filters](#object-filters) | `get`, `set`, `has`, `keys`, `values` |
+| [Type Filters](#type-filters) | `to_int`, `to_text`, `to_bool`, `json_encode` |
+| [Date/Time Filters](#datetime-filters) | `to_timestamp`, `format_timestamp` |
+| [Encoding Filters](#encoding-filters) | `url_encode`, `base64_encode`, `json_encode` |
+| [Security Filters](#security-filters) | `md5`, `sha256`, `encrypt`, `jws_encode` |
+| [DB Query Filters](#db-query-filters) | `contains`, `includes`, `between`, `within` |
+| [Error Handling](#error-handling) | `precondition`, `try_catch`, `throw` |
+| [System Variables](#system-variables) | `$env.*`, `$auth.*`, request context |
+
+## Choosing a Filter
+
+```
+Working with...
+├── Strings?
+│   ├── Clean whitespace? → trim, ltrim, rtrim
+│   ├── Change case? → to_lower, to_upper, capitalize
+│   ├── Extract part? → substr
+│   ├── Split to array? → split
+│   ├── Find/replace? → replace, contains
+│   └── Get length? → strlen
+├── Arrays?
+│   ├── Get element? → first, last, get
+│   ├── Count items? → count
+│   ├── Transform all? → map
+│   ├── Keep some? → filter
+│   ├── Find one? → find
+│   ├── Combine? → reduce
+│   └── Sort? → sort
+├── Objects?
+│   ├── Get value? → get
+│   ├── Set value? → set
+│   ├── Check key? → has
+│   └── Extract? → keys, values
+├── Convert type?
+│   ├── To number? → to_int, to_decimal
+│   ├── To string? → to_text
+│   ├── To boolean? → to_bool
+│   └── To/from JSON? → json_encode, json_decode
+└── Check value?
+    ├── Is null? → is_null
+    ├── Is empty? → is_empty
+    └── Get type? → is_array, is_object, is_int, is_text
+```
+
 ## Quick Reference
 
 ### Operators

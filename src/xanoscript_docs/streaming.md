@@ -338,3 +338,13 @@ query "stream_large_dataset" {
 3. **Handle errors gracefully** - Log failures without stopping stream
 4. **Set appropriate chunk sizes** - Balance memory and performance
 5. **Use JSONL for structured data** - Easier to parse than multi-line JSON
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `integrations` | Cloud storage for file sources |
+| `apis` | Streaming API responses |
+| `database` | Processing streamed data into tables |

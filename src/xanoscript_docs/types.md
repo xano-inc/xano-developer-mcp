@@ -6,6 +6,10 @@ applyTo: "function/**/*.xs, api/**/*.xs, tool/**/*.xs, agent/**/*.xs"
 
 Reference for XanoScript data types, input blocks, and validation.
 
+> **TL;DR:** Use `text` not `string`, `int` not `integer`, `bool` not `boolean`. Add `?` for nullable, `?=value` for defaults. Use `filters=` for validation. Arrays use `type[]` syntax.
+
+---
+
 ## Quick Reference
 
 ### Primitive Types
