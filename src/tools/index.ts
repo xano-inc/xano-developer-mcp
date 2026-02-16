@@ -38,8 +38,12 @@ import {
   validateXanoscript,
   validateXanoscriptTool,
   validateXanoscriptToolDefinition,
+  TYPE_ALIASES,
+  RESERVED_VARIABLES,
   type ValidateXanoscriptArgs,
   type ValidationResult,
+  type BatchValidationResult,
+  type SingleFileValidationResult,
   type ParserDiagnostic,
 } from "./validate_xanoscript.js";
 
@@ -104,8 +108,12 @@ import { type ToolResult, toMcpResponse } from "./types.js";
 export {
   // Validation
   validateXanoscript,
+  TYPE_ALIASES,
+  RESERVED_VARIABLES,
   type ValidateXanoscriptArgs,
   type ValidationResult,
+  type BatchValidationResult,
+  type SingleFileValidationResult,
   type ParserDiagnostic,
 
   // XanoScript Documentation

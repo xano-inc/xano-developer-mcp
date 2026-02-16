@@ -362,3 +362,17 @@ precondition ($input.start_date < $input.end_date) {
 2. **Use filters first** - Prefer declarative filters over stack validation
 3. **Mark sensitive data** - Use `sensitive = true` for PII/credentials
 4. **Validate at boundaries** - Validate user input, trust internal calls
+
+---
+
+## Related Topics
+
+Explore more with `xanoscript_docs({ topic: "<topic>" })`:
+
+| Topic | Description |
+|-------|-------------|
+| `schema` | Runtime schema parsing and validation |
+| `syntax` | All filters, operators, and error handling |
+| `quickstart` | Common patterns and mistakes to avoid |
+| `functions` | Using input blocks in functions |
+| `apis` | Using input blocks in API endpoints |

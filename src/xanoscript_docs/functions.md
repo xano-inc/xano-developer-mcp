@@ -465,3 +465,17 @@ foreach ($items) {
 5. **Keep stacks shallow** - Avoid deeply nested conditionals
 6. **Use group for organization** - Visually group related statements for readability
 7. **Use remove sparingly** - Consider filtering arrays instead
+
+---
+
+## Related Topics
+
+Explore more with `xanoscript_docs({ topic: "<topic>" })`:
+
+| Topic | Description |
+|-------|-------------|
+| `types` | Input types, filters, and validation |
+| `syntax` | Expressions, operators, and control flow |
+| `quickstart` | Common patterns and examples |
+| `database` | Database operations in function stacks |
+| `testing` | Unit testing functions |

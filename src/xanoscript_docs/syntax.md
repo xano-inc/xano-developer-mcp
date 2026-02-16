@@ -280,6 +280,8 @@ Generate numeric ranges with the `..` operator:
 
 ## Type Filters
 
+> **Full reference:** For input types and validation, see `xanoscript_docs({ topic: "types" })`.
+
 | Filter | Example | Result |
 |--------|---------|--------|
 | `to_int` | `"123"\|to_int` | `123` |
@@ -343,6 +345,8 @@ $ts|timestamp_day_of_week    // Day (0=Sunday)
 
 ## Security Filters
 
+> **Full reference:** For security best practices, see `xanoscript_docs({ topic: "security" })`.
+
 | Filter | Example |
 |--------|---------|
 | `md5` | `"text"\|md5` |
@@ -358,6 +362,8 @@ $ts|timestamp_day_of_week    // Day (0=Sunday)
 ---
 
 ## DB Query Filters
+
+> **Full reference:** For complete database operations, see `xanoscript_docs({ topic: "database" })`.
 
 Used in `db.query` where clauses:
 
@@ -731,6 +737,8 @@ $db.created_at|timestamp_epoch_ms            // Milliseconds since epoch
 
 ### Vector Operations (AI/ML)
 
+> **Full reference:** For AI agents and embeddings, see `xanoscript_docs({ topic: "agents" })`.
+
 Additional vector similarity functions:
 
 ```xs
@@ -741,3 +749,17 @@ $db.embedding|inner_product:$input.vector            // Inner product
 // Geo covers (for polygon containment)
 $db.boundary|covers:$input.point                     // Polygon covers point
 ```
+
+---
+
+## Related Topics
+
+Explore more with `xanoscript_docs({ topic: "<topic>" })`:
+
+| Topic | Description |
+|-------|-------------|
+| `quickstart` | Common patterns, examples, mistakes to avoid |
+| `types` | Data types, input validation, schema definitions |
+| `database` | All db.* operations with query examples |
+| `functions` | Reusable function stacks, async patterns |
+| `security` | Security best practices and authentication |
