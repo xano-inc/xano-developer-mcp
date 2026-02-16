@@ -14,7 +14,7 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/**/*.xs"
 | Security | `security.*` | Passwords, encryption, JWT, random |
 | Email | `util.send_email` | Send emails via providers |
 | Archives | `zip.*` | Create, modify, extract ZIP files |
-| Lambda | `api.lambda` | Invoke AWS Lambda functions |
+| Lambda | `api.lambda` | Execute inline code |
 | Utilities | `util.*` | Templates, IP lookup, geo distance |
 
 ---
@@ -276,57 +276,19 @@ query "export_data" {
 
 ### api.lambda
 
+Execute inline code with optional timeout.
+
 ```xs
 api.lambda {
-  provider = "aws"
-  region = "us-east-1"
-  access_key = $env.AWS_ACCESS_KEY
-  secret_key = $env.AWS_SECRET_KEY
-  function_name = "process-image"
-  payload = {
-    image_url: $input.image_url,
-    operations: ["resize", "compress"]
-  }
-  invocation_type = "RequestResponse"
+  code = 'return "hello";'
+  timeout = 10
 } as $result
 ```
 
-### Invocation Types
-
-| Type | Description |
-|------|-------------|
-| `RequestResponse` | Synchronous, wait for response |
-| `Event` | Asynchronous, fire and forget |
-| `DryRun` | Validate without executing |
-
-### Async Lambda
-
-```xs
-// Fire and forget
-api.lambda {
-  provider = "aws"
-  region = "us-east-1"
-  access_key = $env.AWS_ACCESS_KEY
-  secret_key = $env.AWS_SECRET_KEY
-  function_name = "send-notification"
-  payload = { user_id: $user.id, message: "Welcome!" }
-  invocation_type = "Event"
-}
-```
-
-### With Timeout
-
-```xs
-api.lambda {
-  provider = "aws"
-  region = "us-east-1"
-  access_key = $env.AWS_ACCESS_KEY
-  secret_key = $env.AWS_SECRET_KEY
-  function_name = "heavy-processing"
-  payload = $input.data
-  timeout = 60000
-} as $result
-```
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `code` | string | Code to execute (required) |
+| `timeout` | integer | Execution timeout in seconds (optional) |
 
 ---
 

@@ -50,7 +50,7 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/**/*.xs"
 | `cloud.algolia.*` | Algolia search | search |
 | `redis.*` | Redis caching | redis |
 | `api.request` | External HTTP | external-apis |
-| `api.lambda` | AWS Lambda | utilities |
+| `api.lambda` | Lambda | utilities |
 | `storage.*` | Local storage | utilities |
 | `security.*` | Security operations | utilities |
 | `zip.*` | Archive operations | utilities |
