@@ -20,6 +20,7 @@ describe("xanoscript module", () => {
     it("should have all expected topics", () => {
       const expectedTopics = [
         "readme",
+        "cheatsheet",
         "syntax",
         "quickstart",
         "types",
@@ -34,6 +35,11 @@ describe("xanoscript module", () => {
         "mcp-servers",
         "testing",
         "integrations",
+        "integrations/cloud-storage",
+        "integrations/search",
+        "integrations/redis",
+        "integrations/external-apis",
+        "integrations/utilities",
         "frontend",
         "run",
         "addons",
