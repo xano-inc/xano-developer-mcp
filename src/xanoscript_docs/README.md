@@ -108,7 +108,20 @@ $db.table.field     // Database field reference (in queries)
 $this               // Current item in loops/maps
 ```
 
-**Note:** `$response` is a reserved word and cannot be used as a variable name.
+**Reserved Variables:** The following cannot be used as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`.
+
+### Type Names
+
+XanoScript uses specific type names:
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `text` | String (not "string") | `text name` |
+| `int` | Integer (not "integer") | `int count` |
+| `bool` | Boolean (not "boolean") | `bool active` |
+| `decimal` | Float/number | `decimal price` |
+| `type[]` | Array (not "array" or "list") | `text[] tags` |
+| `json` | Arbitrary JSON data | `json metadata` |
 
 ### Comments
 

@@ -612,3 +612,17 @@ try_catch {
 5. **Use null-safe operators** - `==?` for optional filters
 6. **Use bulk operations for batch processing** - More efficient than loops
 7. **Handle deadlocks gracefully** - Implement retry logic for concurrent writes
+
+---
+
+## Related Topics
+
+Explore more with `xanoscript_docs({ topic: "<topic>" })`:
+
+| Topic | Description |
+|-------|-------------|
+| `tables` | Database schema definitions with indexes and relationships |
+| `syntax` | Query filters, operators, and expressions |
+| `quickstart` | Common CRUD patterns and examples |
+| `addons` | Reusable subqueries for fetching related data |
+| `performance` | Query optimization best practices |
