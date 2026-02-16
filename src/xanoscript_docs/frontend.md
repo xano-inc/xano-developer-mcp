@@ -286,3 +286,13 @@ The tool will:
 2. **Centralize API calls** - Single `api.js` file
 3. **Store tokens securely** - localStorage for web, secure storage for mobile
 4. **Test incrementally** - Migrate one feature at a time
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `apis` | Backend API endpoints |
+| `workspace` | Workspace configuration |
+| `security` | CORS and authentication |

@@ -334,6 +334,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | Topic | Description |
 |-------|-------------|
 | `readme` | XanoScript overview, workspace structure, and quick reference |
+| `cheatsheet` | Quick reference for 20 most common XanoScript patterns (recommended first stop) |
 | `syntax` | Expressions, operators, and filters for all XanoScript code |
 | `types` | Data types, input blocks, and validation |
 | `tables` | Database schema definitions with indexes and relationships |
@@ -346,7 +347,12 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `tools` | AI tools for agents and MCP servers |
 | `mcp-servers` | MCP server definitions exposing tools |
 | `testing` | Unit tests, mocks, and assertions |
-| `integrations` | Cloud storage, Redis, security, and external APIs |
+| `integrations` | External service integrations index |
+| `integrations/cloud-storage` | AWS S3, Azure Blob, and GCP Storage |
+| `integrations/search` | Elasticsearch, OpenSearch, and Algolia |
+| `integrations/redis` | Redis caching, rate limiting, and queues |
+| `integrations/external-apis` | HTTP requests with api.request |
+| `integrations/utilities` | Local storage, email, zip, and Lambda |
 | `frontend` | Static frontend development and deployment |
 | `run` | Run job and service configurations |
 | `addons` | Reusable subqueries for fetching related data |
@@ -361,6 +367,9 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 ```
 // Get overview
 xanoscript_docs()
+
+// Get quick reference cheatsheet (recommended first stop)
+xanoscript_docs({ topic: "cheatsheet" })
 
 // Get specific topic
 xanoscript_docs({ topic: "functions" })
@@ -521,6 +530,7 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | Resource URI | Description |
 |--------------|-------------|
 | `xanoscript://docs/readme` | Overview and quick reference |
+| `xanoscript://docs/cheatsheet` | Quick reference for 20 most common patterns |
 | `xanoscript://docs/syntax` | Expressions, operators, and filters |
 | `xanoscript://docs/types` | Data types and validation |
 | `xanoscript://docs/tables` | Database schema definitions |
@@ -533,7 +543,12 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/tools` | AI tools for agents |
 | `xanoscript://docs/mcp-servers` | MCP server definitions |
 | `xanoscript://docs/testing` | Unit tests and mocks |
-| `xanoscript://docs/integrations` | External service integrations |
+| `xanoscript://docs/integrations` | External service integrations index |
+| `xanoscript://docs/integrations/cloud-storage` | AWS S3, Azure Blob, GCP Storage |
+| `xanoscript://docs/integrations/search` | Elasticsearch, OpenSearch, Algolia |
+| `xanoscript://docs/integrations/redis` | Redis caching and queues |
+| `xanoscript://docs/integrations/external-apis` | HTTP requests with api.request |
+| `xanoscript://docs/integrations/utilities` | Email, zip, Lambda utilities |
 | `xanoscript://docs/frontend` | Static frontend development |
 | `xanoscript://docs/run` | Run job and service configurations |
 | `xanoscript://docs/addons` | Reusable subqueries for related data |

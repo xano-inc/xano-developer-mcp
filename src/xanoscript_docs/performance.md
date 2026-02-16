@@ -6,6 +6,10 @@ applyTo: "function/**/*.xs, api/**/*.xs"
 
 Best practices for building fast, efficient XanoScript applications.
 
+> **TL;DR:** Index frequently queried fields. Use `select` to fetch only needed columns. Use `db.add_bulk`/`db.edit_bulk` for batch operations. Cache with Redis. Paginate large result sets.
+
+---
+
 ## Quick Reference
 
 | Area | Key Techniques |
@@ -387,3 +391,14 @@ conditional {
 8. **Filter early** - In database, not application code
 9. **Stream large responses** - Don't load into memory
 10. **Monitor performance** - Log slow operations
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `database` | Query optimization |
+| `integrations/redis` | Caching patterns |
+| `streaming` | Large data handling |
+| `debugging` | Performance monitoring |

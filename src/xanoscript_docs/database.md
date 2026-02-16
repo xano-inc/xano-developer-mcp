@@ -6,6 +6,29 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/**/*.xs, tool/**/*.xs"
 
 Complete reference for XanoScript database operations.
 
+> **TL;DR:** Use `db.get` for single record by ID, `db.query` for filtered lists, `db.has` to check existence, `db.add` to insert, `db.edit` for inline updates, `db.patch` for dynamic fields, `db.del` to delete.
+
+## Choosing an Operation
+
+```
+Need to...
+├── Read data?
+│   ├── Single record by ID? → db.get
+│   ├── Check if exists? → db.has
+│   └── Filtered list? → db.query
+├── Write data?
+│   ├── New record? → db.add
+│   ├── Update known fields? → db.edit
+│   └── Update dynamic fields? → db.patch
+├── Delete data?
+│   ├── Single record? → db.del
+│   └── All records? → db.truncate
+└── Complex query?
+    ├── Join tables? → db.query with join
+    ├── Aggregate? → db.query with evals
+    └── Transaction? → db.transaction
+```
+
 ## Quick Reference
 
 | Operation        | Purpose                       | Returns                  |

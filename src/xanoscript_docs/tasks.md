@@ -257,3 +257,14 @@ task "risky_sync" {
 3. **Consider timezone** - Schedule uses UTC (+0000)
 4. **Batch operations** - Process in chunks for large datasets
 5. **Set end dates** - Use ends_on for temporary schedules
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `functions` | Reusable function stacks |
+| `database` | Database operations in tasks |
+| `debugging` | Logging and debugging task execution |
+| `triggers` | Event-driven alternatives to scheduled tasks |

@@ -35,6 +35,11 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
     applyTo: [],
     description: "XanoScript overview, workspace structure, and quick reference",
   },
+  cheatsheet: {
+    file: "cheatsheet.md",
+    applyTo: ["**/*.xs"],
+    description: "Quick reference for 20 most common XanoScript patterns",
+  },
   syntax: {
     file: "syntax.md",
     applyTo: ["**/*.xs"],
@@ -103,7 +108,32 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
   integrations: {
     file: "integrations.md",
     applyTo: ["functions/**/*.xs", "apis/**/*.xs", "tasks/*.xs"],
-    description: "Cloud storage, Redis, security, and external APIs",
+    description: "External service integrations index - see sub-topics for details",
+  },
+  "integrations/cloud-storage": {
+    file: "integrations/cloud-storage.md",
+    applyTo: [],
+    description: "AWS S3, Azure Blob, and GCP Storage operations",
+  },
+  "integrations/search": {
+    file: "integrations/search.md",
+    applyTo: [],
+    description: "Elasticsearch, OpenSearch, and Algolia search operations",
+  },
+  "integrations/redis": {
+    file: "integrations/redis.md",
+    applyTo: [],
+    description: "Redis caching, rate limiting, and queue operations",
+  },
+  "integrations/external-apis": {
+    file: "integrations/external-apis.md",
+    applyTo: [],
+    description: "HTTP requests with api.request patterns",
+  },
+  "integrations/utilities": {
+    file: "integrations/utilities.md",
+    applyTo: [],
+    description: "Local storage, email, zip, and Lambda utilities",
   },
   frontend: {
     file: "frontend.md",

@@ -6,6 +6,10 @@ applyTo: "tool/**/*.xs"
 
 Functions that AI agents and MCP servers can execute.
 
+> **TL;DR:** Tools are functions for AI. Use `description` for internal docs, `instructions` for AI guidance. Define `input { }` and `stack { }` like regular functions. Attach to agents via `tools = [{ name: "tool_name" }]`.
+
+---
+
 ## Quick Reference
 
 ```xs
@@ -297,3 +301,14 @@ tool "cancel_order" {
 3. **Use enums for fixed options** - Reduces AI errors
 4. **Keep tools focused** - One task per tool
 5. **Limit response size** - Don't return huge datasets
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `agents` | AI agents that use tools |
+| `mcp-servers` | MCP servers that expose tools |
+| `functions` | Similar structure to tools |
+| `types` | Input type definitions |

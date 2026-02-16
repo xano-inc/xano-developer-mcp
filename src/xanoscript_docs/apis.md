@@ -6,6 +6,30 @@ applyTo: "api/**/*.xs"
 
 HTTP endpoint definitions in XanoScript.
 
+> **TL;DR:** Use `query` to define endpoints. Require `api_group` for organization, `auth` for protected routes. Use appropriate HTTP verbs (GET/POST/PUT/PATCH/DELETE) and validate inputs with filters.
+
+## Choosing an Approach
+
+```
+Building...
+├── REST endpoint?
+│   ├── GET (read) → query with verb=GET
+│   ├── POST (create) → query with verb=POST
+│   ├── PUT/PATCH (update) → query with verb=PUT or verb=PATCH
+│   └── DELETE (remove) → query with verb=DELETE
+├── Protected endpoint?
+│   ├── Token auth? → auth = "user" (table with auth=true)
+│   └── Public? → omit auth attribute
+├── Input handling?
+│   ├── Path params? → query "path/{id}" + input { int id }
+│   ├── Query params? → GET with input block
+│   └── Body params? → POST/PUT/PATCH with input block
+├── Reusable logic?
+│   └── Use function, call with function.run
+└── Scheduled job?
+    └── Use task instead of query
+```
+
 ## Quick Reference
 
 ```xs
@@ -116,26 +140,18 @@ query "products" verb=GET {
 
 ## Input Block
 
-For complete type and filter reference, use `xanoscript_docs({ topic: "types" })`.
-
-### Empty and Single-Input Blocks
-
-Empty input blocks and single-input blocks can be written as one-liners. When there are two or more inputs, each must be on its own line.
+> **Input block rules:** Empty and single-input blocks can be one-liners. Multiple inputs must be on separate lines. For complete type reference, validation filters, and schema definitions, see `xanoscript_docs({ topic: "types" })`.
 
 ```xs
-// OK - empty input
-query "health" verb=GET {
-  api_group = "System"
-  input {}
-  stack { ... }
-  response = { status: "ok" }
-}
-
-// OK - single input as one-liner
+// OK - empty or single input as one-liner
+input {}
 input { text query filters=trim }
 
-// WRONG - multiple inputs on one line will cause parsing errors
-input { text query filters=trim int limit }
+// Multiple inputs - each on own line
+input {
+  text query filters=trim
+  int limit?=10
+}
 ```
 
 ---
@@ -400,14 +416,7 @@ stack {
 
 ## Error Handling
 
-For complete error handling reference, use `xanoscript_docs({ topic: "syntax" })`.
-
-| Type           | HTTP Status |
-| -------------- | ----------- |
-| `inputerror`   | 400         |
-| `accessdenied` | 403         |
-| `notfound`     | 404         |
-| `standard`     | 500         |
+> **Error types:** Use `inputerror` (400), `accessdenied` (403), `notfound` (404), or `standard` (500). For complete error handling patterns including `precondition`, `try_catch`, and `throw`, see `xanoscript_docs({ topic: "syntax" })`.
 
 ---
 
@@ -437,3 +446,15 @@ When using `return = { type: "list", paging: {...} }`:
 4. **Paginate lists** - Never return unbounded result sets
 5. **Group by resource** - Organize endpoints in logical api groups
 6. **Use specific canonicals** - Prefix canonicals to avoid instance-level collisions (e.g., `myapp-users` not `users`)
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `types` | Input validation and filters |
+| `functions` | Reusable logic called from API stacks |
+| `database` | Database operations in API stacks |
+| `security` | Authentication and authorization |
+| `middleware` | Request interceptors |

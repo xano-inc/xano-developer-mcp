@@ -6,6 +6,22 @@ applyTo: "*/trigger/**/*.xs"
 
 Event-driven handlers that execute in response to system events. Triggers allow you to react to database changes, real-time messages, workspace events, agent connections, and MCP server tool calls.
 
+> **TL;DR:** Triggers respond to events. Types: `table_trigger` (CRUD events), `realtime_trigger` (channel events), `workspace_trigger` (branch events), `agent_trigger` (AI events), `mcp_server_trigger` (MCP events). Each has predefined input blocks.
+
+## Section Index
+
+| Section | Contents |
+|---------|----------|
+| [Quick Reference](#quick-reference) | Trigger types summary |
+| [Predefined Input Blocks](#predefined-input-blocks) | All input schemas (reference once) |
+| [Table Trigger](#table-trigger) | Database CRUD event handlers |
+| [Realtime Trigger](#realtime-trigger) | Channel event handlers |
+| [Workspace Trigger](#workspace-trigger) | Branch lifecycle event handlers |
+| [Agent Trigger](#agent-trigger) | AI agent event handlers |
+| [MCP Server Trigger](#mcp-server-trigger) | MCP tool call handlers |
+| [Common Patterns](#common-patterns) | Error handling, conditional logic |
+| [Best Practices](#best-practices) | Guidelines for trigger development |
+
 ## Quick Reference
 
 | Trigger Type | Purpose | Required Clauses |
@@ -159,15 +175,8 @@ table_trigger "<name>" {
   description = "Description of this trigger"
   tags = ["tag1", "tag2"]
 
-  // Predefined input block - read-only, do not modify
-  input {
-    json new
-    json old
-    enum action {
-      values = ["insert", "update", "delete", "truncate"]
-    }
-    text datasource
-  }
+  // Uses predefined Table Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
     // Logic to execute when triggered
@@ -215,17 +224,11 @@ table_trigger "audit_user_changes" {
   description = "Log all changes to user records"
   datasources = ["main_db"]
 
-  // Input block is predefined and read-only - do not modify
-  input {
-    json new
-    json old
-    enum action {
-      values = ["insert", "update", "delete", "truncate"]
-    }
-    text datasource
-  }
+  // Uses predefined Table Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
+    // Access input fields: $input.new, $input.old, $input.action, $input.datasource
     db.add "audit_log" {
       data = {
         table_name: "user",
@@ -258,31 +261,8 @@ realtime_trigger "<name>" {
   description = "Description of this trigger"
   tags = ["tag1", "tag2"]
 
-  // Predefined input block - read-only, do not modify
-  input {
-    enum action {
-      values = ["message", "join"]
-    }
-    text channel
-    object client {
-      schema {
-        json extras
-        object permissions {
-          schema {
-            int dbo_id
-            text row_id
-          }
-        }
-      }
-    }
-    object options {
-      schema {
-        bool authenticated
-        text channel
-      }
-    }
-    json payload
-  }
+  // Uses predefined Realtime Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
     // Logic to execute when triggered
@@ -329,33 +309,11 @@ realtime_trigger "chat_message_handler" {
   active = true
   description = "Handle chat room messages and joins"
 
-  // Input block is predefined and read-only - do not modify
-  input {
-    enum action {
-      values = ["message", "join"]
-    }
-    text channel
-    object client {
-      schema {
-        json extras
-        object permissions {
-          schema {
-            int dbo_id
-            text row_id
-          }
-        }
-      }
-    }
-    object options {
-      schema {
-        bool authenticated
-        text channel
-      }
-    }
-    json payload
-  }
+  // Uses predefined Realtime Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
+    // Access input fields: $input.action, $input.channel, $input.client, $input.options, $input.payload
     conditional {
       if ($input.action == "join") {
         var $welcome { value = "Welcome to the chat!" }
@@ -395,24 +353,8 @@ workspace_trigger "<name>" {
   description = "Description of this trigger"
   tags = ["tag1", "tag2"]
 
-  // Predefined input block - read-only, do not modify
-  input {
-    object to_branch {
-      schema {
-        int id
-        text label
-      }
-    }
-    object from_branch {
-      schema {
-        int id
-        text label
-      }
-    }
-    enum action {
-      values = ["branch_live", "branch_merge", "branch_new"]
-    }
-  }
+  // Uses predefined Workspace Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
     // Logic to execute when triggered
@@ -456,26 +398,11 @@ workspace_trigger "branch_notification" {
   description = "Send notifications on branch events"
   tags = ["devops", "notifications"]
 
-  // Input block is predefined and read-only - do not modify
-  input {
-    object to_branch {
-      schema {
-        int id
-        text label
-      }
-    }
-    object from_branch {
-      schema {
-        int id
-        text label
-      }
-    }
-    enum action {
-      values = ["branch_live", "branch_merge", "branch_new"]
-    }
-  }
+  // Uses predefined Workspace Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
+    // Access input fields: $input.to_branch, $input.from_branch, $input.action
     util.send_email {
       service_provider = "resend"
       api_key = $env.RESEND_API_KEY
@@ -507,23 +434,8 @@ agent_trigger "<name>" {
   docs = "Extended documentation for the trigger"
   tags = ["tag1", "tag2"]
 
-  // Predefined input block - read-only, do not modify
-  input {
-    object toolset {
-      schema {
-        int id
-        text name
-        text instructions
-      }
-    }
-    object[] tools {
-      schema {
-        int id
-        text name
-        text instructions
-      }
-    }
-  }
+  // Uses predefined Agent Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
     // Logic to execute when triggered
@@ -571,26 +483,11 @@ agent_trigger "assistant_handler" {
   description = "Handle customer assistant agent connections"
   docs = "This trigger initializes the customer context when the agent connects"
 
-  // Input block is predefined and read-only - do not modify
-  input {
-    object toolset {
-      schema {
-        int id
-        text name
-        text instructions
-      }
-    }
-    object[] tools {
-      schema {
-        int id
-        text name
-        text instructions
-      }
-    }
-  }
+  // Uses predefined Agent Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
-    // Access toolset and tools information from the predefined input
+    // Access input fields: $input.toolset, $input.tools
     var $context {
       value = {
         toolset_name: $input.toolset.name,
@@ -622,23 +519,8 @@ mcp_server_trigger "<name>" {
   description = "Description of this trigger"
   tags = ["tag1", "tag2"]
 
-  // Predefined input block - read-only, do not modify
-  input {
-    object toolset {
-      schema {
-        int id
-        text name
-        text instructions
-      }
-    }
-    object[] tools {
-      schema {
-        int id
-        text name
-        text instructions
-      }
-    }
-  }
+  // Uses predefined MCP Server Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
     // Logic to execute when triggered
@@ -685,26 +567,11 @@ mcp_server_trigger "database_tool_handler" {
   description = "Handle database tool calls from MCP clients"
   tags = ["mcp", "database"]
 
-  // Input block is predefined and read-only - do not modify
-  input {
-    object toolset {
-      schema {
-        int id
-        text name
-        text instructions
-      }
-    }
-    object[] tools {
-      schema {
-        int id
-        text name
-        text instructions
-      }
-    }
-  }
+  // Uses predefined MCP Server Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
-    // Access toolset and tools information from the predefined input
+    // Access input fields: $input.toolset, $input.tools
     var $result {
       value = {
         server: $input.toolset.name,
@@ -731,15 +598,8 @@ table_trigger "safe_audit" {
   table = "sensitive_data"
   actions = {insert: true, update: true, delete: true, truncate: false}
 
-  // Input block is predefined and read-only
-  input {
-    json new
-    json old
-    enum action {
-      values = ["insert", "update", "delete", "truncate"]
-    }
-    text datasource
-  }
+  // Uses predefined Table Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
     try_catch {
@@ -768,15 +628,8 @@ table_trigger "conditional_notification" {
   table = "order"
   actions = {insert: true, update: false, delete: false, truncate: false}
 
-  // Input block is predefined and read-only
-  input {
-    json new
-    json old
-    enum action {
-      values = ["insert", "update", "delete", "truncate"]
-    }
-    text datasource
-  }
+  // Uses predefined Table Trigger Input - see Predefined Input Blocks section
+  input { ... }
 
   stack {
     conditional {
@@ -807,3 +660,15 @@ table_trigger "conditional_notification" {
 6. **Use tags** - Organize triggers with meaningful tags for easier management
 7. **Document with description** - Always provide a description explaining the trigger's purpose
 8. **Test thoroughly** - Triggers execute automatically, so ensure they handle edge cases
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `tables` | Table definitions that triggers respond to |
+| `functions` | Reusable logic called from triggers |
+| `agents` | Agent triggers for AI events |
+| `mcp-servers` | MCP server triggers |
+| `realtime` | Real-time channel configuration |

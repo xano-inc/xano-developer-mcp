@@ -6,6 +6,10 @@ applyTo: "table/**/*.xs"
 
 Database table definitions in XanoScript.
 
+> **TL;DR:** Every table needs `int id` as primary key. Use `auth = true` for user tables. Add indexes for frequently queried fields. Use `filters=` for validation on fields.
+
+---
+
 ## Quick Reference
 
 ```xs
@@ -311,3 +315,14 @@ table "order" {
 3. **Add indexes** for fields used in WHERE clauses and JOINs
 4. **Use appropriate types** - `email` for emails, `password` for credentials
 5. **Default timestamps** - Use `?=now` for created_at fields
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `database` | CRUD operations on tables |
+| `types` | Data types and validation |
+| `triggers` | Table triggers for CRUD events |
+| `addons` | Reusable subqueries |

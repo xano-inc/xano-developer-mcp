@@ -6,6 +6,10 @@ applyTo: "function/**/*.xs"
 
 Reusable logic blocks in XanoScript.
 
+> **TL;DR:** Define with `function "name" { input { } stack { } response = $result }`. Call with `function.run "name" { input = { } } as $result`. Empty input blocks need braces on separate lines.
+
+---
+
 ## Quick Reference
 
 ```xs
