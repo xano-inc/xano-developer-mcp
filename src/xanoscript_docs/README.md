@@ -19,6 +19,7 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 | `tool`              | `tool/{name}.xs`                     | Tools for AI agents           |
 | `mcp_server`        | `mcp_server/{name}.xs`               | MCP server definitions        |
 | `mcp_server_trigger`| `mcp_server/trigger/{name}.xs`       | MCP server event handlers     |
+| `workflow_test`     | `workflow_test/{name}.xs`            | End-to-end workflow tests     |
 | `addon`             | `addon/{name}.xs`                    | Subqueries for related data   |
 | `middleware`        | `middleware/{name}.xs`               | Request/response interceptors |
 | `branch`            | `branch.xs`                          | Branch-level configuration    |
@@ -65,6 +66,8 @@ project/
 │   ├── my_server.xs                 # MCP server definitions
 │   └── trigger/
 │       └── on_connect.xs            # MCP server triggers
+├── workflow_test/
+│   └── checkout_flow.xs             # End-to-end workflow tests
 ├── middleware/
 │   └── auth_check.xs                # Request/response interceptors
 ├── addon/
@@ -229,7 +232,8 @@ Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
 | Topic       | Description                                                | Key Sections |
 | ----------- | ---------------------------------------------------------- | ------------ |
-| `testing`   | Unit tests, mocks, and assertions                          | Test Syntax, Assertions |
+| `unit-testing` | Unit tests, mocks, and assertions within functions, APIs, and middleware | Test Syntax, Assertions, Mocking |
+| `workflow-tests` | End-to-end workflow tests with data sources and tags   | Data Sources, Tags, Common Patterns |
 | `debugging` | Logging, inspecting, and debugging XanoScript execution    | debug.log, Inspection |
 | `frontend`  | Static frontend development and deployment                 | File Structure |
 | `run`       | Run job and service configurations for the Xano Job Runner | Jobs, Services |

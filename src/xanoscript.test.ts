@@ -33,7 +33,8 @@ describe("xanoscript module", () => {
         "agents",
         "tools",
         "mcp-servers",
-        "testing",
+        "unit-testing",
+        "workflow-tests",
         "integrations",
         "integrations/cloud-storage",
         "integrations/search",
@@ -82,7 +83,7 @@ describe("xanoscript module", () => {
       expect(result).toContain("apis");
       expect(result).toContain("types");
       expect(result).toContain("database");
-      expect(result).toContain("testing");
+      expect(result).toContain("unit-testing");
       expect(result).toContain("addons");
     });
 

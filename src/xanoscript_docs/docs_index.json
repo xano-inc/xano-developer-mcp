@@ -128,10 +128,15 @@
       "purpose": "Request interceptors",
       "aliases": ["interceptors", "hooks"]
     },
-    "testing": {
-      "file": "testing.md",
-      "purpose": "Unit testing",
-      "aliases": ["tests", "unit-tests"]
+    "unit-testing": {
+      "file": "unit-testing.md",
+      "purpose": "Unit tests, mocks, and assertions",
+      "aliases": ["tests", "unit-tests", "mocks", "assertions"]
+    },
+    "workflow-tests": {
+      "file": "workflow-tests.md",
+      "purpose": "End-to-end workflow tests",
+      "aliases": ["e2e", "workflow", "integration-tests"]
     },
     "debugging": {
       "file": "debugging.md",
@@ -185,7 +190,7 @@
 
   "constructs": {
     "table": { "file": "tables.md", "triggers": "triggers.md" },
-    "function": { "file": "functions.md", "testing": "testing.md" },
+    "function": { "file": "functions.md", "testing": "unit-testing.md" },
     "query": { "file": "apis.md", "auth": "security.md" },
     "api_group": { "file": "apis.md" },
     "task": { "file": "tasks.md" },
