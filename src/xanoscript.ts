@@ -100,10 +100,15 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
     applyTo: ["mcp_servers/**/*.xs"],
     description: "MCP server definitions exposing tools",
   },
-  testing: {
-    file: "testing.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
-    description: "Unit tests, mocks, and assertions",
+  "unit-testing": {
+    file: "unit-testing.md",
+    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "middleware/**/*.xs"],
+    description: "Unit tests, mocks, and assertions within functions, APIs, and middleware",
+  },
+  "workflow-tests": {
+    file: "workflow-tests.md",
+    applyTo: ["workflow_test/**/*.xs"],
+    description: "End-to-end workflow tests with data source selection and tags",
   },
   integrations: {
     file: "integrations.md",

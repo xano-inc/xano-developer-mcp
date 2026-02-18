@@ -1,10 +1,10 @@
 ---
-applyTo: "function/**/*.xs, api/**/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs, middleware/**/*.xs"
 ---
 
-# Testing
+# Unit Testing
 
-Unit tests and mocking in XanoScript.
+Unit tests, mocks, and assertions defined inline within functions, API endpoints, and middleware. Unit tests validate individual construct behavior in isolation — for end-to-end workflow testing across multiple constructs, see `workflow-tests`.
 
 ## Quick Reference
 
@@ -330,3 +330,15 @@ function "calculate_discount" {
 3. **Descriptive test names** - Explain what's being tested
 4. **One assertion focus** - Each test verifies one behavior
 5. **Keep tests independent** - No shared state between tests
+
+---
+
+## Related Topics
+
+| Topic             | Description                                        |
+| ----------------- | -------------------------------------------------- |
+| `workflow-tests`  | End-to-end workflow tests across multiple constructs |
+| `functions`       | Reusable function stacks (where unit tests live)   |
+| `apis`            | API endpoints (where unit tests live)              |
+| `middleware`      | Request/response interceptors (where unit tests live) |
+| `debugging`       | Logging and debugging test execution               |

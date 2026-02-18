@@ -346,7 +346,8 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `agents` | AI agent configuration with LLM providers and tools |
 | `tools` | AI tools for agents and MCP servers |
 | `mcp-servers` | MCP server definitions exposing tools |
-| `testing` | Unit tests, mocks, and assertions |
+| `unit-testing` | Unit tests, mocks, and assertions within functions, APIs, and middleware |
+| `workflow-tests` | End-to-end workflow tests with data sources and tags |
 | `integrations` | External service integrations index |
 | `integrations/cloud-storage` | AWS S3, Azure Blob, and GCP Storage |
 | `integrations/search` | Elasticsearch, OpenSearch, and Algolia |
@@ -542,7 +543,8 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/agents` | AI agent configuration |
 | `xanoscript://docs/tools` | AI tools for agents |
 | `xanoscript://docs/mcp-servers` | MCP server definitions |
-| `xanoscript://docs/testing` | Unit tests and mocks |
+| `xanoscript://docs/unit-testing` | Unit tests and mocks |
+| `xanoscript://docs/workflow-tests` | End-to-end workflow tests |
 | `xanoscript://docs/integrations` | External service integrations index |
 | `xanoscript://docs/integrations/cloud-storage` | AWS S3, Azure Blob, GCP Storage |
 | `xanoscript://docs/integrations/search` | Elasticsearch, OpenSearch, Algolia |
