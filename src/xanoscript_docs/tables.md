@@ -166,6 +166,15 @@ The `size` parameter specifies the vector dimensions (must match your embedding 
 
 ## Indexes
 
+Each index field supports an optional `op` property to control sort order or operator class:
+
+| Index Type | `op` Values | Default | Description |
+|------------|-------------|---------|-------------|
+| `btree` | `asc`, `desc` | `asc` | Sort direction |
+| `gin` | `jsonb_path_op` | — | Operator class for JSON containment queries |
+| `search` | `A`, `B`, `C`, `D` | — | Weight category (A = highest relevance) |
+| `vector` | `vector_cosine_ops` | — | Distance function for similarity search |
+
 ### Primary Key
 
 ```xs
