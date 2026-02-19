@@ -27,24 +27,40 @@ Complete reference for XanoScript expressions, operators, and filters.
 | [Error Handling](#error-handling) | `precondition`, `try_catch`, `throw` |
 | [System Variables](#system-variables) | `$env.*`, `$auth.*`, request context |
 
+## CRITICAL: Filters Are Type-Specific
+
+> **Filters only work on the correct input type.** String filters and array filters are NOT interchangeable. Using the wrong filter type will produce errors or incorrect results.
+
+| Task | WRONG (type mismatch) | CORRECT |
+|------|----------------------|---------|
+| Get string length | `$text\|count` | `$text\|strlen` |
+| Get array length | `$arr\|strlen` | `$arr\|count` |
+| Reverse a string | `$text\|reverse` | `$text\|split:""\|reverse\|join:""` |
+| Reverse an array | Use `reverse` directly | `$arr\|reverse` |
+| Check string has substring | `$text\|some:...` | `$text\|contains:"sub"` |
+| Check array has element | `$arr\|contains:$val` (db only) | `$arr\|some:$$==$val` |
+| Get part of string | `$text\|slice:0:3` | `$text\|substr:0:3` |
+| Get part of array | `$arr\|substr:0:3` | `$arr\|slice:0:3` |
+
 ## Choosing a Filter
 
 ```
 Working with...
-├── Strings?
+├── Strings? → USE STRING FILTERS ONLY (see String Filters section)
 │   ├── Clean whitespace? → trim, ltrim, rtrim
 │   ├── Change case? → to_lower, to_upper, capitalize
-│   ├── Extract part? → substr
+│   ├── Extract part? → substr (NOT slice)
 │   ├── Split to array? → split
 │   ├── Find/replace? → replace, contains
-│   └── Get length? → strlen
-├── Arrays?
+│   └── Get length? → strlen (NOT count)
+├── Arrays? → USE ARRAY FILTERS ONLY (see Array Filters section)
 │   ├── Get element? → first, last, get
-│   ├── Count items? → count
+│   ├── Count items? → count (NOT strlen)
 │   ├── Transform all? → map
 │   ├── Keep some? → filter
 │   ├── Find one? → find
 │   ├── Combine? → reduce
+│   ├── Reverse? → reverse (NOT available on strings)
 │   └── Sort? → sort
 ├── Objects?
 │   ├── Get value? → get
@@ -74,16 +90,20 @@ Working with...
 | Null-safe | `==?`, `!=?`, `>=?`, `<=?` (ignore if null) |
 
 ### Common Filters
-| Filter | Purpose | Example |
-|--------|---------|---------|
-| `trim` | Remove whitespace | `$s\|trim` |
-| `to_lower` / `to_upper` | Case conversion | `$s\|to_lower` |
-| `first` / `last` | Array endpoints | `$arr\|first` |
-| `count` | Array/object length | `$arr\|count` |
-| `get` | Object property | `$obj\|get:"key"` |
-| `set` | Set property | `$obj\|set:"key":"val"` |
-| `json_encode` / `json_decode` | JSON conversion | `$obj\|json_encode` |
-| `to_text` / `to_int` | Type conversion | `$num\|to_text` |
+| Filter | Type | Purpose | Example |
+|--------|------|---------|---------|
+| `trim` | STRING | Remove whitespace | `$s\|trim` |
+| `to_lower` / `to_upper` | STRING | Case conversion | `$s\|to_lower` |
+| `strlen` | STRING | String length | `$s\|strlen` |
+| `substr` | STRING | Extract substring | `$s\|substr:0:5` |
+| `first` / `last` | ARRAY | Array endpoints | `$arr\|first` |
+| `count` | ARRAY | Array length | `$arr\|count` |
+| `slice` | ARRAY | Extract sub-array | `$arr\|slice:0:3` |
+| `reverse` | ARRAY | Reverse array | `$arr\|reverse` |
+| `get` | OBJECT | Object property | `$obj\|get:"key"` |
+| `set` | OBJECT | Set property | `$obj\|set:"key":"val"` |
+| `json_encode` / `json_decode` | ANY | JSON conversion | `$obj\|json_encode` |
+| `to_text` / `to_int` | ANY | Type conversion | `$num\|to_text` |
 
 > **Note:** There is no `default` filter. Use conditional blocks or `first_notnull`/`first_notempty` instead.
 
@@ -213,6 +233,8 @@ $db.post.date >=? $input.start_date
 
 ## String Filters
 
+> **These filters operate on STRING values only.** Do not use array filters (`count`, `reverse`, `first`, `last`, `slice`) on strings. Use `strlen` for string length, `substr` for substrings.
+
 | Filter | Example | Result |
 |--------|---------|--------|
 | `trim` | `"  hi  "\|trim` | `"hi"` |
@@ -243,6 +265,8 @@ $db.post.date >=? $input.start_date
 ---
 
 ## Array Filters
+
+> **These filters operate on ARRAY values only.** Do not use string filters (`strlen`, `substr`, `split`, `replace`) on arrays. Use `count` for array length, `slice` for sub-arrays, `join` to convert to string.
 
 | Filter | Example | Result |
 |--------|---------|--------|
