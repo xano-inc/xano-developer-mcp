@@ -228,10 +228,14 @@ var $msg { value = ($status|to_text) ~ ": " ~ ($data|json_encode) }
 
 ## Input Block Syntax
 
+`?` after the **type** = nullable, `?` after the **variable name** = optional (not required).
+
 ```xs
 input {
-  text name                    // Required
-  text nickname?               // Optional (can be omitted)
+  text name                    // Required, not nullable
+  text? name                   // Required, nullable (can send null)
+  text name?                   // Optional (can be omitted)
+  text? name?                  // Optional and nullable
   text role?="user"            // Optional with default
   email contact filters=trim   // With filters
   text[] tags                  // Array type

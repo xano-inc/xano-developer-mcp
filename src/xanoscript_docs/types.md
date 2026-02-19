@@ -6,7 +6,7 @@ applyTo: "function/**/*.xs, api/**/*.xs, tool/**/*.xs, agent/**/*.xs"
 
 Reference for XanoScript data types, input blocks, and validation.
 
-> **TL;DR:** Use `text` not `string`, `int` not `integer`, `bool` not `boolean`. Add `?` for nullable, `?=value` for defaults. Use `filters=` for validation. Arrays use `type[]` syntax.
+> **TL;DR:** Use `text` not `string`, `int` not `integer`, `bool` not `boolean`. `?` after the **type** = nullable (`text?`), `?` after the **variable name** = optional/not required (`name?`). Use `filters=` for validation. Arrays use `type[]` syntax.
 
 ---
 
@@ -36,13 +36,21 @@ Reference for XanoScript data types, input blocks, and validation.
 | `geo_point` / `geo_polygon` / `geo_linestring` | Geographic data |
 
 ### Modifiers
-| Syntax | Meaning |
-|--------|---------|
-| `text?` | Nullable (can be null) |
-| `text name?` | Optional (not required) |
-| `text name?="default"` | Optional with default |
-| `text[]` | Array of type |
-| `text[1:10]` | Array with size constraints |
+
+The `?` has different meanings depending on placement:
+
+- **After the type** (`text?`) → the value is **nullable** (can be `null`)
+- **After the variable name** (`name?`) → the value is **not required** (optional)
+
+| Syntax | Nullable | Required | Description |
+|--------|----------|----------|-------------|
+| `text name` | No | Yes | Required, cannot be null |
+| `text? name` | Yes | Yes | Required, can be null |
+| `text name?` | No | No | Optional, cannot be null |
+| `text? name?` | Yes | No | Optional, can be null |
+| `text name?="default"` | No | No | Optional with default value |
+| `text[]` | — | — | Array of type |
+| `text[1:10]` | — | — | Array with size constraints |
 
 ---
 
@@ -291,22 +299,29 @@ input {
 
 ## Nullable vs Optional
 
+The `?` marker controls two independent behaviors based on where it's placed:
+
+- **`?` after the type** (e.g., `text?`) → **nullable**: the value can be `null`
+- **`?` after the variable name** (e.g., `name?`) → **not required**: the caller can omit the field entirely
+
+These combine to form four distinct behaviors:
+
 ```xs
 input {
-  // Required, cannot be null
-  text required_field
+  // Required, cannot be null — caller MUST provide a non-null value
+  text name filters=trim
 
-  // Required, can be null (must provide, can send null)
-  text? nullable_field
+  // Required, CAN be null — caller MUST provide the field, but can send null
+  text? name filters=trim
 
-  // Optional, cannot be null (can omit, but if sent must have value)
-  text optional_field?
+  // Optional, cannot be null — caller can omit, but if sent must have a value
+  text name? filters=trim
 
-  // Optional, can be null (can omit or send null)
-  text? nullable_optional?
+  // Optional, CAN be null — caller can omit or send null
+  text? name? filters=trim
 
-  // Optional with default
-  text with_default?="hello"
+  // Optional with default — if omitted, uses the default value
+  text name?="hello"
 }
 ```
 
