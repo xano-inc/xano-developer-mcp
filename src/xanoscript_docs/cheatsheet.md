@@ -153,6 +153,7 @@ $text|to_upper                // Uppercase
 $text|substr:0:10             // Substring
 $text|split:","               // Split to array
 $text|contains:"x"            // Check contains → bool
+$text|strlen                  // Length of a string
 
 // Array
 $arr|first                    // First element
