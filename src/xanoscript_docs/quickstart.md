@@ -88,6 +88,40 @@ conditional {
 }
 ```
 
+### Early Return
+
+Stop execution and return a value immediately. Useful for guard clauses and skipping unnecessary work.
+
+```xs
+// Guard clause - return early if condition is met
+conditional {
+  if ($input.skip) {
+    return { value = null }
+  }
+}
+
+// Return early with a value
+conditional {
+  if ($input.use_cache && $cached_result != null) {
+    return { value = $cached_result }
+  }
+}
+
+// Short-circuit with a successful response
+db.get "order" {
+  field_name = "id"
+  field_value = $input.order_id
+} as $order
+
+conditional {
+  if ($order.status == "completed") {
+    return { value = $order }
+  }
+}
+
+// Continue with expensive processing for non-completed orders...
+```
+
 ### API Request with Error Handling
 ```xs
 api.request {
