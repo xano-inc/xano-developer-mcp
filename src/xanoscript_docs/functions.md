@@ -83,10 +83,14 @@ Reference with path: `function.run "math/add" { ... }`
 
 For complete type and filter reference, use `xanoscript_docs({ topic: "types" })`.
 
+`?` after the **type** = nullable (`text?`), `?` after the **variable name** = not required (`age?`).
+
 ```xs
 input {
-  text name filters=trim
-  int age? filters=min:0
+  text name filters=trim                          // Required, not nullable
+  text? bio filters=trim                          // Required, nullable
+  int age? filters=min:0                          // Optional (not required)
+  text? nickname? filters=trim                    // Optional and nullable
   email contact filters=lower { sensitive = true }
 }
 ```

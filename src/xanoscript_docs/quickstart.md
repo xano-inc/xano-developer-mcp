@@ -172,22 +172,29 @@ var $message { value = "Status: " ~ ($status|to_text) ~ " - " ~ ($data|json_enco
 
 > **Full reference:** For complete input types and validation options, see `xanoscript_docs({ topic: "types" })`.
 
+The `?` has different meanings depending on placement:
+- **After the type** (`text?`) → **nullable** (value can be `null`)
+- **After the variable name** (`name?`) → **not required** (optional)
+
 ```xs
 input {
-  // Required input
+  // Required, not nullable
   text name
 
-  // Optional input (can be omitted)
-  text nickname?
+  // Required, nullable (caller must provide, but can send null)
+  text? name
+
+  // Optional, not nullable (can be omitted, but if sent must have value)
+  text name?
+
+  // Optional AND nullable (can be omitted or sent as null)
+  text? name?
 
   // Optional with default value
   text role?="user"
 
   // With filters applied
   email contact filters=trim|lower
-
-  // Optional with default AND filters
-  text search?="" filters=trim
 
   // Array type
   text[] tags filters=trim
