@@ -55,6 +55,8 @@ addon.call "<addon_name>" as $result
 
 ### function.call
 
+> **Important:** Always use `function.call` in workflow tests, not `function.run`. `function.call` handles errors internally, which is required for `expect` assertions (such as `expect.to_throw`) to work correctly. `function.run` is for calling functions from other primitives (APIs, functions, tasks, etc.) outside of workflow tests.
+
 ```xs
 function.call "<function_name>" {
   input = { key: "value" }
@@ -319,7 +321,8 @@ workflow_test "comprehensive_test" {
 2. **Tag for filtering** — Use tags like `critical`, `e2e`, `smoke` to organize test suites
 3. **Avoid `datasource = "live"`** — The entire datasource is cloned before each test run, which can be slow. Use no datasource or a smaller custom datasource instead
 4. **Keep tests independent** — Each workflow test should be self-contained and not depend on other tests
-5. **Use assertions over preconditions** — Prefer `expect.*` assertions for clearer test intent
+5. **Use `function.call`, not `function.run`** — `function.call` handles errors so that `expect` assertions work correctly. `function.run` is for calling functions outside of workflow tests
+6. **Use assertions over preconditions** — Prefer `expect.*` assertions for clearer test intent
 
 ---
 
