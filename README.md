@@ -29,7 +29,6 @@ An MCP server and standalone library that gives AI assistants superpowers for de
 This MCP server acts as a bridge between AI models and Xano's developer ecosystem, offering:
 
 - **Meta API Documentation** - Programmatically manage Xano workspaces, databases, APIs, functions, and more
-- **Run API Documentation** - Runtime execution, session management, and XanoScript execution
 - **CLI Documentation** - Command-line interface for local development, code sync, and execution
 - **XanoScript Documentation** - Language reference with context-aware docs based on file type
 - **Code Validation** - Syntax checking with the official XanoScript language server
@@ -162,7 +161,6 @@ import {
   validateXanoscript,
   xanoscriptDocs,
   metaApiDocs,
-  runApiDocs,
   cliDocs,
   mcpVersion
 } from '@xano/developer-mcp';
@@ -173,6 +171,7 @@ import {
 ```typescript
 import { validateXanoscript } from '@xano/developer-mcp';
 
+// Validate code directly
 const result = validateXanoscript({ code: 'var:result = 1 + 2' });
 
 if (result.valid) {
@@ -183,6 +182,13 @@ if (result.valid) {
     console.log(`  Line ${error.range.start.line + 1}: ${error.message}`);
   });
 }
+
+// Validate a file
+const fileResult = validateXanoscript({ file_path: './functions/utils.xs' });
+
+// Batch validate a directory
+const dirResult = validateXanoscript({ directory: './apis', pattern: '**/*.xs' });
+console.log(`${dirResult.valid_files}/${dirResult.total_files} files valid`);
 ```
 
 ### Get XanoScript Documentation
@@ -222,19 +228,6 @@ const workspaceDocs = metaApiDocs({
 console.log(workspaceDocs.documentation);
 ```
 
-### Get Run API Documentation
-
-```typescript
-import { runApiDocs } from '@xano/developer-mcp';
-
-const sessionDocs = runApiDocs({
-  topic: 'session',
-  detail_level: 'detailed'
-});
-
-console.log(sessionDocs.documentation);
-```
-
 ### Get CLI Documentation
 
 ```typescript
@@ -260,7 +253,6 @@ console.log(`Using version ${version}`);
 | `validateXanoscript` | Validate XanoScript code and get detailed error information |
 | `xanoscriptDocs` | Get XanoScript language documentation |
 | `metaApiDocs` | Get Meta API documentation |
-| `runApiDocs` | Get Run API documentation |
 | `cliDocs` | Get CLI documentation |
 | `mcpVersion` | Get the package version |
 | `toolDefinitions` | MCP tool definitions (for building custom MCP servers) |
@@ -277,7 +269,6 @@ import type {
   ParserDiagnostic,
   XanoscriptDocsArgs,
   MetaApiDocsArgs,
-  RunApiDocsArgs,
   CliDocsArgs,
   ToolResult
 } from '@xano/developer-mcp';
@@ -302,21 +293,38 @@ import '@xano/developer-mcp/server';
 
 ### 1. `validate_xanoscript`
 
-Validates XanoScript code for syntax errors. The language server auto-detects the object type from the code syntax.
+Validates XanoScript code for syntax errors. Supports multiple input methods. The language server auto-detects the object type from the code syntax.
 
 **Parameters:**
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `code` | string | Yes | The XanoScript code to validate |
+| `code` | string | No | The XanoScript code to validate as a string |
+| `file_path` | string | No | Path to a single `.xs` file to validate |
+| `file_paths` | string[] | No | Array of file paths for batch validation |
+| `directory` | string | No | Directory path to validate all `.xs` files recursively |
+| `pattern` | string | No | Glob pattern to filter files when using `directory` (default: `**/*.xs`) |
 
-**Example:**
+> One of `code`, `file_path`, `file_paths`, or `directory` is required.
+
+**Examples:**
 ```
-validate_xanoscript({
-  code: "var:result = 1 + 2"
-})
+// Validate code directly
+validate_xanoscript({ code: "var:result = 1 + 2" })
+
+// Validate a single file
+validate_xanoscript({ file_path: "functions/utils/format.xs" })
+
+// Validate multiple files
+validate_xanoscript({ file_paths: ["apis/users/get.xs", "apis/users/create.xs"] })
+
+// Validate all .xs files in a directory
+validate_xanoscript({ directory: "apis/users" })
+
+// Validate with a specific pattern
+validate_xanoscript({ directory: "src", pattern: "apis/**/*.xs" })
 ```
 
-**Returns:** List of errors with line/column positions, or confirmation of validity.
+**Returns:** List of errors with line/column positions and helpful suggestions, or confirmation of validity.
 
 ### 2. `xanoscript_docs`
 
@@ -336,6 +344,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `readme` | XanoScript overview, workspace structure, and quick reference |
 | `cheatsheet` | Quick reference for 20 most common XanoScript patterns (recommended first stop) |
 | `syntax` | Expressions, operators, and filters for all XanoScript code |
+| `quickstart` | Common patterns, quick reference, and common mistakes to avoid |
 | `types` | Data types, input blocks, and validation |
 | `tables` | Database schema definitions with indexes and relationships |
 | `functions` | Reusable function stacks with inputs and responses |
@@ -363,6 +372,9 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `schema` | Runtime schema parsing and validation |
 | `security` | Security best practices for authentication and authorization |
 | `streaming` | Streaming data from files, requests, and responses |
+| `middleware` | Request/response interceptors for functions, queries, tasks, and tools |
+| `branch` | Branch-level settings: middleware, history retention, visual styling |
+| `workspace` | Workspace-level settings: environment variables, preferences, realtime |
 
 **Examples:**
 ```
@@ -382,46 +394,7 @@ xanoscript_docs({ file_path: "api/users/create_post.xs" })
 xanoscript_docs({ topic: "database", mode: "quick_reference" })
 ```
 
-### 3. `run_api_docs`
-
-Get documentation for Xano's Run API. Use this to understand runtime execution, session management, and XanoScript execution.
-
-**Important:** The Run API uses a fixed base URL: `https://app.dev.xano.com/api:run/<endpoint>` (NOT your Xano instance URL)
-
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `topic` | string | Yes | Documentation topic to retrieve |
-| `detail_level` | string | No | `overview`, `detailed` (default), or `examples` |
-| `include_schemas` | boolean | No | Include JSON schemas for requests/responses (default: true) |
-
-**Available Topics:**
-
-| Topic | Description |
-|-------|-------------|
-| `start` | Getting started with the Run API |
-| `run` | Execute XanoScript code and API endpoints |
-| `session` | Session management for stateful execution |
-| `history` | Execution history and debugging |
-| `data` | Data operations and variable management |
-| `workflows` | Step-by-step workflow guides |
-
-**Examples:**
-```
-// Get overview of Run API
-run_api_docs({ topic: "start" })
-
-// Get detailed run endpoint documentation
-run_api_docs({ topic: "run", detail_level: "detailed" })
-
-// Get examples without schemas (smaller context)
-run_api_docs({ topic: "session", detail_level: "examples", include_schemas: false })
-
-// Step-by-step workflow guides
-run_api_docs({ topic: "workflows" })
-```
-
-### 4. `mcp_version`
+### 3. `mcp_version`
 
 Get the current version of the Xano Developer MCP server.
 
@@ -434,7 +407,7 @@ Get the current version of the Xano Developer MCP server.
 mcp_version()
 ```
 
-### 5. `meta_api_docs`
+### 4. `meta_api_docs`
 
 Get documentation for Xano's Meta API. Use this to understand how to programmatically manage Xano workspaces, databases, APIs, functions, agents, and more.
 
@@ -482,7 +455,7 @@ meta_api_docs({ topic: "api", detail_level: "examples", include_schemas: false }
 meta_api_docs({ topic: "workflows" })
 ```
 
-### 6. `cli_docs`
+### 5. `cli_docs`
 
 Get documentation for the Xano CLI. The CLI is **optional but recommended** for local development workflows. Not all users will have it installed.
 
@@ -504,6 +477,7 @@ Use this tool to understand CLI commands for local development, code synchroniza
 | `start` | Getting started with the CLI - installation and setup |
 | `profile` | Profile management - credentials and multi-environment setup |
 | `workspace` | Workspace operations - pull/push code sync |
+| `branch` | Branch management - list, switch, create, and delete branches |
 | `function` | Function management - list, get, create, edit |
 | `run` | Run API commands - execute code, manage projects/sessions |
 | `static_host` | Static hosting - deploy frontend builds |
@@ -533,6 +507,7 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/readme` | Overview and quick reference |
 | `xanoscript://docs/cheatsheet` | Quick reference for 20 most common patterns |
 | `xanoscript://docs/syntax` | Expressions, operators, and filters |
+| `xanoscript://docs/quickstart` | Common patterns and common mistakes to avoid |
 | `xanoscript://docs/types` | Data types and validation |
 | `xanoscript://docs/tables` | Database schema definitions |
 | `xanoscript://docs/functions` | Reusable function stacks |
@@ -560,12 +535,15 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/schema` | Runtime schema parsing |
 | `xanoscript://docs/security` | Security best practices |
 | `xanoscript://docs/streaming` | Data streaming operations |
+| `xanoscript://docs/middleware` | Request/response interceptors |
+| `xanoscript://docs/branch` | Branch-level settings |
+| `xanoscript://docs/workspace` | Workspace-level settings |
 
 ## npm Scripts
 
 | Script | Command | Description |
 |--------|---------|-------------|
-| `build` | `tsc` | Compile TypeScript to JavaScript |
+| `build` | `tsc && cp -r src/xanoscript_docs dist/` | Compile TypeScript and copy docs |
 | `start` | `node dist/index.js` | Run the MCP server |
 | `dev` | `tsc && node dist/index.js` | Build and run in development |
 | `test` | `vitest run` | Run unit tests |
@@ -589,19 +567,12 @@ xano-developer-mcp/
 │   │   ├── xanoscript_docs.ts          # XanoScript docs tool
 │   │   ├── mcp_version.ts              # Version tool
 │   │   ├── meta_api_docs.ts            # Meta API docs tool wrapper
-│   │   ├── run_api_docs.ts             # Run API docs tool wrapper
 │   │   └── cli_docs.ts                 # CLI docs tool wrapper
 │   ├── meta_api_docs/                  # Meta API documentation
 │   │   ├── index.ts                    # API docs handler
 │   │   ├── index.test.ts               # Tests for index
 │   │   ├── types.ts                    # Type definitions
 │   │   ├── types.test.ts               # Tests for types
-│   │   ├── format.ts                   # Documentation formatter
-│   │   ├── format.test.ts              # Tests for formatter
-│   │   └── topics/                     # Individual topic modules
-│   ├── run_api_docs/                   # Run API documentation
-│   │   ├── index.ts                    # Run API handler
-│   │   ├── index.test.ts               # Tests for index
 │   │   ├── format.ts                   # Documentation formatter
 │   │   ├── format.test.ts              # Tests for formatter
 │   │   └── topics/                     # Individual topic modules
@@ -626,7 +597,7 @@ xano-developer-mcp/
 | Package | Version | Purpose |
 |---------|---------|---------|
 | `@modelcontextprotocol/sdk` | ^1.26.0 | Official MCP SDK |
-| `@xano/xanoscript-language-server` | ^11.6.3 | XanoScript parser and validation |
+| `@xano/xanoscript-language-server` | ^11.6.5 | XanoScript parser and validation |
 | `minimatch` | ^10.1.2 | Glob pattern matching for context-aware docs |
 
 ### Dev Dependencies
@@ -655,8 +626,6 @@ Xano Developer MCP Server
     │
     ├─► meta_api_docs → Meta API documentation with detail levels
     │
-    ├─► run_api_docs → Run API documentation for runtime execution
-    │
     ├─► cli_docs → CLI documentation for local development workflows
     │
     ├─► mcp_version → Returns server version from package.json
@@ -666,7 +635,7 @@ Xano Developer MCP Server
 
 ## Authentication
 
-The MCP server and library functions do not require authentication. However, when using the documented APIs (Meta API, Run API) to interact with actual Xano services, you will need appropriate Xano API credentials. See the `meta_api_docs` and `run_api_docs` tools for authentication details.
+The MCP server and library functions do not require authentication. However, when using the documented APIs (Meta API) to interact with actual Xano services, you will need appropriate Xano API credentials. See the `meta_api_docs` tool for authentication details.
 
 ## Development
 
@@ -717,8 +686,6 @@ npm run test:coverage
 | `meta_api_docs/index.ts` | `meta_api_docs/index.test.ts` | Meta API documentation handler and topic management |
 | `meta_api_docs/format.ts` | `meta_api_docs/format.test.ts` | Documentation formatting for endpoints, examples, and patterns |
 | `meta_api_docs/types.ts` | `meta_api_docs/types.test.ts` | Type structure validation |
-| `run_api_docs/index.ts` | `run_api_docs/index.test.ts` | Run API documentation handler |
-| `run_api_docs/format.ts` | `run_api_docs/format.test.ts` | Run API formatting with correct base URL |
 
 ### Test Structure
 
@@ -734,10 +701,6 @@ src/
 │   ├── format.ts
 │   ├── format.test.ts          # Tests for format.ts
 │   └── ...
-└── run_api_docs/
-    ├── index.ts
-    ├── index.test.ts           # Tests for index.ts
-    └── ...
 ```
 
 ### Writing Tests

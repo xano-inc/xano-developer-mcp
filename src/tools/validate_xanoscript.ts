@@ -515,28 +515,33 @@ export const validateXanoscriptToolDefinition = {
       code: {
         type: "string",
         description:
-          "The XanoScript code to validate as a string. Use file_path instead if the code contains special characters that are hard to escape.",
+          "The XanoScript code to validate as a string. Use file_path instead if the code contains special characters that are hard to escape. " +
+          "Example: \"var $name:text = 'hello'\\nreturn $name\"",
       },
       file_path: {
         type: "string",
         description:
-          "Path to a single XanoScript file to validate. Easier than passing code directly - avoids escaping issues.",
+          "Path to a single XanoScript file to validate. Easier than passing code directly - avoids escaping issues. " +
+          "Example: \"functions/utils/format.xs\"",
       },
       file_paths: {
         type: "array",
         items: { type: "string" },
         description:
-          "Array of file paths for batch validation. Returns a summary with per-file results.",
+          "Array of file paths for batch validation. Returns a summary with per-file results. " +
+          "Example: [\"apis/users/get.xs\", \"apis/users/create.xs\", \"functions/utils/format.xs\"]",
       },
       directory: {
         type: "string",
         description:
-          "Directory path to validate. Validates all .xs files recursively. Use with 'pattern' to filter.",
+          "Directory path to validate. Validates all .xs files recursively. Use with 'pattern' to filter specific subdirectories or files. " +
+          "Example: \"apis/users\"",
       },
       pattern: {
         type: "string",
         description:
-          'Glob pattern to filter files when using directory (default: "**/*.xs"). Example: "apis/**/*.xs"',
+          "Glob pattern to filter files when using 'directory' (default: \"**/*.xs\"). " +
+          "Examples: \"apis/**/*.xs\" to match only API files, \"**/create.xs\" to match all create files.",
       },
     },
     required: [],

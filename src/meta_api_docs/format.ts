@@ -25,22 +25,6 @@ Authorization: \`Bearer <your-access-token>\`
   toolName: "meta_api_docs",
 };
 
-/**
- * Config for Run API
- */
-export const RUN_API_CONFIG: FormatConfig = {
-  baseUrlInfo: `## Base URL
-\`\`\`
-https://app.dev.xano.com/api:run/<endpoint>
-\`\`\`
-
-**Important:** This is a fixed URL - NOT your Xano instance URL. All Run API requests go to this central endpoint.
-
-Authorization: \`Bearer <your-access-token>\`
-`,
-  toolName: "run_api_docs",
-};
-
 function formatParameter(param: NonNullable<EndpointDoc["parameters"]>[0]): string {
   const required = param.required ? " (required)" : "";
   const defaultVal = param.default !== undefined ? ` [default: ${param.default}]` : "";

@@ -10,7 +10,6 @@
  *   validateXanoscript,
  *   xanoscriptDocs,
  *   metaApiDocs,
- *   runApiDocs,
  *   cliDocs,
  *   mcpVersion
  * } from '@xano/developer-mcp';
@@ -82,16 +81,6 @@ export {
   type MetaApiDocsResult,
 } from "./tools/meta_api_docs.js";
 
-// Run API Documentation
-export {
-  runApiDocs,
-  runApiTopics,
-  getRunApiTopicNames,
-  getRunApiTopicDescriptions,
-  type RunApiDocsArgs,
-  type RunApiDocsResult,
-} from "./tools/run_api_docs.js";
-
 // CLI Documentation
 export {
   cliDocs,
@@ -134,6 +123,5 @@ export {
   xanoscriptDocsToolDefinition,
   mcpVersionToolDefinition,
   metaApiDocsToolDefinition,
-  runApiDocsToolDefinition,
   cliDocsToolDefinition,
 } from "./tools/index.js";

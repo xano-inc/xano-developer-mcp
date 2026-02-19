@@ -85,14 +85,20 @@ ${getTopicDescriptions()}
       topic: {
         type: "string",
         enum: getTopicNames(),
-        description: "Documentation topic to retrieve",
+        description:
+          "Documentation topic to retrieve. Start with 'start' for installation and setup. " +
+          "Example: topic='function' for function management commands, topic='run' for running XanoScript locally.",
       },
       detail_level: {
         type: "string",
         enum: ["overview", "detailed", "examples"],
         default: "detailed",
         description:
-          "Level of detail: overview (brief), detailed (full docs), examples (with examples)",
+          "Level of detail to return. " +
+          "'overview' = brief summary of commands and their purpose. " +
+          "'detailed' = full command reference with flags and arguments. " +
+          "'examples' = includes usage examples for each command. " +
+          "Default: 'detailed'.",
       },
     },
     required: ["topic"],

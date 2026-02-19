@@ -103,19 +103,28 @@ ${getTopicDescriptions()}
       topic: {
         type: "string",
         enum: getTopicNames(),
-        description: "Documentation topic to retrieve",
+        description:
+          "Documentation topic to retrieve. Start with 'start' for an overview of the Meta API. " +
+          "Example: topic='workspace' for workspace management endpoints, topic='table' for database table operations.",
       },
       detail_level: {
         type: "string",
         enum: ["overview", "detailed", "examples"],
         default: "detailed",
         description:
-          "Level of detail: overview (brief), detailed (full docs), examples (with code examples)",
+          "Level of detail to return. " +
+          "'overview' = brief summary of endpoints and their purpose. " +
+          "'detailed' = full API reference with parameters, headers, and response formats. " +
+          "'examples' = includes curl and fetch code examples for each endpoint. " +
+          "Default: 'detailed'.",
       },
       include_schemas: {
         type: "boolean",
         default: true,
-        description: "Include JSON schemas for requests/responses",
+        description:
+          "Include JSON schemas for request bodies and response payloads. " +
+          "Useful for understanding the expected data format. Set to false to reduce response size. " +
+          "Default: true.",
       },
     },
     required: ["topic"],
