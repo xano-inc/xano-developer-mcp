@@ -138,10 +138,15 @@ stack {
     }
   }
 
-  // Foreach (array iteration)
+  // Foreach (array iteration) - no built-in index; count manually if needed
+  var $index {
+    value = 0
+  }
   foreach ($input.items) {
     each as $item {
       debug.log { value = $item.name }
+      debug.log { value = $index }
+      math.add $index { value = 1 }
     }
   }
 
