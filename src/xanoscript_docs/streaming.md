@@ -257,7 +257,7 @@ function "import_large_csv" {
             db.add "record" {
               data = {
                 name: $row.name|trim,
-                email: $row.email|trim|lower,
+                email: $row.email|trim|to_lower,
                 created_at: now
               }
             }
