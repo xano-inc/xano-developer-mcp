@@ -20,6 +20,8 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/**/*.xs"
 | `redis.range` | Get list range |
 | `redis.count` | Get list length |
 | `redis.ratelimit` | Rate limiting |
+| `redis.remove` | Remove elements from list |
+| `redis.keys` | Search keys by pattern |
 
 ---
 
@@ -48,13 +50,13 @@ redis.del { key = "user:123:session" }
 ## Counters
 
 ```xs
-# Increment
+// Increment
 redis.incr {
   key = "page_views"
   by = 1
 } as $new_count
 
-# Decrement
+// Decrement
 redis.decr {
   key = "inventory:item-123"
   by = 1
@@ -66,33 +68,51 @@ redis.decr {
 ## Lists
 
 ```xs
-# Push to end
+// Push to end
 redis.push {
   key = "queue:tasks"
   value = $task
 } as $length
 
-# Push to front
+// Push to front
 redis.unshift {
   key = "queue:priority"
   value = $urgent_task
 }
 
-# Pop from end
+// Pop from end
 redis.pop { key = "queue:tasks" } as $task
 
-# Pop from front
+// Pop from front
 redis.shift { key = "queue:tasks" } as $task
 
-# Get range
+// Get range
 redis.range {
   key = "recent:logs"
   start = 0
   stop = 9
 } as $logs
 
-# Count
+// Count
 redis.count { key = "queue:tasks" } as $count
+
+// Remove specific elements from list
+redis.remove {
+  key = "user_list"
+  value = "inactive_user"
+  count = 1
+}
+```
+
+---
+
+## Key Management
+
+```xs
+// Search keys by pattern
+redis.keys {
+  search = "user_*"
+} as $user_keys
 ```
 
 ---

@@ -18,6 +18,10 @@ Complete reference for XanoScript expressions, operators, and filters.
 | [Math Filters](#math-filters) | `add`, `subtract`, `round`, `abs`, `ceil`, `floor` |
 | [String Filters](#string-filters) | `trim`, `to_lower`, `to_upper`, `substr`, `split`, `replace` |
 | [Array Filters](#array-filters) | `first`, `last`, `count`, `map`, `filter`, `reduce` |
+| [Array Functions](#array-functions) | `array.push`, `array.pop`, `array.map`, `array.filter`, `array.group_by` |
+| [Text Functions](#text-functions) | `text.contains`, `text.starts_with`, `text.trim`, `text.append`, `text.prepend` |
+| [Math Functions](#math-functions) | `math.add`, `math.sub`, `math.mul`, `math.div`, `math.bitwise.*` |
+| [Object Functions](#object-functions) | `object.keys`, `object.values`, `object.entries` |
 | [Object Filters](#object-filters) | `get`, `set`, `has`, `keys`, `values` |
 | [Type Filters](#type-filters) | `to_int`, `to_text`, `to_bool`, `json_encode` |
 | [Date/Time Filters](#datetime-filters) | `to_timestamp`, `format_timestamp` |
@@ -56,12 +60,13 @@ Working with...
 ├── Arrays? → USE ARRAY FILTERS ONLY (see Array Filters section)
 │   ├── Get element? → first, last, get
 │   ├── Count items? → count (NOT strlen)
-│   ├── Transform all? → map
-│   ├── Keep some? → filter
-│   ├── Find one? → find
+│   ├── Transform all? → map (filter) or array.map (statement)
+│   ├── Keep some? → filter (filter) or array.filter (statement)
+│   ├── Find one? → find (filter) or array.find (statement)
 │   ├── Combine? → reduce
 │   ├── Reverse? → reverse (NOT available on strings)
-│   └── Sort? → sort
+│   ├── Sort? → sort
+│   └── Statement-level ops? → See Array Functions (array.push, array.pop, etc.)
 ├── Objects?
 │   ├── Get value? → get
 │   ├── Set value? → set
@@ -331,6 +336,408 @@ Generate numeric ranges with the `..` operator:
 
 // Sort
 [{n:"z"},{n:"a"}]|sort:n:text:false         // Ascending by n
+```
+
+---
+
+## Array Functions
+
+Statement-level functions for manipulating arrays within stacks. Unlike filters (e.g., `$arr|push:3`), these are standalone operations.
+
+> **Syntax note:** Functions that use a `{ by = ... }` or `{ value = ... }` block wrap the array in parentheses — e.g., `array.map ($arr) { ... }`. Functions that use an `if (...)` condition take a bare variable — e.g., `array.filter $arr if (...) as $result`.
+
+### array.push
+
+Appends a new element to the end of an array.
+
+```xs
+array.push $shopping_cart {
+  value = "oranges"
+}
+```
+
+### array.unshift
+
+Inserts a new element at the beginning of an array, shifting existing elements to higher indexes.
+
+```xs
+array.unshift $priority_tasks {
+  value = "urgent meeting"
+}
+```
+
+### array.pop
+
+Removes and returns the last element of an array. The removed element is stored in the `as` variable.
+
+```xs
+array.pop $completed_tasks as $last_finished_task
+```
+
+### array.shift
+
+Removes and returns the first element of an array. The removed element is stored in the `as` variable.
+
+```xs
+array.shift $waiting_list as $next_customer
+```
+
+### array.merge
+
+Combines another array or a single value into the target array, appending all elements from the provided `value`.
+
+```xs
+array.merge $active_users {
+  value = $new_users
+}
+```
+
+### array.find
+
+Searches an array and returns the first element that meets the specified condition. Returns `null` if no match.
+
+```xs
+array.find $customer_ages if ($this > 18) as $first_adult_age
+```
+
+### array.find_index
+
+Returns the index of the first element that satisfies the condition. Returns `-1` if no match.
+
+```xs
+array.find_index $sale_prices if ($this < 20) as $first_discount_index
+```
+
+### array.has
+
+Checks if at least one element meets the condition. Returns `true` or `false`.
+
+```xs
+array.has $team_roles if ($this == "manager") as $has_manager
+```
+
+### array.every
+
+Tests whether every element satisfies the condition. Returns `true` if all pass, `false` otherwise.
+
+```xs
+array.every $exam_scores if ($this >= 70) as $all_passed
+```
+
+### array.filter
+
+Creates a new array containing only the elements that meet the condition.
+
+```xs
+array.filter $temperatures if ($this > 32) as $above_freezing
+```
+
+### array.filter_count
+
+Counts how many elements satisfy the condition.
+
+```xs
+array.filter_count $survey_responses if ($this == "yes") as $yes_count
+```
+
+### array.map
+
+Transforms each element in an array based on a specified mapping. The `by` parameter defines the transformation.
+
+```xs
+array.map ($json) {
+  by = $this.email
+} as $emails
+
+array.map ($json) {
+  by = {name: $this.name, gender: $this.gender}
+} as $people
+```
+
+### array.partition
+
+Divides an array into two groups based on a condition. Returns an object with `true` and `false` keys.
+
+```xs
+array.partition ($json) if ($this.gender == "male") as $is_male
+```
+
+### array.group_by
+
+Groups elements based on a specified key or expression. Returns an object where each key is a group.
+
+```xs
+array.group_by ($users) {
+  by = $this.gender
+} as $user_by_gender
+```
+
+### array.union
+
+Combines two arrays ensuring all elements are unique based on the `by` key.
+
+```xs
+array.union ([1,3,5,7,9]) {
+  value = [2,4,6,8]
+  by = $this
+} as $union
+// Result: [1,2,3,4,5,6,7,8,9]
+```
+
+### array.difference
+
+Returns elements present in the first array but not in the second, based on the `by` key.
+
+```xs
+array.difference ([1,2,3,4,5,6,7,8,9]) {
+  value = [2,4,6,8]
+  by = $this
+} as $difference
+// Result: [1,3,5,7,9]
+```
+
+### array.intersection
+
+Returns elements present in both arrays, based on the `by` key.
+
+```xs
+array.intersection ([1,2,3,4,5,6,7,8,9]) {
+  value = [2,4,6,8]
+  by = $this
+} as $intersection
+// Result: [2,4,6,8]
+```
+
+---
+
+## Text Functions
+
+Statement-level functions for text manipulation within stacks. These operate directly on variables — checking conditions (returning `true`/`false` via `as`) or mutating the variable in place.
+
+> **Syntax note:** Functions that check a condition (e.g., `text.contains`, `text.starts_with`) store the result in an `as` variable. Functions that modify text (e.g., `text.trim`, `text.append`) mutate the variable directly and do not return a value.
+
+### text.contains
+
+Checks if a text string contains the specified value. Returns `true` if found, `false` otherwise.
+
+```xs
+text.contains $log_entry {
+  value = "error"
+} as $has_error
+```
+
+### text.icontains
+
+Performs a case-insensitive check to see if a text string contains the specified value.
+
+```xs
+text.icontains $description {
+  value = "error"
+} as $has_error
+```
+
+### text.starts_with
+
+Checks if a text string begins with the specified value.
+
+```xs
+text.starts_with $message {
+  value = "Hello"
+} as $starts_with_hello
+```
+
+### text.istarts_with
+
+Performs a case-insensitive check to see if a text string starts with the specified value.
+
+```xs
+text.istarts_with $title {
+  value = "intro"
+} as $starts_with_intro
+```
+
+### text.ends_with
+
+Checks if a text string ends with the specified value.
+
+```xs
+text.ends_with $url {
+  value = ".com"
+} as $is_com_domain
+```
+
+### text.iends_with
+
+Performs a case-insensitive check to see if a text string ends with the specified value.
+
+```xs
+text.iends_with $filename {
+  value = "pdf"
+} as $ends_with_pdf
+```
+
+### text.trim
+
+Removes characters (default is whitespace, or as specified by `value`) from both the beginning and end of a text string. Mutates the variable directly.
+
+```xs
+text.trim $user_input {
+  value = " "
+}
+```
+
+### text.ltrim
+
+Removes leading characters (default is whitespace, or as specified by `value`) from a text string. Mutates the variable directly.
+
+```xs
+text.ltrim $user_input {
+  value = " "
+}
+```
+
+### text.rtrim
+
+Removes trailing characters (default is whitespace, or as specified by `value`) from a text string. Mutates the variable directly.
+
+```xs
+text.rtrim $user_input {
+  value = " "
+}
+```
+
+### text.append
+
+Adds the specified value to the end of a text string. Mutates the variable directly.
+
+```xs
+text.append $greeting {
+  value = ", welcome!"
+}
+```
+
+### text.prepend
+
+Adds the specified value to the beginning of a text string. Mutates the variable directly.
+
+```xs
+text.prepend $message {
+  value = "Alert: "
+}
+```
+
+---
+
+## Math Functions
+
+Statement-level functions for arithmetic and bitwise operations within stacks. These mutate the target variable directly and do not return a value.
+
+> **Note:** These are different from math filters (e.g., `$x|add:5`) and math domain functions (e.g., `math.add(5, 3)`). Statement-level math functions modify the variable in place.
+
+### math.add
+
+Adds the specified value to the variable.
+
+```xs
+math.add $cart_total {
+  value = $item_price
+}
+```
+
+### math.sub
+
+Subtracts the specified value from the variable.
+
+```xs
+math.sub $total_cost {
+  value = $discount_amount
+}
+```
+
+### math.mul
+
+Multiplies the variable by the specified value.
+
+```xs
+math.mul $base_price {
+  value = $tax_rate
+}
+```
+
+### math.div
+
+Divides the variable by the specified value.
+
+```xs
+math.div $total_time {
+  value = $num_tasks
+}
+```
+
+### math.bitwise.and
+
+Performs a bitwise AND operation on the variable.
+
+```xs
+math.bitwise.and $status_flags {
+  value = $check_bit
+}
+```
+
+### math.bitwise.or
+
+Performs a bitwise OR operation on the variable.
+
+```xs
+math.bitwise.or $permissions {
+  value = $new_permission
+}
+```
+
+### math.bitwise.xor
+
+Performs a bitwise XOR operation on the variable.
+
+```xs
+math.bitwise.xor $flags {
+  value = $toggle_bit
+}
+```
+
+---
+
+## Object Functions
+
+Statement-level functions for extracting object properties within stacks. These return results via the `as` variable.
+
+### object.keys
+
+Retrieves the property keys of an object as an array.
+
+```xs
+object.keys {
+  value = $user_data
+} as $user_data_keys
+```
+
+### object.values
+
+Extracts the values of an object's properties into an array.
+
+```xs
+object.values {
+  value = $product_info
+} as $product_values
+```
+
+### object.entries
+
+Returns an array of key-value pairs from an object.
+
+```xs
+object.entries {
+  value = $settings
+} as $settings_pairs
 ```
 
 ---
