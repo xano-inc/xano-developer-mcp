@@ -221,7 +221,7 @@ The most common filters at a glance:
 | Filter | Example | Result |
 |--------|---------|--------|
 | `trim` | `" hello "|trim` | `"hello"` |
-| `lower` | `"HELLO"|lower` | `"hello"` |
+| `to_lower` | `"HELLO"|to_lower` | `"hello"` |
 | `first` | `[1,2,3]|first` | `1` |
 | `count` | `[1,2,3]|count` | `3` |
 | `to_int` | `"42"|to_int` | `42` |

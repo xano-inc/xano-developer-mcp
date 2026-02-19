@@ -140,7 +140,7 @@ var $total {
 ### Filters (Pipe Syntax)
 
 ```xs
-$value|trim|lower                    // Chain filters
+$value|trim|to_lower                 // Chain filters
 $input.name|strlen                   // Get length
 $array|first                         // First element
 ($a + $b)|round:2                    // Math with precision
