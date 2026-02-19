@@ -137,20 +137,27 @@ export const xanoscriptDocsToolDefinition = {
     properties: {
       topic: {
         type: "string",
-        description: "Documentation topic. Available: " + getTopicDescriptions(),
+        description:
+          "Documentation topic to retrieve. Call without any parameters to get the README overview. " +
+          "Example: topic='syntax' for language syntax, topic='database' for database operations, topic='types' for type system.\n\n" +
+          "Available topics:\n" + getTopicDescriptions(),
       },
       file_path: {
         type: "string",
         description:
-          "File path being edited (e.g., 'apis/users/create.xs', 'functions/utils/format.xs'). " +
-          "Returns all relevant docs based on file type using applyTo pattern matching.",
+          "File path being edited. Returns all relevant docs automatically based on the file type and location. " +
+          "Uses applyTo pattern matching to select applicable topics. " +
+          "Example: 'apis/users/create.xs' returns API, database, and syntax docs. " +
+          "'functions/utils/format.xs' returns function and syntax docs.",
       },
       mode: {
         type: "string",
         enum: ["full", "quick_reference"],
         description:
-          "full = complete documentation, quick_reference = compact Quick Reference sections only. " +
-          "Use quick_reference for smaller context window usage.",
+          "'full' = complete documentation with explanations and examples. " +
+          "'quick_reference' = compact cheatsheet with just syntax patterns and signatures. " +
+          "Use 'quick_reference' to save context window space when you just need a reminder. " +
+          "Default: 'full'.",
       },
     },
     required: [],

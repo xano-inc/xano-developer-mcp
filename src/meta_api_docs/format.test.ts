@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   formatDocumentation,
   META_API_CONFIG,
-  RUN_API_CONFIG,
 } from "./format.js";
 import type { TopicDoc, EndpointDoc, ExampleDoc, PatternDoc } from "./types.js";
 
@@ -13,15 +12,6 @@ describe("meta_api_docs/format", () => {
         "https://<your-instance-subdomain>.xano.io/api:meta/"
       );
       expect(META_API_CONFIG.toolName).toBe("meta_api_docs");
-    });
-  });
-
-  describe("RUN_API_CONFIG", () => {
-    it("should have correct base URL info", () => {
-      expect(RUN_API_CONFIG.baseUrlInfo).toContain(
-        "https://app.dev.xano.com/api:run/"
-      );
-      expect(RUN_API_CONFIG.toolName).toBe("run_api_docs");
     });
   });
 
@@ -249,13 +239,17 @@ describe("meta_api_docs/format", () => {
     });
 
     it("should use custom config", () => {
+      const customConfig = {
+        baseUrlInfo: "## Base URL\nhttps://custom.example.com/api/",
+        toolName: "custom_docs",
+      };
       const result = formatDocumentation(
         { ...minimalDoc, patterns: [{ name: "Test", steps: ["step"] }] },
         "detailed",
         true,
-        RUN_API_CONFIG
+        customConfig
       );
-      expect(result).toContain("https://app.dev.xano.com/api:run/");
+      expect(result).toContain("https://custom.example.com/api/");
     });
 
     describe("detail levels", () => {

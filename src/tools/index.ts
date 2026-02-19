@@ -19,7 +19,6 @@
  *   validateXanoscript,
  *   xanoscriptDocs,
  *   metaApiDocs,
- *   runApiDocs,
  *   cliDocs,
  *   mcpVersion
  * } from '@xano/developer-mcp';
@@ -78,17 +77,6 @@ import {
 } from "./meta_api_docs.js";
 
 import {
-  runApiDocs,
-  runApiDocsTool,
-  runApiDocsToolDefinition,
-  runApiTopics,
-  getRunApiTopicNames,
-  getRunApiTopicDescriptions,
-  type RunApiDocsArgs,
-  type RunApiDocsResult,
-} from "./run_api_docs.js";
-
-import {
   cliDocs,
   cliDocsTool,
   cliDocsToolDefinition,
@@ -137,14 +125,6 @@ export {
   type MetaApiDocsArgs,
   type MetaApiDocsResult,
 
-  // Run API Documentation
-  runApiDocs,
-  runApiTopics,
-  getRunApiTopicNames,
-  getRunApiTopicDescriptions,
-  type RunApiDocsArgs,
-  type RunApiDocsResult,
-
   // CLI Documentation
   cliDocs,
   cliTopics,
@@ -167,7 +147,6 @@ export {
   xanoscriptDocsTool,
   mcpVersionTool,
   metaApiDocsTool,
-  runApiDocsTool,
   cliDocsTool,
 };
 
@@ -180,7 +159,6 @@ export {
   xanoscriptDocsToolDefinition,
   mcpVersionToolDefinition,
   metaApiDocsToolDefinition,
-  runApiDocsToolDefinition,
   cliDocsToolDefinition,
 };
 
@@ -192,7 +170,6 @@ export const toolDefinitions = [
   xanoscriptDocsToolDefinition,
   mcpVersionToolDefinition,
   metaApiDocsToolDefinition,
-  runApiDocsToolDefinition,
   cliDocsToolDefinition,
 ];
 
@@ -220,9 +197,6 @@ export function handleTool(
 
     case "meta_api_docs":
       return metaApiDocsTool(args as unknown as MetaApiDocsArgs);
-
-    case "run_api_docs":
-      return runApiDocsTool(args as unknown as RunApiDocsArgs);
 
     case "cli_docs":
       return cliDocsTool(args as unknown as CliDocsArgs);
