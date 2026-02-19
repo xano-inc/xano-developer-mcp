@@ -10,9 +10,9 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/**/*.xs"
 
 | Provider | Prefix | Operations |
 |----------|--------|------------|
-| AWS S3 | `cloud.aws.s3.*` | upload_file, read_file, sign_url, list_directory, delete_file |
-| Azure Blob | `cloud.azure.storage.*` | upload_file, read_file, sign_url |
-| Google Cloud | `cloud.google.storage.*` | upload_file, read_file, sign_url |
+| AWS S3 | `cloud.aws.s3.*` | upload_file, read_file, sign_url, list_directory, delete_file, get_file_info |
+| Azure Blob | `cloud.azure.storage.*` | upload_file, read_file, sign_url, list_directory, delete_file, get_file_info |
+| Google Cloud | `cloud.google.storage.*` | upload_file, read_file, sign_url, list_directory, delete_file, get_file_info |
 
 ---
 
@@ -75,6 +75,17 @@ cloud.aws.s3.delete_file {
 }
 ```
 
+### Get File Info
+```xs
+cloud.aws.s3.get_file_info {
+  bucket = "my-bucket"
+  region = "us-east-1"
+  key = $env.AWS_ACCESS_KEY
+  secret = $env.AWS_SECRET_KEY
+  file_key = "items/photo.jpg"
+} as $file_metadata
+```
+
 ---
 
 ## Azure Blob Storage
@@ -102,6 +113,30 @@ cloud.azure.storage.sign_url {
   path = "document.pdf"
   ttl = 300
 } as $url
+
+// List directory
+cloud.azure.storage.list_directory {
+  account_name = $env.AZURE_ACCOUNT
+  account_key = $env.AZURE_KEY
+  container_name = "archives"
+  path = "2023/"
+} as $yearly_archives
+
+// Delete file
+cloud.azure.storage.delete_file {
+  account_name = $env.AZURE_ACCOUNT
+  account_key = $env.AZURE_KEY
+  container_name = "temp_files"
+  filePath = "drafts/old_draft.docx"
+}
+
+// Get file info
+cloud.azure.storage.get_file_info {
+  account_name = $env.AZURE_ACCOUNT
+  account_key = $env.AZURE_KEY
+  container_name = "media"
+  filePath = "videos/intro.mp4"
+} as $video_metadata
 ```
 
 ---
@@ -129,6 +164,27 @@ cloud.google.storage.sign_url {
   method = "GET"
   ttl = 300
 } as $url
+
+// List directory
+cloud.google.storage.list_directory {
+  service_account = $env.GCP_SERVICE_ACCOUNT
+  bucket = "my-bucket"
+  path = "designs/"
+} as $design_files
+
+// Delete file
+cloud.google.storage.delete_file {
+  service_account = $env.GCP_SERVICE_ACCOUNT
+  bucket = "my-bucket"
+  filePath = "old/temp_data.csv"
+}
+
+// Get file info
+cloud.google.storage.get_file_info {
+  service_account = $env.GCP_SERVICE_ACCOUNT
+  bucket = "my-bucket"
+  filePath = "icons/app_icon.png"
+} as $icon_details
 ```
 
 ---

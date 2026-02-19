@@ -10,9 +10,9 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/**/*.xs"
 
 | Provider | Prefix | Operations |
 |----------|--------|------------|
-| Elasticsearch | `cloud.elasticsearch.*` | query, document, bulk |
-| AWS OpenSearch | `cloud.aws.opensearch.*` | query, document |
-| Algolia | `cloud.algolia.*` | search, save_object, save_objects, delete_object, set_settings |
+| Elasticsearch | `cloud.elasticsearch.*` | query, document, request, bulk |
+| AWS OpenSearch | `cloud.aws.opensearch.*` | query, document, request |
+| Algolia | `cloud.algolia.*` | search, request, save_object, save_objects, delete_object, set_settings |
 
 ---
 
@@ -93,6 +93,19 @@ cloud.elasticsearch.bulk {
 } as $result
 ```
 
+### Raw Request
+
+```xs
+cloud.elasticsearch.request {
+  auth_type = "API Key"
+  key_id = $env.ES_KEY_ID
+  access_key = $env.ES_ACCESS_KEY
+  method = "GET"
+  url = "https://my-cluster.es.io/posts/_search"
+  query = { query: { match: { category: "tech" } } }
+} as $search_results
+```
+
 ### Advanced Search
 
 ```xs
@@ -147,6 +160,17 @@ cloud.aws.opensearch.query {
   size = 100
 } as $logs
 
+// Raw request
+cloud.aws.opensearch.request {
+  auth_type = "IAM"
+  key_id = $env.AWS_ACCESS_KEY
+  access_key = $env.AWS_SECRET_KEY
+  region = "us-east-1"
+  method = "POST"
+  url = "https://search-domain.us-east-1.es.amazonaws.com/_search"
+  query = { query: { term: { status: "active" } } }
+} as $active_items
+
 // Index document
 cloud.aws.opensearch.document {
   region = "us-east-1"
@@ -163,6 +187,18 @@ cloud.aws.opensearch.document {
 ---
 
 ## Algolia
+
+### Raw Request
+
+```xs
+cloud.algolia.request {
+  application_id = $env.ALGOLIA_APP_ID
+  api_key = $env.ALGOLIA_API_KEY
+  url = "https://my-algolia-app.algolia.net/1/indexes/posts/query"
+  method = "POST"
+  payload = { query: "tech" }
+} as $tech_posts
+```
 
 ### Search
 

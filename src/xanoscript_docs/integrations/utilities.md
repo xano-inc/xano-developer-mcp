@@ -294,6 +294,31 @@ api.lambda {
 
 ## Utilities
 
+### Headers
+
+```xs
+// Set a response header
+util.set_header {
+  value = "Set-Cookie: sessionId=e8bb43229de9; HttpOnly; Secure; Domain=foo.example.com"
+  duplicates = "replace"
+}
+```
+
+### Request Introspection
+
+```xs
+// Get all environment variables
+util.get_env as $environment_vars
+
+// Get all parsed input data
+util.get_all_input as $input_data
+
+// Get raw, unparsed input data
+util.get_input as $raw_input
+```
+
+### Template Engine, IP Lookup, Geo & Sleep
+
 ```xs
 // Template engine (Twig)
 util.template_engine {

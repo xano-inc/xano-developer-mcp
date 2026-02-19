@@ -410,6 +410,45 @@ input {
 }
 ```
 
+### Key Generation
+
+```xs
+// Generate elliptic curve key
+security.create_curve_key {
+  curve = "P-256"
+  format = "object"
+} as $crypto_key
+
+// Generate secret key for symmetric encryption
+security.create_secret_key {
+  bits = 2048
+  format = "object"
+} as $secret_key
+```
+
+### JWE (Encrypted JWT)
+
+```xs
+// Encrypt JWT payload
+security.jwe_encode {
+  headers = { "alg": "A256KW" }
+  claims = { data: "secret" }
+  key = $env.JWE_KEY
+  key_algorithm = "A256KW"
+  content_algorithm = "A256GCM"
+  ttl = 3600
+} as $encrypted_token
+
+// Decrypt JWE token
+security.jwe_decode {
+  token = $encrypted_token
+  key = $env.JWE_KEY
+  key_algorithm = "A256KW"
+  content_algorithm = "A256GCM"
+  check_claims = { "iss": "my_app" }
+} as $decoded_payload
+```
+
 ### JWT Security
 
 ```xs
