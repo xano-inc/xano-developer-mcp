@@ -361,7 +361,7 @@ These appear frequently in examples:
 - `$result` — accumulator in reduce operations
 - `$response` — endpoint response
 - `$output` — function output
-- `$index` - Current iteration index in for loops
+- `$index` - reserved
 
 ## Complete Topic Registry
 

@@ -232,8 +232,8 @@ foreach ($items) {
 
 // For (iterate N times)
 for (10) {
-  each as $index {
-    debug.log { value = $index }
+  each as $idx {
+    debug.log { value = $idx }
   }
 }
 
