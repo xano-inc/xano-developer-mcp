@@ -249,7 +249,7 @@ var $msg { value = ($status|to_text) ~ ": " ~ ($data|json_encode) }
 
 ## Reserved Variables (Cannot Use)
 
-`$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`
+`$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`
 
 ## Input Block Syntax
 
