@@ -197,7 +197,7 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
   },
   workspace: {
     file: "workspace.md",
-    applyTo: ["workspace.xs"],
+    applyTo: ["workspace/**/*.xs"],
     description: "Workspace-level settings: environment variables, preferences, realtime",
   },
 };

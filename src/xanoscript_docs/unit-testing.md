@@ -311,6 +311,65 @@ function "validate_age" {
 
 ---
 
+## Common Mistakes
+
+### Testing Required Fields with Empty Strings
+
+A required input field (no `?` after the name) rejects both `null` and empty strings at the platform level — **before your stack runs**. Writing a test that sends `""` to a required field will always get a validation error, never your custom precondition or error logic.
+
+❌ **Wrong — will always throw a validation error, not your custom error:**
+```xs
+function "create_user" {
+  input { text name }  // required: rejects null AND ""
+  stack {
+    precondition ($input.name != "") {
+      error_type = "inputerror"
+      error = "Name cannot be blank"
+    }
+  }
+  response = { ok: true }
+
+  // This test gets a validation error from the input layer, not "Name cannot be blank"
+  test "rejects empty name" {
+    input = { name: "" }
+    expect.to_throw { value = "Name cannot be blank" }
+  }
+}
+```
+
+✅ **Correct — use an optional field if you need to test the empty/omitted case:**
+```xs
+function "create_user" {
+  input { text name? }  // optional: accepts "", null, or omission
+  stack {
+    precondition ($input.name != null && $input.name != "") {
+      error_type = "inputerror"
+      error = "Name cannot be blank"
+    }
+  }
+  response = { ok: true }
+
+  test "rejects empty name" {
+    input = { name: "" }
+    expect.to_throw { value = "Name cannot be blank" }
+  }
+
+  test "rejects null name" {
+    input = { name: null }
+    expect.to_throw { value = "Name cannot be blank" }
+  }
+
+  test "accepts valid name" {
+    input = { name: "Alice" }
+    expect.to_equal ($response.ok) { value = true }
+  }
+}
+```
+
+For a full breakdown of what each required/optional/nullable combination accepts, see `xanoscript_docs({ topic: "types" })`.
+
+---
+
 ## Complete Example
 
 ```xs
