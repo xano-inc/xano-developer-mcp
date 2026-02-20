@@ -88,14 +88,44 @@ text[1:10] tags             // Array size constraints
 
 | Pattern | Description | Example |
 |---------|-------------|---------|
-| `$input.field` | Input parameters | `$input.name` |
-| `$var.field` | Stack variables | `$var.total` |
+| `$input.field` | Input parameters — **prefix required** | `$input.name` |
+| `$var.field` or `$field` | Stack variables — prefix is optional | `$var.total` or `$total` |
 | `$auth.id` | Authenticated user | `$auth.id`, `$auth.role` |
 | `$env.NAME` | Environment variables | `$env.API_KEY` |
 | `$db.table.field` | DB field reference (queries) | `$db.user.email` |
 | `$this` | Current item in loops/maps | `$this.name` |
 | `$result` | Accumulator in reduce | `$result + $$` |
 | `$$` | Shorthand for current item in filter expressions | `$items\|map:$$.name` |
+
+### Input vs. Variable Access (Critical Distinction)
+
+Inputs and stack variables have different access rules:
+
+- **Inputs** declared in the `input {}` block **must always use `$input.fieldname`**. There is no shorthand.
+- **Stack variables** declared with `var` can be accessed as `$var.fieldname` or just `$fieldname` — they are identical.
+
+```xs
+// Declared in input block
+input {
+  text name
+  int age
+}
+
+// ❌ Wrong — inputs cannot be referenced as bare variables
+var $greeting { value = "Hello, " ~ $name }   // $name is undefined
+
+// ✅ Correct — inputs require $input prefix
+var $greeting { value = "Hello, " ~ $input.name }
+```
+
+```xs
+// Declared as a stack variable
+var $total { value = 42 }
+
+// ✅ Both forms are valid and identical
+$var.total     // explicit prefix
+$total         // shorthand — same thing
+```
 
 ### Reserved Names
 
