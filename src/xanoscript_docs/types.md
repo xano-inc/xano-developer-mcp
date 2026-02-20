@@ -325,6 +325,19 @@ input {
 }
 ```
 
+### Required Fields Also Reject Empty Strings
+
+> **Important for testing:** A required `text` field (no `?` after the name) rejects both `null` **and** empty strings (`""`). Sending `""` triggers a platform-level validation error **before your stack runs** — your preconditions and custom error handling never execute.
+
+| Value sent | `text name` | `text? name` | `text name?` | `text? name?` |
+|------------|-------------|--------------|--------------|---------------|
+| `"Alice"` | ✅ valid | ✅ valid | ✅ valid | ✅ valid |
+| `""` | ❌ validation error | ❌ validation error | ✅ valid (empty) | ✅ valid (empty) |
+| `null` | ❌ validation error | ✅ valid | ❌ validation error | ✅ valid |
+| *(omitted)* | ❌ validation error | ❌ validation error | ✅ valid | ✅ valid |
+
+To test the "empty input" scenario for a text field, the field must be declared optional (`text name?`). Testing a required field with `""` will always produce a validation error — never your custom logic.
+
 ---
 
 ## Foreign Key References

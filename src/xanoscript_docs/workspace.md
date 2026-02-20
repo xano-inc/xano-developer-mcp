@@ -1,5 +1,5 @@
 ---
-applyTo: "workspace.xs"
+applyTo: "workspace/**/*.xs"
 ---
 
 # Workspace Configuration
@@ -21,6 +21,7 @@ workspace "<name>" {
 ### Attributes
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
+| `name` | text | **Yes** | Workspace name (matches the filename, e.g. `workspace/my_project.xs` → `"my_project"`) |
 | `description` | text | No | Human-readable workspace description |
 | `env` | object | No | Environment variable definitions |
 | `acceptance` | object | No | Terms and acceptance settings |
@@ -171,7 +172,7 @@ workspace "ecommerce_platform" {
 
 ## File Location
 
-Workspace configuration is stored in `workspace.xs` at the root of your project.
+Workspace configuration is stored as `workspace/<name>.xs`, where `<name>` matches the name declared in the `workspace` block.
 
 ```
 project/

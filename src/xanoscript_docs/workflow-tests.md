@@ -323,6 +323,7 @@ workflow_test "comprehensive_test" {
 4. **Keep tests independent** — Each workflow test should be self-contained and not depend on other tests
 5. **Use `function.call`, not `function.run`** — `function.call` handles errors so that `expect` assertions work correctly. `function.run` is for calling functions outside of workflow tests
 6. **Use assertions over preconditions** — Prefer `expect.*` assertions for clearer test intent
+7. **Don't test required fields with empty strings** — Required inputs reject both `null` and `""` at the platform level before your stack runs. If you send `""` to a required `text` field, you'll always get a platform validation error — never your custom logic. To test the empty/blank case, the input must be declared optional (`text name?`). See `xanoscript_docs({ topic: "types" })` for the full breakdown.
 
 ---
 
