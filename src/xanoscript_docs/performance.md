@@ -286,11 +286,14 @@ For basic rate limiting setup, see `xanoscript_docs({ topic: "security" })`. Bel
 
 ```xs
 // Different limits by user tier
-var $limit {
-  value = conditional {
-    if ($auth.tier == "premium") { 1000 }
-    elseif ($auth.tier == "pro") { 500 }
-    else { 100 }
+var $limit { value = 100 }
+
+conditional {
+  if ($auth.tier == "premium") { 
+    var.update $limit { value = 1000 } 
+  }
+  elseif ($auth.tier == "pro") {
+    var.update $limit { value = 500 } 
   }
 }
 

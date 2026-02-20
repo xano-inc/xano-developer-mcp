@@ -149,24 +149,28 @@ var $content_type { value = $api_result.response.headers|first }
 var $retries { value = 0 }
 var $success { value = false }
 
-while ($retries < 3 && $success == false) {
-  try_catch {
-    try {
-      api.request {
-        url = "https://api.example.com/data"
-        method = "GET"
-        timeout = 10
-      } as $api_result
+stack {
+  while ($retries < 3 && $success == false) {
+    each {
+      try_catch {
+        try {
+          api.request {
+            url = "https://api.example.com/data"
+            method = "GET"
+            timeout = 10
+          } as $api_result
 
-      conditional {
-        if ($api_result.response.status == 200) {
-          var.update $success { value = true }
+          conditional {
+            if ($api_result.response.status == 200) {
+              var.update $success { value = true }
+            }
+          }
+        }
+        catch {
+          var.update $retries { value = $retries + 1 }
+          util.sleep { value = 2 }
         }
       }
-    }
-    catch {
-      var.update $retries { value = $retries + 1 }
-      util.sleep { value = 2 }
     }
   }
 }

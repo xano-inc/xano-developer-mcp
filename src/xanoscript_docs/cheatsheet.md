@@ -33,21 +33,46 @@ conditional {
 
 > **Note:** Use `elseif` (one word), not `else if`.
 
+## Switch
+
+```xs
+switch ($input.status) {
+  case ("active") {
+    var $message { value = "User is active" }
+  } break
+  case ("pending") {
+    var $message { value = "User is pending" }
+  } break
+  default {
+    var $message { value = "Unknown status" }
+  }
+}
+```
+
+> **Note:** `break` goes **after** the closing `}` of each `case` block. The `default` case does not need `break`.
+
 ## Loops
 
 ```xs
 // For each loop
-each ($input.items as $item) {
-  debug.log { value = $item.name }
+foreach ($input.items) {
+  each as $item {
+    debug.log { value = $item.name }
+  }
 }
 
-// While loop (must be inside stack block)
-stack {
-  var $counter { value = 0 }
-  while ($counter < 10) {
-    each {
-      var.update $counter { value = $counter + 1 }
-    }
+// For loop (iterate N times)
+for (10) {
+  each as $index {
+    debug.log { value = $index }
+  }
+}
+
+// While loop
+var $counter { value = 0 }
+while ($counter < 10) {
+  each {
+    var.update $counter { value = $counter + 1 }
   }
 }
 
