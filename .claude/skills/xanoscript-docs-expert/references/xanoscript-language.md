@@ -223,24 +223,36 @@ var $tier { value = conditional { if (`$level > 5`) { "premium" } else { "basic"
 ### Loops
 
 ```xs
-// Each (forEach)
-each ($items as $item) {
-  debug.log { value = $item.name }
+// forEach
+foreach ($items) {
+  each as $item {
+    debug.log { value = $item.name }
+  }
 }
 
-// While (must be inside stack)
-stack {
-  var $i { value = 0 }
-  while ($i < 10) {
-    each { var.update $i { value = $i + 1 } }
+// For (iterate N times)
+for (10) {
+  each as $index {
+    debug.log { value = $index }
   }
+}
+
+// While
+var $i { value = 0 }
+while ($i < 10) {
+  each { var.update $i { value = $i + 1 } }
 }
 
 // Switch
 switch ($input.action) {
-  case "create" { /* ... */ }
-  case "update" { /* ... */ }
-  default { /* ... */ }
+  case ("create") {
+    /* ... */
+  }
+
+  case ("update") break
+  default {
+    /* ... */
+  }
 }
 ```
 

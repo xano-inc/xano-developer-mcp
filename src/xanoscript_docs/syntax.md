@@ -150,16 +150,19 @@ conditional {
 
 > **Important:** Use `elseif` (one word), not `else if` or `else { if (...) }`. Nested `if` inside `else` blocks is not supported.
 
-### Conditional as Expression
+### Conditional with Variable Updates
 
-Use conditional blocks inline to return values:
+Use conditional blocks to update a variable based on conditions:
 
 ```xs
-var $tier_limit {
-  value = conditional {
-    if ($auth.tier == "premium") { 1000 }
-    elseif ($auth.tier == "pro") { 500 }
-    else { 100 }
+var $tier_limit { value = 100 }
+
+conditional {
+  if ($auth.tier == "premium") { 
+    var.update $tier_limit { value = 1000 }
+  }
+  elseif ($auth.tier == "pro") { 
+    var.update $tier_limit { value = 500 }
   }
 }
 ```
