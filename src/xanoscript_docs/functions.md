@@ -143,14 +143,14 @@ stack {
   }
 
   // Foreach (array iteration) - no built-in index; count manually if needed
-  var $index {
+  var $idx {
     value = 0
   }
   foreach ($input.items) {
     each as $item {
       debug.log { value = $item.name }
-      debug.log { value = $index }
-      math.add $index { value = 1 }
+      debug.log { value = $idx }
+      math.add $idx { value = 1 }
     }
   }
 
@@ -441,21 +441,6 @@ foreach ($items) {
     }
 
     // Process item
-  }
-}
-```
-
-### Loop with Index
-
-```xs
-foreach ($items) {
-  each as $item, $index {
-    db.add "item" {
-      data = {
-        value: $item,
-        position: $index
-      }
-    }
   }
 }
 ```

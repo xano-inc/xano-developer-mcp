@@ -63,8 +63,8 @@ foreach ($input.items) {
 
 // For loop (iterate N times)
 for (10) {
-  each as $index {
-    debug.log { value = $index }
+  each as $idx {
+    debug.log { value = $idx }
   }
 }
 
@@ -249,7 +249,7 @@ var $msg { value = ($status|to_text) ~ ": " ~ ($data|json_encode) }
 
 ## Reserved Variables (Cannot Use)
 
-`$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`
+`$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`
 
 ## Input Block Syntax
 

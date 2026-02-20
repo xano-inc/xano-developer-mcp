@@ -95,6 +95,7 @@ const RESERVED_VARIABLES = [
   "$response",
   "$output",
   "$input",
+  "$index",
   "$auth",
   "$env",
   "$db",

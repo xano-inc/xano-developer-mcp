@@ -24,6 +24,7 @@ These variable names are reserved and cannot be used:
 | `$db` | Database table reference for queries |
 | `$this` | Current context reference |
 | `$result` | Used in reduce operations |
+| `$index` | Reserved for some array operations |
 
 ```xs
 // ❌ Wrong - using reserved variable name

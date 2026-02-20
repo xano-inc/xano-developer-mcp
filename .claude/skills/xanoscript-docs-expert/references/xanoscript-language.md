@@ -99,7 +99,7 @@ text[1:10] tags             // Array size constraints
 
 ### Reserved Names
 
-Cannot use as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`
+Cannot use as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`
 
 ## Operators
 
@@ -232,8 +232,8 @@ foreach ($items) {
 
 // For (iterate N times)
 for (10) {
-  each as $index {
-    debug.log { value = $index }
+  each as $idx {
+    debug.log { value = $idx }
   }
 }
 

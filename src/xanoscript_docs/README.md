@@ -111,7 +111,7 @@ $db.table.field     // Database field reference (in queries)
 $this               // Current item in loops/maps
 ```
 
-**Reserved Variables:** The following cannot be used as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`.
+**Reserved Variables:** The following cannot be used as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`.
 
 ### Type Names
 
