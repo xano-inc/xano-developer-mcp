@@ -35,6 +35,46 @@ function "<name>" {
 
 ---
 
+## Scope Limitations
+
+> **Unit tests can only access `$response`** — the value declared in the construct's `response = ...` field. Tests do **not** have access to intermediate stack variables.
+
+```xs
+function "calculate" {
+  input { int x }
+  stack {
+    var $doubled { value = $input.x * 2 }    // NOT accessible in tests
+    var $result  { value = $doubled + 1 }    // NOT accessible in tests
+  }
+  response = $result                          // This becomes $response in tests
+
+  test "doubles and adds one" {
+    input = { x: 5 }
+    // ✅ Can access $response (the declared response)
+    expect.to_equal ($response) { value = 11 }
+
+    // ❌ Stack variables are not in scope — this will fail
+    // expect.to_equal ($doubled) { value = 10 }
+  }
+}
+```
+
+To assert on intermediate values, expose them through the response:
+
+```xs
+response = { result: $result, doubled: $doubled }
+
+test "intermediate values" {
+  input = { x: 5 }
+  expect.to_equal ($response.doubled) { value = 10 }
+  expect.to_equal ($response.result) { value = 11 }
+}
+```
+
+> **Note:** Function stack variables (variables defined in other functions called via `function.run`) are also not accessible — tests are fully isolated to the construct's own declared response.
+
+---
+
 ## Basic Test
 
 ```xs

@@ -112,21 +112,41 @@ Working with...
 
 > **Note:** There is no `default` filter. Use conditional blocks or `first_notnull`/`first_notempty` instead.
 
-### String Concatenation with Filters
+### Parentheses and Filter Precedence
 
-When concatenating strings that use filters, wrap each filtered expression in parentheses:
+> **Rule:** Filters bind greedily to the left. Without parentheses, the parser extends the filter expression into the operator that follows — producing invalid or unexpected results. **When in doubt, wrap `$var|filter` in parentheses.**
+
+The filter `|` grabs everything to its right until it hits a boundary. This means `$arr|count > 3` is parsed as `$arr | (length > 3)` — treating `count > 3` as the filter argument, which is invalid.
 
 ```xs
-// ✅ Correct - parentheses around filtered expressions
-var $message {
-  value = ($status|to_text) ~ ": " ~ ($data|json_encode)
-}
+// ❌ Wrong — parser reads filter argument as "count == 0" (invalid)
+if ($arr|count == 0) { ... }
 
-// ❌ Incorrect - missing parentheses causes parse error
+// ❌ Wrong — parse error in concatenation
 var $message {
   value = $status|to_text ~ ": " ~ $data|json_encode
 }
 ```
+
+```xs
+// ✅ Correct — evaluate filter first, then apply operator
+
+// ✅ Correct
+if (($arr|count) == 0) { ... }
+
+// ✅ Correct — wrap each filtered expression for concatenation
+var $message {
+  value = ($status|to_text) ~ ": " ~ ($data|json_encode)
+}
+
+// ✅ Correct — filter result used in arithmetic
+var $total { value = ($prices|sum) + $tax }
+
+// ✅ Correct — filter result compared
+var $is_long { value = ($text|strlen) > 100 }
+```
+
+**Summary:** Any time you apply an operator (`>`, `<`, `==`, `!=`, `~`, `+`, `-`, etc.) to a filtered value, wrap the `$var|filter` portion in its own parentheses.
 
 ---
 
@@ -285,7 +305,7 @@ $db.post.date >=? $input.start_date
 | `unique` | `[1,1,2]\|unique` | `[1,2]` |
 | `flatten` | `[[1,2],[3]]\|flatten` | `[1,2,3]` |
 | `shuffle` | `[1,2,3]\|shuffle` | Random order |
-| `slice` | `[1,2,3,4]\|slice:1:2` | `[2,3]` |
+| `slice` | `[1,2,3,4]\|slice:1:2` | `[2,3]` — offset 1, length 2 |
 | `push` | `[1,2]\|push:3` | `[1,2,3]` |
 | `pop` | `[1,2,3]\|pop` | `3` |
 | `shift` | `[1,2,3]\|shift` | `1` |
@@ -329,6 +349,30 @@ Generate numeric ranges with the `..` operator:
 
 // Reduce - accumulate to single value
 [1,2,3,4]|reduce:$$+$result:0               // 10
+```
+
+### Array Element Access: `|get` vs `|slice`
+
+> **`|get:N`** returns a **single element** by zero-based index.
+> **`|slice:offset:length`** returns a **sub-array**, skipping `offset` elements and returning the next `length` elements.
+
+| Method | Use For | Example | Result |
+|--------|---------|---------|--------|
+| `\|get:N` | Single element by index (0-based) | `[10,20,30]\|get:0` | `10` |
+| `\|slice:offset:length` | Sub-array — skip N, take M | `[10,20,30,40]\|slice:1:2` | `[20,30]` |
+| `\|first` | First element | `[10,20,30]\|first` | `10` |
+| `\|last` | Last element | `[10,20,30]\|last` | `30` |
+
+```xs
+// Single element by index
+var $third { value = $items|get:2 }             // 0-based: 3rd element
+
+// Sub-array: skip first 10, return the next 5
+var $page { value = $items|slice:10:5 }
+
+// ⚠️ slice:offset:length — NOT slice:start:end
+// $arr|slice:2:3 → skip 2, return 3 elements (indices 2, 3, 4)
+// NOT "from index 2 to index 3"
 ```
 
 ### Grouping & Indexing
