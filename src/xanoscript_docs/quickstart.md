@@ -611,6 +611,28 @@ stack {
 }
 ```
 
+### 13. Multiple constructs in one file
+Each `.xs` file must contain exactly **one** construct. Placing two constructs in the same file causes a parse error.
+
+```xs
+// ❌ Wrong - two constructs in one file
+function "helper_a" {
+  stack { ... }
+  response = $result
+}
+
+function "helper_b" {
+  stack { ... }
+  response = $result
+}
+```
+
+```
+// ✅ Correct - one construct per file
+// function/helper_a.xs  → contains only "helper_a"
+// function/helper_b.xs  → contains only "helper_b"
+```
+
 ---
 
 ## Related Topics
