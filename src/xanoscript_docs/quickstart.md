@@ -10,6 +10,36 @@ Essential patterns for XanoScript development. Use this as a quick reference for
 
 ## Quick Reference
 
+### Variable Access Rules
+
+**Inputs must use `$input.fieldname` — no shorthand exists.**
+
+Input fields declared in the `input {}` block are only accessible via the `$input` prefix. You cannot reference them as bare variables.
+
+```xs
+input {
+  text name
+  int age
+}
+
+// ❌ Wrong — $name is not defined; inputs live on $input
+var $greeting { value = "Hello, " ~ $name }
+
+// ✅ Correct
+var $greeting { value = "Hello, " ~ $input.name }
+var $is_adult { value = $input.age >= 18 }
+```
+
+**Stack variables have an optional `$var.` prefix — both forms are identical.**
+
+```xs
+var $total { value = 100 }
+
+// ✅ Both are the same thing
+$var.total       // explicit prefix form
+$total           // shorthand form (no prefix)
+```
+
 ### Reserved Variable Names
 
 These variable names are reserved and cannot be used:

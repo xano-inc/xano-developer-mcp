@@ -85,6 +85,29 @@ Working with...
 
 ## Quick Reference
 
+### Variable Access Prefixes
+
+| Prefix | Applies to | Shorthand? |
+|--------|-----------|------------|
+| `$input.field` | Input parameters | No — prefix always required |
+| `$var.field` | Stack variables | Yes — `$field` is identical |
+| `$auth.field` | Auth context | No |
+| `$env.NAME` | Environment variables | No |
+| `$db.table.field` | DB field refs (queries) | No |
+
+```xs
+// ❌ Wrong — input fields are NOT accessible as bare variables
+var $name { value = $name }      // undefined; inputs live on $input
+
+// ✅ Correct — always use $input for input fields
+var $name { value = $input.name }
+
+// ✅ Both are valid for stack variables
+var $total { value = 0 }
+$var.total      // explicit
+$total          // shorthand — same thing
+```
+
 ### Operators
 | Category | Operators |
 |----------|-----------|
