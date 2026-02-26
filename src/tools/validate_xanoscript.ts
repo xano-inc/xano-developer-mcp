@@ -502,6 +502,12 @@ export function validateXanoscriptTool(args: ValidateXanoscriptArgs): ToolResult
 
 export const validateXanoscriptToolDefinition = {
   name: "validate_xanoscript",
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   description:
     "Validate XanoScript code for syntax errors. Supports multiple input methods:\n" +
     "- code: Raw XanoScript code as a string\n" +

@@ -87,6 +87,12 @@ export function handleMetaApiDocs(args: MetaApiDocsArgs): string {
  */
 export const metaApiDocsToolDefinition = {
   name: "meta_api_docs",
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   description: `Get documentation for Xano's Meta API. Use this to understand how to programmatically manage Xano workspaces, databases, APIs, functions, agents, and more.
 
 ## Topics

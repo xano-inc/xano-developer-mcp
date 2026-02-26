@@ -6,7 +6,9 @@ applyTo: "**/*.xs"
 
 > **Purpose:** Quick reference for the 20 most common XanoScript patterns. For detailed documentation, use `xanoscript_docs({ topic: "<topic>" })`.
 
-## Variable Declaration
+## Quick Reference
+
+### Variable Declaration
 
 ```xs
 var $name { value = "initial" }
@@ -15,7 +17,7 @@ var $items { value = [] }
 var $data { value = { key: "value" } }
 ```
 
-## Conditionals
+### Conditionals
 
 ```xs
 conditional {
@@ -33,7 +35,7 @@ conditional {
 
 > **Note:** Use `elseif` (one word), not `else if`.
 
-## Switch
+### Switch
 
 ```xs
 switch ($input.status) {
@@ -51,7 +53,7 @@ switch ($input.status) {
 
 > **Note:** `break` goes **after** the closing `}` of each `case` block. The `default` case does not need `break`.
 
-## Loops
+### Loops
 
 ```xs
 // For each loop
@@ -81,7 +83,7 @@ var $names { value = $items|map:$$.name }
 var $active { value = $items|filter:$$.is_active }
 ```
 
-## Database CRUD
+### Database CRUD
 
 ```xs
 // Get single record by field
@@ -113,7 +115,7 @@ db.edit "user" {
 db.del "user" { field_name = "id", field_value = $input.user_id }
 ```
 
-## API Requests
+### API Requests
 
 ```xs
 api.request {
@@ -133,7 +135,7 @@ api.request {
 // $api_result.response.headers → Response headers
 ```
 
-## Error Handling
+### Error Handling
 
 ```xs
 // Precondition (stops execution if false)
@@ -159,7 +161,7 @@ throw {
 }
 ```
 
-## Error Types
+### Error Types
 
 | Type | HTTP Status | Use Case |
 |------|-------------|----------|
@@ -168,7 +170,7 @@ throw {
 | `notfound` | 404 | Resource doesn't exist |
 | `standard` | 500 | General errors |
 
-## Common Filters
+### Common Filters
 
 ```xs
 // String
@@ -210,7 +212,7 @@ $num|round:2                  // Round to 2 decimals
 $num|abs                      // Absolute value
 ```
 
-## Authentication Check
+### Authentication Check
 
 ```xs
 precondition ($auth.id != null) {
@@ -219,7 +221,7 @@ precondition ($auth.id != null) {
 }
 ```
 
-## Function Call
+### Function Call
 
 ```xs
 function.run "my_function" {
@@ -227,7 +229,7 @@ function.run "my_function" {
 } as $result
 ```
 
-## String Concatenation
+### String Concatenation
 
 ```xs
 // Basic
@@ -237,7 +239,7 @@ var $msg { value = "Hello, " ~ $input.name ~ "!" }
 var $msg { value = ($status|to_text) ~ ": " ~ ($data|json_encode) }
 ```
 
-## Common Type Names
+### Common Type Names
 
 | Use This | Not This |
 |----------|----------|
@@ -247,11 +249,11 @@ var $msg { value = ($status|to_text) ~ ": " ~ ($data|json_encode) }
 | `decimal` | float, number |
 | `type[]` | array, list |
 
-## Reserved Variables (Cannot Use)
+### Reserved Variables (Cannot Use)
 
 `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`
 
-## Input Block Syntax
+### Input Block Syntax
 
 `?` after the **type** = nullable, `?` after the **variable name** = optional (not required).
 

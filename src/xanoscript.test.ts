@@ -150,7 +150,7 @@ describe("xanoscript module", () => {
     });
 
     it("should match workspace.xs", () => {
-      const result = getDocsForFilePath("workspace.xs");
+      const result = getDocsForFilePath("workspace/workspace.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("workspace");
     });
@@ -274,10 +274,10 @@ Even more content.
       expect(result).toContain("Documentation version:");
     });
 
-    it("should return error for unknown topic", () => {
-      const result = readXanoscriptDocsV2(DOCS_PATH, { topic: "nonexistent" });
-      expect(result).toContain('Error: Unknown topic "nonexistent"');
-      expect(result).toContain("Available topics:");
+    it("should throw for unknown topic", () => {
+      expect(() =>
+        readXanoscriptDocsV2(DOCS_PATH, { topic: "nonexistent" })
+      ).toThrow('Unknown topic "nonexistent"');
     });
 
     it("should return context-aware docs for file_path", () => {
@@ -314,11 +314,10 @@ Even more content.
       expect(quickResult).toContain("Mode: quick_reference");
     });
 
-    it("should return error for invalid docs path", () => {
-      const result = readXanoscriptDocsV2("/nonexistent/path", {
-        topic: "syntax",
-      });
-      expect(result).toContain("Error reading XanoScript documentation:");
+    it("should throw for invalid docs path", () => {
+      expect(() =>
+        readXanoscriptDocsV2("/nonexistent/path", { topic: "syntax" })
+      ).toThrow();
     });
   });
 

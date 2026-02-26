@@ -113,7 +113,7 @@ debug.stop
 function "process_order" {
   input { int order_id }
   stack {
-    var $trace_id { value = |uuid }
+    security.create_uuid as $trace_id
 
     debug.log {
       label = "TRACE_START"

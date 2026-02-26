@@ -69,6 +69,12 @@ export function handleCliDocs(args: CliDocsArgs): string {
  */
 export const cliDocsToolDefinition = {
   name: "cli_docs",
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   description: `Get documentation for the Xano CLI. Use this to understand how to use the CLI for local development, code sync, and XanoScript execution.
 
 ## Topics

@@ -275,55 +275,50 @@ export function readXanoscriptDocsV2(
   const mode = args?.mode || "full";
   const version = getXanoscriptDocsVersion(docsPath);
 
-  try {
-    // Default: return README
-    if (!args?.topic && !args?.file_path) {
-      const readme = readFileSync(join(docsPath, "README.md"), "utf-8");
-      return `${readme}\n\n---\nDocumentation version: ${version}`;
-    }
-
-    // Context-aware: return docs matching file pattern
-    if (args?.file_path) {
-      const topics = getDocsForFilePath(args.file_path);
-
-      if (topics.length === 0) {
-        return `No documentation found for file pattern: ${args.file_path}\n\nAvailable topics: ${Object.keys(XANOSCRIPT_DOCS_V2).join(", ")}`;
-      }
-
-      const docs = topics.map((t) => {
-        const config = XANOSCRIPT_DOCS_V2[t];
-        const content = readFileSync(join(docsPath, config.file), "utf-8");
-        return mode === "quick_reference"
-          ? extractQuickReference(content, t)
-          : content;
-      });
-
-      const header = `# XanoScript Documentation for: ${args.file_path}\n\nMatched topics: ${topics.join(", ")}\nMode: ${mode}\nVersion: ${version}\n\n---\n\n`;
-      return header + docs.join("\n\n---\n\n");
-    }
-
-    // Topic-based: return specific doc
-    if (args?.topic) {
-      const config = XANOSCRIPT_DOCS_V2[args.topic];
-
-      if (!config) {
-        const availableTopics = Object.keys(XANOSCRIPT_DOCS_V2).join(", ");
-        return `Error: Unknown topic "${args.topic}".\n\nAvailable topics: ${availableTopics}`;
-      }
-
-      const content = readFileSync(join(docsPath, config.file), "utf-8");
-      const doc = mode === "quick_reference"
-        ? extractQuickReference(content, args.topic)
-        : content;
-
-      return `${doc}\n\n---\nDocumentation version: ${version}`;
-    }
-
-    return "Error: Invalid parameters";
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return `Error reading XanoScript documentation: ${errorMessage}`;
+  // Default: return README
+  if (!args?.topic && !args?.file_path) {
+    const readme = readFileSync(join(docsPath, "README.md"), "utf-8");
+    return `${readme}\n\n---\nDocumentation version: ${version}`;
   }
+
+  // Context-aware: return docs matching file pattern
+  if (args?.file_path) {
+    const topics = getDocsForFilePath(args.file_path);
+
+    if (topics.length === 0) {
+      throw new Error(
+        `No documentation found for file pattern: ${args.file_path}\n\nAvailable topics: ${Object.keys(XANOSCRIPT_DOCS_V2).join(", ")}`
+      );
+    }
+
+    const docs = topics.map((t) => {
+      const config = XANOSCRIPT_DOCS_V2[t];
+      const content = readFileSync(join(docsPath, config.file), "utf-8");
+      return mode === "quick_reference"
+        ? extractQuickReference(content, t)
+        : content;
+    });
+
+    const header = `# XanoScript Documentation for: ${args.file_path}\n\nMatched topics: ${topics.join(", ")}\nMode: ${mode}\nVersion: ${version}\n\n---\n\n`;
+    return header + docs.join("\n\n---\n\n");
+  }
+
+  // Topic-based: return specific doc
+  const config = XANOSCRIPT_DOCS_V2[args!.topic!];
+
+  if (!config) {
+    const availableTopics = Object.keys(XANOSCRIPT_DOCS_V2).join(", ");
+    throw new Error(
+      `Unknown topic "${args!.topic}".\n\nAvailable topics: ${availableTopics}`
+    );
+  }
+
+  const content = readFileSync(join(docsPath, config.file), "utf-8");
+  const doc = mode === "quick_reference"
+    ? extractQuickReference(content, args!.topic!)
+    : content;
+
+  return `${doc}\n\n---\nDocumentation version: ${version}`;
 }
 
 /**
