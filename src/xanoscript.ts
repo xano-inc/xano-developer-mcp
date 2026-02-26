@@ -23,6 +23,7 @@ export interface XanoscriptDocsArgs {
   topic?: string;
   file_path?: string;
   mode?: "full" | "quick_reference";
+  exclude_topics?: string[];
 }
 
 // =============================================================================
@@ -112,7 +113,7 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
   },
   integrations: {
     file: "integrations.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "tasks/*.xs"],
+    applyTo: [],
     description: "External service integrations index - see sub-topics for details",
   },
   "integrations/cloud-storage": {
@@ -152,7 +153,7 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
   },
   addons: {
     file: "addons.md",
-    applyTo: ["addons/*.xs", "functions/**/*.xs", "apis/**/*.xs"],
+    applyTo: ["addons/*.xs"],
     description: "Reusable subqueries for fetching related data",
   },
   debugging: {
@@ -167,12 +168,12 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
   },
   realtime: {
     file: "realtime.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "triggers/**/*.xs"],
+    applyTo: ["triggers/**/*.xs"],
     description: "Real-time channels and events for push updates",
   },
   schema: {
     file: "schema.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
+    applyTo: [],
     description: "Runtime schema parsing and validation",
   },
   security: {
@@ -182,7 +183,7 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
   },
   streaming: {
     file: "streaming.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
+    applyTo: [],
     description: "Streaming data from files, requests, and responses",
   },
   middleware: {
@@ -272,7 +273,9 @@ export function readXanoscriptDocsV2(
   docsPath: string,
   args?: XanoscriptDocsArgs
 ): string {
-  const mode = args?.mode || "full";
+  // Default to quick_reference for file_path mode (loads many topics),
+  // full for topic mode (loads single topic)
+  const mode = args?.mode || (args?.file_path ? "quick_reference" : "full");
   const version = getXanoscriptDocsVersion(docsPath);
 
   // Default: return README
@@ -283,7 +286,12 @@ export function readXanoscriptDocsV2(
 
   // Context-aware: return docs matching file pattern
   if (args?.file_path) {
-    const topics = getDocsForFilePath(args.file_path);
+    let topics = getDocsForFilePath(args.file_path);
+
+    // Filter out excluded topics
+    if (args.exclude_topics && args.exclude_topics.length > 0) {
+      topics = topics.filter((t) => !args.exclude_topics!.includes(t));
+    }
 
     if (topics.length === 0) {
       throw new Error(

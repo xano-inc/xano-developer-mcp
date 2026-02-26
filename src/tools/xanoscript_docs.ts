@@ -132,7 +132,8 @@ export const xanoscriptDocsToolDefinition = {
     "Get XanoScript programming language documentation for AI code generation. " +
     "Call without parameters for overview (README). " +
     "Use 'topic' for specific documentation, or 'file_path' for context-aware docs based on the file you're editing. " +
-    "Use mode='quick_reference' for compact syntax cheatsheet (recommended for context efficiency).",
+    "Use mode='quick_reference' for compact syntax cheatsheet (recommended for context efficiency). " +
+    "file_path mode defaults to 'quick_reference' to reduce context size; use mode='full' to get complete docs.",
   annotations: {
     readOnlyHint: true,
     destructiveHint: false,
@@ -165,7 +166,15 @@ export const xanoscriptDocsToolDefinition = {
           "'full' = complete documentation with explanations and examples. " +
           "'quick_reference' = compact cheatsheet with just syntax patterns and signatures. " +
           "Use 'quick_reference' to save context window space when you just need a reminder. " +
-          "Default: 'full'.",
+          "Default: 'full' for topic mode, 'quick_reference' for file_path mode.",
+      },
+      exclude_topics: {
+        type: "array",
+        items: { type: "string" },
+        description:
+          "List of topic names to exclude from file_path results. " +
+          "Use this to skip topics you've already loaded (e.g., exclude_topics: ['syntax', 'quickstart']). " +
+          "Only applies when using file_path parameter.",
       },
     },
     required: [],

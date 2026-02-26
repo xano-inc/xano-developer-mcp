@@ -84,7 +84,12 @@ describe("xanoscript module", () => {
       expect(result).toContain("types");
       expect(result).toContain("database");
       expect(result).toContain("unit-testing");
-      expect(result).toContain("addons");
+      // Niche topics should NOT be auto-included for apis
+      expect(result).not.toContain("addons");
+      expect(result).not.toContain("integrations");
+      expect(result).not.toContain("realtime");
+      expect(result).not.toContain("schema");
+      expect(result).not.toContain("streaming");
     });
 
     it("should match functions files", () => {
@@ -93,6 +98,12 @@ describe("xanoscript module", () => {
       expect(result).toContain("functions");
       expect(result).toContain("types");
       expect(result).toContain("database");
+      // Niche topics should NOT be auto-included for functions
+      expect(result).not.toContain("addons");
+      expect(result).not.toContain("integrations");
+      expect(result).not.toContain("realtime");
+      expect(result).not.toContain("schema");
+      expect(result).not.toContain("streaming");
     });
 
     it("should match tables files", () => {
@@ -106,7 +117,8 @@ describe("xanoscript module", () => {
       expect(result).toContain("syntax");
       expect(result).toContain("tasks");
       expect(result).toContain("database");
-      expect(result).toContain("integrations");
+      // integrations is now topic-only (not auto-included)
+      expect(result).not.toContain("integrations");
     });
 
     it("should match triggers files", () => {
@@ -312,6 +324,41 @@ Even more content.
         mode: "quick_reference",
       });
       expect(quickResult).toContain("Mode: quick_reference");
+    });
+
+    it("should default to quick_reference mode for file_path", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, {
+        file_path: "apis/test.xs",
+      });
+      expect(result).toContain("Mode: quick_reference");
+    });
+
+    it("should default to full mode for topic", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, { topic: "syntax" });
+      // Full mode returns the complete doc content, not quick_reference
+      expect(result).not.toContain("Mode: quick_reference");
+    });
+
+    it("should support exclude_topics with file_path", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, {
+        file_path: "apis/users/create.xs",
+        exclude_topics: ["syntax", "quickstart"],
+      });
+      expect(result).toContain("Matched topics:");
+      expect(result).not.toContain("Matched topics: syntax");
+      // Verify excluded topics are not in the matched list
+      const matchLine = result.split("\n").find((l: string) => l.startsWith("Matched topics:"));
+      expect(matchLine).not.toContain("syntax");
+      expect(matchLine).not.toContain("quickstart");
+    });
+
+    it("should throw when all topics are excluded via exclude_topics", () => {
+      expect(() =>
+        readXanoscriptDocsV2(DOCS_PATH, {
+          file_path: "branch.xs",
+          exclude_topics: ["syntax", "cheatsheet", "quickstart", "debugging", "branch"],
+        })
+      ).toThrow("No documentation found");
     });
 
     it("should throw for invalid docs path", () => {
