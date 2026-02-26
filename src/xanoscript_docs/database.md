@@ -613,7 +613,7 @@ try_catch {
     conditional {
       if ($error.name == "DeadlockError") {
         // Retry logic
-        util.sleep { value = 100 }
+        util.sleep { value = 1 }                // value = seconds
         function.run "retry_transaction" { input = $input }
       }
       else {

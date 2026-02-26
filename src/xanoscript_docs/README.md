@@ -183,7 +183,7 @@ Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 | Topic        | Description                                          | Key Sections |
 | ------------ | ---------------------------------------------------- | ------------ |
 | `quickstart` | Common patterns, quick examples, mistakes to avoid   | Patterns, Common Mistakes |
-| `syntax`     | Expressions, operators, filters, system variables    | Filters (L179-275), Error Handling (L411-477) |
+| `syntax`     | Expressions, operators, filters, system variables    | Filters, Error Handling |
 | `types`      | Data types, validation, input blocks                 | Validation Filters, Input Blocks |
 | `functions`  | Reusable function stacks, async, loops               | Loops, Async Patterns |
 | `schema`     | Runtime schema parsing and validation                | parse.object, parse.array |
@@ -193,7 +193,7 @@ Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 | Topic       | Description                                                | Key Sections |
 | ----------- | ---------------------------------------------------------- | ------------ |
 | `tables`    | Database schema definitions with indexes and relationships | Indexes, Foreign Keys |
-| `database`  | All db.\* operations: query, get, add, edit, patch, delete | Decision Tree (L11), Bulk Ops (L450-529) |
+| `database`  | All db.\* operations: query, get, add, edit, patch, delete | Decision Tree, Bulk Ops |
 | `addons`    | Reusable subqueries for fetching related data              | Usage Patterns |
 | `streaming` | Streaming data from files, requests, and responses         | File Streams, API Streams |
 
@@ -201,7 +201,7 @@ Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
 | Topic      | Description                                                     | Key Sections |
 | ---------- | --------------------------------------------------------------- | ------------ |
-| `apis`     | HTTP endpoint definitions with authentication and CRUD patterns | Decision Tree (L9), CRUD Examples (L220-350) |
+| `apis`     | HTTP endpoint definitions with authentication and CRUD patterns | Decision Tree, CRUD Examples |
 | `tasks`    | Scheduled and cron jobs                                         | Cron Syntax, Input Handling |
 | `triggers` | Event-driven handlers (table, realtime, workspace, agent, MCP)  | Predefined Inputs, Event Types |
 | `realtime` | Real-time channels and events for push updates                  | Channels, Events |

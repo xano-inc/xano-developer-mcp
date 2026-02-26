@@ -179,10 +179,10 @@ Use `conditional` blocks for if/elseif/else logic:
 
 ```xs
 conditional {
-  if (`$status == "success"`) {
+  if ($status == "success") {
     var $message { value = "All good!" }
   }
-  elseif (`$status == "pending"`) {
+  elseif ($status == "pending") {
     var $message { value = "Please wait..." }
   }
   else {
@@ -214,14 +214,16 @@ conditional {
 
 ## Expressions
 
-Expressions are wrapped in backticks for evaluation:
+Backticks enter **expression mode** — use them only when you need inline evaluation of a complex expression, not for regular conditionals or variable assignments.
 
 ```xs
+// ✅ Regular conditionals — no backticks needed
 conditional {
-  if (`$input.age >= 18`) { ... }
+  if ($input.age >= 18) { ... }
 }
 
-var $total { value = `$input.qty * $input.price` }
+// ✅ Variable assignment — no backticks needed
+var $total { value = $input.qty * $input.price }
 ```
 
 ### Comparison

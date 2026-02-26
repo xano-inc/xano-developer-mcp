@@ -576,7 +576,7 @@ mcp_server_trigger "database_tool_handler" {
       value = {
         server: $input.toolset.name,
         instructions: $input.toolset.instructions,
-        tool_count: count($input.tools)
+        tool_count: $input.tools|count
       }
     }
   }

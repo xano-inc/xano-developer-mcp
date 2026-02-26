@@ -10,14 +10,14 @@ Best practices for building secure XanoScript applications.
 
 ## Section Index
 
-- [Authentication](#authentication) (L24) - Tokens, sessions, MFA
-- [Authorization](#authorization) (L186) - Role checks, ownership
-- [Input Validation](#input-validation) (L277) - Type enforcement, sanitization
-- [Data Protection](#data-protection) (L339) - Encryption, hashing, secrets
-- [Rate Limiting](#rate-limiting--abuse-prevention) (L427) - API limits, abuse prevention
-- [Security Headers](#security-headers) (L486) - CORS configuration
-- [Audit Logging](#audit-logging) (L504) - Security event tracking
-- [Best Practices Summary](#best-practices-summary) (L545) - Quick checklist
+- [Authentication](#authentication) - Tokens, sessions, refresh tokens
+- [Authorization](#authorization) - Role checks, ownership
+- [Input Validation](#input-validation) - Type enforcement, sanitization
+- [Data Protection](#data-protection) - Encryption, hashing, secrets
+- [Rate Limiting](#rate-limiting--abuse-prevention) - API limits, abuse prevention
+- [Security Headers](#security-headers) - CORS configuration
+- [Audit Logging](#audit-logging) - Security event tracking
+- [Best Practices Summary](#best-practices-summary) - Quick checklist
 
 ---
 
@@ -162,36 +162,6 @@ function "validate_session" {
 }
 ```
 
-### Multi-Factor Authentication
-
-```xs
-function "verify_mfa" {
-  input {
-    int user_id
-    text code filters=digitOk|min:6|max:6
-  }
-  stack {
-    db.get "user" {
-      field_name = "id"
-      field_value = $input.user_id
-    } as $user
-
-    // Verify TOTP code
-    security.verify_totp {
-      secret = $user.mfa_secret
-      code = $input.code
-      window = 1
-    } as $is_valid
-
-    precondition ($is_valid) {
-      error_type = "accessdenied"
-      error = "Invalid MFA code"
-    }
-  }
-  response = { verified: true }
-}
-```
-
 ---
 
 ## Authorization
@@ -294,7 +264,7 @@ input {
   email email filters=trim|lower
   text password filters=min:8|max:128
   int age filters=min:0|max:150
-  text username filters=trim|lower|min:3|max:20|alphaNumOk
+  text username filters=trim|lower|min:3|max:20|alphaOk|digitOk
 }
 ```
 
@@ -324,9 +294,9 @@ var $safe_content {
   value = $input.content|escape
 }
 
-// For rich text, use allowlist sanitization
+// For rich text, escape HTML entities
 var $sanitized {
-  value = $input.html|html_sanitize:["p", "b", "i", "a"]
+  value = $input.html|escape
 }
 ```
 
@@ -508,8 +478,13 @@ function "record_failed_login" {
   input { text email }
   stack {
     var $key { value = "login_attempts:" ~ $input.email|md5 }
-    redis.incr { key = $key, by = 1 }
-    redis.expire { key = $key, ttl = 900 }
+
+    redis.get { key = $key } as $current
+    redis.set {
+      key = $key
+      data = ($current|to_int ?? 0) + 1
+      ttl = 900
+    }
   }
 }
 
