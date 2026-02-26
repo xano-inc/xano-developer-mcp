@@ -646,6 +646,6 @@ Explore more with `xanoscript_docs({ topic: "<topic>" })`:
 |-------|-------------|
 | `tables` | Database schema definitions with indexes and relationships |
 | `syntax` | Query filters, operators, and expressions |
-| `quickstart` | Common CRUD patterns and examples |
+| `essentials` | Common CRUD patterns and examples |
 | `addons` | Reusable subqueries for fetching related data |
 | `performance` | Query optimization best practices |
