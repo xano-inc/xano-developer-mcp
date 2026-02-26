@@ -324,9 +324,11 @@ var $data {
 
 ```xs
 // Using foreach
-foreach ($items) { each as $item {
-  debug.log { value = $item.name }
-} }
+foreach ($items) {
+  each as $item {
+    debug.log { value = $item.name }
+  }
+}
 
 // Using map filter
 var $names { value = $items|map:$$.name }
