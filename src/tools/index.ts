@@ -54,6 +54,7 @@ import {
   setXanoscriptDocsPath,
   type XanoscriptDocsArgs,
   type XanoscriptDocsResult,
+  type TopicDoc,
 } from "./xanoscript_docs.js";
 
 import {
@@ -88,6 +89,7 @@ import {
 } from "./cli_docs.js";
 
 import { type ToolResult, toMcpResponse } from "./types.js";
+import { z } from "zod";
 
 // =============================================================================
 // Standalone Tool Functions (for library usage)
@@ -110,6 +112,7 @@ export {
   setXanoscriptDocsPath,
   type XanoscriptDocsArgs,
   type XanoscriptDocsResult,
+  type TopicDoc,
 
   // MCP Version
   mcpVersion,
@@ -174,6 +177,50 @@ export const toolDefinitions = [
 ];
 
 // =============================================================================
+// Argument Schemas (Zod validation)
+// =============================================================================
+
+const validateXanoscriptSchema = z.object({
+  code: z.string().optional(),
+  file_path: z.string().optional(),
+  file_paths: z.array(z.string()).optional(),
+  directory: z.string().optional(),
+  pattern: z.string().optional(),
+});
+
+const xanoscriptDocsSchema = z.object({
+  topic: z.string().optional(),
+  file_path: z.string().optional(),
+  mode: z.enum(["full", "quick_reference", "index"]).optional(),
+  exclude_topics: z.array(z.string()).optional(),
+});
+
+const metaApiDocsSchema = z.object({
+  topic: z.string(),
+  detail_level: z.enum(["overview", "detailed", "examples"]).optional(),
+  include_schemas: z.boolean().optional(),
+});
+
+const cliDocsSchema = z.object({
+  topic: z.string(),
+  detail_level: z.enum(["overview", "detailed", "examples"]).optional(),
+});
+
+function parseArgs<T>(
+  schema: z.ZodType<T>,
+  args: Record<string, unknown>
+): { ok: true; data: T } | { ok: false; error: ToolResult } {
+  const result = schema.safeParse(args);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((i) => `${i.path.join(".")}: ${i.message}`)
+      .join("; ");
+    return { ok: false, error: { success: false, error: `Invalid arguments: ${issues}` } };
+  }
+  return { ok: true, data: result.data };
+}
+
+// =============================================================================
 // Tool Handler (for MCP server)
 // =============================================================================
 
@@ -186,20 +233,32 @@ export function handleTool(
   args: Record<string, unknown>
 ): ToolResult {
   switch (name) {
-    case "validate_xanoscript":
-      return validateXanoscriptTool(args as unknown as ValidateXanoscriptArgs);
+    case "validate_xanoscript": {
+      const parsed = parseArgs(validateXanoscriptSchema, args);
+      if (!parsed.ok) return parsed.error;
+      return validateXanoscriptTool(parsed.data);
+    }
 
-    case "xanoscript_docs":
-      return xanoscriptDocsTool(args as unknown as XanoscriptDocsArgs);
+    case "xanoscript_docs": {
+      const parsed = parseArgs(xanoscriptDocsSchema, args);
+      if (!parsed.ok) return parsed.error;
+      return xanoscriptDocsTool(parsed.data);
+    }
 
     case "mcp_version":
       return mcpVersionTool();
 
-    case "meta_api_docs":
-      return metaApiDocsTool(args as unknown as MetaApiDocsArgs);
+    case "meta_api_docs": {
+      const parsed = parseArgs(metaApiDocsSchema, args);
+      if (!parsed.ok) return parsed.error;
+      return metaApiDocsTool(parsed.data);
+    }
 
-    case "cli_docs":
-      return cliDocsTool(args as unknown as CliDocsArgs);
+    case "cli_docs": {
+      const parsed = parseArgs(cliDocsSchema, args);
+      if (!parsed.ok) return parsed.error;
+      return cliDocsTool(parsed.data);
+    }
 
     default:
       return {

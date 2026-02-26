@@ -489,11 +489,14 @@ export function validateXanoscript(
  */
 export function validateXanoscriptTool(args: ValidateXanoscriptArgs): ToolResult {
   const result = validateXanoscript(args);
-  return {
-    success: result.valid,
-    data: result.valid ? result.message : undefined,
-    error: result.valid ? undefined : result.message,
-  };
+  if (result.valid) {
+    return {
+      success: true,
+      data: result.message,
+      structuredContent: { valid: true, message: result.message },
+    };
+  }
+  return { success: false, error: result.message };
 }
 
 // =============================================================================
@@ -552,6 +555,21 @@ export const validateXanoscriptToolDefinition = {
       },
     },
     required: [],
+  },
+  outputSchema: {
+    type: "object",
+    properties: {
+      valid: {
+        type: "boolean",
+        description: "Whether the code passed validation without errors.",
+      },
+      message: {
+        type: "string",
+        description:
+          "Human-readable validation summary with error details if any.",
+      },
+    },
+    required: ["valid", "message"],
   },
 };
 

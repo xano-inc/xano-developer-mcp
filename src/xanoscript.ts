@@ -8,6 +8,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { minimatch } from "minimatch";
+import docsIndex from "./xanoscript_docs/docs_index.json" with { type: "json" };
 
 // =============================================================================
 // Types
@@ -22,196 +23,51 @@ export interface DocConfig {
 export interface XanoscriptDocsArgs {
   topic?: string;
   file_path?: string;
-  mode?: "full" | "quick_reference";
+  mode?: "full" | "quick_reference" | "index";
   exclude_topics?: string[];
 }
 
 // =============================================================================
-// Documentation Configuration
+// Documentation Configuration (loaded from docs_index.json)
 // =============================================================================
 
-export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
-  readme: {
-    file: "README.md",
-    applyTo: [],
-    description: "XanoScript overview, workspace structure, and quick reference",
-  },
-  essentials: {
-    file: "essentials.md",
-    applyTo: ["**/*.xs"],
-    description: "Common patterns, quick reference, and common mistakes to avoid",
-  },
-  syntax: {
-    file: "syntax.md",
-    applyTo: ["**/*.xs"],
-    description: "Expressions, operators, and filters for all XanoScript code",
-  },
-  "syntax/string-filters": {
-    file: "syntax/string-filters.md",
-    applyTo: [],
-    description: "String filters, regex, encoding, security filters, text functions",
-  },
-  "syntax/array-filters": {
-    file: "syntax/array-filters.md",
-    applyTo: [],
-    description: "Array filters, functional operations, and array functions",
-  },
-  "syntax/functions": {
-    file: "syntax/functions.md",
-    applyTo: [],
-    description: "Math filters/functions, object functions, bitwise operations",
-  },
-  types: {
-    file: "types.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "tools/**/*.xs", "agents/**/*.xs"],
-    description: "Data types, input blocks, and validation",
-  },
-  tables: {
-    file: "tables.md",
-    applyTo: ["tables/*.xs"],
-    description: "Database schema definitions with indexes and relationships",
-  },
-  functions: {
-    file: "functions.md",
-    applyTo: ["functions/**/*.xs"],
-    description: "Reusable function stacks with inputs and responses",
-  },
-  apis: {
-    file: "apis.md",
-    applyTo: ["apis/**/*.xs"],
-    description: "HTTP endpoint definitions with authentication and CRUD patterns",
-  },
-  tasks: {
-    file: "tasks.md",
-    applyTo: ["tasks/*.xs"],
-    description: "Scheduled and cron jobs",
-  },
-  triggers: {
-    file: "triggers.md",
-    applyTo: ["triggers/**/*.xs"],
-    description: "Event-driven handlers (table, realtime, workspace, agent, MCP)",
-  },
-  database: {
-    file: "database.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "tasks/*.xs", "tools/**/*.xs"],
-    description: "All db.* operations: query, get, add, edit, patch, delete",
-  },
-  agents: {
-    file: "agents.md",
-    applyTo: ["agents/**/*.xs"],
-    description: "AI agent configuration with LLM providers and tools",
-  },
-  tools: {
-    file: "tools.md",
-    applyTo: ["tools/**/*.xs"],
-    description: "AI tools for agents and MCP servers",
-  },
-  "mcp-servers": {
-    file: "mcp-servers.md",
-    applyTo: ["mcp_servers/**/*.xs"],
-    description: "MCP server definitions exposing tools",
-  },
-  "unit-testing": {
-    file: "unit-testing.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs", "middleware/**/*.xs"],
-    description: "Unit tests, mocks, and assertions within functions, APIs, and middleware",
-  },
-  "workflow-tests": {
-    file: "workflow-tests.md",
-    applyTo: ["workflow_test/**/*.xs"],
-    description: "End-to-end workflow tests with data source selection and tags",
-  },
-  integrations: {
-    file: "integrations.md",
-    applyTo: [],
-    description: "External service integrations index - see sub-topics for details",
-  },
-  "integrations/cloud-storage": {
-    file: "integrations/cloud-storage.md",
-    applyTo: [],
-    description: "AWS S3, Azure Blob, and GCP Storage operations",
-  },
-  "integrations/search": {
-    file: "integrations/search.md",
-    applyTo: [],
-    description: "Elasticsearch, OpenSearch, and Algolia search operations",
-  },
-  "integrations/redis": {
-    file: "integrations/redis.md",
-    applyTo: [],
-    description: "Redis caching, rate limiting, and queue operations",
-  },
-  "integrations/external-apis": {
-    file: "integrations/external-apis.md",
-    applyTo: [],
-    description: "HTTP requests with api.request patterns",
-  },
-  "integrations/utilities": {
-    file: "integrations/utilities.md",
-    applyTo: [],
-    description: "Local storage, email, zip, and Lambda utilities",
-  },
-  frontend: {
-    file: "frontend.md",
-    applyTo: ["static/**/*"],
-    description: "Static frontend development and deployment",
-  },
-  run: {
-    file: "run.md",
-    applyTo: ["run/**/*.xs"],
-    description: "Run job and service configurations for the Xano Job Runner",
-  },
-  addons: {
-    file: "addons.md",
-    applyTo: ["addons/*.xs"],
-    description: "Reusable subqueries for fetching related data",
-  },
-  debugging: {
-    file: "debugging.md",
-    applyTo: ["**/*.xs"],
-    description: "Logging, inspecting, and debugging XanoScript execution",
-  },
-  performance: {
-    file: "performance.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
-    description: "Performance optimization best practices",
-  },
-  realtime: {
-    file: "realtime.md",
-    applyTo: ["triggers/**/*.xs"],
-    description: "Real-time channels and events for push updates",
-  },
-  schema: {
-    file: "schema.md",
-    applyTo: [],
-    description: "Runtime schema parsing and validation",
-  },
-  security: {
-    file: "security.md",
-    applyTo: ["functions/**/*.xs", "apis/**/*.xs"],
-    description: "Security best practices for authentication and authorization",
-  },
-  streaming: {
-    file: "streaming.md",
-    applyTo: [],
-    description: "Streaming data from files, requests, and responses",
-  },
-  middleware: {
-    file: "middleware.md",
-    applyTo: ["middleware/**/*.xs"],
-    description: "Request/response interceptors for functions, queries, tasks, and tools",
-  },
-  branch: {
-    file: "branch.md",
-    applyTo: ["branch.xs"],
-    description: "Branch-level settings: middleware, history retention, visual styling",
-  },
-  workspace: {
-    file: "workspace.md",
-    applyTo: ["workspace/**/*.xs"],
-    description: "Workspace-level settings: environment variables, preferences, realtime",
-  },
-};
+function buildDocsConfig(): Record<string, DocConfig> {
+  const config: Record<string, DocConfig> = {};
+  for (const [key, topic] of Object.entries(docsIndex.topics)) {
+    config[key] = {
+      file: topic.file,
+      applyTo: topic.applyTo,
+      description: topic.description,
+    };
+  }
+  return config;
+}
+
+export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = buildDocsConfig();
+
+// =============================================================================
+// Content Cache
+// =============================================================================
+
+const _fileCache = new Map<string, string>();
+let _versionCache: { path: string; version: string } | null = null;
+
+/**
+ * Clear all cached documentation content and version data.
+ * Useful for testing or when docs files change at runtime.
+ */
+export function clearDocsCache(): void {
+  _fileCache.clear();
+  _versionCache = null;
+}
+
+function cachedReadFile(filePath: string): string {
+  const cached = _fileCache.get(filePath);
+  if (cached !== undefined) return cached;
+  const content = readFileSync(filePath, "utf-8");
+  _fileCache.set(filePath, content);
+  return content;
+}
 
 // =============================================================================
 // Core Functions
@@ -268,9 +124,14 @@ export function extractQuickReference(content: string, topic: string): string {
  * Get the documentation version from the version.json file
  */
 export function getXanoscriptDocsVersion(docsPath: string): string {
+  if (_versionCache && _versionCache.path === docsPath) {
+    return _versionCache.version;
+  }
   try {
-    const versionFile = readFileSync(join(docsPath, "version.json"), "utf-8");
-    return JSON.parse(versionFile).version || "unknown";
+    const versionFile = cachedReadFile(join(docsPath, "version.json"));
+    const version = JSON.parse(versionFile).version || "unknown";
+    _versionCache = { path: docsPath, version };
+    return version;
   } catch {
     return "unknown";
   }
@@ -283,14 +144,41 @@ export function readXanoscriptDocsV2(
   docsPath: string,
   args?: XanoscriptDocsArgs
 ): string {
+  const version = getXanoscriptDocsVersion(docsPath);
+
+  // Index mode: return compact topic listing with byte sizes
+  if (args?.mode === "index") {
+    const rows = Object.entries(XANOSCRIPT_DOCS_V2).map(([name, config]) => {
+      let size: number;
+      try {
+        size = cachedReadFile(join(docsPath, config.file)).length;
+      } catch {
+        size = 0;
+      }
+      const sizeKb = (size / 1024).toFixed(1);
+      return `| ${name} | ${config.description} | ${sizeKb} KB |`;
+    });
+    return [
+      `# XanoScript Documentation Index`,
+      ``,
+      `Version: ${version}`,
+      `Topics: ${rows.length}`,
+      ``,
+      `| Topic | Description | Size |`,
+      `|-------|-------------|------|`,
+      ...rows,
+      ``,
+      `Use topic='<name>' to load a specific topic. Use mode='quick_reference' for compact output.`,
+    ].join("\n");
+  }
+
   // Default to quick_reference for file_path mode (loads many topics),
   // full for topic mode (loads single topic)
   const mode = args?.mode || (args?.file_path ? "quick_reference" : "full");
-  const version = getXanoscriptDocsVersion(docsPath);
 
   // Default: return README
   if (!args?.topic && !args?.file_path) {
-    const readme = readFileSync(join(docsPath, "README.md"), "utf-8");
+    const readme = cachedReadFile(join(docsPath, "README.md"));
     return `${readme}\n\n---\nDocumentation version: ${version}`;
   }
 
@@ -311,7 +199,7 @@ export function readXanoscriptDocsV2(
 
     const docs = topics.map((t) => {
       const config = XANOSCRIPT_DOCS_V2[t];
-      const content = readFileSync(join(docsPath, config.file), "utf-8");
+      const content = cachedReadFile(join(docsPath, config.file));
       return mode === "quick_reference"
         ? extractQuickReference(content, t)
         : content;
@@ -331,13 +219,61 @@ export function readXanoscriptDocsV2(
     );
   }
 
-  const content = readFileSync(join(docsPath, config.file), "utf-8");
+  const content = cachedReadFile(join(docsPath, config.file));
   const doc = mode === "quick_reference"
     ? extractQuickReference(content, args!.topic!)
     : content;
 
   return `${doc}\n\n---\nDocumentation version: ${version}`;
 }
+
+// =============================================================================
+// Structured Documentation Access
+// =============================================================================
+
+export interface TopicDoc {
+  topic: string;
+  content: string;
+}
+
+/**
+ * Read documentation as structured per-topic entries for file_path mode.
+ * Returns each matched topic as a separate object for multi-content MCP responses.
+ */
+export function readXanoscriptDocsStructured(
+  docsPath: string,
+  args: XanoscriptDocsArgs & { file_path: string }
+): TopicDoc[] {
+  const mode = args.mode || "quick_reference";
+
+  let topics = getDocsForFilePath(args.file_path);
+
+  if (args.exclude_topics && args.exclude_topics.length > 0) {
+    topics = topics.filter((t) => !args.exclude_topics!.includes(t));
+  }
+
+  if (topics.length === 0) {
+    throw new Error(
+      `No documentation found for file pattern: ${args.file_path}\n\nAvailable topics: ${Object.keys(XANOSCRIPT_DOCS_V2).join(", ")}`
+    );
+  }
+
+  return topics.map((t) => {
+    const config = XANOSCRIPT_DOCS_V2[t];
+    const content = cachedReadFile(join(docsPath, config.file));
+    return {
+      topic: t,
+      content:
+        mode === "quick_reference"
+          ? extractQuickReference(content, t)
+          : content,
+    };
+  });
+}
+
+// =============================================================================
+// Topic Metadata
+// =============================================================================
 
 /**
  * Get available topic names

@@ -92,9 +92,11 @@ export function mcpVersion(): McpVersionResult {
  * Get the MCP version and return a ToolResult.
  */
 export function mcpVersionTool(): ToolResult {
+  const version = getServerVersion();
   return {
     success: true,
-    data: getServerVersion(),
+    data: version,
+    structuredContent: { version },
   };
 }
 
@@ -117,5 +119,15 @@ export const mcpVersionToolDefinition = {
     type: "object",
     properties: {},
     required: [],
+  },
+  outputSchema: {
+    type: "object",
+    properties: {
+      version: {
+        type: "string",
+        description: "The semantic version string of the MCP server.",
+      },
+    },
+    required: ["version"],
   },
 };

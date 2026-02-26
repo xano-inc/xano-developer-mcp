@@ -135,4 +135,14 @@ ${getTopicDescriptions()}
     },
     required: ["topic"],
   },
+  outputSchema: {
+    type: "object",
+    properties: {
+      documentation: {
+        type: "string",
+        description: "The Meta API documentation content for the requested topic.",
+      },
+    },
+    required: ["documentation"],
+  },
 };

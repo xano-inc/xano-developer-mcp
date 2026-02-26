@@ -61,6 +61,7 @@ export {
   setXanoscriptDocsPath,
   type XanoscriptDocsArgs,
   type XanoscriptDocsResult,
+  type TopicDoc,
 } from "./tools/xanoscript_docs.js";
 
 // MCP Version
@@ -104,9 +105,11 @@ export { type ToolResult, toMcpResponse } from "./tools/types.js";
 export {
   XANOSCRIPT_DOCS_V2,
   readXanoscriptDocsV2,
+  readXanoscriptDocsStructured,
   getDocsForFilePath,
   extractQuickReference,
   getXanoscriptDocsVersion,
+  clearDocsCache,
   getTopicNames as getXanoscriptTopicNames,
   getTopicDescriptions as getXanoscriptTopicDescriptions,
   type DocConfig,

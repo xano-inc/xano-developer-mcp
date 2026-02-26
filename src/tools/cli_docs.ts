@@ -83,6 +83,7 @@ export function cliDocsTool(args: CliDocsArgs): ToolResult {
     return {
       success: true,
       data: result.documentation,
+      structuredContent: { documentation: result.documentation },
     };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
