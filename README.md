@@ -208,6 +208,9 @@ const apiDocs = xanoscriptDocs({ file_path: 'api/users/create_post.xs' });
 
 // Get compact quick reference
 const quickRef = xanoscriptDocs({ topic: 'database', mode: 'quick_reference' });
+
+// Get topic index with sizes
+const index = xanoscriptDocs({ mode: 'index' });
 ```
 
 ### Get Meta API Documentation
@@ -335,16 +338,19 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 |-----------|------|----------|-------------|
 | `topic` | string | No | Specific documentation topic to retrieve |
 | `file_path` | string | No | File path being edited for context-aware docs (e.g., `api/users/create_post.xs`) |
-| `mode` | string | No | `full` (default) or `quick_reference` for compact syntax cheatsheet |
+| `mode` | string | No | `full` (default), `quick_reference` for compact syntax reference, or `index` for topic listing with sizes |
+| `exclude_topics` | string[] | No | Topic names to exclude from `file_path` results (e.g., topics already loaded) |
 
 **Available Topics:**
 
 | Topic | Description |
 |-------|-------------|
 | `readme` | XanoScript overview, workspace structure, and quick reference |
-| `cheatsheet` | Quick reference for 20 most common XanoScript patterns (recommended first stop) |
+| `essentials` | Common patterns, quick reference, and common mistakes to avoid |
 | `syntax` | Expressions, operators, and filters for all XanoScript code |
-| `quickstart` | Common patterns, quick reference, and common mistakes to avoid |
+| `syntax/string-filters` | String filters, regex, encoding, security filters, text functions |
+| `syntax/array-filters` | Array filters, functional operations, and array functions |
+| `syntax/functions` | Math filters/functions, object functions, bitwise operations |
 | `types` | Data types, input blocks, and validation |
 | `tables` | Database schema definitions with indexes and relationships |
 | `functions` | Reusable function stacks with inputs and responses |
@@ -381,14 +387,20 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 // Get overview
 xanoscript_docs()
 
-// Get quick reference cheatsheet (recommended first stop)
-xanoscript_docs({ topic: "cheatsheet" })
+// Get essentials (recommended first stop)
+xanoscript_docs({ topic: "essentials" })
 
 // Get specific topic
 xanoscript_docs({ topic: "functions" })
 
+// Discover available topics with sizes
+xanoscript_docs({ mode: "index" })
+
 // Context-aware: get all docs relevant to file being edited
 xanoscript_docs({ file_path: "api/users/create_post.xs" })
+
+// Context-aware with exclusions (skip already-loaded topics)
+xanoscript_docs({ file_path: "api/users/create_post.xs", exclude_topics: ["syntax", "essentials"] })
 
 // Compact quick reference (uses less context)
 xanoscript_docs({ topic: "database", mode: "quick_reference" })
@@ -505,9 +517,11 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | Resource URI | Description |
 |--------------|-------------|
 | `xanoscript://docs/readme` | Overview and quick reference |
-| `xanoscript://docs/cheatsheet` | Quick reference for 20 most common patterns |
+| `xanoscript://docs/essentials` | Common patterns, quick reference, and common mistakes to avoid |
 | `xanoscript://docs/syntax` | Expressions, operators, and filters |
-| `xanoscript://docs/quickstart` | Common patterns and common mistakes to avoid |
+| `xanoscript://docs/syntax/string-filters` | String filters, regex, encoding, security filters |
+| `xanoscript://docs/syntax/array-filters` | Array filters, functional operations |
+| `xanoscript://docs/syntax/functions` | Math filters/functions, object functions, bitwise |
 | `xanoscript://docs/types` | Data types and validation |
 | `xanoscript://docs/tables` | Database schema definitions |
 | `xanoscript://docs/functions` | Reusable function stacks |
@@ -561,10 +575,12 @@ xano-developer-mcp/
 │   ├── xanoscript.test.ts              # Tests for xanoscript module
 │   ├── xanoscript-language-server.d.ts # TypeScript declarations
 │   ├── tools/                          # Standalone tool modules
-│   │   ├── index.ts                    # Unified tool exports
+│   │   ├── index.ts                    # Unified tool exports & handler
+│   │   ├── index.test.ts               # Tests for tool handler
 │   │   ├── types.ts                    # Common types (ToolResult)
 │   │   ├── validate_xanoscript.ts      # XanoScript validation tool
 │   │   ├── xanoscript_docs.ts          # XanoScript docs tool
+│   │   ├── xanoscript_docs.test.ts     # Tests for xanoscript docs tool
 │   │   ├── mcp_version.ts              # Version tool
 │   │   ├── meta_api_docs.ts            # Meta API docs tool wrapper
 │   │   └── cli_docs.ts                 # CLI docs tool wrapper
@@ -582,9 +598,15 @@ xano-developer-mcp/
 │   │   ├── format.ts                   # Documentation formatter
 │   │   └── topics/                     # Individual topic modules
 │   └── xanoscript_docs/                # XanoScript language documentation
+│       ├── docs_index.json             # Machine-readable topic registry
 │       ├── version.json
 │       ├── README.md
+│       ├── essentials.md
 │       ├── syntax.md
+│       ├── syntax/                     # Syntax sub-topics
+│       │   ├── string-filters.md
+│       │   ├── array-filters.md
+│       │   └── functions.md
 │       └── ...
 ├── dist/                               # Compiled JavaScript output
 ├── vitest.config.ts                    # Test configuration
@@ -651,10 +673,12 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
 
 **XanoScript Documentation** (`src/xanoscript_docs/`):
 - Markdown files for XanoScript language reference
-- Configured in `src/index.ts` via `XANOSCRIPT_DOCS_V2` with:
+- Configured in `src/xanoscript_docs/docs_index.json` with:
   - **file**: The markdown file containing the documentation
-  - **applyTo**: Glob patterns for context-aware matching (e.g., `api/**/*.xs`)
+  - **applyTo**: Glob patterns for context-aware matching (e.g., `apis/**/*.xs`)
   - **description**: Human-readable description of the topic
+  - **aliases**: Alternative names for topic lookup
+  - **priority**: Ordering weight for file_path matching
 
 **Meta API Documentation** (`src/meta_api_docs/`):
 - TypeScript modules with structured documentation
@@ -683,6 +707,8 @@ npm run test:coverage
 | Module | Test File | Description |
 |--------|-----------|-------------|
 | `xanoscript.ts` | `xanoscript.test.ts` | Core XanoScript documentation logic including file path matching and quick reference extraction |
+| `tools/index.ts` | `tools/index.test.ts` | Tool handler dispatch and argument validation |
+| `tools/xanoscript_docs.ts` | `tools/xanoscript_docs.test.ts` | XanoScript documentation tool and path resolution |
 | `meta_api_docs/index.ts` | `meta_api_docs/index.test.ts` | Meta API documentation handler and topic management |
 | `meta_api_docs/format.ts` | `meta_api_docs/format.test.ts` | Documentation formatting for endpoints, examples, and patterns |
 | `meta_api_docs/types.ts` | `meta_api_docs/types.test.ts` | Type structure validation |
@@ -695,6 +721,12 @@ Tests are co-located with source files using the `.test.ts` suffix:
 src/
 ├── xanoscript.ts
 ├── xanoscript.test.ts          # Tests for xanoscript.ts
+├── tools/
+│   ├── index.ts
+│   ├── index.test.ts           # Tests for tool handler
+│   ├── xanoscript_docs.ts
+│   ├── xanoscript_docs.test.ts # Tests for xanoscript docs tool
+│   └── ...
 ├── meta_api_docs/
 │   ├── index.ts
 │   ├── index.test.ts           # Tests for index.ts

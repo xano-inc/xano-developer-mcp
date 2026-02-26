@@ -26,6 +26,7 @@ import {
   toolDefinitions,
   handleTool,
   toMcpResponse,
+  getXanoscriptDocsPath,
 } from "./tools/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -40,26 +41,8 @@ if (process.argv.includes("--version") || process.argv.includes("-v")) {
 }
 
 // =============================================================================
-// Path Resolution
+// Path Resolution (uses shared path from tools/xanoscript_docs.ts)
 // =============================================================================
-
-function getXanoscriptDocsPath(): string {
-  const possiblePaths = [
-    join(__dirname, "xanoscript_docs"),           // dist/xanoscript_docs (production)
-    join(__dirname, "..", "src", "xanoscript_docs"), // src/xanoscript_docs (dev before build)
-  ];
-
-  for (const p of possiblePaths) {
-    try {
-      readFileSync(join(p, "version.json"));
-      return p;
-    } catch {
-      continue;
-    }
-  }
-
-  return join(__dirname, "xanoscript_docs");
-}
 
 const XANOSCRIPT_DOCS_PATH = getXanoscriptDocsPath();
 

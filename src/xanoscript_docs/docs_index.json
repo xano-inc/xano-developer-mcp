@@ -3,154 +3,225 @@
   "description": "Machine-readable index for XanoScript documentation",
 
   "topics": {
+    "readme": {
+      "file": "README.md",
+      "description": "XanoScript overview, workspace structure, and quick reference",
+      "applyTo": [],
+      "aliases": ["overview", "intro", "index"]
+    },
     "essentials": {
       "file": "essentials.md",
-      "purpose": "Common patterns, quick reference, and mistakes to avoid",
+      "description": "Common patterns, quick reference, and common mistakes to avoid",
+      "applyTo": ["**/*.xs"],
       "priority": 1,
       "aliases": ["quick", "common", "basics", "start", "cheatsheet", "quickstart", "patterns", "mistakes"]
     },
     "syntax": {
       "file": "syntax.md",
-      "purpose": "Operators, core filters, expressions, error handling",
+      "description": "Expressions, operators, and filters for all XanoScript code",
+      "applyTo": ["**/*.xs"],
       "priority": 2,
       "aliases": ["filters", "operators", "expressions"]
     },
     "syntax/string-filters": {
       "file": "syntax/string-filters.md",
-      "purpose": "String filters, regex, encoding, security filters, text functions",
+      "description": "String filters, regex, encoding, security filters, text functions",
+      "applyTo": [],
       "aliases": ["string", "regex", "encoding", "security-filters"]
     },
     "syntax/array-filters": {
       "file": "syntax/array-filters.md",
-      "purpose": "Array filters, functional operations, array functions",
+      "description": "Array filters, functional operations, and array functions",
+      "applyTo": [],
       "aliases": ["array", "map", "filter", "reduce", "sort"]
     },
     "syntax/functions": {
       "file": "syntax/functions.md",
-      "purpose": "Math filters/functions, object functions, bitwise operations",
+      "description": "Math filters/functions, object functions, bitwise operations",
+      "applyTo": [],
       "aliases": ["math", "object", "bitwise"]
     },
     "types": {
       "file": "types.md",
-      "purpose": "Data types, validation, input blocks",
+      "description": "Data types, input blocks, and validation",
+      "applyTo": ["functions/**/*.xs", "apis/**/*.xs", "tools/**/*.xs", "agents/**/*.xs"],
       "priority": 4,
       "aliases": ["validation", "input", "data-types"]
     },
-    "database": {
-      "file": "database.md",
-      "purpose": "All db.* operations",
-      "priority": 5,
-      "aliases": ["db", "crud", "query", "sql"]
-    },
     "tables": {
       "file": "tables.md",
-      "purpose": "Table schema definitions",
+      "description": "Database schema definitions with indexes and relationships",
+      "applyTo": ["tables/*.xs"],
       "aliases": ["schema", "fields", "indexes"]
-    },
-    "apis": {
-      "file": "apis.md",
-      "purpose": "HTTP endpoint definitions",
-      "aliases": ["endpoints", "http", "rest", "query"]
     },
     "functions": {
       "file": "functions.md",
-      "purpose": "Reusable function stacks",
+      "description": "Reusable function stacks with inputs and responses",
+      "applyTo": ["functions/**/*.xs"],
       "aliases": ["fn", "reusable", "stack"]
+    },
+    "apis": {
+      "file": "apis.md",
+      "description": "HTTP endpoint definitions with authentication and CRUD patterns",
+      "applyTo": ["apis/**/*.xs"],
+      "aliases": ["endpoints", "http", "rest", "query"]
+    },
+    "tasks": {
+      "file": "tasks.md",
+      "description": "Scheduled and cron jobs",
+      "applyTo": ["tasks/*.xs"],
+      "aliases": ["scheduled", "jobs", "cron"]
     },
     "triggers": {
       "file": "triggers.md",
-      "purpose": "Event-driven handlers",
+      "description": "Event-driven handlers (table, realtime, workspace, agent, MCP)",
+      "applyTo": ["triggers/**/*.xs"],
       "aliases": ["events", "hooks", "handlers"]
+    },
+    "database": {
+      "file": "database.md",
+      "description": "All db.* operations: query, get, add, edit, patch, delete",
+      "applyTo": ["functions/**/*.xs", "apis/**/*.xs", "tasks/*.xs", "tools/**/*.xs"],
+      "priority": 5,
+      "aliases": ["db", "crud", "query", "sql"]
     },
     "agents": {
       "file": "agents.md",
-      "purpose": "AI agent configuration",
+      "description": "AI agent configuration with LLM providers and tools",
+      "applyTo": ["agents/**/*.xs"],
       "aliases": ["ai", "llm", "chatbot"]
     },
     "tools": {
       "file": "tools.md",
-      "purpose": "AI tools for agents",
+      "description": "AI tools for agents and MCP servers",
+      "applyTo": ["tools/**/*.xs"],
       "aliases": ["ai-tools", "agent-tools"]
-    },
-    "integrations": {
-      "file": "integrations.md",
-      "purpose": "External service integrations (index)",
-      "aliases": ["external", "services", "cloud"]
-    },
-    "integrations/cloud-storage": {
-      "file": "integrations/cloud-storage.md",
-      "purpose": "AWS S3, Azure Blob, GCP Storage",
-      "aliases": ["s3", "azure", "gcp", "files", "upload"]
-    },
-    "integrations/search": {
-      "file": "integrations/search.md",
-      "purpose": "Elasticsearch, Algolia",
-      "aliases": ["elasticsearch", "algolia", "full-text"]
-    },
-    "integrations/redis": {
-      "file": "integrations/redis.md",
-      "purpose": "Caching, rate limiting, queues",
-      "aliases": ["cache", "rate-limit", "queue"]
-    },
-    "integrations/external-apis": {
-      "file": "integrations/external-apis.md",
-      "purpose": "api.request patterns",
-      "aliases": ["http", "api", "request", "fetch"]
-    },
-    "integrations/utilities": {
-      "file": "integrations/utilities.md",
-      "purpose": "Email, Zip, Lambda",
-      "aliases": ["email", "zip", "lambda", "archive"]
-    },
-    "security": {
-      "file": "security.md",
-      "purpose": "Authentication, authorization, security patterns",
-      "aliases": ["auth", "authorization", "permissions"]
-    },
-    "performance": {
-      "file": "performance.md",
-      "purpose": "Optimization best practices",
-      "aliases": ["optimization", "speed", "caching"]
     },
     "mcp-servers": {
       "file": "mcp-servers.md",
-      "purpose": "MCP server configuration",
+      "description": "MCP server definitions exposing tools",
+      "applyTo": ["mcp_servers/**/*.xs"],
       "aliases": ["mcp", "model-context-protocol"]
-    },
-    "tasks": {
-      "file": "tasks.md",
-      "purpose": "Scheduled job definitions",
-      "aliases": ["scheduled", "jobs", "cron"]
-    },
-    "streaming": {
-      "file": "streaming.md",
-      "purpose": "Streaming data handling",
-      "aliases": ["stream", "large-files"]
-    },
-    "realtime": {
-      "file": "realtime.md",
-      "purpose": "Real-time channel configuration",
-      "aliases": ["websocket", "channels", "pubsub"]
-    },
-    "middleware": {
-      "file": "middleware.md",
-      "purpose": "Request interceptors",
-      "aliases": ["interceptors", "hooks"]
     },
     "unit-testing": {
       "file": "unit-testing.md",
-      "purpose": "Unit tests, mocks, and assertions",
+      "description": "Unit tests, mocks, and assertions within functions, APIs, and middleware",
+      "applyTo": ["functions/**/*.xs", "apis/**/*.xs", "middleware/**/*.xs"],
       "aliases": ["tests", "unit-tests", "mocks", "assertions"]
     },
     "workflow-tests": {
       "file": "workflow-tests.md",
-      "purpose": "End-to-end workflow tests",
+      "description": "End-to-end workflow tests with data source selection and tags",
+      "applyTo": ["workflow_test/**/*.xs"],
       "aliases": ["e2e", "workflow", "integration-tests"]
+    },
+    "integrations": {
+      "file": "integrations.md",
+      "description": "External service integrations index - see sub-topics for details",
+      "applyTo": [],
+      "aliases": ["external", "services", "cloud"]
+    },
+    "integrations/cloud-storage": {
+      "file": "integrations/cloud-storage.md",
+      "description": "AWS S3, Azure Blob, and GCP Storage operations",
+      "applyTo": [],
+      "aliases": ["s3", "azure", "gcp", "files", "upload"]
+    },
+    "integrations/search": {
+      "file": "integrations/search.md",
+      "description": "Elasticsearch, OpenSearch, and Algolia search operations",
+      "applyTo": [],
+      "aliases": ["elasticsearch", "algolia", "full-text"]
+    },
+    "integrations/redis": {
+      "file": "integrations/redis.md",
+      "description": "Redis caching, rate limiting, and queue operations",
+      "applyTo": [],
+      "aliases": ["cache", "rate-limit", "queue"]
+    },
+    "integrations/external-apis": {
+      "file": "integrations/external-apis.md",
+      "description": "HTTP requests with api.request patterns",
+      "applyTo": [],
+      "aliases": ["http", "api", "request", "fetch"]
+    },
+    "integrations/utilities": {
+      "file": "integrations/utilities.md",
+      "description": "Local storage, email, zip, and Lambda utilities",
+      "applyTo": [],
+      "aliases": ["email", "zip", "lambda", "archive"]
+    },
+    "frontend": {
+      "file": "frontend.md",
+      "description": "Static frontend development and deployment",
+      "applyTo": ["static/**/*"],
+      "aliases": ["static", "html", "css", "web"]
+    },
+    "run": {
+      "file": "run.md",
+      "description": "Run job and service configurations for the Xano Job Runner",
+      "applyTo": ["run/**/*.xs"],
+      "aliases": ["jobs", "runner", "services"]
+    },
+    "addons": {
+      "file": "addons.md",
+      "description": "Reusable subqueries for fetching related data",
+      "applyTo": ["addons/*.xs"],
+      "aliases": ["subqueries", "relations"]
     },
     "debugging": {
       "file": "debugging.md",
-      "purpose": "Logging and debugging",
+      "description": "Logging, inspecting, and debugging XanoScript execution",
+      "applyTo": ["**/*.xs"],
       "aliases": ["logs", "debug", "trace"]
+    },
+    "performance": {
+      "file": "performance.md",
+      "description": "Performance optimization best practices",
+      "applyTo": ["functions/**/*.xs", "apis/**/*.xs"],
+      "aliases": ["optimization", "speed", "caching"]
+    },
+    "realtime": {
+      "file": "realtime.md",
+      "description": "Real-time channels and events for push updates",
+      "applyTo": ["triggers/**/*.xs"],
+      "aliases": ["websocket", "channels", "pubsub"]
+    },
+    "schema": {
+      "file": "schema.md",
+      "description": "Runtime schema parsing and validation",
+      "applyTo": [],
+      "aliases": ["runtime-schema", "parsing"]
+    },
+    "security": {
+      "file": "security.md",
+      "description": "Security best practices for authentication and authorization",
+      "applyTo": ["functions/**/*.xs", "apis/**/*.xs"],
+      "aliases": ["auth", "authorization", "permissions"]
+    },
+    "streaming": {
+      "file": "streaming.md",
+      "description": "Streaming data from files, requests, and responses",
+      "applyTo": [],
+      "aliases": ["stream", "large-files"]
+    },
+    "middleware": {
+      "file": "middleware.md",
+      "description": "Request/response interceptors for functions, queries, tasks, and tools",
+      "applyTo": ["middleware/**/*.xs"],
+      "aliases": ["interceptors", "hooks"]
+    },
+    "branch": {
+      "file": "branch.md",
+      "description": "Branch-level settings: middleware, history retention, visual styling",
+      "applyTo": ["branch.xs"],
+      "aliases": ["settings", "config"]
+    },
+    "workspace": {
+      "file": "workspace.md",
+      "description": "Workspace-level settings: environment variables, preferences, realtime",
+      "applyTo": ["workspace/**/*.xs"],
+      "aliases": ["env", "environment", "preferences"]
     }
   },
 

@@ -10,9 +10,12 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import {
   readXanoscriptDocsV2,
+  readXanoscriptDocsStructured,
+  getXanoscriptDocsVersion,
   getTopicNames,
   getTopicDescriptions,
   type XanoscriptDocsArgs,
+  type TopicDoc,
 } from "../xanoscript.js";
 import type { ToolResult } from "./types.js";
 
@@ -22,8 +25,11 @@ import type { ToolResult } from "./types.js";
 
 export type { XanoscriptDocsArgs };
 
+export type { TopicDoc };
+
 export interface XanoscriptDocsResult {
   documentation: string;
+  topics?: TopicDoc[];
 }
 
 // =============================================================================
@@ -100,18 +106,60 @@ export function setXanoscriptDocsPath(path: string): void {
 export function xanoscriptDocs(args?: XanoscriptDocsArgs): XanoscriptDocsResult {
   const docsPath = getXanoscriptDocsPath();
   const documentation = readXanoscriptDocsV2(docsPath, args);
+
+  // For file_path mode, also provide structured per-topic access
+  if (args?.file_path) {
+    const topics = readXanoscriptDocsStructured(docsPath, {
+      ...args,
+      file_path: args.file_path,
+    });
+    return { documentation, topics };
+  }
+
   return { documentation };
 }
 
 /**
  * Get XanoScript documentation and return a ToolResult.
+ * For file_path mode, returns each topic as a separate content block.
  */
 export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
   try {
+    const docsPath = getXanoscriptDocsPath();
+
+    // file_path mode: return structured multi-content (one block per topic)
+    if (args?.file_path) {
+      const version = getXanoscriptDocsVersion(docsPath);
+      const topicDocs = readXanoscriptDocsStructured(docsPath, {
+        ...args,
+        file_path: args.file_path,
+      });
+      const mode = args.mode || "quick_reference";
+      const topics = topicDocs.map((d) => d.topic);
+      const header =
+        `XanoScript Documentation for: ${args.file_path}\n` +
+        `Matched topics: ${topics.join(", ")}\n` +
+        `Mode: ${mode}\n` +
+        `Version: ${version}`;
+
+      return {
+        success: true,
+        data: [header, ...topicDocs.map((d) => d.content)],
+        structuredContent: {
+          file_path: args.file_path,
+          mode,
+          version,
+          topics,
+        },
+      };
+    }
+
+    // All other modes: return single content block
     const result = xanoscriptDocs(args);
     return {
       success: true,
       data: result.documentation,
+      structuredContent: { documentation: result.documentation },
     };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -161,10 +209,12 @@ export const xanoscriptDocsToolDefinition = {
       },
       mode: {
         type: "string",
-        enum: ["full", "quick_reference"],
+        enum: ["full", "quick_reference", "index"],
         description:
           "'full' = complete documentation with explanations and examples. " +
           "'quick_reference' = compact reference with just syntax patterns and signatures. " +
+          "'index' = compact topic listing with descriptions and byte sizes (~1KB). " +
+          "Use 'index' to discover available topics before loading them. " +
           "Use 'quick_reference' to save context window space when you just need a reminder. " +
           "Default: 'full' for topic mode, 'quick_reference' for file_path mode.",
       },
@@ -178,5 +228,31 @@ export const xanoscriptDocsToolDefinition = {
       },
     },
     required: [],
+  },
+  outputSchema: {
+    type: "object",
+    properties: {
+      documentation: {
+        type: "string",
+        description: "The documentation content (topic or README mode).",
+      },
+      file_path: {
+        type: "string",
+        description: "The file path that was matched (file_path mode only).",
+      },
+      mode: {
+        type: "string",
+        description: "The documentation mode used.",
+      },
+      version: {
+        type: "string",
+        description: "The XanoScript documentation version.",
+      },
+      topics: {
+        type: "array",
+        items: { type: "string" },
+        description: "List of matched topic names (file_path mode only).",
+      },
+    },
   },
 };

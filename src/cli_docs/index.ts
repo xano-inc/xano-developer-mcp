@@ -109,4 +109,14 @@ ${getTopicDescriptions()}
     },
     required: ["topic"],
   },
+  outputSchema: {
+    type: "object",
+    properties: {
+      documentation: {
+        type: "string",
+        description: "The CLI documentation content for the requested topic.",
+      },
+    },
+    required: ["documentation"],
+  },
 };

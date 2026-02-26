@@ -7,6 +7,7 @@ import {
   extractQuickReference,
   getXanoscriptDocsVersion,
   readXanoscriptDocsV2,
+  readXanoscriptDocsStructured,
   getTopicNames,
   getTopicDescriptions,
 } from "./xanoscript.js";
@@ -368,6 +369,33 @@ Even more content.
         readXanoscriptDocsV2("/nonexistent/path", { topic: "syntax" })
       ).toThrow();
     });
+
+    it("should return compact index with mode: index", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, { mode: "index" });
+      expect(result).toContain("# XanoScript Documentation Index");
+      expect(result).toContain("Version:");
+      expect(result).toContain("Topics:");
+      expect(result).toContain("| Topic | Description | Size |");
+      // Should contain some known topics
+      expect(result).toContain("| syntax |");
+      expect(result).toContain("| essentials |");
+      expect(result).toContain("| database |");
+      // Should contain KB size indicators
+      expect(result).toContain("KB |");
+    });
+
+    it("should return index mode without requiring topic or file_path", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, { mode: "index" });
+      // Index mode ignores topic/file_path — just returns the listing
+      expect(result).toContain("# XanoScript Documentation Index");
+    });
+
+    it("should return index that is significantly smaller than full docs", () => {
+      const index = readXanoscriptDocsV2(DOCS_PATH, { mode: "index" });
+      const full = readXanoscriptDocsV2(DOCS_PATH, { topic: "syntax", mode: "full" });
+      // Index should be compact — smaller than even a single full topic
+      expect(index.length).toBeLessThan(full.length);
+    });
   });
 
   describe("getTopicNames", () => {
@@ -402,6 +430,63 @@ Even more content.
       const descriptions = getTopicDescriptions();
       expect(descriptions).toContain("XanoScript overview");
       expect(descriptions).toContain("Expressions, operators");
+    });
+  });
+
+  describe("readXanoscriptDocsStructured", () => {
+    it("should return array of TopicDoc objects", () => {
+      const result = readXanoscriptDocsStructured(DOCS_PATH, {
+        file_path: "apis/users/create.xs",
+      });
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      for (const doc of result) {
+        expect(doc).toHaveProperty("topic");
+        expect(doc).toHaveProperty("content");
+        expect(typeof doc.topic).toBe("string");
+        expect(typeof doc.content).toBe("string");
+      }
+    });
+
+    it("should match the same topics as getDocsForFilePath", () => {
+      const filePath = "apis/users/create.xs";
+      const expected = getDocsForFilePath(filePath);
+      const result = readXanoscriptDocsStructured(DOCS_PATH, { file_path: filePath });
+      const resultTopics = result.map((d) => d.topic);
+      expect(resultTopics).toEqual(expected);
+    });
+
+    it("should respect exclude_topics", () => {
+      const result = readXanoscriptDocsStructured(DOCS_PATH, {
+        file_path: "apis/users/create.xs",
+        exclude_topics: ["syntax", "essentials"],
+      });
+      const topics = result.map((d) => d.topic);
+      expect(topics).not.toContain("syntax");
+      expect(topics).not.toContain("essentials");
+    });
+
+    it("should throw when all topics are excluded", () => {
+      expect(() =>
+        readXanoscriptDocsStructured(DOCS_PATH, {
+          file_path: "branch.xs",
+          exclude_topics: ["syntax", "essentials", "debugging", "branch"],
+        })
+      ).toThrow("No documentation found");
+    });
+
+    it("should use quick_reference mode by default", () => {
+      const quickResult = readXanoscriptDocsStructured(DOCS_PATH, {
+        file_path: "tables/users.xs",
+      });
+      const fullResult = readXanoscriptDocsStructured(DOCS_PATH, {
+        file_path: "tables/users.xs",
+        mode: "full",
+      });
+      // Quick reference content should be shorter than full
+      const quickTotal = quickResult.reduce((sum, d) => sum + d.content.length, 0);
+      const fullTotal = fullResult.reduce((sum, d) => sum + d.content.length, 0);
+      expect(quickTotal).toBeLessThanOrEqual(fullTotal);
     });
   });
 });
