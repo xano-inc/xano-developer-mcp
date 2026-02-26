@@ -111,7 +111,7 @@ $db.table.field     // Database field reference (in queries)
 $this               // Current item in loops/maps
 ```
 
-**Reserved Variables:** The following cannot be used as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`.
+**Reserved Variables:** The following cannot be used as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`. See `xanoscript_docs({ topic: "essentials" })` for detailed variable access rules.
 
 ### Type Names
 
@@ -162,7 +162,7 @@ This helps AI tools apply the correct documentation based on the file being edit
 
 For common patterns and quick examples, use:
 ```
-xanoscript_docs({ topic: "quickstart" })
+xanoscript_docs({ topic: "essentials" })
 ```
 
 This includes:
@@ -182,7 +182,7 @@ Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
 | Topic        | Description                                          | Key Sections |
 | ------------ | ---------------------------------------------------- | ------------ |
-| `quickstart` | Common patterns, quick examples, mistakes to avoid   | Patterns, Common Mistakes |
+| `essentials` | Common patterns, quick examples, mistakes to avoid   | Patterns, Common Mistakes |
 | `syntax`     | Expressions, operators, filters, system variables    | Filters, Error Handling |
 | `types`      | Data types, validation, input blocks                 | Validation Filters, Input Blocks |
 | `functions`  | Reusable function stacks, async, loops               | Loops, Async Patterns |
@@ -287,4 +287,4 @@ function "call_external_api" {
 }
 ```
 
-For more patterns, see `xanoscript_docs({ topic: "quickstart" })` or `xanoscript_docs({ topic: "integrations" })`.
+For more patterns, see `xanoscript_docs({ topic: "essentials" })` or `xanoscript_docs({ topic: "integrations" })`.

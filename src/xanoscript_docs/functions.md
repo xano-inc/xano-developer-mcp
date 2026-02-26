@@ -474,6 +474,6 @@ Explore more with `xanoscript_docs({ topic: "<topic>" })`:
 |-------|-------------|
 | `types` | Input types, filters, and validation |
 | `syntax` | Expressions, operators, and control flow |
-| `quickstart` | Common patterns and examples |
+| `essentials` | Common patterns and examples |
 | `database` | Database operations in function stacks |
 | `testing` | Unit testing functions |

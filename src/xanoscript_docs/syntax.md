@@ -4,7 +4,7 @@ applyTo: "**/*.xs"
 
 # Syntax Reference
 
-Complete reference for XanoScript expressions, operators, and filters.
+Complete reference for XanoScript expressions, operators, and core filters. For extended filter references, see the syntax sub-topics.
 
 > **TL;DR:** XanoScript uses `|` for filters (`$text|trim`), `~` for string concat, and standard operators (`==`, `!=`, `&&`, `||`). Filters are chainable. Error handling uses `precondition`, `try_catch`, and `throw`.
 
@@ -15,21 +15,19 @@ Complete reference for XanoScript expressions, operators, and filters.
 | [Operators](#quick-reference) | Comparison, logical, math, null-safe |
 | [Conditional Blocks](#conditional-blocks) | `conditional`, `if`/`elseif`/`else` |
 | [Expressions](#expressions) | Backtick syntax, comparisons |
-| [Math Filters](#math-filters) | `add`, `subtract`, `round`, `abs`, `ceil`, `floor` |
-| [String Filters](#string-filters) | `trim`, `to_lower`, `to_upper`, `substr`, `split`, `replace` |
-| [Array Filters](#array-filters) | `first`, `last`, `count`, `map`, `filter`, `reduce` |
-| [Array Functions](#array-functions) | `array.push`, `array.pop`, `array.map`, `array.filter`, `array.group_by` |
-| [Text Functions](#text-functions) | `text.contains`, `text.starts_with`, `text.trim`, `text.append`, `text.prepend` |
-| [Math Functions](#math-functions) | `math.add`, `math.sub`, `math.mul`, `math.div`, `math.bitwise.*` |
-| [Object Functions](#object-functions) | `object.keys`, `object.values`, `object.entries` |
 | [Object Filters](#object-filters) | `get`, `set`, `has`, `keys`, `values` |
 | [Type Filters](#type-filters) | `to_int`, `to_text`, `to_bool`, `json_encode` |
 | [Date/Time Filters](#datetime-filters) | `to_timestamp`, `format_timestamp` |
-| [Encoding Filters](#encoding-filters) | `url_encode`, `base64_encode`, `json_encode` |
-| [Security Filters](#security-filters) | `md5`, `sha256`, `encrypt`, `jws_encode` |
 | [DB Query Filters](#db-query-filters) | `contains`, `includes`, `between`, `within` |
 | [Error Handling](#error-handling) | `precondition`, `try_catch`, `throw` |
 | [System Variables](#system-variables) | `$env.*`, `$auth.*`, request context |
+
+### Extended Filter Sub-Topics
+
+For detailed references on specific filter categories, use:
+- `xanoscript_docs({ topic: "syntax/string-filters" })` — String filters, regex, encoding, security filters, text functions
+- `xanoscript_docs({ topic: "syntax/array-filters" })` — Array filters, functional operations, array functions
+- `xanoscript_docs({ topic: "syntax/functions" })` — Math filters/functions, object functions, bitwise operations
 
 ## CRITICAL: Filters Are Type-Specific
 
@@ -50,14 +48,14 @@ Complete reference for XanoScript expressions, operators, and filters.
 
 ```
 Working with...
-├── Strings? → USE STRING FILTERS ONLY (see String Filters section)
+├── Strings? → USE STRING FILTERS ONLY
 │   ├── Clean whitespace? → trim, ltrim, rtrim
 │   ├── Change case? → to_lower, to_upper, capitalize
 │   ├── Extract part? → substr (NOT slice)
 │   ├── Split to array? → split
 │   ├── Find/replace? → replace, contains
 │   └── Get length? → strlen (NOT count)
-├── Arrays? → USE ARRAY FILTERS ONLY (see Array Filters section)
+├── Arrays? → USE ARRAY FILTERS ONLY
 │   ├── Get element? → first, last, get
 │   ├── Count items? → count (NOT strlen)
 │   ├── Transform all? → map (filter) or array.map (statement)
@@ -66,7 +64,7 @@ Working with...
 │   ├── Combine? → reduce
 │   ├── Reverse? → reverse (NOT available on strings)
 │   ├── Sort? → sort
-│   └── Statement-level ops? → See Array Functions (array.push, array.pop, etc.)
+│   └── Statement-level ops? → See syntax/array-filters topic
 ├── Objects?
 │   ├── Get value? → get
 │   ├── Set value? → set
@@ -87,6 +85,8 @@ Working with...
 
 ### Variable Access Prefixes
 
+> **Full reference:** See `xanoscript_docs({ topic: "essentials" })` for detailed variable access rules, reserved variables, and type names.
+
 | Prefix | Applies to | Shorthand? |
 |--------|-----------|------------|
 | `$input.field` | Input parameters | No — prefix always required |
@@ -95,29 +95,18 @@ Working with...
 | `$env.NAME` | Environment variables | No |
 | `$db.table.field` | DB field refs (queries) | No |
 
-```xs
-// ❌ Wrong — input fields are NOT accessible as bare variables
-var $name { value = $name }      // undefined; inputs live on $input
-
-// ✅ Correct — always use $input for input fields
-var $name { value = $input.name }
-
-// ✅ Both are valid for stack variables
-var $total { value = 0 }
-$var.total      // explicit
-$total          // shorthand — same thing
-```
-
 ### Operators
+
 | Category | Operators |
 |----------|-----------|
 | Comparison | `==`, `!=`, `>`, `<`, `>=`, `<=` |
-| Logical | `&&`, `||`, `!` |
+| Logical | `&&`, `\|\|`, `!` |
 | Math | `+`, `-`, `*`, `/`, `%` |
 | String | `~` (concat) |
 | Null-safe | `==?`, `!=?`, `>=?`, `<=?` (ignore if null) |
 
 ### Common Filters
+
 | Filter | Type | Purpose | Example |
 |--------|------|---------|---------|
 | `trim` | STRING | Remove whitespace | `$s\|trim` |
@@ -153,8 +142,6 @@ var $message {
 
 ```xs
 // ✅ Correct — evaluate filter first, then apply operator
-
-// ✅ Correct
 if (($arr|count) == 0) { ... }
 
 // ✅ Correct — wrap each filtered expression for concatenation
@@ -195,16 +182,14 @@ conditional {
 
 ### Conditional with Variable Updates
 
-Use conditional blocks to update a variable based on conditions:
-
 ```xs
 var $tier_limit { value = 100 }
 
 conditional {
-  if ($auth.tier == "premium") { 
+  if ($auth.tier == "premium") {
     var.update $tier_limit { value = 1000 }
   }
-  elseif ($auth.tier == "pro") { 
+  elseif ($auth.tier == "pro") {
     var.update $tier_limit { value = 500 }
   }
 }
@@ -248,568 +233,6 @@ $a || $b      // OR
 // In db.query where clauses - ignore condition if value is null
 $db.post.category ==? $input.category
 $db.post.date >=? $input.start_date
-```
-
----
-
-## Math Filters
-
-| Filter | Example | Result |
-|--------|---------|--------|
-| `add` | `10\|add:5` | `15` |
-| `subtract` | `10\|subtract:3` | `7` |
-| `multiply` | `10\|multiply:2` | `20` |
-| `divide` | `10\|divide:2` | `5` |
-| `modulus` | `10\|modulus:3` | `1` |
-| `floor` | `2.7\|floor` | `2` |
-| `ceil` | `2.3\|ceil` | `3` |
-| `round` | `2.567\|round:2` | `2.57` |
-| `abs` | `-5\|abs` | `5` |
-| `sqrt` | `9\|sqrt` | `3` |
-| `pow` | `2\|pow:3` | `8` |
-| `min` | `5\|min:3` | `3` |
-| `max` | `5\|max:10` | `10` |
-
-### Array Math
-```xs
-[1,2,3,4]|sum        // 10
-[1,2,3,4]|avg        // 2.5
-[1,2,3,4]|product    // 24
-[5,2,8,1]|array_min  // 1
-[5,2,8,1]|array_max  // 8
-```
-
-### Trigonometry
-`sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `deg2rad`, `rad2deg`
-
----
-
-## String Filters
-
-> **These filters operate on STRING values only.** Do not use array filters (`count`, `reverse`, `first`, `last`, `slice`) on strings. Use `strlen` for string length, `substr` for substrings.
-
-| Filter | Example | Result |
-|--------|---------|--------|
-| `trim` | `"  hi  "\|trim` | `"hi"` |
-| `ltrim` / `rtrim` | `"  hi"\|ltrim` | `"hi"` |
-| `to_lower` | `"Hi"\|to_lower` | `"hi"` |
-| `to_upper` | `"Hi"\|to_upper` | `"HI"` |
-| `capitalize` | `"hi there"\|capitalize` | `"Hi There"` |
-| `strlen` | `"hello"\|strlen` | `5` |
-| `substr` | `"hello"\|substr:1:3` | `"ell"` |
-| `split` | `"a,b,c"\|split:","` | `["a","b","c"]` |
-| `replace` | `"hello"\|replace:"l":"x"` | `"hexxo"` |
-| `contains` | `"hello"\|contains:"ell"` | `true` |
-| `starts_with` | `"hello"\|starts_with:"he"` | `true` |
-| `ends_with` | `"hello"\|ends_with:"lo"` | `true` |
-| `concat` | `"a"\|concat:"b":"-"` | `"a-b"` |
-
-### Case-Insensitive Variants
-`icontains`, `istarts_with`, `iends_with`, `iindex`
-
-### Regex
-```xs
-"/pattern/"|regex_matches:"subject"           // Boolean match
-"/(\w+)/"|regex_get_first_match:"test"        // First match
-"/\w+/"|regex_get_all_matches:"a b c"         // All matches
-"/\s+/"|regex_replace:"-":"a  b"              // Replace: "a-b"
-```
-
----
-
-## Array Filters
-
-> **These filters operate on ARRAY values only.** Do not use string filters (`strlen`, `substr`, `split`, `replace`) on arrays. Use `count` for array length, `slice` for sub-arrays, `join` to convert to string.
-
-| Filter | Example | Result |
-|--------|---------|--------|
-| `first` | `[1,2,3]\|first` | `1` |
-| `last` | `[1,2,3]\|last` | `3` |
-| `count` | `[1,2,3]\|count` | `3` |
-| `reverse` | `[1,2,3]\|reverse` | `[3,2,1]` |
-| `unique` | `[1,1,2]\|unique` | `[1,2]` |
-| `flatten` | `[[1,2],[3]]\|flatten` | `[1,2,3]` |
-| `shuffle` | `[1,2,3]\|shuffle` | Random order |
-| `slice` | `[1,2,3,4]\|slice:1:2` | `[2,3]` — offset 1, length 2 |
-| `push` | `[1,2]\|push:3` | `[1,2,3]` |
-| `pop` | `[1,2,3]\|pop` | `3` |
-| `shift` | `[1,2,3]\|shift` | `1` |
-| `unshift` | `[1,2]\|unshift:0` | `[0,1,2]` |
-| `merge` | `[1,2]\|merge:[3,4]` | `[1,2,3,4]` |
-| `diff` | `[1,2,3]\|diff:[2]` | `[1,3]` |
-| `intersect` | `[1,2,3]\|intersect:[2,3,4]` | `[2,3]` |
-| `join` | `["a","b"]\|join:","` | `"a,b"` |
-| `range` | `\|range:1:5` | `[1,2,3,4,5]` |
-| `..` | `(1..5)` | `[1,2,3,4,5]` |
-
-### Range Operator
-
-Generate numeric ranges with the `..` operator:
-
-```xs
-(1..5)                                      // [1,2,3,4,5]
-(0..10)                                     // [0,1,2,3,4,5,6,7,8,9,10]
-($start..$end)                              // Dynamic range with variables
-```
-
-### Functional Operations
-```xs
-// Map - transform each element
-[{v:1},{v:2}]|map:$$.v*2                    // [2,4]
-
-// Filter - keep matching elements
-[1,2,3,4]|filter:$$%2==0                    // [2,4]
-
-// Find - first matching element
-[{id:1},{id:2}]|find:$$.id==2               // {id:2}
-
-// FindIndex - index of first match
-[{id:1},{id:2}]|findIndex:$$.id==2          // 1
-
-// Some - any element matches?
-[1,2,3]|some:$$>2                           // true
-
-// Every - all elements match?
-[2,4,6]|every:$$%2==0                       // true
-
-// Reduce - accumulate to single value
-[1,2,3,4]|reduce:$$+$result:0               // 10
-```
-
-### Array Element Access: `|get` vs `|slice`
-
-> **`|get:N`** returns a **single element** by zero-based index.
-> **`|slice:offset:length`** returns a **sub-array**, skipping `offset` elements and returning the next `length` elements.
-
-| Method | Use For | Example | Result |
-|--------|---------|---------|--------|
-| `\|get:N` | Single element by index (0-based) | `[10,20,30]\|get:0` | `10` |
-| `\|slice:offset:length` | Sub-array — skip N, take M | `[10,20,30,40]\|slice:1:2` | `[20,30]` |
-| `\|first` | First element | `[10,20,30]\|first` | `10` |
-| `\|last` | Last element | `[10,20,30]\|last` | `30` |
-
-```xs
-// Single element by index
-var $third { value = $items|get:2 }             // 0-based: 3rd element
-
-// Sub-array: skip first 10, return the next 5
-var $page { value = $items|slice:10:5 }
-
-// ⚠️ slice:offset:length — NOT slice:start:end
-// $arr|slice:2:3 → skip 2, return 3 elements (indices 2, 3, 4)
-// NOT "from index 2 to index 3"
-```
-
-### Grouping & Indexing
-```xs
-// Group by property
-[{g:"a",v:1},{g:"b",v:2},{g:"a",v:3}]|index_by:g
-// {"a":[{g:"a",v:1},{g:"a",v:3}],"b":[{g:"b",v:2}]}
-
-// Sort
-[{n:"z"},{n:"a"}]|sort:n:text:false         // Ascending by n
-```
-
----
-
-## Array Functions
-
-Statement-level functions for manipulating arrays within stacks. Unlike filters (e.g., `$arr|push:3`), these are standalone operations.
-
-> **Syntax note:** Functions that use a `{ by = ... }` or `{ value = ... }` block wrap the array in parentheses — e.g., `array.map ($arr) { ... }`. Functions that use an `if (...)` condition take a bare variable — e.g., `array.filter $arr if (...) as $result`.
-
-### array.push
-
-Appends a new element to the end of an array.
-
-```xs
-array.push $shopping_cart {
-  value = "oranges"
-}
-```
-
-### array.unshift
-
-Inserts a new element at the beginning of an array, shifting existing elements to higher indexes.
-
-```xs
-array.unshift $priority_tasks {
-  value = "urgent meeting"
-}
-```
-
-### array.pop
-
-Removes and returns the last element of an array. The removed element is stored in the `as` variable.
-
-```xs
-array.pop $completed_tasks as $last_finished_task
-```
-
-### array.shift
-
-Removes and returns the first element of an array. The removed element is stored in the `as` variable.
-
-```xs
-array.shift $waiting_list as $next_customer
-```
-
-### array.merge
-
-Combines another array or a single value into the target array, appending all elements from the provided `value`.
-
-```xs
-array.merge $active_users {
-  value = $new_users
-}
-```
-
-### array.find
-
-Searches an array and returns the first element that meets the specified condition. Returns `null` if no match.
-
-```xs
-array.find $customer_ages if ($this > 18) as $first_adult_age
-```
-
-### array.find_index
-
-Returns the index of the first element that satisfies the condition. Returns `-1` if no match.
-
-```xs
-array.find_index $sale_prices if ($this < 20) as $first_discount_index
-```
-
-### array.has
-
-Checks if at least one element meets the condition. Returns `true` or `false`.
-
-```xs
-array.has $team_roles if ($this == "manager") as $has_manager
-```
-
-### array.every
-
-Tests whether every element satisfies the condition. Returns `true` if all pass, `false` otherwise.
-
-```xs
-array.every $exam_scores if ($this >= 70) as $all_passed
-```
-
-### array.filter
-
-Creates a new array containing only the elements that meet the condition.
-
-```xs
-array.filter $temperatures if ($this > 32) as $above_freezing
-```
-
-### array.filter_count
-
-Counts how many elements satisfy the condition.
-
-```xs
-array.filter_count $survey_responses if ($this == "yes") as $yes_count
-```
-
-### array.map
-
-Transforms each element in an array based on a specified mapping. The `by` parameter defines the transformation.
-
-```xs
-array.map ($json) {
-  by = $this.email
-} as $emails
-
-array.map ($json) {
-  by = {name: $this.name, gender: $this.gender}
-} as $people
-```
-
-### array.partition
-
-Divides an array into two groups based on a condition. Returns an object with `true` and `false` keys.
-
-```xs
-array.partition ($json) if ($this.gender == "male") as $is_male
-```
-
-### array.group_by
-
-Groups elements based on a specified key or expression. Returns an object where each key is a group.
-
-```xs
-array.group_by ($users) {
-  by = $this.gender
-} as $user_by_gender
-```
-
-### array.union
-
-Combines two arrays ensuring all elements are unique based on the `by` key.
-
-```xs
-array.union ([1,3,5,7,9]) {
-  value = [2,4,6,8]
-  by = $this
-} as $union
-// Result: [1,2,3,4,5,6,7,8,9]
-```
-
-### array.difference
-
-Returns elements present in the first array but not in the second, based on the `by` key.
-
-```xs
-array.difference ([1,2,3,4,5,6,7,8,9]) {
-  value = [2,4,6,8]
-  by = $this
-} as $difference
-// Result: [1,3,5,7,9]
-```
-
-### array.intersection
-
-Returns elements present in both arrays, based on the `by` key.
-
-```xs
-array.intersection ([1,2,3,4,5,6,7,8,9]) {
-  value = [2,4,6,8]
-  by = $this
-} as $intersection
-// Result: [2,4,6,8]
-```
-
----
-
-## Text Functions
-
-Statement-level functions for text manipulation within stacks. These operate directly on variables — checking conditions (returning `true`/`false` via `as`) or mutating the variable in place.
-
-> **Syntax note:** Functions that check a condition (e.g., `text.contains`, `text.starts_with`) store the result in an `as` variable. Functions that modify text (e.g., `text.trim`, `text.append`) mutate the variable directly and do not return a value.
-
-### text.contains
-
-Checks if a text string contains the specified value. Returns `true` if found, `false` otherwise.
-
-```xs
-text.contains $log_entry {
-  value = "error"
-} as $has_error
-```
-
-### text.icontains
-
-Performs a case-insensitive check to see if a text string contains the specified value.
-
-```xs
-text.icontains $description {
-  value = "error"
-} as $has_error
-```
-
-### text.starts_with
-
-Checks if a text string begins with the specified value.
-
-```xs
-text.starts_with $message {
-  value = "Hello"
-} as $starts_with_hello
-```
-
-### text.istarts_with
-
-Performs a case-insensitive check to see if a text string starts with the specified value.
-
-```xs
-text.istarts_with $title {
-  value = "intro"
-} as $starts_with_intro
-```
-
-### text.ends_with
-
-Checks if a text string ends with the specified value.
-
-```xs
-text.ends_with $url {
-  value = ".com"
-} as $is_com_domain
-```
-
-### text.iends_with
-
-Performs a case-insensitive check to see if a text string ends with the specified value.
-
-```xs
-text.iends_with $filename {
-  value = "pdf"
-} as $ends_with_pdf
-```
-
-### text.trim
-
-Removes characters (default is whitespace, or as specified by `value`) from both the beginning and end of a text string. Mutates the variable directly.
-
-```xs
-text.trim $user_input {
-  value = " "
-}
-```
-
-### text.ltrim
-
-Removes leading characters (default is whitespace, or as specified by `value`) from a text string. Mutates the variable directly.
-
-```xs
-text.ltrim $user_input {
-  value = " "
-}
-```
-
-### text.rtrim
-
-Removes trailing characters (default is whitespace, or as specified by `value`) from a text string. Mutates the variable directly.
-
-```xs
-text.rtrim $user_input {
-  value = " "
-}
-```
-
-### text.append
-
-Adds the specified value to the end of a text string. Mutates the variable directly.
-
-```xs
-text.append $greeting {
-  value = ", welcome!"
-}
-```
-
-### text.prepend
-
-Adds the specified value to the beginning of a text string. Mutates the variable directly.
-
-```xs
-text.prepend $message {
-  value = "Alert: "
-}
-```
-
----
-
-## Math Functions
-
-Statement-level functions for arithmetic and bitwise operations within stacks. These mutate the target variable directly and do not return a value.
-
-> **Note:** These are different from math filters (e.g., `$x|add:5`) and math domain functions (e.g., `math.add(5, 3)`). Statement-level math functions modify the variable in place.
-
-### math.add
-
-Adds the specified value to the variable.
-
-```xs
-math.add $cart_total {
-  value = $item_price
-}
-```
-
-### math.sub
-
-Subtracts the specified value from the variable.
-
-```xs
-math.sub $total_cost {
-  value = $discount_amount
-}
-```
-
-### math.mul
-
-Multiplies the variable by the specified value.
-
-```xs
-math.mul $base_price {
-  value = $tax_rate
-}
-```
-
-### math.div
-
-Divides the variable by the specified value.
-
-```xs
-math.div $total_time {
-  value = $num_tasks
-}
-```
-
-### math.bitwise.and
-
-Performs a bitwise AND operation on the variable.
-
-```xs
-math.bitwise.and $status_flags {
-  value = $check_bit
-}
-```
-
-### math.bitwise.or
-
-Performs a bitwise OR operation on the variable.
-
-```xs
-math.bitwise.or $permissions {
-  value = $new_permission
-}
-```
-
-### math.bitwise.xor
-
-Performs a bitwise XOR operation on the variable.
-
-```xs
-math.bitwise.xor $flags {
-  value = $toggle_bit
-}
-```
-
----
-
-## Object Functions
-
-Statement-level functions for extracting object properties within stacks. These return results via the `as` variable.
-
-### object.keys
-
-Retrieves the property keys of an object as an array.
-
-```xs
-object.keys {
-  value = $user_data
-} as $user_data_keys
-```
-
-### object.values
-
-Extracts the values of an object's properties into an array.
-
-```xs
-object.values {
-  value = $product_info
-} as $product_values
-```
-
-### object.entries
-
-Returns an array of key-value pairs from an object.
-
-```xs
-object.entries {
-  value = $settings
-} as $settings_pairs
 ```
 
 ---
@@ -860,6 +283,22 @@ null|first_notnull:0                        // 0
 ""|first_notempty:"default"                 // "default"
 ```
 
+### Nullish Coalescing
+
+Return right operand when left is null (not just falsy):
+
+```xs
+$value ?? "default"              // Returns "default" only if $value is null
+$value || "default"              // Returns "default" if $value is null, 0, "", or false
+```
+
+```xs
+// Difference example
+var $count { value = 0 }
+$count ?? 10                     // Returns 0 (not null)
+$count || 10                     // Returns 10 (0 is falsy)
+```
+
 ---
 
 ## Date/Time Filters
@@ -886,40 +325,6 @@ $ts|timestamp_day_of_week    // Day (0=Sunday)
 
 ---
 
-## Encoding Filters
-
-| Filter | Example |
-|--------|---------|
-| `json_encode` | `{a:1}\|json_encode` |
-| `json_decode` | `'{"a":1}'\|json_decode` |
-| `base64_encode` | `"hello"\|base64_encode` |
-| `base64_decode` | `"aGVsbG8="\|base64_decode` |
-| `url_encode` | `"a b"\|url_encode` |
-| `url_decode` | `"a%20b"\|url_decode` |
-| `xml_decode` | `"<a>1</a>"\|xml_decode` |
-| `yaml_encode` / `yaml_decode` | YAML conversion |
-| `hex2bin` / `bin2hex` | Hex conversion |
-
----
-
-## Security Filters
-
-> **Full reference:** For security best practices, see `xanoscript_docs({ topic: "security" })`.
-
-| Filter | Example |
-|--------|---------|
-| `md5` | `"text"\|md5` |
-| `sha1` / `sha256` / `sha512` | Hash functions |
-| `hmac_sha256` | `"msg"\|hmac_sha256:"key"` |
-| `encrypt` | `"data"\|encrypt:"aes-256-cbc":"key":"iv"` |
-| `decrypt` | `$enc\|decrypt:"aes-256-cbc":"key":"iv"` |
-| `jws_encode` / `jws_decode` | JWT signing |
-| `jwe_encode` / `jwe_decode` | JWT encryption |
-| `secureid_encode` / `secureid_decode` | ID obfuscation |
-| `uuid` | `\|uuid` |
-
----
-
 ## DB Query Filters
 
 > **Full reference:** For complete database operations, see `xanoscript_docs({ topic: "database" })`.
@@ -938,10 +343,56 @@ Used in `db.query` where clauses:
 | `cosine_similarity` | `$db.vector\|cosine_similarity:$vec` | Vector similarity |
 | `l2_distance_euclidean` | `$db.vector\|l2_distance_euclidean:$vec` | Vector distance |
 
+### Database Filter Operators
+
+Additional operators for `db.query` where clauses:
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `@>` | JSON contains | `$db.meta @> {"type": "featured"}` |
+| `~` | Regex match | `$db.name ~ "^test"` |
+| `!~` | Regex not match | `$db.name !~ "^draft"` |
+| `not in` | Not in list | `$db.status not in ["deleted", "hidden"]` |
+| `not between` | Not in range | `$db.price not between 0:10` |
+| `not contains` | Array not contains | `$db.tags not contains "spam"` |
+| `not includes` | String not includes | `$db.title not includes "test"` |
+| `not overlaps` | Arrays don't overlap | `$db.tags not overlaps ["hidden", "draft"]` |
+| `not ilike` | Case-insensitive not like | `$db.name not ilike "%test%"` |
+
+```xs
+db.query "product" {
+  where = $db.product.status not in ["deleted", "archived"]
+        && $db.product.metadata @> {"featured": true}
+        && $db.product.sku ~ "^SKU-[0-9]+"
+} as $products
+```
+
 ### Timestamp Arithmetic (DB)
+
 ```xs
 $db.created_at|timestamp_add_days:7
 $db.created_at|timestamp_subtract_hours:24
+$db.created_at|timestamp_year                // Extract year
+$db.created_at|timestamp_month               // Extract month (1-12)
+$db.created_at|timestamp_week                // Extract week number
+$db.created_at|timestamp_day_of_month        // Day of month (1-31)
+$db.created_at|timestamp_day_of_week         // Day of week (0-6)
+$db.created_at|timestamp_day_of_year         // Day of year (1-366)
+$db.created_at|timestamp_hour                // Hour (0-23)
+$db.created_at|timestamp_minute              // Minute (0-59)
+$db.created_at|timestamp_epoch_seconds       // Seconds since epoch
+$db.created_at|timestamp_epoch_ms            // Milliseconds since epoch
+```
+
+### Vector Operations (AI/ML)
+
+> **Full reference:** For AI agents and embeddings, see `xanoscript_docs({ topic: "agents" })`.
+
+```xs
+$db.embedding|l1_distance_manhattan:$input.vector    // L1/Manhattan distance
+$db.embedding|negative_inner_product:$input.vector   // Negative inner product
+$db.embedding|inner_product:$input.vector            // Inner product
+$db.boundary|covers:$input.point                     // Polygon covers point
 ```
 
 ---
@@ -950,7 +401,7 @@ $db.created_at|timestamp_subtract_hours:24
 
 ### Preconditions
 
-Validate conditions and throw typed errors:
+Validate conditions and throw typed errors. See `xanoscript_docs({ topic: "essentials" })` for the error types reference table.
 
 ```xs
 precondition ($input.amount > 0) {
@@ -968,15 +419,6 @@ precondition ($user.id == $auth.id) {
   error = "Not authorized"
 }
 ```
-
-### Error Types
-
-| Type | HTTP Status | Use Case |
-|------|-------------|----------|
-| `inputerror` | 400 Bad Request | Invalid input data |
-| `accessdenied` | 403 Forbidden | Authorization failure |
-| `notfound` | 404 Not Found | Resource doesn't exist |
-| `standard` | 500 Internal Server Error | General errors |
 
 ### Throwing Errors
 
@@ -1056,259 +498,6 @@ var $current_branch { value = $env.$branch }
 var $api_key { value = $env.MY_API_KEY }
 ```
 
-### $env Limitations
-
-> **Important:** `$env` variables cannot be used in `run.job` or `run.service` input blocks. Input values must be constants.
-
-```xs
-// ❌ Invalid - $env not allowed in run.job input
-run.job "my_job" {
-  input {
-    text api_key = $env.API_KEY    // Error!
-  }
-}
-
-// ✅ Valid - access $env inside the stack instead
-run.job "my_job" {
-  input {
-    text api_key                   // No default value
-  }
-  stack {
-    var $key { value = $env.API_KEY }
-  }
-}
-```
-
----
-
-## Additional Operators
-
-### Nullish Coalescing
-
-Return right operand when left is null (not just falsy):
-
-```xs
-$value ?? "default"              // Returns "default" only if $value is null
-$value || "default"              // Returns "default" if $value is null, 0, "", or false
-```
-
-```xs
-// Difference example
-var $count { value = 0 }
-$count ?? 10                     // Returns 0 (not null)
-$count || 10                     // Returns 10 (0 is falsy)
-```
-
-### Database Filter Operators
-
-Additional operators for `db.query` where clauses:
-
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `@>` | JSON contains | `$db.meta @> {"type": "featured"}` |
-| `~` | Regex match | `$db.name ~ "^test"` |
-| `!~` | Regex not match | `$db.name !~ "^draft"` |
-| `not in` | Not in list | `$db.status not in ["deleted", "hidden"]` |
-| `not between` | Not in range | `$db.price not between 0:10` |
-| `not contains` | Array not contains | `$db.tags not contains "spam"` |
-| `not includes` | String not includes | `$db.title not includes "test"` |
-| `not overlaps` | Arrays don't overlap | `$db.tags not overlaps ["hidden", "draft"]` |
-| `not ilike` | Case-insensitive not like | `$db.name not ilike "%test%"` |
-
-```xs
-db.query "product" {
-  where = $db.product.status not in ["deleted", "archived"]
-        && $db.product.metadata @> {"featured": true}
-        && $db.product.sku ~ "^SKU-[0-9]+"
-} as $products
-```
-
----
-
-## Additional Filters
-
-### Text Domain Functions
-
-Functional equivalents for string operations:
-
-```xs
-text.contains("hello world", "world")        // true
-text.starts_with("hello", "he")              // true
-text.ends_with("hello", "lo")                // true
-text.icontains("Hello World", "WORLD")       // true (case-insensitive)
-text.istarts_with("Hello", "HE")             // true
-text.iends_with("Hello", "LO")               // true
-```
-
-### Object Domain Functions
-
-Functional equivalents for object operations:
-
-```xs
-object.keys({a: 1, b: 2})                    // ["a", "b"]
-object.values({a: 1, b: 2})                  // [1, 2]
-object.entries({a: 1, b: 2})                 // [{key: "a", value: 1}, {key: "b", value: 2}]
-```
-
-### Math Domain Functions
-
-Functional equivalents for math operations:
-
-```xs
-math.add(5, 3)                               // 8
-math.sub(10, 4)                              // 6
-math.mul(3, 4)                               // 12
-math.div(20, 5)                              // 4
-math.mod(10, 3)                              // 1
-```
-
-### Bitwise Operations
-
-```xs
-// As filters
-5|bitwise_and:3                              // 1
-5|bitwise_or:3                               // 7
-5|bitwise_xor:3                              // 6
-5|bitwise_not                                // -6
-
-// As functions
-math.bitwise.and(5, 3)                       // 1
-math.bitwise.or(5, 3)                        // 7
-math.bitwise.xor(5, 3)                       // 6
-```
-
-### Logical NOT Filter
-
-```xs
-true|not                                     // false
-false|not                                    // true
-$condition|not                               // Inverts boolean
-```
-
-### Array Filtering
-
-| Filter | Description | Example |
-|--------|-------------|---------|
-| `filter_empty` | Remove empty values | `$arr\|filter_empty` |
-| `filter_empty_text` | Remove empty strings | `$arr\|filter_empty_text` |
-| `filter_empty_array` | Remove empty arrays | `$arr\|filter_empty_array` |
-| `filter_empty_object` | Remove empty objects | `$arr\|filter_empty_object` |
-| `filter_null` | Remove null values | `$arr\|filter_null` |
-| `filter_zero` | Remove zero values | `$arr\|filter_zero` |
-| `filter_false` | Remove false values | `$arr\|filter_false` |
-
-```xs
-[1, null, "", 0, "text", false]|filter_empty      // [1, "text"]
-["a", "", "b", ""]|filter_empty_text              // ["a", "b"]
-```
-
-### Array Fill Operations
-
-```xs
-|fill:5:"x"                                  // ["x", "x", "x", "x", "x"]
-["a", "b"]|fill_keys:{"a": 1, "b": 2}        // {a: 1, b: 2}
-```
-
-### Deep Merge & Comparison
-
-```xs
-{a: {b: 1}}|merge_recursive:{a: {c: 2}}      // {a: {b: 1, c: 2}}
-[1, 2, 3]|diff_assoc:[2]                     // Associative diff
-[1, 2, 3]|intersect_assoc:[2, 3, 4]          // Associative intersect
-```
-
-### Encoding Filters
-
-| Filter | Description | Example |
-|--------|-------------|---------|
-| `list_encodings` | List available encodings | `\|list_encodings` |
-| `detect_encoding` | Detect string encoding | `$text\|detect_encoding` |
-| `to_utf8` | Convert to UTF-8 | `$text\|to_utf8` |
-| `from_utf8` | Convert from UTF-8 | `$text\|from_utf8:"ISO-8859-1"` |
-| `convert_encoding` | Convert encodings | `$text\|convert_encoding:"UTF-8":"ISO-8859-1"` |
-
-```xs
-// CSV parsing (alternative to csv_decode)
-$csv_text|csv_parse                          // Parse CSV string
-$data|csv_create                             // Create CSV string
-
-// Query string
-"a=1&b=2"|querystring_parse                  // {a: "1", b: "2"}
-```
-
-### String Escape Filters
-
-| Filter | Description |
-|--------|-------------|
-| `addslashes` | Escape quotes and backslashes |
-| `escape` | HTML escape |
-| `text_escape` | Escape for text output |
-| `text_unescape` | Unescape text |
-| `regex_quote` | Escape regex special characters |
-
-```xs
-"Hello \"World\""|addslashes                 // "Hello \\\"World\\\""
-"<script>"|escape                            // "&lt;script&gt;"
-"^test$"|regex_quote                         // "\^test\$"
-```
-
-### Trigonometry Examples
-
-```xs
-// Radians and degrees
-90|deg2rad                                   // 1.5707963...
-1.5707963|rad2deg                            // 90
-
-// Trig functions (input in radians)
-0|sin                                        // 0
-0|cos                                        // 1
-0.785398|tan                                 // ~1 (45 degrees)
-
-// Inverse trig
-0|asin                                       // 0
-1|acos                                       // 0
-1|atan                                       // 0.785398...
-
-// Hyperbolic
-0|sinh                                       // 0
-0|cosh                                       // 1
-0|tanh                                       // 0
-```
-
-### DB Query Timestamp Filters
-
-Extended timestamp operations for database queries:
-
-```xs
-$db.created_at|timestamp_year                // Extract year
-$db.created_at|timestamp_month               // Extract month (1-12)
-$db.created_at|timestamp_week                // Extract week number
-$db.created_at|timestamp_day_of_month        // Day of month (1-31)
-$db.created_at|timestamp_day_of_week         // Day of week (0-6)
-$db.created_at|timestamp_day_of_year         // Day of year (1-366)
-$db.created_at|timestamp_hour                // Hour (0-23)
-$db.created_at|timestamp_minute              // Minute (0-59)
-
-// Epoch variants
-$db.created_at|timestamp_epoch_seconds       // Seconds since epoch
-$db.created_at|timestamp_epoch_ms            // Milliseconds since epoch
-```
-
-### Vector Operations (AI/ML)
-
-> **Full reference:** For AI agents and embeddings, see `xanoscript_docs({ topic: "agents" })`.
-
-Additional vector similarity functions:
-
-```xs
-$db.embedding|l1_distance_manhattan:$input.vector    // L1/Manhattan distance
-$db.embedding|negative_inner_product:$input.vector   // Negative inner product
-$db.embedding|inner_product:$input.vector            // Inner product
-
-// Geo covers (for polygon containment)
-$db.boundary|covers:$input.point                     // Polygon covers point
-```
-
 ---
 
 ## Related Topics
@@ -1317,8 +506,9 @@ Explore more with `xanoscript_docs({ topic: "<topic>" })`:
 
 | Topic | Description |
 |-------|-------------|
-| `quickstart` | Common patterns, examples, mistakes to avoid |
+| `essentials` | Common patterns, mistakes to avoid, error types, type names |
+| `syntax/string-filters` | String filters, regex, encoding, security filters, text functions |
+| `syntax/array-filters` | Array filters, functional operations, array functions |
+| `syntax/functions` | Math filters/functions, object functions, bitwise |
 | `types` | Data types, input validation, schema definitions |
 | `database` | All db.* operations with query examples |
-| `functions` | Reusable function stacks, async patterns |
-| `security` | Security best practices and authentication |

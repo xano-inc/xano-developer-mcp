@@ -405,6 +405,6 @@ Explore more with `xanoscript_docs({ topic: "<topic>" })`:
 |-------|-------------|
 | `schema` | Runtime schema parsing and validation |
 | `syntax` | All filters, operators, and error handling |
-| `quickstart` | Common patterns and mistakes to avoid |
+| `essentials` | Common patterns and mistakes to avoid |
 | `functions` | Using input blocks in functions |
 | `apis` | Using input blocks in API endpoints |

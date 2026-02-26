@@ -20,9 +20,11 @@ describe("xanoscript module", () => {
     it("should have all expected topics", () => {
       const expectedTopics = [
         "readme",
-        "cheatsheet",
+        "essentials",
         "syntax",
-        "quickstart",
+        "syntax/string-filters",
+        "syntax/array-filters",
+        "syntax/functions",
         "types",
         "tables",
         "functions",
@@ -183,10 +185,10 @@ describe("xanoscript module", () => {
       expect(result).not.toContain("readme");
     });
 
-    it("should include syntax and quickstart for .xs files", () => {
+    it("should include syntax and essentials for .xs files", () => {
       const result = getDocsForFilePath("some/random/file.xs");
       expect(result).toContain("syntax");
-      expect(result).toContain("quickstart");
+      expect(result).toContain("essentials");
     });
   });
 
@@ -342,21 +344,21 @@ Even more content.
     it("should support exclude_topics with file_path", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH, {
         file_path: "apis/users/create.xs",
-        exclude_topics: ["syntax", "quickstart"],
+        exclude_topics: ["syntax", "essentials"],
       });
       expect(result).toContain("Matched topics:");
       expect(result).not.toContain("Matched topics: syntax");
       // Verify excluded topics are not in the matched list
       const matchLine = result.split("\n").find((l: string) => l.startsWith("Matched topics:"));
       expect(matchLine).not.toContain("syntax");
-      expect(matchLine).not.toContain("quickstart");
+      expect(matchLine).not.toContain("essentials");
     });
 
     it("should throw when all topics are excluded via exclude_topics", () => {
       expect(() =>
         readXanoscriptDocsV2(DOCS_PATH, {
           file_path: "branch.xs",
-          exclude_topics: ["syntax", "cheatsheet", "quickstart", "debugging", "branch"],
+          exclude_topics: ["syntax", "essentials", "debugging", "branch"],
         })
       ).toThrow("No documentation found");
     });

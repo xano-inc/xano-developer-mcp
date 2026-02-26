@@ -36,20 +36,30 @@ export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = {
     applyTo: [],
     description: "XanoScript overview, workspace structure, and quick reference",
   },
-  cheatsheet: {
-    file: "cheatsheet.md",
+  essentials: {
+    file: "essentials.md",
     applyTo: ["**/*.xs"],
-    description: "Quick reference for 20 most common XanoScript patterns",
+    description: "Common patterns, quick reference, and common mistakes to avoid",
   },
   syntax: {
     file: "syntax.md",
     applyTo: ["**/*.xs"],
     description: "Expressions, operators, and filters for all XanoScript code",
   },
-  quickstart: {
-    file: "quickstart.md",
-    applyTo: ["**/*.xs"],
-    description: "Common patterns, quick reference, and common mistakes to avoid",
+  "syntax/string-filters": {
+    file: "syntax/string-filters.md",
+    applyTo: [],
+    description: "String filters, regex, encoding, security filters, text functions",
+  },
+  "syntax/array-filters": {
+    file: "syntax/array-filters.md",
+    applyTo: [],
+    description: "Array filters, functional operations, and array functions",
+  },
+  "syntax/functions": {
+    file: "syntax/functions.md",
+    applyTo: [],
+    description: "Math filters/functions, object functions, bitwise operations",
   },
   types: {
     file: "types.md",
