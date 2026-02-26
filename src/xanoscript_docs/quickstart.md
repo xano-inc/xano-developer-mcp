@@ -298,7 +298,7 @@ precondition ($input.email|contains:"@") {
 | `db.query` | Filtered list | `db.query "users" { where = $db.users.active == true } as $users` |
 | `db.add` | Insert | `db.add "users" { data = { name: "John" } } as $new` |
 | `db.edit` | Update | `db.edit "users" { field_name = "id" field_value = 1 data = { name: "Jane" } }` |
-| `db.delete` | Delete | `db.delete "users" { field_name = "id" field_value = 1 }` |
+| `db.del` | Delete | `db.del "users" { field_name = "id" field_value = 1 }` |
 
 > **Full reference:** See `xanoscript_docs({ topic: "database" })` for joins, bulk operations, transactions, and more.
 
@@ -323,10 +323,10 @@ var $data {
 ### 4. Loop Through Array
 
 ```xs
-// Using each
-each ($items as $item) {
+// Using foreach
+foreach ($items) { each as $item {
   debug.log { value = $item.name }
-}
+} }
 
 // Using map filter
 var $names { value = $items|map:$$.name }

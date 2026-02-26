@@ -96,7 +96,7 @@ function "refresh_auth" {
     } as $new_token
 
     // Rotate refresh token
-    var $new_refresh { value = |uuid }
+    security.create_uuid as $new_refresh
 
     db.edit "refresh_token" {
       field_name = "id"
@@ -120,7 +120,7 @@ function "refresh_auth" {
 function "create_session" {
   input { int user_id }
   stack {
-    var $session_id { value = |uuid }
+    security.create_uuid as $session_id
 
     db.add "session" {
       data = {

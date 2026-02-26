@@ -104,6 +104,12 @@ export function mcpVersionTool(): ToolResult {
 
 export const mcpVersionToolDefinition = {
   name: "mcp_version",
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   description:
     "Get the current version of the Xano Developer MCP server. " +
     "Returns the version string from package.json.",

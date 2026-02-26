@@ -10,6 +10,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import {
   readXanoscriptDocsV2,
+  getTopicNames,
   getTopicDescriptions,
   type XanoscriptDocsArgs,
 } from "../xanoscript.js";
@@ -132,11 +133,18 @@ export const xanoscriptDocsToolDefinition = {
     "Call without parameters for overview (README). " +
     "Use 'topic' for specific documentation, or 'file_path' for context-aware docs based on the file you're editing. " +
     "Use mode='quick_reference' for compact syntax cheatsheet (recommended for context efficiency).",
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   inputSchema: {
     type: "object",
     properties: {
       topic: {
         type: "string",
+        enum: getTopicNames(),
         description:
           "Documentation topic to retrieve. Call without any parameters to get the README overview. " +
           "Example: topic='syntax' for language syntax, topic='database' for database operations, topic='types' for type system.\n\n" +

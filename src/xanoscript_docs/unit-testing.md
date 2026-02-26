@@ -107,34 +107,34 @@ function "add" {
 ### Value Assertions
 
 ```xs
-# Equality
+// Equality
 expect.to_equal ($response.status) { value = "active" }
 expect.to_not_equal ($response.status) { value = "deleted" }
 
-# Boolean
+// Boolean
 expect.to_be_true ($response.is_active)
 expect.to_be_false ($response.is_deleted)
 
-# Null
+// Null
 expect.to_be_null ($response.deleted_at)
 expect.to_not_be_null ($response.created_at)
 
-# Defined
+// Defined
 expect.to_be_defined ($response.id)
 expect.to_not_be_defined ($response.optional_field)
 
-# Empty
+// Empty
 expect.to_be_empty ($response.errors)
 ```
 
 ### Comparison Assertions
 
 ```xs
-# Numeric comparisons
+// Numeric comparisons
 expect.to_be_greater_than ($response.total) { value = 100 }
 expect.to_be_less_than ($response.stock) { value = 10 }
 
-# Range
+// Range
 expect.to_be_within ($response.temperature) {
   min = 20
   max = 30
@@ -144,14 +144,14 @@ expect.to_be_within ($response.temperature) {
 ### String Assertions
 
 ```xs
-# Starts/ends with
+// Starts/ends with
 expect.to_start_with ($response.name) { value = "John" }
 expect.to_end_with ($response.file) { value = ".pdf" }
 
-# Contains
+// Contains
 expect.to_contain ($response.tags) { value = "featured" }
 
-# Regex match
+// Regex match
 expect.to_match ($response.phone) { value = "^\\+1\\d{10}$" }
 ```
 
@@ -165,13 +165,13 @@ expect.to_be_in_the_future ($response.expires_at)
 ### Error Assertions
 
 ```xs
-# Expects any error
+// Expects any error
 test "throws on invalid input" {
   input = { amount: -1 }
   expect.to_throw
 }
 
-# Expects specific error
+// Expects specific error
 test "throws validation error" {
   input = { amount: -1 }
   expect.to_throw { value = "InvalidInputError" }
