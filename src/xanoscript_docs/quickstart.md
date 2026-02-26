@@ -107,10 +107,10 @@ var $data { value = { key: "value" } }
 ### Conditional Logic
 ```xs
 conditional {
-  if (`$status == "active"`) {
+  if ($status == "active") {
     var $result { value = "Active user" }
   }
-  elseif (`$status == "pending"`) {
+  elseif ($status == "pending") {
     var $result { value = "Pending approval" }
   }
   else {
@@ -464,7 +464,7 @@ conditional {
   }
   else {
     throw {
-      name = "APIError",
+      name = "APIError"
       value = "OpenAI API error: " ~ ($api_result.response.status|to_text)
     }
   }
@@ -574,19 +574,28 @@ var $data { value = { customer = $id } }
 var $data { value = { customer: $id } }
 ```
 
-### 9. Throw block with commas
+### 9. Commas in block properties (`=`) vs object literals (`:`)
+
+Block properties use `=` and go on **separate lines with no commas**. Object literals use `:` and **require commas** between entries.
+
 ```xs
-// ❌ Wrong - throw blocks don't use commas
+// ❌ Wrong - block properties don't use commas
 throw {
   name = "Error",
   value = "message"
 }
 
-// ✅ Correct - no commas between properties
+// ✅ Correct - no commas between block properties (=)
 throw {
   name = "Error"
   value = "message"
 }
+
+// ✅ Correct - object literals (:) DO use commas
+db.query "dad_jokes" {
+  sort = {dad_jokes.id: "rand", dad_jokes.joke: "asc"}
+  return = {type: "single"}
+} as $joke
 ```
 
 ### 10. Using $env in run.job input blocks

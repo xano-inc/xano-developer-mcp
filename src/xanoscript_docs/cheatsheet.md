@@ -112,7 +112,10 @@ db.edit "user" {
 }
 
 // Delete record
-db.del "user" { field_name = "id", field_value = $input.user_id }
+db.del "user" {
+  field_name = "id"
+  field_value = $input.user_id
+}
 ```
 
 ### API Requests

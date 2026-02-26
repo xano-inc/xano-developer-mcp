@@ -220,8 +220,6 @@
     "function.run": { "file": "functions.md" },
     "redis.get": { "file": "integrations/redis.md" },
     "redis.set": { "file": "integrations/redis.md" },
-    "storage.s3_put": { "file": "integrations/cloud-storage.md" },
-    "storage.s3_get": { "file": "integrations/cloud-storage.md" },
     "array.push": { "file": "syntax.md" },
     "array.pop": { "file": "syntax.md" },
     "array.shift": { "file": "syntax.md" },

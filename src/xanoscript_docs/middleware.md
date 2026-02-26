@@ -239,28 +239,15 @@ middleware "rate_limit" {
   }
 
   stack {
-    var $key { value = "ratelimit:" ~ $input.user_id }
-
-    redis.incr {
-      key = $key
-    } as $count
-
-    conditional {
-      if ($count == 1) {
-        redis.expire {
-          key = $key
-          seconds = $input.window_seconds
-        }
-      }
-    }
-
-    precondition ($count <= $input.max_requests) {
-      error_type = "standard"
+    redis.ratelimit {
+      key = "ratelimit:" ~ $input.user_id
+      max = $input.max_requests
+      ttl = $input.window_seconds
       error = "Rate limit exceeded"
     }
   }
 
-  response = { remaining: $input.max_requests - $count }
+  response = null
 }
 ```
 
