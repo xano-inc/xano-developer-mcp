@@ -390,10 +390,9 @@ precondition ($input.start_date < $input.end_date) {
 
 ## Best Practices
 
-1. **Always specify types** - Never leave inputs untyped
-2. **Use filters first** - Prefer declarative filters over stack validation
-3. **Mark sensitive data** - Use `sensitive = true` for PII/credentials
-4. **Validate at boundaries** - Validate user input, trust internal calls
+1. **Use filters first** - Prefer declarative `filters=` over stack-level preconditions for input validation
+2. **Mark sensitive data** - Use `sensitive = true` for PII/credentials to mask them in logs
+3. **Use `?` placement correctly** - `text?` = nullable, `name?` = optional; these are independent modifiers
 
 ---
 

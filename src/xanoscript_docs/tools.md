@@ -298,9 +298,7 @@ tool "cancel_order" {
 
 1. **Write clear instructions** - This is what the AI reads to understand the tool
 2. **Describe all inputs** - Help AI construct valid requests
-3. **Use enums for fixed options** - Reduces AI errors
-4. **Keep tools focused** - One task per tool
-5. **Limit response size** - Don't return huge datasets
+3. **Use enums for fixed options** - Reduces AI errors; keep tools focused to one task
 
 ---
 

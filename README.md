@@ -339,12 +339,16 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `topic` | string | No | Specific documentation topic to retrieve |
 | `file_path` | string | No | File path being edited for context-aware docs (e.g., `api/users/create_post.xs`) |
 | `mode` | string | No | `full` (default), `quick_reference` for compact syntax reference, or `index` for topic listing with sizes |
+| `tier` | string | No | Pre-packaged documentation tier for context-limited models: `survival` (~800 tokens) or `working` (~3500 tokens). Overrides topic/file_path/mode when set |
+| `max_tokens` | number | No | Maximum estimated token budget. Loads topics in priority order until budget is reached. Helps prevent context overflow for small-window models |
 | `exclude_topics` | string[] | No | Topic names to exclude from `file_path` results (e.g., topics already loaded) |
 
 **Available Topics:**
 
 | Topic | Description |
 |-------|-------------|
+| `survival` | Minimal syntax survival kit (~3KB, ~800 tokens) for models with <16K context |
+| `working` | Complete working reference (~12KB, ~3500 tokens) for models with 16-64K context |
 | `readme` | XanoScript overview, workspace structure, and quick reference |
 | `essentials` | Common patterns, quick reference, and common mistakes to avoid |
 | `syntax` | Expressions, operators, and filters for all XanoScript code |
@@ -387,6 +391,12 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 // Get overview
 xanoscript_docs()
 
+// Get survival kit for small context models (~800 tokens)
+xanoscript_docs({ tier: "survival" })
+
+// Get working reference for medium context models (~3500 tokens)
+xanoscript_docs({ tier: "working" })
+
 // Get essentials (recommended first stop)
 xanoscript_docs({ topic: "essentials" })
 
@@ -395,6 +405,9 @@ xanoscript_docs({ topic: "functions" })
 
 // Discover available topics with sizes
 xanoscript_docs({ mode: "index" })
+
+// Budget-aware: load docs up to token limit
+xanoscript_docs({ file_path: "api/users/create_post.xs", max_tokens: 2000 })
 
 // Context-aware: get all docs relevant to file being edited
 xanoscript_docs({ file_path: "api/users/create_post.xs" })
@@ -516,6 +529,8 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 
 | Resource URI | Description |
 |--------------|-------------|
+| `xanoscript://docs/survival` | Minimal syntax survival kit (~800 tokens) |
+| `xanoscript://docs/working` | Complete working reference (~3500 tokens) |
 | `xanoscript://docs/readme` | Overview and quick reference |
 | `xanoscript://docs/essentials` | Common patterns, quick reference, and common mistakes to avoid |
 | `xanoscript://docs/syntax` | Expressions, operators, and filters |

@@ -183,8 +183,7 @@ The MCP protocol handles:
 
 1. **Clear naming** - Server name should indicate its purpose
 2. **Comprehensive instructions** - Guide AI on server's overall purpose
-3. **Logical tool grouping** - Group related tools in one server
-4. **Keep focused** - One domain per server (support, analytics, etc.)
+3. **Logical tool grouping** - Group related tools in one server; one domain per server
 
 ---
 

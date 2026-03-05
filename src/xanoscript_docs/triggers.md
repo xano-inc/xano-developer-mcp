@@ -589,77 +589,11 @@ mcp_server_trigger "database_tool_handler" {
 
 ---
 
-## Common Patterns
-
-### Error Handling in Triggers
-
-```xs
-table_trigger "safe_audit" {
-  table = "sensitive_data"
-  actions = {insert: true, update: true, delete: true, truncate: false}
-
-  // Uses predefined Table Trigger Input - see Predefined Input Blocks section
-  input { ... }
-
-  stack {
-    try_catch {
-      try {
-        db.add "audit_log" {
-          data = {
-            action: $input.action,
-            new_data: $input.new,
-            old_data: $input.old,
-            timestamp: now
-          }
-        }
-      }
-      catch {
-        debug.log { value = "Audit logging failed" }
-      }
-    }
-  }
-}
-```
-
-### Conditional Trigger Logic
-
-```xs
-table_trigger "conditional_notification" {
-  table = "order"
-  actions = {insert: true, update: false, delete: false, truncate: false}
-
-  // Uses predefined Table Trigger Input - see Predefined Input Blocks section
-  input { ... }
-
-  stack {
-    conditional {
-      if ($input.new.total > 1000) {
-        util.send_email {
-          service_provider = "resend"
-          api_key = $env.RESEND_API_KEY
-          to = "sales@example.com"
-          from = "system@example.com"
-          subject = "High Value Order"
-          message = "Order #" ~ $input.new.id ~ " for $" ~ $input.new.total
-        }
-      }
-    }
-  }
-}
-```
-
----
-
 ## Best Practices
 
-1. **Use predefined input blocks as-is** - Each trigger type has a read-only input block that cannot be modified; use the exact structure provided
-2. **Use descriptive names** - Indicate the event and action: `user_audit_log`, `chat_message_handler`
-3. **Handle errors gracefully** - Use try_catch to prevent trigger failures from affecting the main operation
-4. **Keep triggers lightweight** - Offload heavy processing to functions or tasks
-5. **Set appropriate history** - Use `history = false` for high-frequency triggers to save storage
-6. **Use tags** - Organize triggers with meaningful tags for easier management
-7. **Document with description** - Always provide a description explaining the trigger's purpose
-8. **Test thoroughly** - Triggers execute automatically, so ensure they handle edge cases
+1. **Use predefined input blocks as-is** - Each trigger type has a read-only input block that cannot be modified
+2. **Handle errors gracefully** - Use try_catch to prevent trigger failures from affecting the main operation
+3. **Keep triggers lightweight** - Offload heavy processing to functions or tasks; use `history = false` for high-frequency triggers
 
 ---
 

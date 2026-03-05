@@ -456,13 +456,9 @@ foreach ($items) {
 
 ## Best Practices
 
-1. **Single responsibility** - Each function does one thing well
-2. **Descriptive names** - Use verb_noun format: `calculate_total`, `validate_user`
-3. **Organize in folders** - Group related functions: `utils/`, `auth/`, `orders/`
-4. **Return early** - Use return for guard clauses
-5. **Keep stacks shallow** - Avoid deeply nested conditionals
-6. **Use group for organization** - Visually group related statements for readability
-7. **Use remove sparingly** - Consider filtering arrays instead
+1. **Organize in folders** - Group related functions in subfolders (`utils/`, `auth/`); call with `function.run "utils/format" { ... }`
+2. **Return early** - Use `return { value = ... }` for guard clauses to avoid deep nesting
+3. **Use `remove` sparingly** - Prefer `$items|filter:$$.condition` over in-loop `remove` for cleaner array filtering
 
 ---
 

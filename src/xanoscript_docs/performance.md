@@ -137,143 +137,20 @@ db.bulk.add "order_item" {
 
 ## Caching Strategies
 
-### Redis Caching
-
-```xs
-// Check cache first
-redis.get { key = "user:" ~ $input.user_id } as $cached
-
-conditional {
-  if ($cached != null) {
-    var $user { value = $cached }
-  }
-  else {
-    db.get "user" {
-      field_name = "id"
-      field_value = $input.user_id
-    } as $user
-
-    // Cache for 5 minutes
-    redis.set {
-      key = "user:" ~ $input.user_id
-      data = $user
-      ttl = 300
-    }
-  }
-}
-```
-
-### Cache Invalidation
-
-```xs
-function "update_user" {
-  input { int user_id, object data }
-  stack {
-    db.patch "user" {
-      field_name = "id"
-      field_value = $input.user_id
-      data = $input.data
-    } as $user
-
-    // Invalidate cache
-    redis.del { key = "user:" ~ $input.user_id }
-  }
-  response = $user
-}
-```
-
-### Computed Value Caching
-
-```xs
-// Cache expensive computations
-redis.get { key = "stats:daily:" ~ now|format_timestamp:"Y-m-d" } as $cached_stats
-
-conditional {
-  if ($cached_stats == null) {
-    // Expensive aggregation
-    db.query "order" {
-      where = $db.order.created_at >= now|transform_timestamp:"start of day"
-    } as $orders
-
-    var $stats {
-      value = {
-        count: $orders|count,
-        total: $orders|map:$$.total|sum,
-        avg: $orders|map:$$.total|avg
-      }
-    }
-
-    redis.set {
-      key = "stats:daily:" ~ now|format_timestamp:"Y-m-d"
-      data = $stats
-      ttl = 300
-    }
-
-    var $cached_stats { value = $stats }
-  }
-}
-```
-
----
-
-## Organizing with Group
-
-The `group` statement is an organizational block for visually grouping related statements. It does **not** create parallel execution or a new scope — variables declared inside a group are accessible outside it.
-
-```xs
-// Use group to organize related variable initialization
-group {
-  stack {
-    var $total {
-      value = 0
-    }
-
-    var $count {
-      value = 0
-    }
-  }
-}
-
-// $total and $count are accessible here
-```
+> See `xanoscript_docs({ topic: "integrations/redis" })` for full Redis caching patterns (get/set, invalidation, computed value caching).
 
 ---
 
 ## Efficient Data Transformations
 
-### Use Filter Chains Wisely
-
 ```xs
 // Good: Single pass with chained filters
 $data|filter:$$.active|map:$$.name|unique
 
-// Avoid: Multiple passes over data
-var $active { value = $data|filter:$$.active }
-var $names { value = $active|map:$$.name }
-var $unique { value = $names|unique }
-```
-
-### Early Filtering
-
-```xs
 // Filter in database, not in code
 db.query "product" {
   where = $db.product.is_active == true && $db.product.price > 0
 } as $products
-
-// Not: Fetch all then filter
-db.query "product" as $all_products
-var $products { value = $all_products|filter:$$.is_active && $$.price > 0 }
-```
-
-### Limit Data Transfer
-
-```xs
-// Only fetch needed fields from external API
-api.request {
-  url = "https://api.example.com/users"
-  params = { fields: "id,name,email" }
-} as $result
 ```
 
 ---
@@ -308,92 +185,25 @@ redis.ratelimit {
 
 ## Response Optimization
 
-### Stream Large Responses
+For large responses, use `return = { type: "stream" }` with `api.stream` to avoid loading into memory. Large JSON responses are automatically compressed when clients support it.
 
-```xs
-// Stream instead of loading into memory
-db.query "log" {
-  where = $db.log.created_at >= $input.start
-  return = { type: "stream" }
-} as $logs
-
-api.stream {
-  format = "jsonl"
-  value = $logs
-}
-```
-
-### Compress Responses
-
-Large JSON responses are automatically compressed when clients support it.
-
-### Paginate API Responses
-
-```xs
-query "list_products" {
-  input {
-    int page?=1
-    int per_page?=25 filters=max:100
-  }
-  stack {
-    db.query "product" {
-      return = {
-        type: "list",
-        paging: {
-          page: $input.page,
-          per_page: $input.per_page,
-          totals: true
-        }
-      }
-    } as $products
-  }
-  response = $products
-}
-```
+> See `xanoscript_docs({ topic: "streaming" })` for streaming patterns.
 
 ---
 
 ## Query Analysis
 
-### Log Slow Queries
+Use `now|to_ms` before and after operations to measure duration, and `debug.log` to log slow queries.
 
-```xs
-var $start { value = now|to_ms }
-
-db.query "product" {
-  where = $db.product.category == $input.category
-} as $products
-
-var $duration { value = (now|to_ms) - $start }
-
-conditional {
-  if ($duration > 100) {
-    debug.log {
-      label = "SLOW_QUERY"
-      value = {
-        query: "product by category",
-        duration_ms: $duration,
-        result_count: $products|count
-      }
-    }
-  }
-}
-```
+> See `xanoscript_docs({ topic: "debugging" })` for timing and logging patterns.
 
 ---
 
 ## Best Practices Summary
 
-1. **Index frequently queried columns** - Check query patterns
-2. **Use appropriate return types** - count, exists, single
-3. **Paginate large results** - Never return unbounded lists
-4. **Avoid N+1 queries** - Use joins or batch fetching
-5. **Use bulk operations** - For batch inserts/updates
-6. **Cache expensive operations** - Redis with appropriate TTL
-7. **Use group for organization** - Group related statements for readability
-8. **Filter early** - In database, not application code
-9. **Stream large responses** - Don't load into memory
-10. **Monitor performance** - Log slow operations
+1. **Index frequently queried columns** - Use `select` for only needed fields; use `count`/`exists` return types
+2. **Avoid N+1 queries** - Use joins or bulk operations (`db.bulk.add`, `db.bulk.edit`)
+3. **Paginate large results** - Never return unbounded lists; cache expensive computations with Redis
 
 ---
 

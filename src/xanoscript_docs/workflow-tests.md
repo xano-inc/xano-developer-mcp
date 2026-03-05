@@ -181,44 +181,21 @@ expect.to_throw {
 
 ## Data Sources
 
-The `datasource` property controls which data source the test runs against.
-
-**Avoid using `datasource = "live"`.** When a workflow test runs, the entire datasource is cloned so that real data is not modified. This cloning step can be slow, especially for large datasources. Prefer running without a datasource or using a smaller custom datasource instead.
-
-### Default (No Data Source) — Recommended
+The `datasource` property controls which data source the test runs against. **Avoid `datasource = "live"`** — it clones the entire datasource before each run, which can be slow. Prefer omitting `datasource` or using a smaller custom datasource.
 
 ```xs
+// Recommended: no datasource
 workflow_test "basic_check" {
   stack {
     function.call "health_check" as $result
     expect.to_be_defined ($result)
   }
 }
-```
 
-### Custom Data Source
-
-```xs
-workflow_test "staging_data_check" {
+// Custom datasource
+workflow_test "staging_check" {
   datasource = "staging"
-  stack {
-    function.call "get_products" as $products
-    expect.to_be_defined ($products)
-  }
-}
-```
-
-### Live Data Source (Not Recommended)
-
-Using `datasource = "live"` clones the entire live datasource before running the test. Only use this when you specifically need to validate against production data.
-
-```xs
-workflow_test "live_data_check" {
-  datasource = "live"
-  stack {
-    function.call "get_active_users" as $users
-    expect.to_be_defined ($users)
-  }
+  stack { ... }
 }
 ```
 
@@ -317,13 +294,9 @@ workflow_test "comprehensive_test" {
 
 ## Best Practices
 
-1. **Use descriptive names** — Name tests after the workflow being tested: `user_signup_flow`, `checkout_process`
-2. **Tag for filtering** — Use tags like `critical`, `e2e`, `smoke` to organize test suites
-3. **Avoid `datasource = "live"`** — The entire datasource is cloned before each test run, which can be slow. Use no datasource or a smaller custom datasource instead
-4. **Keep tests independent** — Each workflow test should be self-contained and not depend on other tests
-5. **Use `function.call`, not `function.run`** — `function.call` handles errors so that `expect` assertions work correctly. `function.run` is for calling functions outside of workflow tests
-6. **Use assertions over preconditions** — Prefer `expect.*` assertions for clearer test intent
-7. **Don't test required fields with empty strings** — Required inputs reject both `null` and `""` at the platform level before your stack runs. If you send `""` to a required `text` field, you'll always get a platform validation error — never your custom logic. To test the empty/blank case, the input must be declared optional (`text name?`). See `xanoscript_docs({ topic: "types" })` for the full breakdown.
+1. **Use `function.call`, not `function.run`** — `function.call` handles errors so that `expect` assertions work correctly
+2. **Keep tests independent** — Each workflow test should be self-contained
+3. **Don't test required fields with empty strings** — Required inputs reject `""` at the platform level. Use optional fields (`text name?`) to test blank cases. See `xanoscript_docs({ topic: "types" })`
 
 ---
 

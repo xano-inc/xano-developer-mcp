@@ -148,12 +148,6 @@ if (($arr|count) == 0) { ... }
 var $message {
   value = ($status|to_text) ~ ": " ~ ($data|json_encode)
 }
-
-// ✅ Correct — filter result used in arithmetic
-var $total { value = ($prices|sum) + $tax }
-
-// ✅ Correct — filter result compared
-var $is_long { value = ($text|strlen) > 100 }
 ```
 
 **Summary:** Any time you apply an operator (`>`, `<`, `==`, `!=`, `~`, `+`, `-`, etc.) to a filtered value, wrap the `$var|filter` portion in its own parentheses.

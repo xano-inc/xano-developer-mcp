@@ -20,6 +20,8 @@ describe("xanoscript module", () => {
   describe("XANOSCRIPT_DOCS_V2", () => {
     it("should have all expected topics", () => {
       const expectedTopics = [
+        "survival",
+        "working",
         "readme",
         "essentials",
         "syntax",
@@ -359,7 +361,7 @@ Even more content.
       expect(() =>
         readXanoscriptDocsV2(DOCS_PATH, {
           file_path: "branch.xs",
-          exclude_topics: ["syntax", "essentials", "debugging", "branch"],
+          exclude_topics: ["syntax", "essentials", "debugging", "branch", "survival", "working"],
         })
       ).toThrow("No documentation found");
     });
@@ -375,7 +377,7 @@ Even more content.
       expect(result).toContain("# XanoScript Documentation Index");
       expect(result).toContain("Version:");
       expect(result).toContain("Topics:");
-      expect(result).toContain("| Topic | Description | Size |");
+      expect(result).toContain("| Topic | Description | Size | Est. Tokens |");
       // Should contain some known topics
       expect(result).toContain("| syntax |");
       expect(result).toContain("| essentials |");
@@ -470,7 +472,7 @@ Even more content.
       expect(() =>
         readXanoscriptDocsStructured(DOCS_PATH, {
           file_path: "branch.xs",
-          exclude_topics: ["syntax", "essentials", "debugging", "branch"],
+          exclude_topics: ["syntax", "essentials", "debugging", "branch", "survival", "working"],
         })
       ).toThrow("No documentation found");
     });

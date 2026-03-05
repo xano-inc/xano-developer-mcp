@@ -178,6 +178,15 @@ This includes:
 
 Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
+### Tiers (for context-limited models)
+
+| Topic      | Description                                                  | Size |
+| ---------- | ------------------------------------------------------------ | ---- |
+| `survival` | Minimal syntax survival kit for models with <16K context     | ~3KB (~800 tokens) |
+| `working`  | Complete working reference for models with 16-64K context    | ~12KB (~3500 tokens) |
+
+Use `xanoscript_docs({ tier: "survival" })` or `xanoscript_docs({ tier: "working" })`.
+
 ### Core Language
 
 | Topic        | Description                                          | Key Sections |
@@ -245,46 +254,3 @@ Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 | `performance` | Performance optimization best practices                      | Caching, Query Optimization |
 | `security`    | Security best practices for authentication and authorization | Auth Patterns, Token Handling |
 
----
-
-## Example Implementations
-
-Common integration patterns you can reference:
-
-### External API Integrations
-- **OpenAI/ChatGPT**: Use `api.request` with POST to `/v1/chat/completions`
-- **Stripe**: Use `api.request` with form-encoded params for payments
-- **SendGrid/Resend**: Use `api.request` or `util.send_email` for emails
-- **Slack/Discord**: Use `api.request` with webhook URLs
-- **Twilio**: Use `api.request` with Basic auth for SMS
-
-### Common Pattern: API Integration Function
-
-```xs
-function "call_external_api" {
-  input {
-    text endpoint
-    object payload
-  }
-  stack {
-    api.request {
-      url = $env.API_BASE_URL ~ $input.endpoint
-      method = "POST"
-      params = $input.payload
-      headers = [
-        "Content-Type: application/json",
-        "Authorization: Bearer " ~ $env.API_KEY
-      ]
-      timeout = 30
-    } as $api_result
-
-    precondition ($api_result.response.status >= 200 && $api_result.response.status < 300) {
-      error_type = "standard"
-      error = "API error: " ~ ($api_result.response.status|to_text)
-    }
-  }
-  response = $api_result.response.result
-}
-```
-
-For more patterns, see `xanoscript_docs({ topic: "essentials" })` or `xanoscript_docs({ topic: "integrations" })`.

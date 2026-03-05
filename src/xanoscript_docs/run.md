@@ -56,16 +56,6 @@ run.job "Random Dad Joke" {
 }
 ```
 
-### With Empty Input (Alternative)
-```xs
-run.job "Random Dad Joke" {
-  main = {
-    name: "fetch_dad_joke"
-    input: {}
-  }
-}
-```
-
 ### With Input Parameters
 ```xs
 run.job "Average of values" {
@@ -134,16 +124,6 @@ run.service "Random Dad Joke" {
 }
 ```
 
-### With Empty Input (Alternative)
-```xs
-run.service "Random Dad Joke" {
-  pre = {
-    name: "fetch_dad_joke"
-    input: {}
-  }
-}
-```
-
 ### With Initialization
 ```xs
 run.service "email proxy" {
@@ -173,169 +153,9 @@ run.service "webhook listener" {
 
 ## Supporting Files
 
-Jobs and services can include supporting tables and functions.
+Jobs and services can include supporting tables and functions in `table/` and `function/` subdirectories.
 
-### Table with Seed Data
-```xs
-table users {
-  auth = false
-  schema {
-    int id
-    text name
-    text email
-    timestamp created_at?=now
-  }
-  index = [
-    {type: "primary", field: [{name: "id"}]}
-  ]
-  items = [
-    {"id": 1, "name": "Alice", "email": "alice@example.com"}
-    {"id": 2, "name": "Bob", "email": "bob@example.com"}
-  ]
-}
-```
-
-### Function Definition
-```xs
-function "process_data" {
-  input {
-    json data
-  }
-  stack {
-    db.query users {
-      return = { type: "list" }
-    } as $users
-  }
-  response = $users
-}
-```
-
----
-
-## Complete Job Example
-
-```
-run.xs
-table/
-└── users.xs
-function/
-└── migrate_users.xs
-```
-
-### run.xs
-```xs
-run.job "Data Migration" {
-  main = {
-    name: "migrate_users"
-    input: {
-      batch_size: 100
-    }
-  }
-  env = ["source_db_url", "webhook_url"]
-}
-```
-
-### table/users.xs
-```xs
-table users {
-  auth = false
-  schema {
-    int id
-    text name
-    text email
-    timestamp migrated_at?
-  }
-  index = [
-    {type: "primary", field: [{name: "id"}]}
-  ]
-  items = [
-    {"id": 1, "name": "Alice", "email": "alice@example.com"}
-    {"id": 2, "name": "Bob", "email": "bob@example.com"}
-  ]
-}
-```
-
-### function/migrate_users.xs
-```xs
-function "migrate_users" {
-  input {
-    int batch_size
-  }
-  stack {
-    db.query users {
-      where = $db.users.migrated_at == null
-      paging = { page: 1, per_page: $input.batch_size }
-    } as $pending
-
-    foreach ($pending) {
-      each as $user {
-        db.edit users {
-          field_name = "id"
-          field_value = $user.id
-          data = { migrated_at: now }
-        }
-      }
-    }
-  }
-  response = { migrated: $pending|count }
-}
-```
-
----
-
-## Complete Service Example
-
-```
-run.xs
-table/
-└── event.xs
-api/
-└── events/
-    ├── api_group.xs
-    ├── list_get.xs
-    └── add_post.xs
-```
-
-### run.xs
-```xs
-run.service "Event Tracker" {
-  pre = {
-    name: "init_tracker"
-    input: {}
-  }
-  env = ["api_key"]
-}
-```
-
-### table/event.xs
-```xs
-table event {
-  auth = false
-  schema {
-    int id
-    timestamp created_at?=now
-    text name
-  }
-  index = [
-    {type: "primary", field: [{name: "id"}]}
-  ]
-  items = []
-}
-```
-
-### api/events/list_get.xs
-```xs
-query list verb=GET {
-  api_group = "events"
-  stack {
-    db.query event {
-      sort = { created_at: "desc" }
-      return = { type: "list" }
-    } as $events
-  }
-  response = $events
-}
-```
+> See `xanoscript_docs({ topic: "tables" })` and `xanoscript_docs({ topic: "functions" })` for table/function syntax.
 
 ---
 
@@ -364,8 +184,6 @@ query list verb=GET {
 1. **Name clearly** - Indicate purpose: `data-migration`, `email-proxy`
 2. **Use env for secrets** - Never hardcode API keys or credentials
 3. **Keep self-contained** - Include all required tables and functions
-4. **Seed test data** - Use `items` in table definitions for testing
-5. **Validate inputs** - Use preconditions in functions for input validation
 
 ---
 

@@ -370,65 +370,11 @@ For a full breakdown of what each required/optional/nullable combination accepts
 
 ---
 
-## Complete Example
-
-```xs
-function "calculate_discount" {
-  input {
-    decimal subtotal filters=min:0
-    enum customer_type { values = ["regular", "premium", "vip"] }
-    text coupon?
-  }
-  stack {
-    var $discount_rate { value = 0 }
-
-    switch ($input.customer_type) {
-      case ("premium") { var.update $discount_rate { value = 0.1 } } break
-      case ("vip") { var.update $discount_rate { value = 0.2 } } break
-      default { var.update $discount_rate { value = 0 } }
-    }
-
-    conditional {
-      if ($input.coupon == "SAVE10") {
-        math.add $discount_rate { value = 0.1 }
-      }
-    }
-
-    var $discount { value = $input.subtotal * $discount_rate }
-  }
-  response = { discount: $discount, rate: $discount_rate }
-
-  test "no discount for regular customer" {
-    input = { subtotal: 100, customer_type: "regular" }
-    expect.to_equal ($response.discount) { value = 0 }
-  }
-
-  test "10% discount for premium" {
-    input = { subtotal: 100, customer_type: "premium" }
-    expect.to_equal ($response.discount) { value = 10 }
-  }
-
-  test "20% discount for VIP" {
-    input = { subtotal: 100, customer_type: "vip" }
-    expect.to_equal ($response.discount) { value = 20 }
-  }
-
-  test "coupon stacks with VIP discount" {
-    input = { subtotal: 100, customer_type: "vip", coupon: "SAVE10" }
-    expect.to_equal ($response.rate) { value = 0.3 }
-  }
-}
-```
-
----
-
 ## Best Practices
 
 1. **Test happy paths, edge cases, and errors** - Cover expected, boundary, and failure scenarios
 2. **Use mocks** - Isolate from external dependencies
-3. **Descriptive test names** - Explain what's being tested
-4. **One assertion focus** - Each test verifies one behavior
-5. **Keep tests independent** - No shared state between tests
+3. **Descriptive test names** - Each test verifies one behavior
 
 ---
 

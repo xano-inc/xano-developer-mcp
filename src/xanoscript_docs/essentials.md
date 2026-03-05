@@ -52,15 +52,7 @@ var $api_response { value = "test" }
 
 XanoScript uses specific type names. Common aliases from other languages won't work.
 
-> **Full reference:** See `xanoscript_docs({ topic: "types" })` for complete type details and validation.
-
-| Wrong | Correct | Description |
-|-------|---------|-------------|
-| `boolean` | `bool` | Boolean true/false |
-| `integer` | `int` | 32-bit integer |
-| `string` | `text` | UTF-8 string |
-| `number` / `float` | `decimal` | Floating-point number |
-| `array` / `list` | `type[]` | Array (e.g., `text[]`, `int[]`) |
+> **Type names:** Use `text` (not string), `int` (not integer), `bool` (not boolean), `decimal` (not float). Full list: `xanoscript_docs({ topic: "types" })`
 
 ### Variable Declaration
 

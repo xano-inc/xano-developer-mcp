@@ -265,135 +265,18 @@ Handle events from connected clients using `realtime_trigger`. For complete trig
 
 ---
 
-## Common Patterns
-
-### Chat Application
+## Common Pattern: Broadcast After Database Write
 
 ```xs
-function "send_chat_message" {
-  input {
-    int room_id
-    text content filters=trim|max:1000
-  }
-  stack {
-    // Save message
-    db.add "message" {
-      data = {
-        room_id: $input.room_id,
-        sender_id: $auth.id,
-        content: $input.content,
-        created_at: now
-      }
-    } as $message
+// Save to database, then broadcast to subscribers
+db.add "message" {
+  data = { room_id: $input.room_id, sender_id: $auth.id, content: $input.content }
+} as $message
 
-    // Broadcast to room
-    api.realtime_event {
-      channel = "room:" ~ $input.room_id
-      event = "new_message"
-      data = {
-        id: $message.id,
-        sender_id: $auth.id,
-        content: $input.content,
-        created_at: $message.created_at
-      }
-    }
-  }
-  response = $message
-}
-```
-
-### Live Dashboard Updates
-
-```xs
-function "update_metrics" {
-  stack {
-    // Calculate metrics
-    db.query "order" {
-      where = $db.order.created_at >= now|transform_timestamp:"-1 hour"
-    } as $recent_orders
-
-    var $metrics {
-      value = {
-        orders_last_hour: $recent_orders|count,
-        revenue_last_hour: $recent_orders|map:$$.total|sum,
-        updated_at: now
-      }
-    }
-
-    // Push to dashboard subscribers
-    api.realtime_event {
-      channel = "dashboard:metrics"
-      event = "update"
-      data = $metrics
-    }
-  }
-  response = $metrics
-}
-```
-
-### Collaborative Editing
-
-```xs
-realtime_trigger "document_edit" {
-  channel = "document:*"
-  event = "operation"
-  stack {
-    // Apply operation to document
-    function.run "apply_document_op" {
-      input = {
-        document_id: $input.document_id,
-        operation: $input.operation,
-        user_id: $auth.id
-      }
-    } as $result
-
-    // Broadcast to other editors
-    api.realtime_event {
-      channel = $channel
-      event = "remote_operation"
-      data = {
-        operation: $input.operation,
-        user_id: $auth.id,
-        version: $result.version
-      }
-    }
-  }
-}
-```
-
-### Notification System
-
-```xs
-function "notify_user" {
-  input {
-    int user_id
-    text type
-    text title
-    text body
-    json? data
-  }
-  stack {
-    // Save notification
-    db.add "notification" {
-      data = {
-        user_id: $input.user_id,
-        type: $input.type,
-        title: $input.title,
-        body: $input.body,
-        data: $input.data,
-        read: false,
-        created_at: now
-      }
-    } as $notification
-
-    // Push to user
-    api.realtime_event {
-      channel = "user:" ~ $input.user_id
-      event = "notification"
-      data = $notification
-    }
-  }
-  response = $notification
+api.realtime_event {
+  channel = "room:" ~ $input.room_id
+  event = "new_message"
+  data = $message
 }
 ```
 
@@ -401,39 +284,9 @@ function "notify_user" {
 
 ## Subscription Management
 
-Clients subscribe to channels client-side. Server controls what events to send.
+Clients subscribe to channels client-side. Server controls what events to send. Validate channel access with preconditions before broadcasting.
 
-### Authorization Pattern
-
-```xs
-// Validate user can access channel before sending
-function "send_to_room" {
-  input {
-    int room_id
-    text event
-    json data
-  }
-  stack {
-    // Check membership
-    db.query "room_member" {
-      where = $db.room_member.room_id == $input.room_id
-            && $db.room_member.user_id == $auth.id
-      return = { type: "exists" }
-    } as $is_member
-
-    precondition ($is_member) {
-      error_type = "accessdenied"
-      error = "Not a member of this room"
-    }
-
-    api.realtime_event {
-      channel = "room:" ~ $input.room_id
-      event = $input.event
-      data = $input.data
-    }
-  }
-}
-```
+> See `xanoscript_docs({ topic: "security" })` for authorization patterns.
 
 ---
 
@@ -442,6 +295,3 @@ function "send_to_room" {
 1. **Use channel namespacing** - `type:id` format for clarity
 2. **Keep payloads small** - Send IDs, let client fetch details
 3. **Validate before broadcast** - Don't trust client event data
-4. **Use triggers for client events** - Handle incoming realtime events
-5. **Consider fan-out carefully** - Large broadcasts can be expensive
-6. **Implement presence** - Track who's connected to channels

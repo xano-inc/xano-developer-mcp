@@ -290,35 +290,6 @@ agent "Code Reviewer" {
 }
 ```
 
-### Multi-Tool Research Agent
-```xs
-agent "Research Assistant" {
-  canonical = "research-v1"
-  llm = {
-    type: "openai"
-    api_key: "{{ $env.OPENAI_API_KEY }}"
-    model: "gpt-5"
-    system_prompt: """
-      You are a research assistant. Use your tools to:
-      1. Search for relevant information
-      2. Analyze data
-      3. Compile findings into clear summaries
-      Always cite your sources.
-    """
-    prompt: "Research topic: {{ $args.topic }}"
-    max_steps: 10
-    temperature: 0.5
-    reasoning_effort: "high"
-  }
-  tools = [
-    { name: "web_search" },
-    { name: "fetch_article" },
-    { name: "analyze_data" },
-    { name: "save_findings" }
-  ]
-}
-```
-
 ---
 
 ## External MCP Tools
@@ -407,12 +378,8 @@ agent "Research Agent" {
 ## Best Practices
 
 1. **Clear system prompts** - Define persona, capabilities, and constraints
-2. **Use appropriate temperature** - Low for factual, higher for creative
-3. **Limit max_steps** - Prevent infinite loops (3-10 typical)
-4. **Don't repeat tool descriptions** - They're auto-injected
-5. **Use environment variables** - Never hardcode API keys
-6. **Test with xano-free first** - Free for development
-7. **Validate external MCP servers** - Check server_details before using
+2. **Limit max_steps** - Prevent infinite loops (3-10 typical)
+3. **Don't repeat tool descriptions** - They're auto-injected; use environment variables for API keys
 
 ---
 

@@ -127,6 +127,16 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
   try {
     const docsPath = getXanoscriptDocsPath();
 
+    // Tier mode: return single content block for pre-built tiers
+    if (args?.tier) {
+      const result = xanoscriptDocs(args);
+      return {
+        success: true,
+        data: result.documentation,
+        structuredContent: { tier: args.tier, documentation: result.documentation },
+      };
+    }
+
     // file_path mode: return structured multi-content (one block per topic)
     if (args?.file_path) {
       const version = getXanoscriptDocsVersion(docsPath);
@@ -179,8 +189,10 @@ export const xanoscriptDocsToolDefinition = {
   description:
     "Get XanoScript programming language documentation for AI code generation. " +
     "Call without parameters for overview (README). " +
+    "For context-limited models: use tier='survival' (~800 tokens) or tier='working' (~3500 tokens). " +
     "Use 'topic' for specific documentation, or 'file_path' for context-aware docs based on the file you're editing. " +
     "Use mode='quick_reference' for compact syntax reference (recommended for context efficiency). " +
+    "Use max_tokens to limit documentation size to fit your context budget. " +
     "file_path mode defaults to 'quick_reference' to reduce context size; use mode='full' to get complete docs.",
   annotations: {
     readOnlyHint: true,
@@ -217,6 +229,24 @@ export const xanoscriptDocsToolDefinition = {
           "Use 'index' to discover available topics before loading them. " +
           "Use 'quick_reference' to save context window space when you just need a reminder. " +
           "Default: 'full' for topic mode, 'quick_reference' for file_path mode.",
+      },
+      tier: {
+        type: "string",
+        enum: ["survival", "working"],
+        description:
+          "Pre-packaged documentation tier for context-limited models. " +
+          "'survival' (~3KB, ~800 tokens): minimum syntax to write valid XanoScript. " +
+          "'working' (~12KB, ~3500 tokens): complete reference for common tasks. " +
+          "Overrides topic/file_path/mode when set. " +
+          "Use 'survival' for models with <16K context, 'working' for 16-64K context.",
+      },
+      max_tokens: {
+        type: "number",
+        description:
+          "Maximum estimated token budget for documentation. " +
+          "When used with file_path, loads topics in priority order until budget is reached. " +
+          "Helps prevent context overflow for small-window models. " +
+          "Estimate: 1KB of docs ≈ 250 tokens.",
       },
       exclude_topics: {
         type: "array",

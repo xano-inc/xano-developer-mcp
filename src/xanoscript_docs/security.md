@@ -8,19 +8,6 @@ Best practices for building secure XanoScript applications.
 
 > **TL;DR:** Always check `$auth.id` for protected endpoints. Use `security.create_auth_token` for JWT. Validate all inputs with `filters=`. Hash passwords with `password` type. Use `$env.SECRET_NAME` for secrets.
 
-## Section Index
-
-- [Authentication](#authentication) - Tokens, sessions, refresh tokens
-- [Authorization](#authorization) - Role checks, ownership
-- [Input Validation](#input-validation) - Type enforcement, sanitization
-- [Data Protection](#data-protection) - Encryption, hashing, secrets
-- [Rate Limiting](#rate-limiting--abuse-prevention) - API limits, abuse prevention
-- [Security Headers](#security-headers) - CORS configuration
-- [Audit Logging](#audit-logging) - Security event tracking
-- [Best Practices Summary](#best-practices-summary) - Quick checklist
-
----
-
 ## Quick Reference
 
 | Area | Key Practices |
@@ -62,104 +49,46 @@ precondition ($auth.id != null) {
 
 ### Refresh Tokens
 
+Pattern: Store refresh tokens in a `refresh_token` table. On refresh, verify the token hasn't expired or been revoked, generate a new access token via `security.create_auth_token`, rotate the refresh token with `security.create_uuid`, and update the stored token.
+
 ```xs
-function "refresh_auth" {
-  input {
-    text refresh_token
-  }
-  stack {
-    // Verify refresh token
-    db.query "refresh_token" {
-      where = $db.refresh_token.token == $input.refresh_token
-            && $db.refresh_token.expires_at > now
-            && $db.refresh_token.revoked == false
-      return = { type: "single" }
-    } as $stored_token
+// Key operations in a refresh flow:
+db.query "refresh_token" {
+  where = $db.refresh_token.token == $input.refresh_token
+        && $db.refresh_token.expires_at > now
+        && $db.refresh_token.revoked == false
+  return = { type: "single" }
+} as $stored_token
 
-    precondition ($stored_token != null) {
-      error_type = "accessdenied"
-      error = "Invalid or expired refresh token"
-    }
-
-    // Get user
-    db.get "user" {
-      field_name = "id"
-      field_value = $stored_token.user_id
-    } as $user
-
-    // Generate new access token
-    security.create_auth_token {
-      table = "user"
-      id = $user.id
-      extras = { role: $user.role }
-      expiration = 3600
-    } as $new_token
-
-    // Rotate refresh token
-    security.create_uuid as $new_refresh
-
-    db.edit "refresh_token" {
-      field_name = "id"
-      field_value = $stored_token.id
-      data = {
-        token: $new_refresh,
-        expires_at: now|transform_timestamp:"+30 days"
-      }
-    }
-  }
-  response = {
-    access_token: $new_token,
-    refresh_token: $new_refresh
-  }
-}
+security.create_auth_token {
+  table = "user"
+  id = $user.id
+  extras = { role: $user.role }
+  expiration = 3600
+} as $new_token
 ```
 
 ### Session Management
 
+Pattern: Use `security.create_uuid` for session IDs. Store in a `session` table with `user_id`, `ip_address` (`$env.$remote_ip`), `expires_at`, and `last_activity`. Validate by querying where `expires_at > now`.
+
 ```xs
-function "create_session" {
-  input { int user_id }
-  stack {
-    security.create_uuid as $session_id
-
-    db.add "session" {
-      data = {
-        id: $session_id,
-        user_id: $input.user_id,
-        ip_address: $env.$remote_ip,
-        user_agent: $env.$http_headers|get:"user-agent",
-        created_at: now,
-        last_activity: now,
-        expires_at: now|transform_timestamp:"+7 days"
-      }
-    }
+// Create session
+security.create_uuid as $session_id
+db.add "session" {
+  data = {
+    id: $session_id,
+    user_id: $input.user_id,
+    expires_at: now|transform_timestamp:"+7 days"
   }
-  response = $session_id
 }
 
-function "validate_session" {
-  input { text session_id }
-  stack {
-    db.query "session" {
-      where = $db.session.id == $input.session_id
-            && $db.session.expires_at > now
-      return = { type: "single" }
-    } as $session
-
-    precondition ($session != null) {
-      error_type = "accessdenied"
-      error = "Invalid or expired session"
-    }
-
-    // Update last activity
-    db.edit "session" {
-      field_name = "id"
-      field_value = $session.id
-      data = { last_activity: now }
-    }
-  }
-  response = $session
-}
+// Validate session
+db.query "session" {
+  where = $db.session.id == $input.session_id
+        && $db.session.expires_at > now
+  return = { type: "single" }
+} as $session
 ```
 
 ---
@@ -178,25 +107,9 @@ precondition ($auth.role == "admin") {
 ### Permission Checks
 
 ```xs
-function "check_permission" {
-  input {
-    text permission
-  }
-  stack {
-    var $has_permission {
-      value = $auth.permissions|contains:$input.permission
-    }
-
-    precondition ($has_permission) {
-      error_type = "accessdenied"
-      error = "Missing permission: " ~ $input.permission
-    }
-  }
-}
-
-// Usage
-function.run "check_permission" {
-  input = { permission: "users.delete" }
+precondition ($auth.permissions|contains:"users.delete") {
+  error_type = "accessdenied"
+  error = "Missing permission: users.delete"
 }
 ```
 
@@ -217,40 +130,19 @@ precondition ($document.owner_id == $auth.id) {
 
 ### Hierarchical Access
 
+Check ownership first, then team membership via `join`. Combine with action-specific logic:
+
 ```xs
-function "can_access_resource" {
-  input {
-    int resource_id
-    text action
-  }
-  stack {
-    // Check direct ownership
-    db.query "resource" {
-      where = $db.resource.id == $input.resource_id
-            && $db.resource.owner_id == $auth.id
-      return = { type: "exists" }
-    } as $is_owner
+db.query "resource" {
+  where = $db.resource.id == $input.resource_id && $db.resource.owner_id == $auth.id
+  return = { type: "exists" }
+} as $is_owner
 
-    // Check team membership
-    db.query "team_member" {
-      join = {
-        resource: {
-          table: "resource",
-          where: $db.resource.team_id == $db.team_member.team_id
-        }
-      }
-      where = $db.resource.id == $input.resource_id
-            && $db.team_member.user_id == $auth.id
-      return = { type: "exists" }
-    } as $is_team_member
-
-    // Check permissions
-    var $can_access {
-      value = $is_owner || ($is_team_member && $input.action != "delete")
-    }
-  }
-  response = $can_access
-}
+db.query "team_member" {
+  join = { resource: { table: "resource", where: $db.resource.team_id == $db.team_member.team_id } }
+  where = $db.resource.id == $input.resource_id && $db.team_member.user_id == $auth.id
+  return = { type: "exists" }
+} as $is_team_member
 ```
 
 ---
@@ -286,32 +178,14 @@ db.direct_query {
 // sql = "SELECT * FROM users WHERE email = '" ~ $input.email ~ "'"
 ```
 
-### XSS Prevention
+### XSS / Path Traversal Prevention
 
 ```xs
-// Escape HTML content before storage or display
-var $safe_content {
-  value = $input.content|escape
-}
+var $safe_content { value = $input.content|escape }             // Escape HTML
 
-// For rich text, escape HTML entities
-var $sanitized {
-  value = $input.html|escape
-}
-```
-
-### Path Traversal Prevention
-
-```xs
-// Validate file paths
-precondition (!($input.filename|contains:"..")) {
+precondition (!($input.filename|contains:"..")) {               // Validate paths
   error_type = "inputerror"
   error = "Invalid filename"
-}
-
-precondition ($input.filename|regex_matches:"/^[a-zA-Z0-9_.-]+$/") {
-  error_type = "inputerror"
-  error = "Filename contains invalid characters"
 }
 ```
 
@@ -337,110 +211,57 @@ security.check_password {
 } as $is_valid
 ```
 
-### Encryption at Rest
+### Encryption
 
 ```xs
-// Encrypt sensitive data before storage
+// Encrypt/decrypt sensitive data
 security.encrypt {
   data = $input.ssn
   algorithm = "aes-256-cbc"
   key = $env.ENCRYPTION_KEY
   iv = $env.ENCRYPTION_IV
-} as $encrypted_ssn
+} as $encrypted
 
-db.add "user" {
-  data = { ssn_encrypted: $encrypted_ssn }
-}
-
-// Decrypt when needed
 security.decrypt {
-  data = $user.ssn_encrypted
+  data = $encrypted
   algorithm = "aes-256-cbc"
   key = $env.ENCRYPTION_KEY
   iv = $env.ENCRYPTION_IV
-} as $ssn
+} as $decrypted
 ```
 
 ### Secrets Management
 
 ```xs
-// Store secrets in environment variables
+// Use $env for secrets — NEVER hardcode
 $env.API_SECRET_KEY
-$env.DATABASE_URL
 $env.ENCRYPTION_KEY
-
-// NEVER hardcode secrets
-// api_key = "sk_live_abc123"  // BAD
 
 // Mark sensitive inputs
 input {
-  text api_key {
-    sensitive = true                       // Masked in logs
-  }
+  text api_key { sensitive = true }       // Masked in logs
 }
 ```
 
-### Key Generation
+### JWT (JWS/JWE)
 
 ```xs
-// Generate elliptic curve key
-security.create_curve_key {
-  curve = "P-256"
-  format = "object"
-} as $crypto_key
-
-// Generate secret key for symmetric encryption
-security.create_secret_key {
-  bits = 2048
-  format = "object"
-} as $secret_key
-```
-
-### JWE (Encrypted JWT)
-
-```xs
-// Encrypt JWT payload
-security.jwe_encode {
-  headers = { "alg": "A256KW" }
-  claims = { data: "secret" }
-  key = $env.JWE_KEY
-  key_algorithm = "A256KW"
-  content_algorithm = "A256GCM"
-  ttl = 3600
-} as $encrypted_token
-
-// Decrypt JWE token
-security.jwe_decode {
-  token = $encrypted_token
-  key = $env.JWE_KEY
-  key_algorithm = "A256KW"
-  content_algorithm = "A256GCM"
-  check_claims = { "iss": "my_app" }
-} as $decoded_payload
-```
-
-### JWT Security
-
-```xs
-// Sign with strong algorithm
+// Sign JWT
 security.jws_encode {
-  claims = {
-    sub: $user.id|to_text,
-    role: $user.role,
-    iat: now|to_seconds,
-    exp: (now|to_seconds) + 3600
-  }
+  claims = { sub: $user.id|to_text, role: $user.role }
   key = $env.JWT_SECRET
   signature_algorithm = "HS256"
 } as $token
 
-// Verify with algorithm check
+// Verify JWT
 security.jws_decode {
   token = $input.token
   key = $env.JWT_SECRET
   signature_algorithm = "HS256"
 } as $claims
 ```
+
+> See `xanoscript_docs({ topic: "integrations/utilities" })` for JWE, key generation, and other security utilities.
 
 ---
 
@@ -459,41 +280,19 @@ redis.ratelimit {
 
 ### Login Attempt Limiting
 
+Use Redis to track failed attempts per email with a TTL-based lockout:
+
 ```xs
-function "check_login_attempts" {
-  input { text email }
-  stack {
-    var $key { value = "login_attempts:" ~ $input.email|md5 }
+var $key { value = "login_attempts:" ~ $input.email|md5 }
+redis.get { key = $key } as $attempts
 
-    redis.get { key = $key } as $attempts
-
-    precondition (($attempts|to_int ?? 0) < 5) {
-      error_type = "accessdenied"
-      error = "Too many login attempts. Try again in 15 minutes."
-    }
-  }
+precondition (($attempts|to_int ?? 0) < 5) {
+  error_type = "accessdenied"
+  error = "Too many login attempts. Try again in 15 minutes."
 }
 
-function "record_failed_login" {
-  input { text email }
-  stack {
-    var $key { value = "login_attempts:" ~ $input.email|md5 }
-
-    redis.get { key = $key } as $current
-    redis.set {
-      key = $key
-      data = ($current|to_int ?? 0) + 1
-      ttl = 900
-    }
-  }
-}
-
-function "clear_login_attempts" {
-  input { text email }
-  stack {
-    redis.del { key = "login_attempts:" ~ $input.email|md5 }
-  }
-}
+// On failure: redis.set { key = $key, data = ($attempts|to_int ?? 0) + 1, ttl = 900 }
+// On success: redis.del { key = $key }
 ```
 
 ### Request Size Limits
@@ -528,39 +327,16 @@ precondition ($allowed_origins|contains:$env.$http_headers|get:"origin") {
 
 ## Audit Logging
 
-### Log Security Events
+Log security events to an `audit_log` table with `user_id` (`$auth.id`), `action`, `resource_type`, `ip_address` (`$env.$remote_ip`), and `created_at`.
 
 ```xs
-function "audit_log" {
-  input {
-    text action
-    text resource_type
-    int? resource_id
-    json? details
-  }
-  stack {
-    db.add "audit_log" {
-      data = {
-        user_id: $auth.id,
-        action: $input.action,
-        resource_type: $input.resource_type,
-        resource_id: $input.resource_id,
-        details: $input.details,
-        ip_address: $env.$remote_ip,
-        user_agent: $env.$http_headers|get:"user-agent",
-        created_at: now
-      }
-    }
-  }
-}
-
-// Usage
-function.run "audit_log" {
-  input = {
-    action: "delete",
-    resource_type: "user",
-    resource_id: $deleted_user.id,
-    details: { reason: $input.reason }
+db.add "audit_log" {
+  data = {
+    user_id: $auth.id,
+    action: $input.action,
+    resource_type: $input.resource_type,
+    ip_address: $env.$remote_ip,
+    created_at: now
   }
 }
 ```
@@ -569,16 +345,9 @@ function.run "audit_log" {
 
 ## Best Practices Summary
 
-1. **Validate all inputs** - Use types and filters
-2. **Check authorization** - Verify permissions for every operation
-3. **Use parameterized queries** - Never concatenate user input into SQL
-4. **Hash passwords** - Use built-in password type
-5. **Encrypt sensitive data** - SSN, payment info, etc.
-6. **Store secrets in env vars** - Never hardcode
-7. **Rate limit APIs** - Prevent abuse
-8. **Log security events** - Audit trail for compliance
-9. **Use HTTPS** - Always (handled by platform)
-10. **Rotate tokens** - Implement refresh token flow
+1. **Validate all inputs** - Use types and filters; never concatenate user input into SQL
+2. **Check authorization** - Verify `$auth.id` and permissions for every operation
+3. **Store secrets in env vars** - Never hardcode; use `$env.SECRET_NAME`
 
 ---
 

@@ -18,12 +18,15 @@ export interface DocConfig {
   file: string;
   applyTo: string[];
   description: string;
+  priority?: number;
 }
 
 export interface XanoscriptDocsArgs {
   topic?: string;
   file_path?: string;
   mode?: "full" | "quick_reference" | "index";
+  tier?: "survival" | "working";
+  max_tokens?: number;
   exclude_topics?: string[];
 }
 
@@ -38,6 +41,7 @@ function buildDocsConfig(): Record<string, DocConfig> {
       file: topic.file,
       applyTo: topic.applyTo,
       description: topic.description,
+      priority: (topic as Record<string, unknown>).priority as number | undefined,
     };
   }
   return config;
@@ -99,7 +103,8 @@ export function getDocsForFilePath(filePath: string): string[] {
 }
 
 /**
- * Extract just the Quick Reference section from a doc
+ * Extract the Quick Reference section plus critical sections
+ * (Common Mistakes, Decision/Choosing trees) from a doc.
  */
 export function extractQuickReference(content: string, topic: string): string {
   const lines = content.split("\n");
@@ -115,9 +120,22 @@ export function extractQuickReference(content: string, topic: string): string {
   let endIdx = lines.findIndex((l, i) => i > startIdx && l.startsWith("## "));
   if (endIdx === -1) endIdx = lines.length;
 
+  const sections: string[] = [lines.slice(startIdx, endIdx).join("\n")];
+
+  // Also extract Common Mistakes and Decision/Choosing sections if present
+  const bonusSections = ["## Common Mistakes", "## Choosing", "## Decision"];
+  for (const sectionName of bonusSections) {
+    const sIdx = lines.findIndex((l) => l.startsWith(sectionName));
+    if (sIdx !== -1 && sIdx !== startIdx) {
+      let eIdx = lines.findIndex((l, i) => i > sIdx && l.startsWith("## "));
+      if (eIdx === -1) eIdx = lines.length;
+      sections.push(lines.slice(sIdx, eIdx).join("\n"));
+    }
+  }
+
   // Include topic header for context
   const header = `# ${topic}\n\n`;
-  return header + lines.slice(startIdx, endIdx).join("\n");
+  return header + sections.join("\n\n---\n\n");
 }
 
 /**
@@ -146,7 +164,14 @@ export function readXanoscriptDocsV2(
 ): string {
   const version = getXanoscriptDocsVersion(docsPath);
 
-  // Index mode: return compact topic listing with byte sizes
+  // Tier mode: return pre-built documentation tier
+  if (args?.tier) {
+    const tierFile = args.tier === "survival" ? "survival.md" : "working.md";
+    const content = cachedReadFile(join(docsPath, tierFile));
+    return `${content}\n\n---\nDocumentation version: ${version}`;
+  }
+
+  // Index mode: return compact topic listing with byte sizes and token estimates
   if (args?.mode === "index") {
     const rows = Object.entries(XANOSCRIPT_DOCS_V2).map(([name, config]) => {
       let size: number;
@@ -156,7 +181,8 @@ export function readXanoscriptDocsV2(
         size = 0;
       }
       const sizeKb = (size / 1024).toFixed(1);
-      return `| ${name} | ${config.description} | ${sizeKb} KB |`;
+      const estTokens = Math.ceil(size / 4);
+      return `| ${name} | ${config.description} | ${sizeKb} KB | ~${estTokens} |`;
     });
     return [
       `# XanoScript Documentation Index`,
@@ -164,11 +190,12 @@ export function readXanoscriptDocsV2(
       `Version: ${version}`,
       `Topics: ${rows.length}`,
       ``,
-      `| Topic | Description | Size |`,
-      `|-------|-------------|------|`,
+      `| Topic | Description | Size | Est. Tokens |`,
+      `|-------|-------------|------|-------------|`,
       ...rows,
       ``,
       `Use topic='<name>' to load a specific topic. Use mode='quick_reference' for compact output.`,
+      `Use tier='survival' (~800 tokens) or tier='working' (~3500 tokens) for context-limited models.`,
     ].join("\n");
   }
 
@@ -189,6 +216,27 @@ export function readXanoscriptDocsV2(
     // Filter out excluded topics
     if (args.exclude_topics && args.exclude_topics.length > 0) {
       topics = topics.filter((t) => !args.exclude_topics!.includes(t));
+    }
+
+    // Budget-aware loading: sort by priority and stop when budget is exceeded
+    if (args.max_tokens) {
+      let tokenBudget = args.max_tokens;
+      const sortedTopics = [...topics].sort((a, b) => {
+        const pa = XANOSCRIPT_DOCS_V2[a]?.priority ?? 99;
+        const pb = XANOSCRIPT_DOCS_V2[b]?.priority ?? 99;
+        return pa - pb;
+      });
+      const filteredTopics: string[] = [];
+      for (const t of sortedTopics) {
+        const config = XANOSCRIPT_DOCS_V2[t];
+        const content = cachedReadFile(join(docsPath, config.file));
+        const topicContent = mode === "quick_reference" ? extractQuickReference(content, t) : content;
+        const estimatedTokens = Math.ceil(topicContent.length / 4);
+        if (tokenBudget - estimatedTokens < 0 && filteredTopics.length > 0) break;
+        filteredTopics.push(t);
+        tokenBudget -= estimatedTokens;
+      }
+      topics = filteredTopics;
     }
 
     if (topics.length === 0) {
@@ -250,6 +298,27 @@ export function readXanoscriptDocsStructured(
 
   if (args.exclude_topics && args.exclude_topics.length > 0) {
     topics = topics.filter((t) => !args.exclude_topics!.includes(t));
+  }
+
+  // Budget-aware loading
+  if (args.max_tokens) {
+    let tokenBudget = args.max_tokens;
+    const sortedTopics = [...topics].sort((a, b) => {
+      const pa = XANOSCRIPT_DOCS_V2[a]?.priority ?? 99;
+      const pb = XANOSCRIPT_DOCS_V2[b]?.priority ?? 99;
+      return pa - pb;
+    });
+    const filteredTopics: string[] = [];
+    for (const t of sortedTopics) {
+      const config = XANOSCRIPT_DOCS_V2[t];
+      const content = cachedReadFile(join(docsPath, config.file));
+      const topicContent = mode === "quick_reference" ? extractQuickReference(content, t) : content;
+      const estimatedTokens = Math.ceil(topicContent.length / 4);
+      if (tokenBudget - estimatedTokens < 0 && filteredTopics.length > 0) break;
+      filteredTopics.push(t);
+      tokenBudget -= estimatedTokens;
+    }
+    topics = filteredTopics;
   }
 
   if (topics.length === 0) {

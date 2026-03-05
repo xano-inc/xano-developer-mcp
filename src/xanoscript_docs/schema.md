@@ -287,6 +287,4 @@ try_catch {
 
 1. **Define schemas upfront** - Use input blocks when structure is known
 2. **Use schema.parse for dynamic data** - External APIs, user-generated content
-3. **Validate at boundaries** - Parse external input, trust internal data
-4. **Provide clear error messages** - Use error_message for user-facing errors
-5. **Use immutable for config** - Prevent accidental modification
+3. **Validate at boundaries** - Parse external input, trust internal data; provide clear error messages
