@@ -178,6 +178,15 @@ This includes:
 
 Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
+### Tiers (for context-limited models)
+
+| Topic      | Description                                                  | Size |
+| ---------- | ------------------------------------------------------------ | ---- |
+| `survival` | Minimal syntax survival kit for models with <16K context     | ~3KB (~800 tokens) |
+| `working`  | Complete working reference for models with 16-64K context    | ~12KB (~3500 tokens) |
+
+Use `xanoscript_docs({ tier: "survival" })` or `xanoscript_docs({ tier: "working" })`.
+
 ### Core Language
 
 | Topic        | Description                                          | Key Sections |
