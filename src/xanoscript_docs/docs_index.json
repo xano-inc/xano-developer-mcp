@@ -3,6 +3,20 @@
   "description": "Machine-readable index for XanoScript documentation",
 
   "topics": {
+    "survival": {
+      "file": "survival.md",
+      "description": "Minimal syntax survival kit for writing valid XanoScript (~3KB)",
+      "applyTo": ["**/*.xs"],
+      "priority": 0,
+      "aliases": ["minimal", "tiny", "nano", "small"]
+    },
+    "working": {
+      "file": "working.md",
+      "description": "Complete working reference for common XanoScript tasks (~12KB)",
+      "applyTo": ["**/*.xs"],
+      "priority": 0,
+      "aliases": ["compact", "reference", "medium"]
+    },
     "readme": {
       "file": "README.md",
       "description": "XanoScript overview, workspace structure, and quick reference",
@@ -52,30 +66,35 @@
       "file": "tables.md",
       "description": "Database schema definitions with indexes and relationships",
       "applyTo": ["tables/*.xs"],
+      "priority": 8,
       "aliases": ["schema", "fields", "indexes"]
     },
     "functions": {
       "file": "functions.md",
       "description": "Reusable function stacks with inputs and responses",
       "applyTo": ["functions/**/*.xs"],
+      "priority": 6,
       "aliases": ["fn", "reusable", "stack"]
     },
     "apis": {
       "file": "apis.md",
       "description": "HTTP endpoint definitions with authentication and CRUD patterns",
       "applyTo": ["apis/**/*.xs"],
+      "priority": 7,
       "aliases": ["endpoints", "http", "rest", "query"]
     },
     "tasks": {
       "file": "tasks.md",
       "description": "Scheduled and cron jobs",
       "applyTo": ["tasks/*.xs"],
+      "priority": 10,
       "aliases": ["scheduled", "jobs", "cron"]
     },
     "triggers": {
       "file": "triggers.md",
       "description": "Event-driven handlers (table, realtime, workspace, agent, MCP)",
       "applyTo": ["triggers/**/*.xs"],
+      "priority": 10,
       "aliases": ["events", "hooks", "handlers"]
     },
     "database": {
@@ -89,18 +108,21 @@
       "file": "agents.md",
       "description": "AI agent configuration with LLM providers and tools",
       "applyTo": ["agents/**/*.xs"],
+      "priority": 12,
       "aliases": ["ai", "llm", "chatbot"]
     },
     "tools": {
       "file": "tools.md",
       "description": "AI tools for agents and MCP servers",
       "applyTo": ["tools/**/*.xs"],
+      "priority": 12,
       "aliases": ["ai-tools", "agent-tools"]
     },
     "mcp-servers": {
       "file": "mcp-servers.md",
       "description": "MCP server definitions exposing tools",
       "applyTo": ["mcp_servers/**/*.xs"],
+      "priority": 15,
       "aliases": ["mcp", "model-context-protocol"]
     },
     "unit-testing": {

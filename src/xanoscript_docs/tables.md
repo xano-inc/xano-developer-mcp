@@ -319,11 +319,9 @@ table "order" {
 
 ## Best Practices
 
-1. **Always define `id`** - Every table needs a primary key named `id`
-2. **Use `auth = true`** only for authentication tables (typically just `user`)
-3. **Add indexes** for fields used in WHERE clauses and JOINs
-4. **Use appropriate types** - `email` for emails, `password` for credentials
-5. **Default timestamps** - Use `?=now` for created_at fields
+1. **Always define `int id`** - Every table requires a primary key field named `id`
+2. **Use `auth = true`** only for the authentication table (typically just `user`)
+3. **Add indexes** for fields used in `db.query` WHERE clauses and JOINs to avoid full table scans
 
 ---
 

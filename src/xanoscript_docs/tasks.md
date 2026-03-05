@@ -254,9 +254,7 @@ task "risky_sync" {
 
 1. **Descriptive names** - Indicate what and when: `daily_cleanup`, `hourly_sync`
 2. **Handle errors** - Use try_catch for external dependencies
-3. **Consider timezone** - Schedule uses UTC (+0000)
-4. **Batch operations** - Process in chunks for large datasets
-5. **Set end dates** - Use ends_on for temporary schedules
+3. **Consider timezone** - Schedule uses UTC (+0000); use `ends_on` for temporary schedules
 
 ---
 

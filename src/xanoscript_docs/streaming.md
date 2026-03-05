@@ -276,39 +276,6 @@ function "import_large_csv" {
 }
 ```
 
-### ETL Pipeline
-
-```xs
-function "etl_events" {
-  input { file events_file }
-  stack {
-    stream.from_jsonl {
-      value = $input.events_file
-    } as $stream
-
-    foreach ($stream) {
-      each as $event {
-        // Transform
-        var $transformed {
-          value = {
-            event_type: $event.type|to_lower,
-            user_id: $event.user_id|to_int,
-            metadata: $event.data|json_encode,
-            occurred_at: $event.timestamp|to_timestamp
-          }
-        }
-
-        // Load
-        db.add "processed_event" {
-          data = $transformed
-        }
-      }
-    }
-  }
-  response = { status: "complete" }
-}
-```
-
 ### Chunked Export
 
 ```xs
@@ -334,10 +301,8 @@ query "stream_large_dataset" {
 ## Best Practices
 
 1. **Use streaming for large files** - Prevents memory exhaustion
-2. **Process in batches** - Commit database operations periodically
-3. **Handle errors gracefully** - Log failures without stopping stream
-4. **Set appropriate chunk sizes** - Balance memory and performance
-5. **Use JSONL for structured data** - Easier to parse than multi-line JSON
+2. **Handle errors gracefully** - Log failures without stopping stream
+3. **Use JSONL for structured data** - Easier to parse than multi-line JSON
 
 ---
 

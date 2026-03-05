@@ -628,13 +628,9 @@ try_catch {
 
 ## Best Practices
 
-1. **Use db.query for searches** - Flexible filtering and pagination
-2. **Use db.get for single lookups** - Simpler than db.query with single return
-3. **Use db.patch for dynamic updates** - Accepts variable data
-4. **Use transactions for atomicity** - Ensure all-or-nothing operations
-5. **Use null-safe operators** - `==?` for optional filters
-6. **Use bulk operations for batch processing** - More efficient than loops
-7. **Handle deadlocks gracefully** - Implement retry logic for concurrent writes
+1. **Use null-safe operators** - `==?` for optional filters avoids manual null checks
+2. **Use bulk operations for batch processing** - More efficient than loops with individual db calls
+3. **Use transactions for atomicity** - Ensure all-or-nothing operations across multiple tables
 
 ---
 

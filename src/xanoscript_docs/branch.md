@@ -236,5 +236,3 @@ project/
 1. **Use descriptive colors** - Green for production, blue for development, yellow for staging
 2. **Limit production history** - Excessive history impacts performance and storage
 3. **Apply security middleware in production** - Rate limiting, auth checks, audit logging
-4. **Disable middleware history in production** - Reduces noise and storage
-5. **Enable full history in development** - Aids debugging and testing

@@ -252,8 +252,6 @@ addon/
 1. **Keep addons focused** - One purpose per addon
 2. **Use input parameters** - Make addons reusable
 3. **Use appropriate return types** - `list`, `single`, `count`, `exists`
-4. **Limit nested queries** - Avoid N+1 query patterns
-5. **Document inputs** - Add descriptions to input fields
 
 ---
 

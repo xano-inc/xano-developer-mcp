@@ -440,12 +440,9 @@ When using `return = { type: "list", paging: {...} }`:
 
 ## Best Practices
 
-1. **RESTful design** - Use appropriate HTTP methods for operations
-2. **Consistent naming** - Use lowercase, hyphens for multi-word paths
-3. **Authenticate writes** - Always require auth for POST/PATCH/DELETE
-4. **Paginate lists** - Never return unbounded result sets
-5. **Group by resource** - Organize endpoints in logical api groups
-6. **Use specific canonicals** - Prefix canonicals to avoid instance-level collisions (e.g., `myapp-users` not `users`)
+1. **Use specific canonicals** - Prefix canonicals to avoid instance-level collisions (e.g., `myapp-users` not `users`)
+2. **Authenticate writes** - Always require `auth` for POST/PATCH/DELETE endpoints
+3. **Paginate lists** - Use `return = { type: "list", paging: {...} }` to avoid unbounded result sets
 
 ---
 

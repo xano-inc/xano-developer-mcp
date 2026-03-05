@@ -303,6 +303,4 @@ branch "production" {
 
 1. **Keep middleware focused** - Each middleware should do one thing well
 2. **Use appropriate exception policies** - Critical for security, silent for optional enrichment
-3. **Consider performance** - Middleware runs on every request
-4. **Log failures** - Even silent failures should be logged for debugging
-5. **Test independently** - Middleware should be testable in isolation
+3. **Consider performance** - Middleware runs on every request; log even silent failures
