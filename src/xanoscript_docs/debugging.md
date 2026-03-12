@@ -77,3 +77,13 @@ View past request executions in the Xano dashboard:
 
 1. **Remove debug.stop in production** - Causes execution to halt
 2. **Don't log sensitive data** - Passwords, tokens, PII
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `performance` | Performance profiling and optimization |
+| `unit-testing` | Unit testing functions |
+| `workflow-tests` | End-to-end workflow testing |

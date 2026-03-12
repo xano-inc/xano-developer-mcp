@@ -288,3 +288,13 @@ try_catch {
 1. **Define schemas upfront** - Use input blocks when structure is known
 2. **Use schema.parse for dynamic data** - External APIs, user-generated content
 3. **Validate at boundaries** - Parse external input, trust internal data; provide clear error messages
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `types` | Data types and input validation |
+| `integrations/external-apis` | Parsing external API responses |
+| `syntax` | Expressions and filters |

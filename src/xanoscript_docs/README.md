@@ -193,6 +193,9 @@ Use `xanoscript_docs({ tier: "survival" })` or `xanoscript_docs({ tier: "working
 | ------------ | ---------------------------------------------------- | ------------ |
 | `essentials` | Common patterns, quick examples, mistakes to avoid   | Patterns, Common Mistakes |
 | `syntax`     | Expressions, operators, filters, system variables    | Filters, Error Handling |
+| `syntax/string-filters` | String manipulation filters                 | Case, Trim, Split, Replace |
+| `syntax/array-filters`  | Array manipulation filters                  | Map, Filter, Sort, Group |
+| `syntax/functions`      | Built-in functions                          | Math, Date, Crypto, JSON |
 | `types`      | Data types, validation, input blocks                 | Validation Filters, Input Blocks |
 | `functions`  | Reusable function stacks, async, loops               | Loops, Async Patterns |
 | `schema`     | Runtime schema parsing and validation                | parse.object, parse.array |
@@ -227,7 +230,7 @@ Use `xanoscript_docs({ tier: "survival" })` or `xanoscript_docs({ tier: "working
 
 | Topic          | Description                                       | Sub-topics |
 | -------------- | ------------------------------------------------- | ---------- |
-| `integrations` | Cloud storage, Redis, security, and external APIs | cloud-storage, search, redis, external-apis, utilities |
+| `integrations` | Cloud storage, Redis, security, and external APIs | integrations/cloud-storage, integrations/search, integrations/redis, integrations/external-apis, integrations/utilities |
 
 ### Configuration
 

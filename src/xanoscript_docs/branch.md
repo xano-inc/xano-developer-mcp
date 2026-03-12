@@ -236,3 +236,13 @@ project/
 1. **Use descriptive colors** - Green for production, blue for development, yellow for staging
 2. **Limit production history** - Excessive history impacts performance and storage
 3. **Apply security middleware in production** - Rate limiting, auth checks, audit logging
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `workspace` | Workspace-level configuration |
+| `middleware` | Request/response interceptors |
+| `security` | Authentication and rate limiting |

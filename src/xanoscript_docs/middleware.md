@@ -304,3 +304,14 @@ branch "production" {
 1. **Keep middleware focused** - Each middleware should do one thing well
 2. **Use appropriate exception policies** - Critical for security, silent for optional enrichment
 3. **Consider performance** - Middleware runs on every request; log even silent failures
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `branch` | Branch-level middleware configuration |
+| `security` | Authentication and authorization patterns |
+| `apis` | API endpoint request/response lifecycle |
+| `performance` | Performance optimization strategies |
