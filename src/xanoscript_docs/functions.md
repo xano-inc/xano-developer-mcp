@@ -472,4 +472,4 @@ Explore more with `xanoscript_docs({ topic: "<topic>" })`:
 | `syntax` | Expressions, operators, and control flow |
 | `essentials` | Common patterns and examples |
 | `database` | Database operations in function stacks |
-| `testing` | Unit testing functions |
+| `unit-testing` | Unit testing functions |

@@ -207,3 +207,13 @@ These variables are automatically available without configuration:
 1. **Never commit secrets** - Use environment variables for API keys and credentials
 2. **Use descriptive names** - Environment variable names should be self-documenting
 3. **Enable performance tracking** - Helps identify bottlenecks in production
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `branch` | Branch-level configuration |
+| `realtime` | Realtime channel configuration |
+| `security` | Environment variable security practices |

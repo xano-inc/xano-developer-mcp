@@ -295,3 +295,13 @@ Clients subscribe to channels client-side. Server controls what events to send. 
 1. **Use channel namespacing** - `type:id` format for clarity
 2. **Keep payloads small** - Send IDs, let client fetch details
 3. **Validate before broadcast** - Don't trust client event data
+
+---
+
+## Related Topics
+
+| Topic | Description |
+|-------|-------------|
+| `workspace` | Realtime configuration settings |
+| `security` | Authorization patterns for channels |
+| `frontend` | Client-side realtime integration |
