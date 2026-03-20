@@ -34,7 +34,8 @@ export const functionDoc: TopicDoc = {
         { name: "search", type: "string", required: false, description: "Search by name" },
         { name: "sort", type: "string", required: false, description: "Sort field" },
         { name: "order", type: "string", required: false, description: "Sort order: asc, desc" },
-        { name: "include_draft", type: "boolean", required: false, description: "Include draft versions" }
+        { name: "include_draft", type: "boolean", required: false, description: "Include draft versions" },
+        { name: "include_xanoscript", type: "boolean", required: false, description: "Include XanoScript source in output" }
       ],
       examples: [
         "xano function:list",
@@ -86,11 +87,16 @@ export const functionDoc: TopicDoc = {
       ],
       flags: [
         { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID" },
-        { name: "file", short: "f", type: "string", required: false, description: "Path to .xs file with updated code" }
+        { name: "file", short: "f", type: "string", required: false, description: "Path to .xs file with updated code" },
+        { name: "stdin", type: "boolean", required: false, description: "Read updated code from stdin" },
+        { name: "edit", type: "boolean", required: false, description: "Open current code in $EDITOR before updating" },
+        { name: "no-publish", type: "boolean", required: false, description: "Save as draft without publishing" }
       ],
       examples: [
         "xano function:edit 145",
-        "xano function:edit 145 -f ./updated_function.xs"
+        "xano function:edit 145 -f ./updated_function.xs",
+        "xano function:edit 145 --edit",
+        "xano function:edit 145 --no-publish"
       ]
     }
   ],

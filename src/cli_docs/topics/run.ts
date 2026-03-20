@@ -28,7 +28,7 @@ This is different from your instance URL used by the Meta API.`,
 - Stored per-project in Run API
 - Override at runtime with \`--env KEY=value\``,
 
-  related_topics: ["profile", "integration"],
+  related_topics: ["function", "profile", "integration"],
 
   commands: [
     {

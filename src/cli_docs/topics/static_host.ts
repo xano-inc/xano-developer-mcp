@@ -15,7 +15,7 @@ export const staticHostDoc: TopicDoc = {
 - Host static documentation sites
 - Serve frontend that calls your Xano APIs`,
 
-  related_topics: ["workspace"],
+  related_topics: ["workspace", "tenant"],
 
   commands: [
     {
