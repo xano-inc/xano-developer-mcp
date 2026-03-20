@@ -28,18 +28,17 @@ npm link
 
 ## Quick Setup
 
-Use the interactive wizard to configure your first profile:
+**Option 1: Browser login (recommended)**
+\`\`\`bash
+xano auth
+\`\`\`
+Opens your browser to log in. Automatically creates a profile.
 
+**Option 2: Interactive wizard**
 \`\`\`bash
 xano profile:wizard
 \`\`\`
-
-This will prompt you for:
-1. Your Xano access token (from Settings > Access Tokens in dashboard)
-2. Select your instance
-3. Select a workspace
-4. Select a branch
-5. Select a Run project (optional)
+Prompts you for your access token, instance, workspace, and branch.
 
 ## Credential Storage
 
@@ -71,11 +70,19 @@ All commands support:
 
 | Category | Description |
 |----------|-------------|
+| \`auth\` | Browser-based OAuth login |
 | \`profile:*\` | Manage authentication profiles |
-| \`workspace:*\` | Sync workspaces (pull/push) |
-| \`function:*\` | Manage functions |
+| \`workspace:*\` | Sync workspaces (pull/push), git integration |
+| \`branch:*\` | Manage workspace branches |
+| \`function:*\` | Manage individual functions |
+| \`release:*\` | Create and manage named releases |
+| \`tenant:*\` | Manage tenants, deployments, backups, env vars |
+| \`unit_test:*\` | Run unit tests |
+| \`workflow_test:*\` | Run workflow tests |
 | \`run:*\` | Execute code and manage Run projects |
-| \`static_host:*\` | Deploy static sites |`,
+| \`platform:*\` | View available platform versions |
+| \`static_host:*\` | Deploy static sites |
+| \`update\` | Update CLI to latest version |`,
 
   ai_hints: `**Important:** The CLI is optional - not all users will have it installed. Before suggesting CLI commands, check if the user has it available or ask if they'd like to install it. The Meta API can accomplish the same tasks programmatically.
 
@@ -85,7 +92,7 @@ All commands support:
 - If CLI not installed: Use Meta API endpoints directly
 
 **Getting started workflow (if CLI is installed):**
-1. Run \`xano profile:wizard\` to set up authentication
+1. Run \`xano auth\` (browser login) or \`xano profile:wizard\` (token-based) to set up authentication
 2. Use \`xano workspace:pull ./code\` to download workspace code
 3. Edit .xs files locally
 4. Use \`xano workspace:push ./code\` to deploy changes
@@ -95,7 +102,7 @@ All commands support:
 2. \`XANO_PROFILE\` environment variable
 3. Default profile in credentials.yaml`,
 
-  related_topics: ["profile", "workspace", "integration"],
+  related_topics: ["auth", "profile", "workspace", "integration"],
 
   workflows: [
     {

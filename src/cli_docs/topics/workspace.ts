@@ -81,9 +81,21 @@ After \`workspace:pull\`, files are organized using snake_case naming:
 
 **Branch handling:**
 - Use \`-b\` flag or set branch in profile
-- Pull from one branch, push to another is supported`,
+- Pull from one branch, push to another is supported
 
-  related_topics: ["start", "function", "integration"],
+**Push modes:**
+- Default (partial): Only pushes changed files
+- \`--sync\`: Full push of all files
+- \`--sync --delete\`: Full push AND removes remote objects not in local
+- \`--dry-run\`: Preview what would change without applying
+- \`--include/-i\` and \`--exclude/-e\`: Glob patterns for selective push
+
+**Git integration:**
+- \`workspace:git:pull\` pulls XanoScript directly from GitHub/GitLab repos
+- Supports private repos with \`--token\` flag
+- Can pull from a specific subdirectory with \`--path\``,
+
+  related_topics: ["start", "branch", "function", "release", "integration"],
 
   commands: [
     {
@@ -167,37 +179,72 @@ After \`workspace:pull\`, files are organized using snake_case naming:
     },
     {
       name: "workspace:pull",
-      description: "Download workspace code to local directory",
+      description: "Download workspace code to local directory. Splits multidoc into individual .xs files organized by type.",
       usage: "xano workspace:pull <directory> [options]",
       args: [
         { name: "directory", required: true, description: "Local directory to save files" }
       ],
       flags: [
         { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile default if not set)" },
-        { name: "branch", short: "b", type: "string", required: false, description: "Branch ID to pull from" },
+        { name: "branch", short: "b", type: "string", required: false, description: "Branch label to pull from" },
         { name: "env", type: "boolean", required: false, description: "Include environment variables" },
+        { name: "draft", type: "boolean", required: false, description: "Include draft versions of functions" },
         { name: "records", type: "boolean", required: false, description: "Include table records" }
       ],
       examples: [
         "xano workspace:pull ./my-app",
-        "xano workspace:pull ./staging-code -b 2",
-        "xano workspace:pull ./backup --env --records"
+        "xano workspace:pull ./staging-code -b dev",
+        "xano workspace:pull ./backup --env --records --draft"
       ]
     },
     {
       name: "workspace:push",
-      description: "Upload local XanoScript files to workspace",
+      description: "Upload local XanoScript files to workspace. By default only pushes changed files (partial push). Use --sync for a full push.",
       usage: "xano workspace:push <directory> [options]",
       args: [
         { name: "directory", required: true, description: "Local directory containing .xs files" }
       ],
       flags: [
         { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile default if not set)" },
-        { name: "branch", short: "b", type: "string", required: false, description: "Branch ID to push to" }
+        { name: "branch", short: "b", type: "string", required: false, description: "Branch label to push to" },
+        { name: "sync", type: "boolean", required: false, description: "Full push (default is partial/changed-only)" },
+        { name: "delete", type: "boolean", required: false, description: "Delete remote objects not in local files (requires --sync)" },
+        { name: "dry-run", type: "boolean", required: false, description: "Preview changes without applying" },
+        { name: "force", type: "boolean", required: false, description: "Skip confirmation prompt" },
+        { name: "env", type: "boolean", required: false, description: "Include environment variables" },
+        { name: "records", type: "boolean", required: false, description: "Include table records" },
+        { name: "truncate", type: "boolean", required: false, description: "Truncate tables before importing records" },
+        { name: "transaction", type: "boolean", required: false, default: "true", description: "Wrap push in database transaction (--no-transaction to disable)" },
+        { name: "guids", type: "boolean", required: false, default: "true", description: "Write GUIDs back to local files after push (--no-guids to disable)" },
+        { name: "include", short: "i", type: "string", required: false, description: "Glob pattern to include specific files (repeatable)" },
+        { name: "exclude", short: "e", type: "string", required: false, description: "Glob pattern to exclude specific files (repeatable)" }
       ],
       examples: [
         "xano workspace:push ./my-app",
-        "xano workspace:push ./my-app -b 2"
+        "xano workspace:push ./my-app -b dev",
+        "xano workspace:push ./my-app --dry-run",
+        "xano workspace:push ./my-app --sync --delete --force",
+        "xano workspace:push ./my-app -i 'api/**' -i 'function/**'",
+        "xano workspace:push ./my-app -e 'table/**' --records --truncate"
+      ]
+    },
+    {
+      name: "workspace:git:pull",
+      description: "Pull XanoScript files directly from a git repository (GitHub, GitLab, etc.)",
+      usage: "xano workspace:git:pull <directory> --repo <url> [options]",
+      args: [
+        { name: "directory", required: true, description: "Local directory to save files" }
+      ],
+      flags: [
+        { name: "repo", short: "r", type: "string", required: true, description: "Git repository URL (HTTPS or SSH)" },
+        { name: "branch", short: "b", type: "string", required: false, description: "Git branch, tag, or ref to pull from" },
+        { name: "path", type: "string", required: false, description: "Subdirectory within the repo to pull from" },
+        { name: "token", short: "t", type: "string", required: false, description: "Personal access token for private repos" }
+      ],
+      examples: [
+        "xano workspace:git:pull ./code -r https://github.com/org/repo.git",
+        "xano workspace:git:pull ./code -r https://github.com/org/repo.git -b main --path src/xano",
+        "xano workspace:git:pull ./code -r https://github.com/org/private-repo.git -t ghp_token123"
       ]
     }
   ],

@@ -33,7 +33,7 @@ Branches are identified by their **label** (e.g., "v1", "dev", "staging"), not n
 - Pass via \`--workspace\` flag or configure in profile
 - Use \`xano workspace:list\` to find workspace IDs`,
 
-  related_topics: ["workspace", "profile", "integration"],
+  related_topics: ["workspace", "release", "profile", "integration"],
 
   commands: [
     {

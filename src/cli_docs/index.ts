@@ -9,26 +9,40 @@ import type { TopicDoc, DetailLevel, CliDocsArgs } from "./types.js";
 import { formatDocumentation } from "./format.js";
 
 // Import all topic documentation
+import { authDoc } from "./topics/auth.js";
 import { startDoc } from "./topics/start.js";
 import { profileDoc } from "./topics/profile.js";
 import { workspaceDoc } from "./topics/workspace.js";
 import { branchDoc } from "./topics/branch.js";
 import { functionDoc } from "./topics/function.js";
+import { releaseDoc } from "./topics/release.js";
+import { tenantDoc } from "./topics/tenant.js";
+import { unitTestDoc } from "./topics/unit_test.js";
+import { workflowTestDoc } from "./topics/workflow_test.js";
 import { runDoc } from "./topics/run.js";
+import { platformDoc } from "./topics/platform.js";
 import { staticHostDoc } from "./topics/static_host.js";
+import { updateDoc } from "./topics/update.js";
 import { integrationDoc } from "./topics/integration.js";
 
 /**
  * All available documentation topics
  */
 export const topics: Record<string, TopicDoc> = {
+  auth: authDoc,
   start: startDoc,
   profile: profileDoc,
   workspace: workspaceDoc,
   branch: branchDoc,
   function: functionDoc,
+  release: releaseDoc,
+  tenant: tenantDoc,
+  unit_test: unitTestDoc,
+  workflow_test: workflowTestDoc,
   run: runDoc,
+  platform: platformDoc,
   static_host: staticHostDoc,
+  update: updateDoc,
   integration: integrationDoc,
 };
 
@@ -82,8 +96,9 @@ ${getTopicDescriptions()}
 
 ## Usage
 - Start with "start" topic for installation and setup
+- Use "auth" or "profile" to understand authentication options
 - Use "integration" to understand when to use CLI vs Meta API
-- Use specific topics (profile, workspace, function, run) for command reference`,
+- Use specific topics for command reference (workspace, branch, release, tenant, function, run, etc.)`,
 
   inputSchema: {
     type: "object",

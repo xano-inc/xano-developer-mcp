@@ -500,12 +500,19 @@ Use this tool to understand CLI commands for local development, code synchroniza
 | Topic | Description |
 |-------|-------------|
 | `start` | Getting started with the CLI - installation and setup |
+| `auth` | Browser-based OAuth authentication |
 | `profile` | Profile management - credentials and multi-environment setup |
-| `workspace` | Workspace operations - pull/push code sync |
+| `workspace` | Workspace operations - pull/push code sync, git integration |
 | `branch` | Branch management - list, switch, create, and delete branches |
 | `function` | Function management - list, get, create, edit |
+| `release` | Release management - create, export, import, pull, push |
+| `tenant` | Tenant management - CRUD, deployments, env vars, backups, clusters |
+| `unit_test` | Unit test management - list and run unit tests |
+| `workflow_test` | Workflow test management - list, run, and manage workflow tests |
 | `run` | Run API commands - execute code, manage projects/sessions |
+| `platform` | Platform management - list and view platform versions |
 | `static_host` | Static hosting - deploy frontend builds |
+| `update` | Update the CLI to the latest version |
 | `integration` | CLI + Meta API integration guide - when to use each |
 
 **Examples:**

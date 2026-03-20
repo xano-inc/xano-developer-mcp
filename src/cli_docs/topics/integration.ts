@@ -23,8 +23,13 @@ npm install -g @xano/cli
 | Local development | Yes | - |
 | Code sync (pull/push) | Yes | - |
 | Quick function edits | Yes | - |
+| Branch management | Yes | Yes |
+| Release management | Yes | Yes |
+| Tenant management | Yes | Yes |
+| Run unit/workflow tests | Yes | - |
 | Execute XanoScript | Yes | Yes (Run API) |
 | CI/CD automation | Both | Both |
+| Deploy static sites | Yes | - |
 | Programmatic management | - | Yes |
 | Create tables/schemas | - | Yes |
 | Manage API groups | - | Yes |
@@ -86,7 +91,7 @@ TOKEN=$(xano profile:token)
 curl -H "Authorization: Bearer $TOKEN" https://instance.xano.io/api:meta/workspace
 \`\`\``,
 
-  related_topics: ["start", "profile", "workspace"],
+  related_topics: ["start", "auth", "profile", "workspace", "release", "tenant"],
 
   workflows: [
     {
