@@ -24,6 +24,8 @@ import { platformDoc } from "./topics/platform.js";
 import { staticHostDoc } from "./topics/static_host.js";
 import { updateDoc } from "./topics/update.js";
 import { integrationDoc } from "./topics/integration.js";
+import { resourcesDoc } from "./topics/resources.js";
+import { historyDoc } from "./topics/history.js";
 
 /**
  * All available documentation topics
@@ -44,6 +46,8 @@ export const topics: Record<string, TopicDoc> = {
   static_host: staticHostDoc,
   update: updateDoc,
   integration: integrationDoc,
+  resources: resourcesDoc,
+  history: historyDoc,
 };
 
 /**
