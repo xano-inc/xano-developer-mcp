@@ -3,9 +3,7 @@ import type { TopicDoc } from "../types.js";
 export const startDoc: TopicDoc = {
   topic: "start",
   title: "Xano CLI - Getting Started",
-  description: `The Xano CLI provides command-line access to manage your Xano workspaces, resources, and execute XanoScript.
-
-> **Note:** The CLI is optional but recommended for local development workflows. You can accomplish most tasks using the Meta API directly, but the CLI provides a more convenient developer experience.
+  description: `The Xano CLI provides command-line access to manage your Xano workspaces, resources, branches, releases, and multi-tenant deployments.
 
 ## Installation
 
@@ -28,17 +26,22 @@ npm link
 
 ## Quick Setup
 
-Use the interactive wizard to configure your first profile:
+**Option 1: Browser login (recommended)**
+\`\`\`bash
+xano auth
+\`\`\`
+Opens your browser for Xano login, then creates a profile automatically.
 
+**Option 2: Interactive wizard**
 \`\`\`bash
 xano profile wizard
 \`\`\`
+Prompts for your access token (from Settings > Account > Metadata API in dashboard), selects your instance, and creates a profile.
 
-This will prompt you for:
-1. Your Xano access token (from Settings > Account > Metadata API in dashboard)
-2. Select your instance
-3. Choose a profile name
-4. Optionally set default workspace
+**Option 3: Direct creation**
+\`\`\`bash
+xano profile create my-profile -i https://your-instance.xano.io -t <access_token>
+\`\`\`
 
 ## Credential Storage
 
@@ -48,10 +51,12 @@ Credentials are stored in \`~/.xano/credentials.yaml\`.
 
 All commands support:
 - \`-p, --profile <name>\` - Use a specific profile (overrides default)
+- \`-v, --verbose\` - Show detailed request/response information
 
 ## Environment Variables
 
 - \`XANO_PROFILE\` - Override the default profile
+- \`XANO_VERBOSE\` - Enable verbose output
 
 ## Discovering Commands
 
@@ -61,8 +66,6 @@ The CLI is self-documenting:
 xano --help                    # List all command categories
 xano <topic> --help            # List subcommands for a topic
 xano <topic> <command> --help  # Detailed flags, args, and examples
-xano docs                      # View detailed documentation topics
-xano docs <topic>              # View specific topic guide (e.g., xano docs table)
 \`\`\`
 
 ## Command Categories
@@ -70,50 +73,56 @@ xano docs <topic>              # View specific topic guide (e.g., xano docs tabl
 | Category | Description |
 |----------|-------------|
 | \`profile\` | Manage authentication profiles |
-| \`workspace\` | Export/import workspaces, get context |
-| \`branch\` | List and delete branches |
-| \`table\` | Manage tables, schemas, content, indexes |
-| \`api\` | Manage API endpoints |
-| \`apigroup\` | Manage API groups |
+| \`workspace\` | Manage workspaces (create, edit, delete, pull, push) |
+| \`branch\` | Manage branches (create, edit, delete, set live) |
 | \`function\` | Manage reusable functions |
-| \`middleware\` | Manage request/response middleware |
-| \`task\` | Manage scheduled tasks |
-| \`trigger\` | Manage workspace triggers |
-| \`addon\` | Manage reusable query components |
-| \`agent\` | Manage AI agents |
-| \`tool\` | Manage AI tools |
-| \`mcp-server\` | Manage MCP protocol servers |
-| \`datasource\` | Manage table datasources |
-| \`file\` | Upload and manage files |
-| \`history\` | View execution history |
-| \`audit-log\` | View change audit logs |
-| \`realtime\` | Manage realtime channels |
-| \`run\` | Execute XanoScript jobs and services |
-| \`static_host\` | Manage static site hosting |
-| \`workflow-test\` | Manage workflow tests |
-| \`template\` | Apply templates to workspaces |
-| \`docs\` | View detailed CLI documentation |`,
+| \`sandbox\` | Sandbox environment for safe development and testing |
+| \`release\` | Manage versioned releases for deployment |
+| \`tenant\` | Manage multi-tenant deployments (enterprise) |
+| \`platform\` | View platform details |
+| \`static_host\` | Manage static site hosting and builds |
+| \`unit_test\` | Run unit tests |
+| \`workflow_test\` | Manage and run workflow tests |
+| \`auth\` | Browser-based authentication |
+| \`update\` | Update the CLI to latest version |
+| \`plugins\` | List installed plugins |
+
+## Recommended Development Workflow
+
+The safest way to make changes is through the **sandbox**:
+
+1. Pull your workspace: \`xano workspace pull ./my-workspace\`
+2. Edit XanoScript files locally
+3. Push to sandbox: \`xano sandbox push ./my-workspace\`
+4. Review and promote: \`xano sandbox review\`
+
+> **Warning:** Direct \`workspace push\` can overwrite production data. Use the sandbox workflow unless you specifically need direct push and understand the risks.`,
 
   ai_hints: `**Important:** The CLI is optional - not all users will have it installed. Before suggesting CLI commands, check if the user has it available.
 
 **Getting started workflow:**
 1. Install: \`npm install -g @xano/cli\`
-2. Run wizard: \`xano profile wizard\`
+2. Authenticate: \`xano auth\` (browser) or \`xano profile wizard\` (token)
 3. Verify: \`xano profile me\`
-4. Explore: \`xano workspace list\` then \`xano workspace context <id>\`
+4. Explore: \`xano workspace list\` then \`xano workspace pull ./my-workspace\`
+
+**Recommended change workflow (safe):**
+1. \`xano workspace pull ./local-dir\` — pull current state
+2. Edit .xs files locally
+3. \`xano sandbox push ./local-dir\` — push to sandbox
+4. \`xano sandbox review\` — review and promote changes
 
 **Self-documenting:** The CLI has built-in help at every level:
 - \`xano --help\` for all categories
 - \`xano <topic> --help\` for subcommands
 - \`xano <topic> <command> --help\` for full details
-- \`xano docs <topic>\` for XanoScript guides
 
 **Profile selection priority:**
 1. \`-p\` flag on command
 2. \`XANO_PROFILE\` environment variable
 3. Default profile in credentials.yaml`,
 
-  related_topics: ["profile", "workspace", "resources", "integration"],
+  related_topics: ["profile", "workspace", "sandbox", "integration"],
 
   workflows: [
     {
@@ -121,14 +130,15 @@ xano docs <topic>              # View specific topic guide (e.g., xano docs tabl
       description: "Set up the CLI for first use",
       steps: [
         "Install: `npm install -g @xano/cli`",
-        "Run wizard: `xano profile wizard`",
-        "Enter your access token when prompted",
-        "Select your instance and workspace",
-        "Verify: `xano profile me`"
+        "Authenticate: `xano auth` (opens browser)",
+        "Verify: `xano profile me`",
+        "List workspaces: `xano workspace list`",
+        "Pull workspace: `xano workspace pull ./my-workspace`"
       ],
       example: `npm install -g @xano/cli
-xano profile wizard
-xano profile me`
+xano auth
+xano profile me
+xano workspace list`
     }
   ]
 };

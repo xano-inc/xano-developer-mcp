@@ -3,7 +3,7 @@ import type { TopicDoc } from "../types.js";
 export const profileDoc: TopicDoc = {
   topic: "profile",
   title: "Xano CLI - Profile Management",
-  description: `Profiles store your Xano credentials and context (workspace, branch, project). Multiple profiles let you switch between instances and environments.
+  description: `Profiles store your Xano credentials and context (workspace, branch). Multiple profiles let you switch between instances and environments.
 
 ## Storage Location
 
@@ -17,15 +17,13 @@ profiles:
     account_origin: https://app.xano.com
     instance_origin: https://prod-instance.xano.io
     access_token: <token>
-    workspace: 1
-    branch: 1
-    project: abc123
-    run_base_url: https://app.dev.xano.com/
+    workspace: my-workspace
+    branch: v1
   staging:
     instance_origin: https://staging-instance.xano.io
     access_token: <token>
-    workspace: 1
-    branch: 2
+    workspace: my-workspace
+    branch: dev
 default: production
 \`\`\`
 
@@ -38,11 +36,12 @@ default: production
 | \`profile list\` | List all profiles |
 | \`profile edit\` | Edit an existing profile |
 | \`profile delete\` | Delete a profile |
-| \`profile set-default\` | Set the default profile |
-| \`profile get-default\` | Show current default |
+| \`profile set\` | Set the default profile |
+| \`profile get\` | Show current default profile name |
 | \`profile me\` | Show authenticated user info |
 | \`profile token\` | Print access token |
-| \`profile project\` | Print project ID |
+| \`profile workspace\` | Print workspace ID |
+| \`profile workspace set\` | Interactively select workspace for profile |
 
 Run \`xano profile <command> --help\` for detailed flags and arguments.`,
 
@@ -58,7 +57,9 @@ Run \`xano profile <command> --help\` for detailed flags and arguments.`,
 **Switching contexts:**
 - Use \`-p <profile>\` flag on any command
 - Or set \`XANO_PROFILE\` environment variable
-- Or use \`xano profile set-default\` to change default`,
+- Or use \`xano profile set\` to change default
+
+**Self-signed certificates:** Use \`-k/--insecure\` flag on wizard, create, or edit for self-hosted instances with self-signed TLS certificates.`,
 
   related_topics: ["start", "integration"],
 
@@ -66,10 +67,11 @@ Run \`xano profile <command> --help\` for detailed flags and arguments.`,
     {
       name: "profile wizard",
       description: "Interactive setup wizard for creating a profile",
-      usage: "xano profile wizard [-n <name>] [-o <origin>]",
+      usage: "xano profile wizard [-n <name>] [-o <origin>] [-k]",
       flags: [
         { name: "name", short: "n", type: "string", required: false, description: "Profile name (skip prompt if provided)" },
-        { name: "origin", short: "o", type: "string", required: false, default: "https://app.xano.com", description: "Xano instance origin URL" }
+        { name: "origin", short: "o", type: "string", required: false, default: "https://app.xano.com", description: "Xano instance origin URL" },
+        { name: "insecure", short: "k", type: "boolean", required: false, description: "Skip TLS certificate verification (for self-signed certificates)" }
       ],
       examples: ["xano profile wizard", "xano profile wizard -n production"]
     },
@@ -86,12 +88,13 @@ Run \`xano profile <command> --help\` for detailed flags and arguments.`,
         { name: "account_origin", short: "a", type: "string", required: false, description: "Account origin URL (optional for self-hosted)" },
         { name: "workspace", short: "w", type: "string", required: false, description: "Default workspace name" },
         { name: "branch", short: "b", type: "string", required: false, description: "Default branch name" },
-        { name: "project", short: "j", type: "string", required: false, description: "Default project name" },
+        { name: "insecure", short: "k", type: "boolean", required: false, description: "Skip TLS certificate verification (for self-signed certificates)" },
         { name: "default", type: "boolean", required: false, description: "Set this profile as the default" }
       ],
       examples: [
         "xano profile create production -i https://x8ki.xano.io -t mytoken123",
-        "xano profile create staging -i https://x8ki.xano.io -t mytoken -w my-workspace -b main"
+        "xano profile create staging -i https://x8ki.xano.io -t mytoken -w my-workspace -b dev",
+        "xano profile create selfhosted -i https://self-signed.example.com -t token123 --insecure"
       ]
     },
     {
@@ -116,14 +119,15 @@ Run \`xano profile <command> --help\` for detailed flags and arguments.`,
         { name: "account_origin", short: "a", type: "string", required: false, description: "Update account origin URL" },
         { name: "workspace", short: "w", type: "string", required: false, description: "Update workspace name" },
         { name: "branch", short: "b", type: "string", required: false, description: "Update branch name" },
-        { name: "project", short: "j", type: "string", required: false, description: "Update project name" },
+        { name: "insecure", type: "boolean", required: false, description: "Enable insecure mode (skip TLS certificate verification)" },
         { name: "remove-workspace", type: "boolean", required: false, description: "Remove workspace from profile" },
         { name: "remove-branch", type: "boolean", required: false, description: "Remove branch from profile" },
-        { name: "remove-project", type: "boolean", required: false, description: "Remove project from profile" }
+        { name: "remove-insecure", type: "boolean", required: false, description: "Remove insecure mode from profile" }
       ],
       examples: [
         "xano profile edit production -w my-workspace",
-        "xano profile edit staging --remove-branch"
+        "xano profile edit staging --remove-branch",
+        "xano profile edit --insecure"
       ]
     },
     {
@@ -136,40 +140,46 @@ Run \`xano profile <command> --help\` for detailed flags and arguments.`,
       examples: ["xano profile delete old-profile"]
     },
     {
-      name: "profile set-default",
+      name: "profile set",
       description: "Set the default profile",
-      usage: "xano profile set-default <name>",
+      usage: "xano profile set <name>",
       args: [
         { name: "name", required: true, description: "Profile to set as default" }
       ],
-      examples: ["xano profile set-default production"]
+      examples: ["xano profile set production"]
     },
     {
-      name: "profile get-default",
+      name: "profile get",
       description: "Show the current default profile name",
-      usage: "xano profile get-default",
-      examples: ["xano profile get-default"]
+      usage: "xano profile get",
+      examples: ["xano profile get"]
     },
     {
       name: "profile me",
       description: "Display current authenticated user info",
-      usage: "xano profile me [-p <profile>]",
-      examples: ["xano profile me", "xano profile me -p staging"]
+      usage: "xano profile me [-p <profile>] [-o summary|json]",
+      examples: ["xano profile me", "xano profile me -p staging", "xano profile me -o json"]
     },
     {
       name: "profile token",
       description: "Print the access token for the default profile",
-      usage: "xano profile token [-p <profile>]",
+      usage: "xano profile token",
       examples: [
         "xano profile token",
         "xano profile token | pbcopy  # macOS"
       ]
     },
     {
-      name: "profile project",
-      description: "Print the project ID for the default profile",
-      usage: "xano profile project [-p <profile>]",
-      examples: ["xano profile project"]
+      name: "profile workspace",
+      description: "Print the workspace ID for the default profile",
+      usage: "xano profile workspace",
+      examples: ["xano profile workspace"]
+    },
+    {
+      name: "profile workspace set",
+      description: "Interactively select a workspace for a profile",
+      usage: "xano profile workspace set",
+      examples: ["xano profile workspace set"]
     }
   ],
 
@@ -178,10 +188,9 @@ Run \`xano profile <command> --help\` for detailed flags and arguments.`,
       name: "Multi-environment Setup",
       description: "Configure profiles for production and staging",
       steps: [
-        "Create production profile: `xano profile create --name prod --token <token>`",
-        "Create staging profile: `xano profile create --name staging --token <token>`",
-        "Set default: `xano profile set-default prod`",
-        "Use staging when needed: `xano table list -p staging`"
+        "Create production profile: `xano profile create prod -i <instance_url> -t <token> --default`",
+        "Create staging profile: `xano profile create staging -i <instance_url> -t <token>`",
+        "Use staging when needed: `xano workspace list -p staging`"
       ]
     }
   ]
