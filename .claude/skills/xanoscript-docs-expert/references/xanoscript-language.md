@@ -38,7 +38,7 @@ XanoScript uses block-based definitions. Each `.xs` file contains exactly one co
 | `table` | `table/*.xs` | Database schema |
 | `table_trigger` | `table/trigger/*.xs` | Table CRUD events |
 | `api_group` + `query` | `api/**/*.xs` | HTTP endpoints |
-| `function` | `function/*.xs` | Reusable logic |
+| `function` | `function/**/*.xs` | Reusable logic |
 | `task` | `task/*.xs` | Scheduled jobs |
 | `addon` | `addon/*.xs` | Reusable subqueries |
 | `middleware` | `middleware/*.xs` | Request interceptors |

@@ -109,7 +109,7 @@ Add an entry to the `XANOSCRIPT_DOCS_V2` object:
 ```typescript
 "my-new-topic": {
   file: "my-new-topic.md",           // Path relative to xanoscript_docs/
-  applyTo: ["function/*.xs"],          // Glob patterns for context-aware matching
+  applyTo: ["function/**/*.xs"],        // Glob patterns for context-aware matching
   description: "One-line description of what this doc covers",
 },
 ```

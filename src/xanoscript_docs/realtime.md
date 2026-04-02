@@ -1,5 +1,5 @@
 ---
-applyTo: "realtime/channel/*.xs, realtime/trigger/*.xs, function/*.xs, api/**/*.xs"
+applyTo: "realtime/channel/*.xs, realtime/trigger/*.xs, function/**/*.xs, api/**/*.xs"
 ---
 
 # Realtime

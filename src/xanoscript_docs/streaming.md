@@ -1,5 +1,5 @@
 ---
-applyTo: "function/*.xs, api/**/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs"
 ---
 
 # Streaming Operations

@@ -58,7 +58,7 @@
     "types": {
       "file": "types.md",
       "description": "Data types, input blocks, and validation",
-      "applyTo": ["function/*.xs", "api/**/*.xs", "ai/tool/*.xs", "ai/agent/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "ai/tool/*.xs", "ai/agent/*.xs"],
       "priority": 4,
       "aliases": ["validation", "input", "data-types"]
     },
@@ -72,7 +72,7 @@
     "functions": {
       "file": "functions.md",
       "description": "Reusable function stacks with inputs and responses",
-      "applyTo": ["function/*.xs"],
+      "applyTo": ["function/**/*.xs"],
       "priority": 6,
       "aliases": ["fn", "reusable", "stack"]
     },
@@ -100,7 +100,7 @@
     "database": {
       "file": "database.md",
       "description": "All db.* operations: query, get, add, edit, patch, delete",
-      "applyTo": ["function/*.xs", "api/**/*.xs", "task/*.xs", "ai/tool/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "task/*.xs", "ai/tool/*.xs"],
       "priority": 5,
       "aliases": ["db", "crud", "query", "sql"]
     },
@@ -128,7 +128,7 @@
     "unit-testing": {
       "file": "unit-testing.md",
       "description": "Unit tests, mocks, and assertions within functions, APIs, and middleware",
-      "applyTo": ["function/*.xs", "api/**/*.xs", "middleware/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "middleware/*.xs"],
       "aliases": ["tests", "unit-tests", "mocks", "assertions"]
     },
     "workflow-tests": {
@@ -200,7 +200,7 @@
     "performance": {
       "file": "performance.md",
       "description": "Performance optimization best practices",
-      "applyTo": ["function/*.xs", "api/**/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs"],
       "aliases": ["optimization", "speed", "caching"]
     },
     "realtime": {
@@ -218,7 +218,7 @@
     "security": {
       "file": "security.md",
       "description": "Security best practices for authentication and authorization",
-      "applyTo": ["function/*.xs", "api/**/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs"],
       "aliases": ["auth", "authorization", "permissions"]
     },
     "streaming": {

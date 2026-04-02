@@ -12,7 +12,7 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 | `table_trigger`     | `table/trigger/{name}.xs`              | Table event handlers          |
 | `api_group`         | `api/{group}/api_group.xs`             | API group definition          |
 | `query`             | `api/{group}/{endpoint}_{verb}.xs`     | HTTP API endpoints            |
-| `function`          | `function/{name}.xs`                   | Reusable logic blocks         |
+| `function`          | `function/{path}/{name}.xs`            | Reusable logic blocks         |
 | `task`              | `task/{name}.xs`                       | Scheduled/cron jobs           |
 | `addon`             | `addon/{name}.xs`                      | Subqueries for related data   |
 | `middleware`        | `middleware/{name}.xs`                 | Request/response interceptors |
@@ -159,7 +159,7 @@ Documentation files use frontmatter to specify which file patterns they apply to
 
 ```markdown
 ---
-applyTo: "function/*.xs"
+applyTo: "function/**/*.xs"
 ---
 ```
 
