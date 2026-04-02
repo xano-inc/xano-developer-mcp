@@ -58,83 +58,83 @@
     "types": {
       "file": "types.md",
       "description": "Data types, input blocks, and validation",
-      "applyTo": ["functions/**/*.xs", "apis/**/*.xs", "tools/**/*.xs", "agents/**/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "ai/tool/*.xs", "ai/agent/*.xs"],
       "priority": 4,
       "aliases": ["validation", "input", "data-types"]
     },
     "tables": {
       "file": "tables.md",
       "description": "Database schema definitions with indexes and relationships",
-      "applyTo": ["tables/*.xs"],
+      "applyTo": ["table/*.xs"],
       "priority": 8,
       "aliases": ["schema", "fields", "indexes"]
     },
     "functions": {
       "file": "functions.md",
       "description": "Reusable function stacks with inputs and responses",
-      "applyTo": ["functions/**/*.xs"],
+      "applyTo": ["function/**/*.xs"],
       "priority": 6,
       "aliases": ["fn", "reusable", "stack"]
     },
     "apis": {
       "file": "apis.md",
       "description": "HTTP endpoint definitions with authentication and CRUD patterns",
-      "applyTo": ["apis/**/*.xs"],
+      "applyTo": ["api/**/*.xs"],
       "priority": 7,
       "aliases": ["endpoints", "http", "rest", "query"]
     },
     "tasks": {
       "file": "tasks.md",
       "description": "Scheduled and cron jobs",
-      "applyTo": ["tasks/*.xs"],
+      "applyTo": ["task/*.xs"],
       "priority": 10,
       "aliases": ["scheduled", "jobs", "cron"]
     },
     "triggers": {
       "file": "triggers.md",
       "description": "Event-driven handlers (table, realtime, workspace, agent, MCP)",
-      "applyTo": ["triggers/**/*.xs"],
+      "applyTo": ["*/trigger/*.xs", "ai/*/trigger/*.xs", "realtime/trigger/*.xs"],
       "priority": 10,
       "aliases": ["events", "hooks", "handlers"]
     },
     "database": {
       "file": "database.md",
       "description": "All db.* operations: query, get, add, edit, patch, delete",
-      "applyTo": ["functions/**/*.xs", "apis/**/*.xs", "tasks/*.xs", "tools/**/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "task/*.xs", "ai/tool/*.xs"],
       "priority": 5,
       "aliases": ["db", "crud", "query", "sql"]
     },
     "agents": {
       "file": "agents.md",
       "description": "AI agent configuration with LLM providers and tools",
-      "applyTo": ["agents/**/*.xs"],
+      "applyTo": ["ai/agent/*.xs"],
       "priority": 12,
       "aliases": ["ai", "llm", "chatbot"]
     },
     "tools": {
       "file": "tools.md",
       "description": "AI tools for agents and MCP servers",
-      "applyTo": ["tools/**/*.xs"],
+      "applyTo": ["ai/tool/*.xs"],
       "priority": 12,
       "aliases": ["ai-tools", "agent-tools"]
     },
     "mcp-servers": {
       "file": "mcp-servers.md",
       "description": "MCP server definitions exposing tools",
-      "applyTo": ["mcp_servers/**/*.xs"],
+      "applyTo": ["ai/mcp_server/*.xs"],
       "priority": 15,
       "aliases": ["mcp", "model-context-protocol"]
     },
     "unit-testing": {
       "file": "unit-testing.md",
       "description": "Unit tests, mocks, and assertions within functions, APIs, and middleware",
-      "applyTo": ["functions/**/*.xs", "apis/**/*.xs", "middleware/**/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "middleware/*.xs"],
       "aliases": ["tests", "unit-tests", "mocks", "assertions"]
     },
     "workflow-tests": {
       "file": "workflow-tests.md",
       "description": "End-to-end workflow tests with data source selection and tags",
-      "applyTo": ["workflow_test/**/*.xs"],
+      "applyTo": ["workflow_test/*.xs"],
       "aliases": ["e2e", "workflow", "integration-tests"]
     },
     "integrations": {
@@ -188,7 +188,7 @@
     "addons": {
       "file": "addons.md",
       "description": "Reusable subqueries for fetching related data",
-      "applyTo": ["addons/*.xs"],
+      "applyTo": ["addon/*.xs"],
       "aliases": ["subqueries", "relations"]
     },
     "debugging": {
@@ -200,13 +200,13 @@
     "performance": {
       "file": "performance.md",
       "description": "Performance optimization best practices",
-      "applyTo": ["functions/**/*.xs", "apis/**/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs"],
       "aliases": ["optimization", "speed", "caching"]
     },
     "realtime": {
       "file": "realtime.md",
       "description": "Real-time channels and events for push updates",
-      "applyTo": ["triggers/**/*.xs"],
+      "applyTo": ["realtime/channel/*.xs", "realtime/trigger/*.xs"],
       "aliases": ["websocket", "channels", "pubsub"]
     },
     "schema": {
@@ -218,7 +218,7 @@
     "security": {
       "file": "security.md",
       "description": "Security best practices for authentication and authorization",
-      "applyTo": ["functions/**/*.xs", "apis/**/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs"],
       "aliases": ["auth", "authorization", "permissions"]
     },
     "streaming": {
@@ -230,7 +230,7 @@
     "middleware": {
       "file": "middleware.md",
       "description": "Request/response interceptors for functions, queries, tasks, and tools",
-      "applyTo": ["middleware/**/*.xs"],
+      "applyTo": ["middleware/*.xs"],
       "aliases": ["interceptors", "hooks"]
     },
     "branch": {

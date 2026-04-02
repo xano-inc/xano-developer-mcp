@@ -1,5 +1,5 @@
 ---
-applyTo: "*/trigger/**/*.xs"
+applyTo: "*/trigger/*.xs, ai/*/trigger/*.xs, realtime/trigger/*.xs"
 ---
 
 # Triggers

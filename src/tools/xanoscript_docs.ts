@@ -97,7 +97,7 @@ export function setXanoscriptDocsPath(path: string): void {
  * const syntaxDocs = xanoscriptDocs({ topic: 'syntax' });
  *
  * // Get context-aware docs for a file
- * const fileDocs = xanoscriptDocs({ file_path: 'apis/users/create.xs' });
+ * const fileDocs = xanoscriptDocs({ file_path: 'api/users/create.xs' });
  *
  * // Get quick reference only
  * const quickRef = xanoscriptDocs({ topic: 'syntax', mode: 'quick_reference' });
@@ -216,8 +216,8 @@ export const xanoscriptDocsToolDefinition = {
         description:
           "File path being edited. Returns all relevant docs automatically based on the file type and location. " +
           "Uses applyTo pattern matching to select applicable topics. " +
-          "Example: 'apis/users/create.xs' returns API, database, and syntax docs. " +
-          "'functions/utils/format.xs' returns function and syntax docs.",
+          "Example: 'api/users/create.xs' returns API, database, and syntax docs. " +
+          "'function/format.xs' returns function and syntax docs.",
       },
       mode: {
         type: "string",

@@ -65,7 +65,7 @@ describe("xanoscriptDocs", () => {
   });
 
   it("should return context-aware docs for file_path", () => {
-    const result = xanoscriptDocs({ file_path: "apis/users/create.xs" });
+    const result = xanoscriptDocs({ file_path: "api/users/create.xs" });
     expect(result.documentation).toContain("XanoScript Documentation for:");
     expect(result.documentation).toContain("Matched topics:");
   });
@@ -119,12 +119,12 @@ describe("xanoscriptDocsTool", () => {
   });
 
   it("should return multi-content array for file_path mode", () => {
-    const result = xanoscriptDocsTool({ file_path: "apis/users/create.xs" });
+    const result = xanoscriptDocsTool({ file_path: "api/users/create.xs" });
     expect(result.success).toBe(true);
     expect(Array.isArray(result.data)).toBe(true);
     const data = result.data as string[];
     // First element is the header
-    expect(data[0]).toContain("XanoScript Documentation for: apis/users/create.xs");
+    expect(data[0]).toContain("XanoScript Documentation for: api/users/create.xs");
     expect(data[0]).toContain("Matched topics:");
     expect(data[0]).toContain("Version:");
     // Remaining elements are per-topic content
@@ -146,7 +146,7 @@ describe("xanoscriptDocsTool", () => {
   });
 
   it("should produce multiple MCP content blocks for file_path via toMcpResponse", () => {
-    const result = xanoscriptDocsTool({ file_path: "apis/users/create.xs" });
+    const result = xanoscriptDocsTool({ file_path: "api/users/create.xs" });
     const mcpResponse = toMcpResponse(result);
     expect(mcpResponse.isError).toBeUndefined();
     // Should have multiple content blocks (header + N topics)
@@ -166,10 +166,10 @@ describe("xanoscriptDocsTool", () => {
   });
 
   it("should include structuredContent for file_path mode", () => {
-    const result = xanoscriptDocsTool({ file_path: "apis/users/create.xs" });
+    const result = xanoscriptDocsTool({ file_path: "api/users/create.xs" });
     expect(result.success).toBe(true);
     expect(result.structuredContent).toBeDefined();
-    expect(result.structuredContent).toHaveProperty("file_path", "apis/users/create.xs");
+    expect(result.structuredContent).toHaveProperty("file_path", "api/users/create.xs");
     expect(result.structuredContent).toHaveProperty("mode", "quick_reference");
     expect(result.structuredContent).toHaveProperty("version");
     expect(result.structuredContent).toHaveProperty("topics");
@@ -184,7 +184,7 @@ describe("xanoscriptDocsTool", () => {
   });
 
   it("should include structuredContent in MCP response", () => {
-    const result = xanoscriptDocsTool({ file_path: "apis/users/create.xs" });
+    const result = xanoscriptDocsTool({ file_path: "api/users/create.xs" });
     const mcpResponse = toMcpResponse(result);
     expect(mcpResponse.structuredContent).toBeDefined();
     expect(mcpResponse.structuredContent).toHaveProperty("file_path");
@@ -194,14 +194,14 @@ describe("xanoscriptDocsTool", () => {
 
 describe("xanoscriptDocs structured output", () => {
   it("should include topics array for file_path mode", () => {
-    const result = xanoscriptDocs({ file_path: "apis/users/create.xs" });
+    const result = xanoscriptDocs({ file_path: "api/users/create.xs" });
     expect(result.topics).toBeDefined();
     expect(Array.isArray(result.topics)).toBe(true);
     expect(result.topics!.length).toBeGreaterThan(0);
   });
 
   it("should have topic and content fields in each TopicDoc", () => {
-    const result = xanoscriptDocs({ file_path: "apis/users/create.xs" });
+    const result = xanoscriptDocs({ file_path: "api/users/create.xs" });
     for (const doc of result.topics!) {
       expect(doc).toHaveProperty("topic");
       expect(doc).toHaveProperty("content");
@@ -223,7 +223,7 @@ describe("xanoscriptDocs structured output", () => {
 
   it("should respect exclude_topics in structured output", () => {
     const result = xanoscriptDocs({
-      file_path: "apis/users/create.xs",
+      file_path: "api/users/create.xs",
       exclude_topics: ["syntax", "essentials"],
     });
     expect(result.topics).toBeDefined();

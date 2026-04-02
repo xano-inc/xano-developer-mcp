@@ -33,22 +33,23 @@ XanoScript uses block-based definitions. Each `.xs` file contains exactly one co
 
 | Construct | File Pattern | Purpose |
 |-----------|-------------|---------|
-| `workspace` | `workspace.xs` | Workspace config |
-| `table` | `tables/*.xs` | Database schema |
-| `api_group` + `query` | `apis/**/*.xs` | HTTP endpoints |
-| `function` | `functions/**/*.xs` | Reusable logic |
-| `task` | `tasks/*.xs` | Scheduled jobs |
-| `agent` | `agents/**/*.xs` | AI agents |
-| `tool` | `tools/**/*.xs` | AI tools |
-| `mcp_server` | `mcp_servers/**/*.xs` | MCP servers |
-| `middleware` | `middleware/**/*.xs` | Request interceptors |
-| `addon` | `addons/*.xs` | Reusable subqueries |
-| `table_trigger` | `triggers/**/*.xs` | Table CRUD events |
-| `realtime_trigger` | `triggers/**/*.xs` | Channel events |
-| `workspace_trigger` | `triggers/**/*.xs` | Branch lifecycle |
-| `agent_trigger` | `triggers/**/*.xs` | Agent events |
-| `mcp_server_trigger` | `triggers/**/*.xs` | MCP tool calls |
-| `workflow_test` | `workflow_test/**/*.xs` | E2E tests |
+| `workspace` | `workspace/*.xs` | Workspace config |
+| `workspace_trigger` | `workspace/trigger/*.xs` | Workspace events |
+| `table` | `table/*.xs` | Database schema |
+| `table_trigger` | `table/trigger/*.xs` | Table CRUD events |
+| `api_group` + `query` | `api/**/*.xs` | HTTP endpoints |
+| `function` | `function/**/*.xs` | Reusable logic |
+| `task` | `task/*.xs` | Scheduled jobs |
+| `addon` | `addon/*.xs` | Reusable subqueries |
+| `middleware` | `middleware/*.xs` | Request interceptors |
+| `agent` | `ai/agent/*.xs` | AI agents |
+| `agent_trigger` | `ai/agent/trigger/*.xs` | Agent events |
+| `tool` | `ai/tool/*.xs` | AI tools |
+| `mcp_server` | `ai/mcp_server/*.xs` | MCP servers |
+| `mcp_server_trigger` | `ai/mcp_server/trigger/*.xs` | MCP tool calls |
+| `workflow_test` | `workflow_test/*.xs` | E2E tests |
+| `realtime_channel` | `realtime/channel/*.xs` | Realtime channels |
+| `realtime_trigger` | `realtime/trigger/*.xs` | Channel events |
 
 ## Data Types
 

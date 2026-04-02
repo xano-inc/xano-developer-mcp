@@ -1,5 +1,5 @@
 ---
-applyTo: "addon/**/*.xs, function/**/*.xs, api/**/*.xs"
+applyTo: "addon/*.xs, function/**/*.xs, api/**/*.xs"
 ---
 
 # Addons

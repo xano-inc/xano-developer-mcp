@@ -1,5 +1,5 @@
 ---
-applyTo: "function/**/*.xs, api/**/*.xs, middleware/**/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs, middleware/*.xs"
 ---
 
 # Unit Testing

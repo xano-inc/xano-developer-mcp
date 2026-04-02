@@ -33,7 +33,7 @@ describe("handleTool", () => {
   });
 
   it("should handle xanoscript_docs with file_path and return multi-content", () => {
-    const result = handleTool("xanoscript_docs", { file_path: "apis/users/create.xs" });
+    const result = handleTool("xanoscript_docs", { file_path: "api/users/create.xs" });
     expect(result.success).toBe(true);
     expect(Array.isArray(result.data)).toBe(true);
     const data = result.data as string[];

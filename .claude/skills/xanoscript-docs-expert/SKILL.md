@@ -51,7 +51,7 @@ Caller provides { topic?, file_path?, mode? }
     │
     ├── No args → Return README.md
     ├── topic="syntax" → Return syntax.md content
-    ├── file_path="apis/users/create.xs" → minimatch applyTo patterns → return all matching docs
+    ├── file_path="api/users/create.xs" → minimatch applyTo patterns → return all matching docs
     └── mode="quick_reference" → Extract only "## Quick Reference" sections
     │
     └── All responses append: "---\nDocumentation version: X.X.X"
@@ -96,7 +96,7 @@ Every doc file MUST start with frontmatter:
 
 ```markdown
 ---
-applyTo: "functions/**/*.xs, apis/**/*.xs"
+applyTo: "function/*.xs, api/**/*.xs"
 ---
 ```
 
@@ -109,7 +109,7 @@ Add an entry to the `XANOSCRIPT_DOCS_V2` object:
 ```typescript
 "my-new-topic": {
   file: "my-new-topic.md",           // Path relative to xanoscript_docs/
-  applyTo: ["functions/**/*.xs"],     // Glob patterns for context-aware matching
+  applyTo: ["function/**/*.xs"],        // Glob patterns for context-aware matching
   description: "One-line description of what this doc covers",
 },
 ```

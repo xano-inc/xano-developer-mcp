@@ -184,10 +184,10 @@ if (result.valid) {
 }
 
 // Validate a file
-const fileResult = validateXanoscript({ file_path: './functions/utils.xs' });
+const fileResult = validateXanoscript({ file_path: './function/utils.xs' });
 
 // Batch validate a directory
-const dirResult = validateXanoscript({ directory: './apis', pattern: '**/*.xs' });
+const dirResult = validateXanoscript({ directory: './api', pattern: '**/*.xs' });
 console.log(`${dirResult.valid_files}/${dirResult.total_files} files valid`);
 ```
 
@@ -315,16 +315,16 @@ Validates XanoScript code for syntax errors. Supports multiple input methods. Th
 validate_xanoscript({ code: "var:result = 1 + 2" })
 
 // Validate a single file
-validate_xanoscript({ file_path: "functions/utils/format.xs" })
+validate_xanoscript({ file_path: "function/utils/format.xs" })
 
 // Validate multiple files
-validate_xanoscript({ file_paths: ["apis/users/get.xs", "apis/users/create.xs"] })
+validate_xanoscript({ file_paths: ["api/users/get.xs", "api/users/create.xs"] })
 
 // Validate all .xs files in a directory
-validate_xanoscript({ directory: "apis/users" })
+validate_xanoscript({ directory: "api/users" })
 
 // Validate with a specific pattern
-validate_xanoscript({ directory: "src", pattern: "apis/**/*.xs" })
+validate_xanoscript({ directory: "src", pattern: "api/**/*.xs" })
 ```
 
 **Returns:** List of errors with line/column positions and helpful suggestions, or confirmation of validity.
@@ -697,7 +697,7 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
 - Markdown files for XanoScript language reference
 - Configured in `src/xanoscript_docs/docs_index.json` with:
   - **file**: The markdown file containing the documentation
-  - **applyTo**: Glob patterns for context-aware matching (e.g., `apis/**/*.xs`)
+  - **applyTo**: Glob patterns for context-aware matching (e.g., `api/**/*.xs`)
   - **description**: Human-readable description of the topic
   - **aliases**: Alternative names for topic lookup
   - **priority**: Ordering weight for file_path matching

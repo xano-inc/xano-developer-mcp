@@ -343,11 +343,11 @@ function validateCode(
  * const result = validateXanoscript({ code: 'return 1 + 1' });
  *
  * // Validate a single file
- * const fileResult = validateXanoscript({ file_path: './functions/utils.xs' });
+ * const fileResult = validateXanoscript({ file_path: './function/utils.xs' });
  *
  * // Validate multiple files
  * const batchResult = validateXanoscript({
- *   file_paths: ['./apis/users/get.xs', './apis/users/create.xs']
+ *   file_paths: ['./api/users/get.xs', './api/users/create.xs']
  * });
  *
  * // Validate all .xs files in a directory
@@ -356,7 +356,7 @@ function validateCode(
  * // Validate with a specific pattern
  * const patternResult = validateXanoscript({
  *   directory: './src',
- *   pattern: 'apis/**\/*.xs'
+ *   pattern: 'api/**\/*.xs'
  * });
  * ```
  */
@@ -532,26 +532,26 @@ export const validateXanoscriptToolDefinition = {
         type: "string",
         description:
           "Path to a single XanoScript file to validate. Easier than passing code directly - avoids escaping issues. " +
-          "Example: \"functions/utils/format.xs\"",
+          "Example: \"function/format.xs\"",
       },
       file_paths: {
         type: "array",
         items: { type: "string" },
         description:
           "Array of file paths for batch validation. Returns a summary with per-file results. " +
-          "Example: [\"apis/users/get.xs\", \"apis/users/create.xs\", \"functions/utils/format.xs\"]",
+          "Example: [\"api/users/get.xs\", \"api/users/create.xs\", \"function/format.xs\"]",
       },
       directory: {
         type: "string",
         description:
           "Directory path to validate. Validates all .xs files recursively. Use with 'pattern' to filter specific subdirectories or files. " +
-          "Example: \"apis/users\"",
+          "Example: \"api/users\"",
       },
       pattern: {
         type: "string",
         description:
           "Glob pattern to filter files when using 'directory' (default: \"**/*.xs\"). " +
-          "Examples: \"apis/**/*.xs\" to match only API files, \"**/create.xs\" to match all create files.",
+          "Examples: \"api/**/*.xs\" to match only API files, \"**/create.xs\" to match all create files.",
       },
     },
     required: [],
