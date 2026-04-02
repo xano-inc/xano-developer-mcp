@@ -4,26 +4,27 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 
 ## Quick Reference
 
-| Construct           | File Location                        | Purpose                       |
-| ------------------- | ------------------------------------ | ----------------------------- |
-| `workspace`         | `workspace/{name}.xs`                | Workspace-level configuration |
-| `workspace_trigger` | `workspace/trigger/{name}.xs`        | Workspace event handlers      |
-| `table`             | `table/{name}.xs`                    | Database schema definition    |
-| `table_trigger`     | `table/trigger/{name}.xs`            | Table event handlers          |
-| `api_group`         | `api/{group}/api_group.xs`           | API group definition          |
-| `query`             | `api/{group}/{endpoint}_{verb}.xs`   | HTTP API endpoints            |
-| `function`          | `function/{name}.xs`                 | Reusable logic blocks         |
-| `task`              | `task/{name}.xs`                     | Scheduled/cron jobs           |
-| `agent`             | `agent/{name}.xs`                    | AI-powered agents             |
-| `agent_trigger`     | `agent/trigger/{name}.xs`            | Agent event handlers          |
-| `tool`              | `tool/{name}.xs`                     | Tools for AI agents           |
-| `mcp_server`        | `mcp_server/{name}.xs`               | MCP server definitions        |
-| `mcp_server_trigger`| `mcp_server/trigger/{name}.xs`       | MCP server event handlers     |
-| `workflow_test`     | `workflow_test/{name}.xs`            | End-to-end workflow tests     |
-| `addon`             | `addon/{name}.xs`                    | Subqueries for related data   |
-| `middleware`        | `middleware/{name}.xs`               | Request/response interceptors |
-| `branch`            | `branch.xs`                          | Branch-level configuration    |
-| `realtime_channel`  | Configuration                        | Realtime channel settings     |
+| Construct           | File Location                          | Purpose                       |
+| ------------------- | -------------------------------------- | ----------------------------- |
+| `workspace`         | `workspace/{name}.xs`                  | Workspace-level configuration |
+| `workspace_trigger` | `workspace/trigger/{name}.xs`          | Workspace event handlers      |
+| `table`             | `table/{name}.xs`                      | Database schema definition    |
+| `table_trigger`     | `table/trigger/{name}.xs`              | Table event handlers          |
+| `api_group`         | `api/{group}/api_group.xs`             | API group definition          |
+| `query`             | `api/{group}/{endpoint}_{verb}.xs`     | HTTP API endpoints            |
+| `function`          | `function/{name}.xs`                   | Reusable logic blocks         |
+| `task`              | `task/{name}.xs`                       | Scheduled/cron jobs           |
+| `addon`             | `addon/{name}.xs`                      | Subqueries for related data   |
+| `middleware`        | `middleware/{name}.xs`                 | Request/response interceptors |
+| `agent`             | `ai/agent/{name}.xs`                   | AI-powered agents             |
+| `agent_trigger`     | `ai/agent/trigger/{name}.xs`           | Agent event handlers          |
+| `tool`              | `ai/tool/{name}.xs`                    | Tools for AI agents           |
+| `mcp_server`        | `ai/mcp_server/{name}.xs`             | MCP server definitions        |
+| `mcp_server_trigger`| `ai/mcp_server/trigger/{name}.xs`     | MCP server event handlers     |
+| `workflow_test`     | `workflow_test/{name}.xs`              | End-to-end workflow tests     |
+| `realtime_channel`  | `realtime/channel/{name}.xs`           | Realtime channel settings     |
+| `realtime_trigger`  | `realtime/trigger/{name}.xs`           | Realtime event handlers       |
+| `branch`            | `branch.xs`                            | Branch-level configuration    |
 
 **Naming convention:** All folder and file names use `snake_case` (e.g., `user_profile.xs`, `get_all_users_get.xs`).
 
@@ -56,22 +57,28 @@ project/
 │   ├── users.xs                     # Table schema
 │   └── trigger/
 │       └── on_user_create.xs        # Table triggers
-├── agent/
-│   ├── support_bot.xs               # AI agents
-│   └── trigger/
-│       └── on_message.xs            # Agent triggers
-├── tool/
-│   └── search_docs.xs               # AI tools
-├── mcp_server/
-│   ├── my_server.xs                 # MCP server definitions
-│   └── trigger/
-│       └── on_connect.xs            # MCP server triggers
+├── ai/
+│   ├── agent/
+│   │   ├── support_bot.xs           # AI agents
+│   │   └── trigger/
+│   │       └── on_message.xs        # Agent triggers
+│   ├── tool/
+│   │   └── search_docs.xs           # AI tools
+│   └── mcp_server/
+│       ├── my_server.xs             # MCP server definitions
+│       └── trigger/
+│           └── on_connect.xs        # MCP server triggers
 ├── workflow_test/
 │   └── checkout_flow.xs             # End-to-end workflow tests
 ├── middleware/
 │   └── auth_check.xs                # Request/response interceptors
 ├── addon/
 │   └── user_posts.xs                # Query addons
+├── realtime/
+│   ├── channel/
+│   │   └── chat_room.xs             # Realtime channels
+│   └── trigger/
+│       └── on_message.xs            # Realtime triggers
 ├── static/                          # Frontend files (HTML, CSS, JS)
 └── run/                             # Job and service configurations
 ```
@@ -152,7 +159,7 @@ Documentation files use frontmatter to specify which file patterns they apply to
 
 ```markdown
 ---
-applyTo: "function/**/*.xs"
+applyTo: "function/*.xs"
 ---
 ```
 

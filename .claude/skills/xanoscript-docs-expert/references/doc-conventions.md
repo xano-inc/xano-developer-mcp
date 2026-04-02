@@ -69,16 +69,19 @@ Every file must begin with YAML frontmatter specifying `applyTo` glob patterns:
 
 ```yaml
 ---
-applyTo: "functions/**/*.xs, apis/**/*.xs, tools/**/*.xs"
+applyTo: "function/*.xs, api/**/*.xs, ai/tool/*.xs"
 ---
 ```
 
 Common patterns:
 - `"**/*.xs"` — applies to all XanoScript files (use for foundational docs like syntax, cheatsheet)
-- `"functions/**/*.xs"` — applies to function definitions
-- `"apis/**/*.xs"` — applies to API endpoint definitions
-- `"tables/*.xs"` — applies to table schemas (no subdirectories)
-- `"triggers/**/*.xs"` — applies to all trigger types
+- `"function/*.xs"` — applies to function definitions
+- `"api/**/*.xs"` — applies to API endpoint definitions
+- `"table/*.xs"` — applies to table schemas (no subdirectories)
+- `"*/trigger/*.xs, ai/*/trigger/*.xs, realtime/trigger/*.xs"` — applies to all trigger types
+- `"ai/agent/*.xs"` — applies to AI agent definitions
+- `"ai/tool/*.xs"` — applies to AI tool definitions
+- `"ai/mcp_server/*.xs"` — applies to MCP server definitions
 - Empty/omitted — only accessible via explicit topic parameter (common for integration sub-topics)
 
 The frontmatter must match the `applyTo` array in `XANOSCRIPT_DOCS_V2` in `src/xanoscript.ts`.
@@ -373,19 +376,19 @@ All 34 topics registered in `XANOSCRIPT_DOCS_V2`:
 | `cheatsheet` | cheatsheet.md | `**/*.xs` | Core |
 | `syntax` | syntax.md | `**/*.xs` | Core |
 | `quickstart` | quickstart.md | `**/*.xs` | Core |
-| `types` | types.md | `functions/**`, `apis/**`, `tools/**`, `agents/**` | Core |
-| `tables` | tables.md | `tables/*.xs` | Constructs |
-| `functions` | functions.md | `functions/**/*.xs` | Constructs |
-| `apis` | apis.md | `apis/**/*.xs` | Constructs |
-| `tasks` | tasks.md | `tasks/*.xs` | Constructs |
-| `triggers` | triggers.md | `triggers/**/*.xs` | Constructs |
-| `database` | database.md | `functions/**`, `apis/**`, `tasks/*`, `tools/**` | Operations |
-| `agents` | agents.md | `agents/**/*.xs` | AI |
-| `tools` | tools.md | `tools/**/*.xs` | AI |
-| `mcp-servers` | mcp-servers.md | `mcp_servers/**/*.xs` | AI |
-| `unit-testing` | unit-testing.md | `functions/**`, `apis/**`, `middleware/**` | Testing |
-| `workflow-tests` | workflow-tests.md | `workflow_test/**/*.xs` | Testing |
-| `integrations` | integrations.md | `functions/**`, `apis/**`, `tasks/*` | Integrations |
+| `types` | types.md | `function/*`, `api/**`, `ai/tool/*`, `ai/agent/*` | Core |
+| `tables` | tables.md | `table/*.xs` | Constructs |
+| `functions` | functions.md | `function/*.xs` | Constructs |
+| `apis` | apis.md | `api/**/*.xs` | Constructs |
+| `tasks` | tasks.md | `task/*.xs` | Constructs |
+| `triggers` | triggers.md | `*/trigger/*`, `ai/*/trigger/*`, `realtime/trigger/*` | Constructs |
+| `database` | database.md | `function/*`, `api/**`, `task/*`, `ai/tool/*` | Operations |
+| `agents` | agents.md | `ai/agent/*.xs` | AI |
+| `tools` | tools.md | `ai/tool/*.xs` | AI |
+| `mcp-servers` | mcp-servers.md | `ai/mcp_server/*.xs` | AI |
+| `unit-testing` | unit-testing.md | `function/*`, `api/**`, `middleware/*` | Testing |
+| `workflow-tests` | workflow-tests.md | `workflow_test/*.xs` | Testing |
+| `integrations` | integrations.md | `function/*`, `api/**`, `task/*` | Integrations |
 | `integrations/cloud-storage` | integrations/cloud-storage.md | (none) | Integrations |
 | `integrations/search` | integrations/search.md | (none) | Integrations |
 | `integrations/redis` | integrations/redis.md | (none) | Integrations |
@@ -393,13 +396,13 @@ All 34 topics registered in `XANOSCRIPT_DOCS_V2`:
 | `integrations/utilities` | integrations/utilities.md | (none) | Integrations |
 | `frontend` | frontend.md | `static/**/*` | Constructs |
 | `run` | run.md | `run/**/*.xs` | Constructs |
-| `addons` | addons.md | `addons/*.xs`, `functions/**`, `apis/**` | Constructs |
+| `addons` | addons.md | `addon/*.xs`, `function/*`, `api/**` | Constructs |
 | `debugging` | debugging.md | `**/*.xs` | Operations |
-| `performance` | performance.md | `functions/**`, `apis/**` | Best Practices |
-| `realtime` | realtime.md | `functions/**`, `apis/**`, `triggers/**` | Operations |
-| `schema` | schema.md | `functions/**`, `apis/**` | Operations |
-| `security` | security.md | `functions/**`, `apis/**` | Best Practices |
-| `streaming` | streaming.md | `functions/**`, `apis/**` | Operations |
-| `middleware` | middleware.md | `middleware/**/*.xs` | Constructs |
+| `performance` | performance.md | `function/*`, `api/**` | Best Practices |
+| `realtime` | realtime.md | `realtime/channel/*`, `realtime/trigger/*` | Operations |
+| `schema` | schema.md | `function/*`, `api/**` | Operations |
+| `security` | security.md | `function/*`, `api/**` | Best Practices |
+| `streaming` | streaming.md | `function/*`, `api/**` | Operations |
+| `middleware` | middleware.md | `middleware/*.xs` | Constructs |
 | `branch` | branch.md | `branch.xs` | Config |
-| `workspace` | workspace.md | `workspace.xs` | Config |
+| `workspace` | workspace.md | `workspace/*.xs` | Config |

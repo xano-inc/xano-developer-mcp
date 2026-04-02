@@ -1,5 +1,5 @@
 ---
-applyTo: "table/**/*.xs"
+applyTo: "table/*.xs"
 ---
 
 # Tables

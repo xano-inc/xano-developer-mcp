@@ -82,8 +82,8 @@ describe("xanoscript module", () => {
       expect(result).toContain("syntax");
     });
 
-    it("should match apis files", () => {
-      const result = getDocsForFilePath("apis/users/create.xs");
+    it("should match api files", () => {
+      const result = getDocsForFilePath("api/users/create.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("apis");
       expect(result).toContain("types");
@@ -92,13 +92,12 @@ describe("xanoscript module", () => {
       // Niche topics should NOT be auto-included for apis
       expect(result).not.toContain("addons");
       expect(result).not.toContain("integrations");
-      expect(result).not.toContain("realtime");
       expect(result).not.toContain("schema");
       expect(result).not.toContain("streaming");
     });
 
-    it("should match functions files", () => {
-      const result = getDocsForFilePath("functions/utils/format.xs");
+    it("should match function files", () => {
+      const result = getDocsForFilePath("function/format.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("functions");
       expect(result).toContain("types");
@@ -111,14 +110,14 @@ describe("xanoscript module", () => {
       expect(result).not.toContain("streaming");
     });
 
-    it("should match tables files", () => {
-      const result = getDocsForFilePath("tables/users.xs");
+    it("should match table files", () => {
+      const result = getDocsForFilePath("table/users.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("tables");
     });
 
-    it("should match tasks files", () => {
-      const result = getDocsForFilePath("tasks/cleanup.xs");
+    it("should match task files", () => {
+      const result = getDocsForFilePath("task/cleanup.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("tasks");
       expect(result).toContain("database");
@@ -126,36 +125,35 @@ describe("xanoscript module", () => {
       expect(result).not.toContain("integrations");
     });
 
-    it("should match triggers files", () => {
-      const result = getDocsForFilePath("triggers/table/users.xs");
+    it("should match trigger files", () => {
+      const result = getDocsForFilePath("table/trigger/on_create.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("triggers");
-      expect(result).toContain("realtime");
     });
 
-    it("should match agents files", () => {
-      const result = getDocsForFilePath("agents/assistant/main.xs");
+    it("should match ai/agent files", () => {
+      const result = getDocsForFilePath("ai/agent/support_bot.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("agents");
       expect(result).toContain("types");
     });
 
-    it("should match tools files", () => {
-      const result = getDocsForFilePath("tools/search/main.xs");
+    it("should match ai/tool files", () => {
+      const result = getDocsForFilePath("ai/tool/search_docs.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("tools");
       expect(result).toContain("types");
       expect(result).toContain("database");
     });
 
-    it("should match mcp_servers files", () => {
-      const result = getDocsForFilePath("mcp_servers/myserver/main.xs");
+    it("should match ai/mcp_server files", () => {
+      const result = getDocsForFilePath("ai/mcp_server/my_server.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("mcp-servers");
     });
 
     it("should match middleware files", () => {
-      const result = getDocsForFilePath("middleware/auth/main.xs");
+      const result = getDocsForFilePath("middleware/auth_check.xs");
       expect(result).toContain("syntax");
       expect(result).toContain("middleware");
     });
@@ -184,7 +182,7 @@ describe("xanoscript module", () => {
     });
 
     it("should not include readme automatically", () => {
-      const result = getDocsForFilePath("apis/test.xs");
+      const result = getDocsForFilePath("api/test.xs");
       expect(result).not.toContain("readme");
     });
 
@@ -299,9 +297,9 @@ Even more content.
 
     it("should return context-aware docs for file_path", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH, {
-        file_path: "apis/users/create.xs",
+        file_path: "api/users/create.xs",
       });
-      expect(result).toContain("XanoScript Documentation for: apis/users/create.xs");
+      expect(result).toContain("XanoScript Documentation for: api/users/create.xs");
       expect(result).toContain("Matched topics:");
       expect(result).toContain("Version:");
     });
@@ -321,11 +319,11 @@ Even more content.
 
     it("should support quick_reference mode for file_path", () => {
       const fullResult = readXanoscriptDocsV2(DOCS_PATH, {
-        file_path: "apis/test.xs",
+        file_path: "api/test.xs",
         mode: "full",
       });
       const quickResult = readXanoscriptDocsV2(DOCS_PATH, {
-        file_path: "apis/test.xs",
+        file_path: "api/test.xs",
         mode: "quick_reference",
       });
       expect(quickResult).toContain("Mode: quick_reference");
@@ -333,7 +331,7 @@ Even more content.
 
     it("should default to quick_reference mode for file_path", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH, {
-        file_path: "apis/test.xs",
+        file_path: "api/test.xs",
       });
       expect(result).toContain("Mode: quick_reference");
     });
@@ -346,7 +344,7 @@ Even more content.
 
     it("should support exclude_topics with file_path", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH, {
-        file_path: "apis/users/create.xs",
+        file_path: "api/users/create.xs",
         exclude_topics: ["syntax", "essentials"],
       });
       expect(result).toContain("Matched topics:");
@@ -438,7 +436,7 @@ Even more content.
   describe("readXanoscriptDocsStructured", () => {
     it("should return array of TopicDoc objects", () => {
       const result = readXanoscriptDocsStructured(DOCS_PATH, {
-        file_path: "apis/users/create.xs",
+        file_path: "api/users/create.xs",
       });
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
@@ -451,7 +449,7 @@ Even more content.
     });
 
     it("should match the same topics as getDocsForFilePath", () => {
-      const filePath = "apis/users/create.xs";
+      const filePath = "api/users/create.xs";
       const expected = getDocsForFilePath(filePath);
       const result = readXanoscriptDocsStructured(DOCS_PATH, { file_path: filePath });
       const resultTopics = result.map((d) => d.topic);
@@ -460,7 +458,7 @@ Even more content.
 
     it("should respect exclude_topics", () => {
       const result = readXanoscriptDocsStructured(DOCS_PATH, {
-        file_path: "apis/users/create.xs",
+        file_path: "api/users/create.xs",
         exclude_topics: ["syntax", "essentials"],
       });
       const topics = result.map((d) => d.topic);
@@ -479,10 +477,10 @@ Even more content.
 
     it("should use quick_reference mode by default", () => {
       const quickResult = readXanoscriptDocsStructured(DOCS_PATH, {
-        file_path: "tables/users.xs",
+        file_path: "table/users.xs",
       });
       const fullResult = readXanoscriptDocsStructured(DOCS_PATH, {
-        file_path: "tables/users.xs",
+        file_path: "table/users.xs",
         mode: "full",
       });
       // Quick reference content should be shorter than full

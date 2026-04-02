@@ -1,5 +1,5 @@
 ---
-applyTo: "workspace/**/*.xs"
+applyTo: "workspace/*.xs"
 ---
 
 # Workspace Configuration

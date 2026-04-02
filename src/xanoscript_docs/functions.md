@@ -1,5 +1,5 @@
 ---
-applyTo: "function/**/*.xs"
+applyTo: "function/*.xs"
 ---
 
 # Functions

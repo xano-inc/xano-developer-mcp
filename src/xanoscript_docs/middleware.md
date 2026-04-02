@@ -1,5 +1,5 @@
 ---
-applyTo: "middleware/**/*.xs"
+applyTo: "middleware/*.xs"
 ---
 
 # Middleware

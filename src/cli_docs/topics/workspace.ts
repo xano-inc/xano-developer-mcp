@@ -10,7 +10,7 @@ export const workspaceDoc: TopicDoc = {
 Xano uses a "multidoc" format where multiple XanoScript documents are separated by \`---\`:
 
 \`\`\`xanoscript
-# functions/auth.xs
+# function/auth.xs
 ---
 function: validate_token
 ...

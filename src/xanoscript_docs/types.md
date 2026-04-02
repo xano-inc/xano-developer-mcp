@@ -1,5 +1,5 @@
 ---
-applyTo: "function/**/*.xs, api/**/*.xs, tool/**/*.xs, agent/**/*.xs"
+applyTo: "function/*.xs, api/**/*.xs, ai/tool/*.xs, ai/agent/*.xs"
 ---
 
 # Types & Inputs
