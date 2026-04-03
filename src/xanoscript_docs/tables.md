@@ -17,8 +17,8 @@ table "<name>" {
   auth = false                    // true if used for authentication
   schema {
     int id                        // Primary key (required)
-    text name filters=trim
     timestamp created_at?=now
+    text name filters=trim
   }
   index = [
     {type: "primary", field: [{name: "id"}]}
@@ -45,12 +45,12 @@ table "user" {
   auth = true
   schema {
     int id
+    timestamp created_at?=now
     text name filters=trim
     email email filters=trim|lower {
       sensitive = true
     }
     password password
-    timestamp created_at?=now
   }
   index = [
     {type: "primary", field: [{name: "id"}]}
@@ -68,10 +68,10 @@ table "user" {
 ```xs
 schema {
   int id
+  timestamp created_at
   text name
   decimal price
   bool is_active
-  timestamp created_at
   date birth_date
 }
 ```
@@ -322,6 +322,7 @@ table "order" {
 1. **Always define `int id`** - Every table requires a primary key field named `id`
 2. **Use `auth = true`** only for the authentication table (typically just `user`)
 3. **Add indexes** for fields used in `db.query` WHERE clauses and JOINs to avoid full table scans
+4. **Add new fields to the bottom of the schema** - When adding new fields to an existing table, append them to the end of the schema block rather than inserting them in the middle. This preserves column ordering consistency and avoids unexpected side effects
 
 ---
 
