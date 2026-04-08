@@ -135,10 +135,24 @@ XanoScript uses specific type names:
 
 ### Comments
 
+XanoScript supports `//` single-line comments. They can be placed above an object definition, above inputs, and above stack items:
+
 ```xs
-// Single-line comment
-var $total {
-  value = 0
+// Example
+function empty {
+  input {
+    // Example
+    text test
+  }
+
+  stack {
+    // Example
+    var $x1 {
+      value = ""
+    }
+  }
+
+  response = $x1
 }
 ```
 
