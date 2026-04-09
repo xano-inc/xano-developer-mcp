@@ -221,6 +221,20 @@ query "users/{user_id}" verb=GET {
 }
 ```
 
+### Route Collisions
+
+Routing does **not** cascade. A wildcard segment collides with any literal at the same position and verb, causing a save error.
+
+```xs
+// WRONG — these collide (both match the first segment)
+query "{workspace_id}" verb=GET { ... }
+query "something" verb=GET { ... }
+
+// CORRECT — prefix wildcards with a literal
+query "workspace/{workspace_id}" verb=GET { ... }
+query "something" verb=GET { ... }
+```
+
 ---
 
 ## CRUD Examples
@@ -443,6 +457,7 @@ When using `return = { type: "list", paging: {...} }`:
 1. **Use specific canonicals** - Prefix canonicals to avoid instance-level collisions (e.g., `myapp-users` not `users`)
 2. **Authenticate writes** - Always require `auth` for POST/PATCH/DELETE endpoints
 3. **Paginate lists** - Use `return = { type: "list", paging: {...} }` to avoid unbounded result sets
+4. **Prefix wildcard path segments** - Routing does not cascade, so `{id}` at a path segment collides with any literal at the same segment. Always use a prefix like `workspace/{workspace_id}` instead of bare `{workspace_id}`
 
 ---
 
