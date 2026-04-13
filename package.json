@@ -1,6 +1,6 @@
 {
   "name": "@xano/developer-mcp",
-  "version": "1.0.69",
+  "version": "1.0.70",
   "description": "MCP server and library for Xano development - XanoScript validation, Meta API, Run API, and CLI documentation",
   "type": "module",
   "main": "dist/lib.js",
@@ -61,7 +61,7 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@xano/xanoscript-language-server": "^11.12.0",
+    "@xano/xanoscript-language-server": "^12.0.0",
     "minimatch": "^10.1.2"
   },
   "devDependencies": {
