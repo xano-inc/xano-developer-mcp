@@ -35,6 +35,11 @@ Reference for XanoScript data types, input blocks, and validation.
 | `file` / `image` / `video` / `audio` / `attachment` | File resources |
 | `geo_point` / `geo_polygon` / `geo_linestring` | Geographic data |
 
+### Dynamic Input
+| Type | Description |
+|------|-------------|
+| `dblink` | Generate inputs from a table's schema (not available on tables) |
+
 ### Modifiers
 
 The `?` has different meanings depending on placement:
@@ -354,6 +359,45 @@ input {
     table = "post"
   }
 }
+```
+
+---
+
+## Database Link Inputs (dblink)
+
+Generates inputs dynamically from a table's schema. Each non-hidden column becomes an input, accessed via `$input.<column_name>`. Not available on table definitions.
+
+```xs
+// user table has: name, email, password → generates $input.name, $input.email, $input.password
+function create_user {
+  input {
+    dblink {
+      table = "user"
+    }
+  }
+
+  stack {
+    var $x1 { value = $input.name }
+  }
+
+  response = $x1
+}
+```
+
+Use `override` to hide fields from the generated inputs:
+
+```xs
+input {
+  dblink {
+    table = "user"
+    override = {
+      created_at: {hidden: true}
+      email     : {hidden: true}
+      password  : {hidden: true}
+    }
+  }
+}
+// Only $input.name is available — overridden fields are excluded
 ```
 
 ---

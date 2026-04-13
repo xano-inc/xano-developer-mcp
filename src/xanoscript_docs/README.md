@@ -219,7 +219,6 @@ Use `xanoscript_docs({ tier: "survival" })` or `xanoscript_docs({ tier: "working
 | `syntax/functions`      | Built-in functions                          | Math, Date, Crypto, JSON |
 | `types`      | Data types, validation, input blocks                 | Validation Filters, Input Blocks |
 | `functions`  | Reusable function stacks, async, loops               | Loops, Async Patterns |
-| `schema`     | Runtime schema parsing and validation                | parse.object, parse.array |
 
 ### Data
 
@@ -269,7 +268,6 @@ Use `xanoscript_docs({ tier: "survival" })` or `xanoscript_docs({ tier: "working
 | `workflow-tests` | End-to-end workflow tests with data sources and tags   | Data Sources, Tags, Common Patterns |
 | `debugging` | Logging, inspecting, and debugging XanoScript execution    | debug.log, Inspection |
 | `frontend`  | Static frontend development and deployment                 | File Structure |
-| `run`       | Run job and service configurations for the Xano Job Runner | Jobs, Services |
 
 ### Best Practices
 
