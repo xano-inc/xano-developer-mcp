@@ -35,7 +35,15 @@ export interface ValidateXanoscriptArgs {
   pattern?: string;
 }
 
+export const SEVERITY = {
+  ERROR: 1,
+  WARNING: 2,
+} as const;
+
+export type DiagnosticSeverity = (typeof SEVERITY)[keyof typeof SEVERITY];
+
 export interface ParserDiagnostic {
+  severity: DiagnosticSeverity;
   range: {
     start: { line: number; character: number };
     end: { line: number; character: number };
@@ -258,7 +266,48 @@ function validateCode(
     const scheme = getSchemeFromContent(text);
     const parser = xanoscriptParser(text, scheme);
 
-    if (parser.errors.length === 0) {
+    function toDiagnostic(
+      item: {
+        token?: { startOffset: number; endOffset: number };
+        message: string;
+        name?: string;
+      },
+      severity: DiagnosticSeverity
+    ): ParserDiagnostic {
+      const startOffset = item.token?.startOffset ?? 0;
+      const endOffset = item.token?.endOffset ?? 5;
+
+      const lines = text.substring(0, startOffset).split("\n");
+      const line = lines.length - 1;
+      const character = lines[lines.length - 1].length;
+
+      const endLines = text.substring(0, endOffset + 1).split("\n");
+      const endLine = endLines.length - 1;
+      const endCharacter = endLines[endLines.length - 1].length;
+
+      const enhancedMessage = enhanceErrorMessage(item.message, text, line);
+
+      return {
+        severity,
+        range: {
+          start: { line, character },
+          end: { line: endLine, character: endCharacter },
+        },
+        message: enhancedMessage,
+        source: item.name || "XanoScript Parser",
+      };
+    }
+
+    const diagnostics: ParserDiagnostic[] = [
+      ...parser.errors.map((e: { token?: { startOffset: number; endOffset: number }; message: string; name?: string }) =>
+        toDiagnostic(e, SEVERITY.ERROR)
+      ),
+      ...((parser.warnings as Array<{ token?: { startOffset: number; endOffset: number }; message: string; name?: string }>) ?? []).map((w) =>
+        toDiagnostic(w, SEVERITY.WARNING)
+      ),
+    ];
+
+    if (diagnostics.length === 0) {
       return {
         valid: true,
         errors: [],
@@ -269,47 +318,32 @@ function validateCode(
       };
     }
 
-    const diagnostics: ParserDiagnostic[] = parser.errors.map(
-      (error: {
-        token?: { startOffset: number; endOffset: number };
-        message: string;
-        name?: string;
-      }) => {
-        const startOffset = error.token?.startOffset ?? 0;
-        const endOffset = error.token?.endOffset ?? 5;
+    const errors = diagnostics.filter((d) => d.severity === SEVERITY.ERROR);
+    const warnings = diagnostics.filter((d) => d.severity === SEVERITY.WARNING);
+    const hasErrors = errors.length > 0;
 
-        const lines = text.substring(0, startOffset).split("\n");
-        const line = lines.length - 1;
-        const character = lines[lines.length - 1].length;
-
-        const endLines = text.substring(0, endOffset + 1).split("\n");
-        const endLine = endLines.length - 1;
-        const endCharacter = endLines[endLines.length - 1].length;
-
-        // Enhance error message with suggestions
-        const enhancedMessage = enhanceErrorMessage(error.message, text, line);
-
-        return {
-          range: {
-            start: { line, character },
-            end: { line: endLine, character: endCharacter },
-          },
-          message: enhancedMessage,
-          source: error.name || "XanoScript Parser",
-        };
-      }
-    );
-
-    const errorMessages = diagnostics.map((d: ParserDiagnostic, i: number) => {
+    const formatDiagnostic = (d: ParserDiagnostic, i: number) => {
+      const label = d.severity === SEVERITY.ERROR ? "ERROR" : "WARNING";
       const location = `Line ${d.range.start.line + 1}, Column ${d.range.start.character + 1}`;
-      return `${i + 1}. [${location}] ${d.message}`;
-    });
+      return `${i + 1}. [${label}] [${location}] ${d.message}`;
+    };
 
-    const prefix = filePath ? `✗ ${basename(filePath)}: ` : "";
+    const messageLines: string[] = [];
+    const prefix = filePath ? `${hasErrors ? "✗" : "⚠"} ${basename(filePath)}: ` : "";
+
+    if (errors.length > 0) {
+      messageLines.push(`${prefix}Found ${errors.length} error(s)${warnings.length > 0 ? ` and ${warnings.length} warning(s)` : ""}:`);
+    } else {
+      messageLines.push(`${prefix}Found ${warnings.length} warning(s):`);
+    }
+
+    messageLines.push("");
+    messageLines.push(...diagnostics.map(formatDiagnostic));
+
     return {
-      valid: false,
+      valid: !hasErrors,
       errors: diagnostics,
-      message: `${prefix}Found ${diagnostics.length} error(s):\n\n${errorMessages.join("\n")}`,
+      message: messageLines.join("\n"),
       file_path: filePath,
     };
   } catch (error: unknown) {

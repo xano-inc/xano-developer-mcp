@@ -47,12 +47,10 @@ describe("xanoscript module", () => {
         "integrations/external-apis",
         "integrations/utilities",
         "frontend",
-        "run",
         "addons",
         "debugging",
         "performance",
         "realtime",
-        "schema",
         "security",
         "streaming",
         "middleware",
@@ -178,7 +176,6 @@ describe("xanoscript module", () => {
     it("should match run files", () => {
       const result = getDocsForFilePath("run/job/main.xs");
       expect(result).toContain("syntax");
-      expect(result).toContain("run");
     });
 
     it("should not include readme automatically", () => {

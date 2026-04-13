@@ -52,6 +52,8 @@ export {
   type ValidateXanoscriptArgs,
   type ValidationResult,
   type ParserDiagnostic,
+  type DiagnosticSeverity,
+  SEVERITY,
 } from "./tools/validate_xanoscript.js";
 
 // XanoScript Documentation
