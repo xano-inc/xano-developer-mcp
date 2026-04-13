@@ -179,12 +179,6 @@
       "applyTo": ["static/**/*"],
       "aliases": ["static", "html", "css", "web"]
     },
-    "run": {
-      "file": "run.md",
-      "description": "Run job and service configurations for the Xano Job Runner",
-      "applyTo": ["run/**/*.xs"],
-      "aliases": ["jobs", "runner", "services"]
-    },
     "addons": {
       "file": "addons.md",
       "description": "Reusable subqueries for fetching related data",
@@ -208,12 +202,6 @@
       "description": "Real-time channels and events for push updates",
       "applyTo": ["realtime/channel/*.xs", "realtime/trigger/*.xs"],
       "aliases": ["websocket", "channels", "pubsub"]
-    },
-    "schema": {
-      "file": "schema.md",
-      "description": "Runtime schema parsing and validation",
-      "applyTo": [],
-      "aliases": ["runtime-schema", "parsing"]
     },
     "security": {
       "file": "security.md",

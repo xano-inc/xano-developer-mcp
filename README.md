@@ -374,12 +374,10 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `integrations/external-apis` | HTTP requests with api.request |
 | `integrations/utilities` | Local storage, email, zip, and Lambda |
 | `frontend` | Static frontend development and deployment |
-| `run` | Run job and service configurations |
 | `addons` | Reusable subqueries for fetching related data |
 | `debugging` | Logging, inspecting, and debugging XanoScript execution |
 | `performance` | Performance optimization best practices |
 | `realtime` | Real-time channels and events for push updates |
-| `schema` | Runtime schema parsing and validation |
 | `security` | Security best practices for authentication and authorization |
 | `streaming` | Streaming data from files, requests, and responses |
 | `middleware` | Request/response interceptors for functions, queries, tasks, and tools |
@@ -563,12 +561,10 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/integrations/external-apis` | HTTP requests with api.request |
 | `xanoscript://docs/integrations/utilities` | Email, zip, Lambda utilities |
 | `xanoscript://docs/frontend` | Static frontend development |
-| `xanoscript://docs/run` | Run job and service configurations |
 | `xanoscript://docs/addons` | Reusable subqueries for related data |
 | `xanoscript://docs/debugging` | Logging and debugging tools |
 | `xanoscript://docs/performance` | Performance optimization |
 | `xanoscript://docs/realtime` | Real-time channels and events |
-| `xanoscript://docs/schema` | Runtime schema parsing |
 | `xanoscript://docs/security` | Security best practices |
 | `xanoscript://docs/streaming` | Data streaming operations |
 | `xanoscript://docs/middleware` | Request/response interceptors |
