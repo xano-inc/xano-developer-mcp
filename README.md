@@ -76,6 +76,27 @@ Add to your Claude Desktop configuration file:
 }
 ```
 
+## Xano Skills
+
+This repo also ships agent skills under `skills/` (starting with `xano-init`, a guided setup that profiles a Xano workspace and builds a sandbox-first development playbook). Skills are distributed via the open [Agent Skills standard](https://github.com/vercel-labs/skills) and install with a single `npx` command — no cloning or manual file copying.
+
+**Recommended:** install `xano-init` globally into Claude Code:
+
+```bash
+npx skills add xano-inc/xano-developer-mcp -s xano-init -a claude-code -g
+```
+
+Install into multiple agents at once (Claude Code, Codex, Cursor, OpenCode, etc.):
+
+```bash
+npx skills add xano-inc/xano-developer-mcp -s xano-init \
+  -a claude-code -a codex -a cursor -a opencode -g
+```
+
+Drop `-s` to install every skill in the repo, or `-g` to scope the install to the current project instead of your user profile. Other supported agents include `gemini-cli`, `windsurf`, `continue`, `cline`, `github-copilot`, and more — see the [skills CLI](https://github.com/vercel-labs/skills) for the full list.
+
+Start a new agent session after installing so the skill manifest is picked up. Once loaded, invoke `xano-init` by name (e.g. `/xano-init` in Claude Code) or by asking your agent to *"set up this Xano workspace for development."*
+
 ## Checking Your Version
 
 ```bash
