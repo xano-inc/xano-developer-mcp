@@ -26,7 +26,6 @@ debug.log { value = "Starting process" }
 debug.log { value = $user }
 
 debug.log {
-  label = "User Data"
   value = $user
 }
 ```
@@ -44,7 +43,9 @@ db.query "user" {
   where = $db.user.id == $input.user_id
 } as $user
 
-debug.stop                              // Execution pauses here
+debug.stop {
+  value = "Execution pauses here"
+}
 
 // Code below does not run
 db.edit "user" { ... }
