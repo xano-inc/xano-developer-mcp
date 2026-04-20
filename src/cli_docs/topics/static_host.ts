@@ -8,61 +8,87 @@ export const staticHostDoc: TopicDoc = {
   ai_hints: `**Static hosting workflow:**
 1. Build your frontend (React, Vue, etc.)
 2. Zip the build output
-3. Upload with \`static_host:build:create\`
+3. Upload with \`static_host build create\`
 
 **Use cases:**
 - Deploy SPAs built with modern frameworks
 - Host static documentation sites
-- Serve frontend that calls your Xano APIs`,
+- Serve frontend that calls your Xano APIs
 
-  related_topics: ["workspace", "tenant"],
+**Sandbox tip:** If the user doesn't have a dedicated tenant, suggest \`xano sandbox\` - the free-tier personal dev environment supports static hosting for experimentation.`,
+
+  related_topics: ["workspace", "tenant", "sandbox"],
 
   commands: [
     {
-      name: "static_host:list",
-      description: "List all static hosts in workspace",
-      usage: "xano static_host:list [-w <workspace>]",
+      name: "static_host list",
+      description: "List all static hosts in a workspace",
+      usage: "xano static_host list [-w <workspace>]",
       flags: [
-        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID" }
-      ],
-      examples: ["xano static_host:list"]
-    },
-    {
-      name: "static_host:build:create",
-      description: "Create a new build for a static host",
-      usage: "xano static_host:build:create <static_host> [options]",
-      args: [
-        { name: "static_host", required: true, description: "Static host name or ID" }
-      ],
-      flags: [
-        { name: "file", short: "f", type: "string", required: true, description: "Path to ZIP file" },
-        { name: "name", short: "n", type: "string", required: true, description: "Build name/version" },
-        { name: "description", short: "d", type: "string", required: false, description: "Build description" },
-        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID" }
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (optional if set in profile)" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" },
+        { name: "page", type: "integer", required: false, default: "1", description: "Page number for pagination" },
+        { name: "per_page", type: "integer", required: false, default: "50", description: "Results per page" }
       ],
       examples: [
-        "xano static_host:build:create my-app -f ./build.zip -n 'v1.0.0'",
-        "xano static_host:build:create my-app -f ./dist.zip -n 'v1.1.0' -d 'Bug fixes'"
+        "xano static_host list",
+        "xano static_host list -w 40",
+        "xano static_host list -o json"
       ]
     },
     {
-      name: "static_host:build:list",
-      description: "List all builds for a static host",
-      usage: "xano static_host:build:list <static_host> [-w <workspace>]",
+      name: "static_host build create",
+      description: "Create a new build for a static host by uploading a ZIP file",
+      usage: "xano static_host build create <host_name> -f <file> -n <name> [options]",
       args: [
-        { name: "static_host", required: true, description: "Static host name or ID" }
+        { name: "host_name", required: true, description: "Static host name" }
       ],
-      examples: ["xano static_host:build:list my-app"]
+      flags: [
+        { name: "file", short: "f", type: "string", required: true, description: "Path to ZIP file to upload" },
+        { name: "name", short: "n", type: "string", required: true, description: "Build name/version" },
+        { name: "description", short: "d", type: "string", required: false, description: "Build description" },
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (optional if set in profile)" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: [
+        "xano static_host build create my-app -f ./build.zip -n 'v1.0.0'",
+        "xano static_host build create my-app -f ./dist.zip -n 'v1.1.0' -d 'Bug fixes'"
+      ]
     },
     {
-      name: "static_host:build:get",
-      description: "Get details of a specific build",
-      usage: "xano static_host:build:get <static_host> <build_id>",
+      name: "static_host build list",
+      description: "List all builds for a static host",
+      usage: "xano static_host build list <host_name> [-w <workspace>]",
       args: [
-        { name: "static_host", required: true, description: "Static host name or ID" },
+        { name: "host_name", required: true, description: "Static host name" }
+      ],
+      flags: [
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (optional if set in profile)" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" },
+        { name: "page", type: "integer", required: false, default: "1", description: "Page number for pagination" },
+        { name: "per_page", type: "integer", required: false, default: "50", description: "Results per page" }
+      ],
+      examples: [
+        "xano static_host build list my-app",
+        "xano static_host build list my-app -o json"
+      ]
+    },
+    {
+      name: "static_host build get",
+      description: "Get details of a specific build",
+      usage: "xano static_host build get <host_name> <build_id>",
+      args: [
+        { name: "host_name", required: true, description: "Static host name" },
         { name: "build_id", required: true, description: "Build ID" }
       ],
-      examples: ["xano static_host:build:get my-app 12345"]
+      flags: [
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (optional if set in profile)" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: [
+        "xano static_host build get my-app 52",
+        "xano static_host build get my-app 52 -o json"
+      ]
     }
   ],
 
@@ -73,11 +99,11 @@ export const staticHostDoc: TopicDoc = {
       steps: [
         "Build your app: `npm run build`",
         "Create ZIP: `zip -r build.zip dist/`",
-        "Deploy: `xano static_host:build:create my-app -f build.zip -n 'v1.0.0'`"
+        "Deploy: `xano static_host build create my-app -f build.zip -n 'v1.0.0'`"
       ],
       example: `npm run build
 zip -r build.zip dist/
-xano static_host:build:create my-frontend -f build.zip -n 'v1.0.0' -d 'Initial release'`
+xano static_host build create my-frontend -f build.zip -n 'v1.0.0' -d 'Initial release'`
     }
   ]
 };
