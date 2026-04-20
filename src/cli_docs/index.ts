@@ -19,7 +19,7 @@ import { releaseDoc } from "./topics/release.js";
 import { tenantDoc } from "./topics/tenant.js";
 import { unitTestDoc } from "./topics/unit_test.js";
 import { workflowTestDoc } from "./topics/workflow_test.js";
-import { runDoc } from "./topics/run.js";
+import { sandboxDoc } from "./topics/sandbox.js";
 import { platformDoc } from "./topics/platform.js";
 import { staticHostDoc } from "./topics/static_host.js";
 import { updateDoc } from "./topics/update.js";
@@ -39,7 +39,7 @@ export const topics: Record<string, TopicDoc> = {
   tenant: tenantDoc,
   unit_test: unitTestDoc,
   workflow_test: workflowTestDoc,
-  run: runDoc,
+  sandbox: sandboxDoc,
   platform: platformDoc,
   static_host: staticHostDoc,
   update: updateDoc,
@@ -98,7 +98,7 @@ ${getTopicDescriptions()}
 - Start with "start" topic for installation and setup
 - Use "auth" or "profile" to understand authentication options
 - Use "integration" to understand when to use CLI vs Meta API
-- Use specific topics for command reference (workspace, branch, release, tenant, function, run, etc.)`,
+- Use specific topics for command reference (workspace, sandbox, branch, release, tenant, function, etc.)`,
 
   inputSchema: {
     type: "object",
@@ -108,7 +108,7 @@ ${getTopicDescriptions()}
         enum: getTopicNames(),
         description:
           "Documentation topic to retrieve. Start with 'start' for installation and setup. " +
-          "Example: topic='function' for function management commands, topic='run' for running XanoScript locally.",
+          "Example: topic='function' for function management commands, topic='sandbox' for the personal dev environment.",
       },
       detail_level: {
         type: "string",

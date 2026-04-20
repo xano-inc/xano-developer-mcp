@@ -11,6 +11,7 @@ export const updateDoc: TopicDoc = {
 - Before troubleshooting CLI issues
 
 **Update uses npm** - runs \`npm install -g @xano/cli\` under the hood.
+**Check only** - use \`--check\` to see whether an update is available without installing.
 **Beta channel** - use \`--beta\` to get pre-release versions for testing new features.`,
 
   related_topics: ["start"],
