@@ -194,9 +194,7 @@ tool "search_products" {
   }
   stack {
     db.query "product" {
-      where = $db.product.name includes? $input.query
-        && $db.product.category ==? $input.category
-        && $db.product.is_active == true
+      where = $db.product.name includes? $input.query && $db.product.category ==? $input.category && $db.product.is_active == true
       return = { type: "list", paging: { page: 1, per_page: $input.limit } }
     } as $products
   }

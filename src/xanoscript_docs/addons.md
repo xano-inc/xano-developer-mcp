@@ -154,9 +154,7 @@ addon has_premium {
 
   stack {
     db.query subscription {
-      where = $db.subscription.user_id == $input.user_id
-            && $db.subscription.status == "active"
-            && $db.subscription.expires_at > now
+      where = $db.subscription.user_id == $input.user_id && $db.subscription.status == "active" && $db.subscription.expires_at > now
       return = {type: "exists"}
     }
   }

@@ -54,9 +54,7 @@ Pattern: Store refresh tokens in a `refresh_token` table. On refresh, verify the
 ```xs
 // Key operations in a refresh flow:
 db.query "refresh_token" {
-  where = $db.refresh_token.token == $input.refresh_token
-        && $db.refresh_token.expires_at > now
-        && $db.refresh_token.revoked == false
+  where = $db.refresh_token.token == $input.refresh_token && $db.refresh_token.expires_at > now && $db.refresh_token.revoked == false
   return = { type: "single" }
 } as $stored_token
 
@@ -85,8 +83,7 @@ db.add "session" {
 
 // Validate session
 db.query "session" {
-  where = $db.session.id == $input.session_id
-        && $db.session.expires_at > now
+  where = $db.session.id == $input.session_id && $db.session.expires_at > now
   return = { type: "single" }
 } as $session
 ```
