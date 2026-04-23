@@ -355,9 +355,7 @@ Additional operators for `db.query` where clauses:
 
 ```xs
 db.query "product" {
-  where = $db.product.status not in ["deleted", "archived"]
-        && $db.product.metadata @> {"featured": true}
-        && $db.product.sku ~ "^SKU-[0-9]+"
+  where = $db.product.status not in ["deleted", "archived"] && $db.product.metadata @> {"featured": true} && $db.product.sku ~ "^SKU-[0-9]+"
 } as $products
 ```
 

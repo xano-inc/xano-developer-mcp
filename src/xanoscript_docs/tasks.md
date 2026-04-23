@@ -149,8 +149,7 @@ task "daily_digest" {
     foreach ($users) {
       each as $user {
         db.query "notification" {
-          where = $db.notification.user_id == $user.id
-            && $db.notification.sent == false
+          where = $db.notification.user_id == $user.id && $db.notification.sent == false
         } as $notifications
 
         conditional {
