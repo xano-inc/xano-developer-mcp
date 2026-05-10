@@ -84,7 +84,7 @@ export function handleCliDocs(args: CliDocsArgs): string {
  * Tool definition for MCP server
  */
 export const cliDocsTool_spec = defineTool({
-  name: "cli_docs",
+  name: "xano_cli_docs",
   description: `Get documentation for the Xano CLI. Use this to understand how to use the CLI for local development, code sync, and XanoScript execution.
 
 ## Topics

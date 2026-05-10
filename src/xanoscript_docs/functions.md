@@ -81,7 +81,7 @@ Reference with path: `function.run "math/add" { ... }`
 
 ## Input Block
 
-For complete type and filter reference, use `xanoscript_docs({ topic: "types" })`.
+For complete type and filter reference, use `xano_xanoscript_docs({ topic: "types" })`.
 
 `?` after the **type** = nullable (`text?`), `?` after the **variable name** = not required (`age?`).
 
@@ -183,7 +183,7 @@ stack {
 
 ### Error Handling
 
-For complete error handling reference (preconditions, try-catch, throw, early return), use `xanoscript_docs({ topic: "syntax" })`.
+For complete error handling reference (preconditions, try-catch, throw, early return), use `xano_xanoscript_docs({ topic: "syntax" })`.
 
 ---
 
@@ -464,7 +464,7 @@ foreach ($items) {
 
 ## Related Topics
 
-Explore more with `xanoscript_docs({ topic: "<topic>" })`:
+Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:
 
 | Topic | Description |
 |-------|-------------|

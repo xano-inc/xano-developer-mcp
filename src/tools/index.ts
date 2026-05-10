@@ -188,11 +188,11 @@ export const toolDefinitions = [
  * the JSON Schema can never drift from the parser.
  */
 export const toolSpecs = {
-  validate_xanoscript: validateXanoscriptTool_spec,
-  xanoscript_docs: xanoscriptDocsTool_spec,
-  mcp_version: mcpVersionTool_spec,
-  meta_api_docs: metaApiDocsTool_spec,
-  cli_docs: cliDocsTool_spec,
+  xano_validate_xanoscript: validateXanoscriptTool_spec,
+  xano_xanoscript_docs: xanoscriptDocsTool_spec,
+  xano_version: mcpVersionTool_spec,
+  xano_meta_api_docs: metaApiDocsTool_spec,
+  xano_cli_docs: cliDocsTool_spec,
 } as const;
 
 // =============================================================================
@@ -225,28 +225,28 @@ export async function handleTool(
   args: Record<string, unknown>
 ): Promise<ToolResult> {
   switch (name) {
-    case "validate_xanoscript": {
+    case "xano_validate_xanoscript": {
       const parsed = parseWithSpec(validateXanoscriptTool_spec, args);
       if (!parsed.ok) return parsed.error;
       return validateXanoscriptTool(parsed.data as ValidateXanoscriptArgs);
     }
 
-    case "xanoscript_docs": {
+    case "xano_xanoscript_docs": {
       const parsed = parseWithSpec(xanoscriptDocsTool_spec, args);
       if (!parsed.ok) return parsed.error;
       return xanoscriptDocsTool(parsed.data as XanoscriptDocsArgs);
     }
 
-    case "mcp_version":
+    case "xano_version":
       return mcpVersionTool();
 
-    case "meta_api_docs": {
+    case "xano_meta_api_docs": {
       const parsed = parseWithSpec(metaApiDocsTool_spec, args);
       if (!parsed.ok) return parsed.error;
       return metaApiDocsTool(parsed.data as MetaApiDocsArgs);
     }
 
-    case "cli_docs": {
+    case "xano_cli_docs": {
       const parsed = parseWithSpec(cliDocsTool_spec, args);
       if (!parsed.ok) return parsed.error;
       return cliDocsTool(parsed.data as CliDocsArgs);

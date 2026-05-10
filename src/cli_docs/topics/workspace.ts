@@ -282,7 +282,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
         "Pull workspace: `xano workspace pull -d ./code`",
         "Navigate to organized folders: `api/{group}/`, `function/`, `table/`, etc.",
         "Edit .xs files in your IDE (files use snake_case naming)",
-        "Validate changes: Use xanoscript_docs MCP tool",
+        "Validate changes: Use xano_xanoscript_docs MCP tool",
         "Push changes: `xano workspace push -d ./code`",
         "Test in Xano dashboard or via API"
       ],

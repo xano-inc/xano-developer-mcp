@@ -10,11 +10,11 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/*.xs"
 
 | Topic | Command | Contents |
 |-------|---------|----------|
-| Cloud Storage | `xanoscript_docs({ topic: "integrations/cloud-storage" })` | AWS S3, Azure Blob, GCP Storage |
-| Search | `xanoscript_docs({ topic: "integrations/search" })` | Elasticsearch, OpenSearch, Algolia |
-| Redis | `xanoscript_docs({ topic: "integrations/redis" })` | Caching, rate limiting, queues |
-| External APIs | `xanoscript_docs({ topic: "integrations/external-apis" })` | api.request patterns |
-| Utilities | `xanoscript_docs({ topic: "integrations/utilities" })` | Local storage, security, email, zip, Lambda |
+| Cloud Storage | `xano_xanoscript_docs({ topic: "integrations/cloud-storage" })` | AWS S3, Azure Blob, GCP Storage |
+| Search | `xano_xanoscript_docs({ topic: "integrations/search" })` | Elasticsearch, OpenSearch, Algolia |
+| Redis | `xano_xanoscript_docs({ topic: "integrations/redis" })` | Caching, rate limiting, queues |
+| External APIs | `xano_xanoscript_docs({ topic: "integrations/external-apis" })` | api.request patterns |
+| Utilities | `xano_xanoscript_docs({ topic: "integrations/utilities" })` | Local storage, security, email, zip, Lambda |
 
 ---
 

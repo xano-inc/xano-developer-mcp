@@ -421,7 +421,7 @@ input {
 
 ## Validation with Preconditions
 
-For complex validation beyond filters, use preconditions. For complete error handling reference, use `xanoscript_docs({ topic: "syntax" })`.
+For complex validation beyond filters, use preconditions. For complete error handling reference, use `xano_xanoscript_docs({ topic: "syntax" })`.
 
 ```xs
 precondition ($input.start_date < $input.end_date) {
@@ -442,7 +442,7 @@ precondition ($input.start_date < $input.end_date) {
 
 ## Related Topics
 
-Explore more with `xanoscript_docs({ topic: "<topic>" })`:
+Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:
 
 | Topic | Description |
 |-------|-------------|

@@ -129,7 +129,7 @@ describe("meta_api_docs/index", () => {
 
   describe("metaApiDocsToolDefinition", () => {
     it("should have required tool properties", () => {
-      expect(metaApiDocsToolDefinition).toHaveProperty("name", "meta_api_docs");
+      expect(metaApiDocsToolDefinition).toHaveProperty("name", "xano_meta_api_docs");
       expect(metaApiDocsToolDefinition).toHaveProperty("description");
       expect(metaApiDocsToolDefinition).toHaveProperty("inputSchema");
     });

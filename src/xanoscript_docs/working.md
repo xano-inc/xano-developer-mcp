@@ -4,7 +4,7 @@ applyTo: "**/*.xs"
 
 # XanoScript Working Reference
 
-> Complete reference for common XanoScript development. Call `xanoscript_docs({ topic: "<topic>" })` for specialized topics.
+> Complete reference for common XanoScript development. Call `xano_xanoscript_docs({ topic: "<topic>" })` for specialized topics.
 
 ## Quick Reference
 
@@ -380,7 +380,7 @@ function.run "send_notification" {
 }
 ```
 
-> For async patterns, recursion, and advanced function features: `xanoscript_docs({ topic: "functions" })`
+> For async patterns, recursion, and advanced function features: `xano_xanoscript_docs({ topic: "functions" })`
 
 ---
 
@@ -475,7 +475,7 @@ db.transaction {
 }
 ```
 
-> For bulk operations, direct SQL, vector search, and advanced queries: `xanoscript_docs({ topic: "database" })`
+> For bulk operations, direct SQL, vector search, and advanced queries: `xano_xanoscript_docs({ topic: "database" })`
 
 ---
 
@@ -555,7 +555,7 @@ query "users/{user_id}" verb=DELETE {
 }
 ```
 
-> For API groups, rate limiting, file uploads, and custom headers: `xanoscript_docs({ topic: "apis" })`
+> For API groups, rate limiting, file uploads, and custom headers: `xano_xanoscript_docs({ topic: "apis" })`
 
 ---
 

@@ -140,7 +140,7 @@ query "products" verb=GET {
 
 ## Input Block
 
-> **Input block rules:** Empty and single-input blocks can be one-liners. Multiple inputs must be on separate lines. For complete type reference, validation filters, and schema definitions, see `xanoscript_docs({ topic: "types" })`.
+> **Input block rules:** Empty and single-input blocks can be one-liners. Multiple inputs must be on separate lines. For complete type reference, validation filters, and schema definitions, see `xano_xanoscript_docs({ topic: "types" })`.
 
 ```xs
 // OK - empty or single input as one-liner
@@ -430,7 +430,7 @@ stack {
 
 ## Error Handling
 
-> **Error types:** Use `inputerror` (400), `accessdenied` (403), `notfound` (404), or `standard` (500). For complete error handling patterns including `precondition`, `try_catch`, and `throw`, see `xanoscript_docs({ topic: "syntax" })`.
+> **Error types:** Use `inputerror` (400), `accessdenied` (403), `notfound` (404), or `standard` (500). For complete error handling patterns including `precondition`, `try_catch`, and `throw`, see `xano_xanoscript_docs({ topic: "syntax" })`.
 
 ---
 

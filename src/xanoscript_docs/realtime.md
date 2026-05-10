@@ -261,7 +261,7 @@ api.realtime_event {
 
 ## Realtime Triggers
 
-Handle events from connected clients using `realtime_trigger`. For complete trigger syntax, input schemas, and configuration options, see `xanoscript_docs({ topic: "triggers" })`.
+Handle events from connected clients using `realtime_trigger`. For complete trigger syntax, input schemas, and configuration options, see `xano_xanoscript_docs({ topic: "triggers" })`.
 
 ---
 
@@ -286,7 +286,7 @@ api.realtime_event {
 
 Clients subscribe to channels client-side. Server controls what events to send. Validate channel access with preconditions before broadcasting.
 
-> See `xanoscript_docs({ topic: "security" })` for authorization patterns.
+> See `xano_xanoscript_docs({ topic: "security" })` for authorization patterns.
 
 ---
 

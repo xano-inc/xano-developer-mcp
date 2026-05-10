@@ -189,7 +189,7 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
 const topicEnumValues = getTopicNames() as [string, ...string[]];
 
 export const xanoscriptDocsTool_spec = defineTool({
-  name: "xanoscript_docs",
+  name: "xano_xanoscript_docs",
   description:
     "Get XanoScript programming language documentation for AI code generation. " +
     "Call without parameters for overview (README). " +

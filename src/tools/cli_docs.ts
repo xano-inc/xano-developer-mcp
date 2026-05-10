@@ -76,7 +76,7 @@ export function cliDocsTool(args: CliDocsArgs): ToolResult {
   if (!args?.topic) {
     return {
       success: false,
-      error: "Error: 'topic' parameter is required. Use cli_docs with topic='start' for overview.",
+      error: "Error: 'topic' parameter is required. Use xano_cli_docs with topic='start' for overview.",
     };
   }
 

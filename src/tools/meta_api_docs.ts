@@ -77,7 +77,7 @@ export function metaApiDocsTool(args: MetaApiDocsArgs): ToolResult {
   if (!args?.topic) {
     return {
       success: false,
-      error: "Error: 'topic' parameter is required. Use meta_api_docs with topic='start' for overview.",
+      error: "Error: 'topic' parameter is required. Use xano_meta_api_docs with topic='start' for overview.",
     };
   }
 

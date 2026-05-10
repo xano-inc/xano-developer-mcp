@@ -20,20 +20,20 @@ beforeAll(() => {
 
 describe("handleTool", () => {
   it("should handle xanoscript_docs tool", async () => {
-    const result = await handleTool("xanoscript_docs", {});
+    const result = await handleTool("xano_xanoscript_docs", {});
     expect(result.success).toBe(true);
     expect(result.data).toBeDefined();
   });
 
   it("should handle xanoscript_docs with topic arg", async () => {
-    const result = await handleTool("xanoscript_docs", { topic: "syntax" });
+    const result = await handleTool("xano_xanoscript_docs", { topic: "syntax" });
     expect(result.success).toBe(true);
     expect(typeof result.data).toBe("string");
     expect(result.data).toContain("Documentation version:");
   });
 
   it("should handle xanoscript_docs with file_path and return multi-content", async () => {
-    const result = await handleTool("xanoscript_docs", { file_path: "api/users/create.xs" });
+    const result = await handleTool("xano_xanoscript_docs", { file_path: "api/users/create.xs" });
     expect(result.success).toBe(true);
     expect(Array.isArray(result.data)).toBe(true);
     const data = result.data as string[];
@@ -42,50 +42,50 @@ describe("handleTool", () => {
   });
 
   it("should handle xanoscript_docs with tier (regression: was silently dropped)", async () => {
-    const result = await handleTool("xanoscript_docs", { tier: "survival" });
+    const result = await handleTool("xano_xanoscript_docs", { tier: "survival" });
     expect(result.success).toBe(true);
     expect(result.structuredContent).toMatchObject({ tier: "survival" });
   });
 
   it("should handle validate_xanoscript tool and return a ToolResult", async () => {
-    const result = await handleTool("validate_xanoscript", { code: "var $x:int = 1" });
+    const result = await handleTool("xano_validate_xanoscript", { code: "var $x:int = 1" });
     expect(result).toHaveProperty("success");
     expect(typeof result.success).toBe("boolean");
     expect(result.data ?? result.error).toBeDefined();
   });
 
   it("should handle validate_xanoscript with missing input", async () => {
-    const result = await handleTool("validate_xanoscript", {});
+    const result = await handleTool("xano_validate_xanoscript", {});
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
   });
 
   it("should handle mcp_version tool", async () => {
-    const result = await handleTool("mcp_version", {});
+    const result = await handleTool("xano_version", {});
     expect(result.success).toBe(true);
     expect(result.data).toBeDefined();
   });
 
   it("should handle meta_api_docs tool with topic", async () => {
-    const result = await handleTool("meta_api_docs", { topic: "start" });
+    const result = await handleTool("xano_meta_api_docs", { topic: "start" });
     expect(result.success).toBe(true);
     expect(result.data).toBeDefined();
   });
 
   it("should handle meta_api_docs tool without topic", async () => {
-    const result = await handleTool("meta_api_docs", {});
+    const result = await handleTool("xano_meta_api_docs", {});
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
   });
 
   it("should handle cli_docs tool with topic", async () => {
-    const result = await handleTool("cli_docs", { topic: "start" });
+    const result = await handleTool("xano_cli_docs", { topic: "start" });
     expect(result.success).toBe(true);
     expect(result.data).toBeDefined();
   });
 
   it("should handle cli_docs tool without topic", async () => {
-    const result = await handleTool("cli_docs", {});
+    const result = await handleTool("xano_cli_docs", {});
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
   });
@@ -97,19 +97,19 @@ describe("handleTool", () => {
   });
 
   it("should return validation error for wrong argument types", async () => {
-    const result = await handleTool("xanoscript_docs", { mode: 123 });
+    const result = await handleTool("xano_xanoscript_docs", { mode: 123 });
     expect(result.success).toBe(false);
     expect(result.error).toContain("Invalid arguments");
   });
 
   it("should return validation error for invalid enum value", async () => {
-    const result = await handleTool("xanoscript_docs", { mode: "invalid_mode" });
+    const result = await handleTool("xano_xanoscript_docs", { mode: "invalid_mode" });
     expect(result.success).toBe(false);
     expect(result.error).toContain("Invalid arguments");
   });
 
   it("should return validation error when meta_api_docs topic is wrong type", async () => {
-    const result = await handleTool("meta_api_docs", { topic: 123 });
+    const result = await handleTool("xano_meta_api_docs", { topic: 123 });
     expect(result.success).toBe(false);
     expect(result.error).toContain("Invalid arguments");
   });
@@ -183,11 +183,11 @@ describe("toolDefinitions", () => {
 
   it("should include expected tool names", async () => {
     const names = toolDefinitions.map((t) => t.name);
-    expect(names).toContain("validate_xanoscript");
-    expect(names).toContain("xanoscript_docs");
-    expect(names).toContain("mcp_version");
-    expect(names).toContain("meta_api_docs");
-    expect(names).toContain("cli_docs");
+    expect(names).toContain("xano_validate_xanoscript");
+    expect(names).toContain("xano_xanoscript_docs");
+    expect(names).toContain("xano_version");
+    expect(names).toContain("xano_meta_api_docs");
+    expect(names).toContain("xano_cli_docs");
   });
 
   it("should have annotations on all tools", async () => {

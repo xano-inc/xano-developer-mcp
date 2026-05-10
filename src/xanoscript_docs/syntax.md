@@ -25,9 +25,9 @@ Complete reference for XanoScript expressions, operators, and core filters. For 
 ### Extended Filter Sub-Topics
 
 For detailed references on specific filter categories, use:
-- `xanoscript_docs({ topic: "syntax/string-filters" })` — String filters, regex, encoding, security filters, text functions
-- `xanoscript_docs({ topic: "syntax/array-filters" })` — Array filters, functional operations, array functions
-- `xanoscript_docs({ topic: "syntax/functions" })` — Math filters/functions, object functions, bitwise operations
+- `xano_xanoscript_docs({ topic: "syntax/string-filters" })` — String filters, regex, encoding, security filters, text functions
+- `xano_xanoscript_docs({ topic: "syntax/array-filters" })` — Array filters, functional operations, array functions
+- `xano_xanoscript_docs({ topic: "syntax/functions" })` — Math filters/functions, object functions, bitwise operations
 
 ## CRITICAL: Filters Are Type-Specific
 
@@ -85,7 +85,7 @@ Working with...
 
 ### Variable Access Prefixes
 
-> **Full reference:** See `xanoscript_docs({ topic: "essentials" })` for detailed variable access rules, reserved variables, and type names.
+> **Full reference:** See `xano_xanoscript_docs({ topic: "essentials" })` for detailed variable access rules, reserved variables, and type names.
 
 | Prefix | Applies to | Shorthand? |
 |--------|-----------|------------|
@@ -256,7 +256,7 @@ $db.post.date >=? $input.start_date
 
 ## Type Filters
 
-> **Full reference:** For input types and validation, see `xanoscript_docs({ topic: "types" })`.
+> **Full reference:** For input types and validation, see `xano_xanoscript_docs({ topic: "types" })`.
 
 | Filter | Example | Result |
 |--------|---------|--------|
@@ -321,7 +321,7 @@ $ts|timestamp_day_of_week    // Day (0=Sunday)
 
 ## DB Query Filters
 
-> **Full reference:** For complete database operations, see `xanoscript_docs({ topic: "database" })`.
+> **Full reference:** For complete database operations, see `xano_xanoscript_docs({ topic: "database" })`.
 
 Used in `db.query` where clauses:
 
@@ -378,7 +378,7 @@ $db.created_at|timestamp_epoch_ms            // Milliseconds since epoch
 
 ### Vector Operations (AI/ML)
 
-> **Full reference:** For AI agents and embeddings, see `xanoscript_docs({ topic: "agents" })`.
+> **Full reference:** For AI agents and embeddings, see `xano_xanoscript_docs({ topic: "agents" })`.
 
 ```xs
 $db.embedding|l1_distance_manhattan:$input.vector    // L1/Manhattan distance
@@ -393,7 +393,7 @@ $db.boundary|covers:$input.point                     // Polygon covers point
 
 ### Preconditions
 
-Validate conditions and throw typed errors. See `xanoscript_docs({ topic: "essentials" })` for the error types reference table.
+Validate conditions and throw typed errors. See `xano_xanoscript_docs({ topic: "essentials" })` for the error types reference table.
 
 ```xs
 precondition ($input.amount > 0) {
@@ -494,7 +494,7 @@ var $api_key { value = $env.MY_API_KEY }
 
 ## Related Topics
 
-Explore more with `xanoscript_docs({ topic: "<topic>" })`:
+Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:
 
 | Topic | Description |
 |-------|-------------|

@@ -554,7 +554,7 @@ function countWarnings(
 // =============================================================================
 
 export const validateXanoscriptTool_spec = defineTool({
-  name: "validate_xanoscript",
+  name: "xano_validate_xanoscript",
   description:
     "Validate XanoScript code for syntax errors. Supports multiple input methods:\n" +
     "- code: Raw XanoScript code as a string\n" +
