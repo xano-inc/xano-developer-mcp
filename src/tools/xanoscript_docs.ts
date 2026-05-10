@@ -8,6 +8,7 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { z } from "zod";
 import {
   readXanoscriptDocsV2,
   readXanoscriptDocsStructured,
@@ -17,6 +18,7 @@ import {
   type XanoscriptDocsArgs,
   type TopicDoc,
 } from "../xanoscript.js";
+import { defineTool } from "./define_tool.js";
 import type { ToolResult } from "./types.js";
 
 // =============================================================================
@@ -184,7 +186,9 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
 // MCP Tool Definition
 // =============================================================================
 
-export const xanoscriptDocsToolDefinition = {
+const topicEnumValues = getTopicNames() as [string, ...string[]];
+
+export const xanoscriptDocsTool_spec = defineTool({
   name: "xanoscript_docs",
   description:
     "Get XanoScript programming language documentation for AI code generation. " +
@@ -200,89 +204,87 @@ export const xanoscriptDocsToolDefinition = {
     idempotentHint: true,
     openWorldHint: false,
   },
-  inputSchema: {
-    type: "object",
-    properties: {
-      topic: {
-        type: "string",
-        enum: getTopicNames(),
-        description:
-          "Documentation topic to retrieve. Call without any parameters to get the README overview. " +
+  inputShape: {
+    topic: z
+      .enum(topicEnumValues)
+      .optional()
+      .describe(
+        "Documentation topic to retrieve. Call without any parameters to get the README overview. " +
           "Example: topic='syntax' for language syntax, topic='database' for database operations, topic='types' for type system.\n\n" +
-          "Available topics:\n" + getTopicDescriptions(),
-      },
-      file_path: {
-        type: "string",
-        description:
-          "File path being edited. Returns all relevant docs automatically based on the file type and location. " +
+          "Available topics:\n" +
+          getTopicDescriptions()
+      ),
+    file_path: z
+      .string()
+      .optional()
+      .describe(
+        "File path being edited. Returns all relevant docs automatically based on the file type and location. " +
           "Uses applyTo pattern matching to select applicable topics. " +
           "Example: 'api/users/create.xs' returns API, database, and syntax docs. " +
-          "'function/format.xs' returns function and syntax docs.",
-      },
-      mode: {
-        type: "string",
-        enum: ["full", "quick_reference", "index"],
-        description:
-          "'full' = complete documentation with explanations and examples. " +
+          "'function/format.xs' returns function and syntax docs."
+      ),
+    mode: z
+      .enum(["full", "quick_reference", "index"])
+      .optional()
+      .describe(
+        "'full' = complete documentation with explanations and examples. " +
           "'quick_reference' = compact reference with just syntax patterns and signatures. " +
           "'index' = compact topic listing with descriptions and byte sizes (~1KB). " +
           "Use 'index' to discover available topics before loading them. " +
           "Use 'quick_reference' to save context window space when you just need a reminder. " +
-          "Default: 'full' for topic mode, 'quick_reference' for file_path mode.",
-      },
-      tier: {
-        type: "string",
-        enum: ["survival", "working"],
-        description:
-          "Pre-packaged documentation tier for context-limited models. " +
+          "Default: 'full' for topic mode, 'quick_reference' for file_path mode."
+      ),
+    tier: z
+      .enum(["survival", "working"])
+      .optional()
+      .describe(
+        "Pre-packaged documentation tier for context-limited models. " +
           "'survival' (~3KB, ~800 tokens): minimum syntax to write valid XanoScript. " +
           "'working' (~12KB, ~3500 tokens): complete reference for common tasks. " +
           "Overrides topic/file_path/mode when set. " +
-          "Use 'survival' for models with <16K context, 'working' for 16-64K context.",
-      },
-      max_tokens: {
-        type: "number",
-        description:
-          "Maximum estimated token budget for documentation. " +
+          "Use 'survival' for models with <16K context, 'working' for 16-64K context."
+      ),
+    max_tokens: z
+      .number()
+      .optional()
+      .describe(
+        "Maximum estimated token budget for documentation. " +
           "When used with file_path, loads topics in priority order until budget is reached. " +
           "Helps prevent context overflow for small-window models. " +
-          "Estimate: 1KB of docs ≈ 250 tokens.",
-      },
-      exclude_topics: {
-        type: "array",
-        items: { type: "string" },
-        description:
-          "List of topic names to exclude from file_path results. " +
+          "Estimate: 1KB of docs ≈ 250 tokens."
+      ),
+    exclude_topics: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "List of topic names to exclude from file_path results. " +
           "Use this to skip topics you've already loaded (e.g., exclude_topics: ['syntax', 'essentials']). " +
-          "Only applies when using file_path parameter.",
-      },
-    },
-    required: [],
+          "Only applies when using file_path parameter."
+      ),
   },
-  outputSchema: {
-    type: "object",
-    properties: {
-      documentation: {
-        type: "string",
-        description: "The documentation content (topic or README mode).",
-      },
-      file_path: {
-        type: "string",
-        description: "The file path that was matched (file_path mode only).",
-      },
-      mode: {
-        type: "string",
-        description: "The documentation mode used.",
-      },
-      version: {
-        type: "string",
-        description: "The XanoScript documentation version.",
-      },
-      topics: {
-        type: "array",
-        items: { type: "string" },
-        description: "List of matched topic names (file_path mode only).",
-      },
-    },
+  outputShape: {
+    documentation: z
+      .string()
+      .optional()
+      .describe("The documentation content (topic or README mode)."),
+    file_path: z
+      .string()
+      .optional()
+      .describe("The file path that was matched (file_path mode only)."),
+    mode: z.string().optional().describe("The documentation mode used."),
+    tier: z
+      .string()
+      .optional()
+      .describe("The pre-packaged tier used, if any."),
+    version: z
+      .string()
+      .optional()
+      .describe("The XanoScript documentation version."),
+    topics: z
+      .array(z.string())
+      .optional()
+      .describe("List of matched topic names (file_path mode only)."),
   },
-};
+});
+
+export const xanoscriptDocsToolDefinition = xanoscriptDocsTool_spec.definition;

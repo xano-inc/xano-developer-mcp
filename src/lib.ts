@@ -123,6 +123,7 @@ export {
 
 export {
   toolDefinitions,
+  toolSpecs,
   handleTool,
   validateXanoscriptToolDefinition,
   xanoscriptDocsToolDefinition,
@@ -130,3 +131,10 @@ export {
   metaApiDocsToolDefinition,
   cliDocsToolDefinition,
 } from "./tools/index.js";
+
+export type {
+  BuiltTool,
+  ToolDefinition,
+  ToolSpec,
+  ToolAnnotations,
+} from "./tools/define_tool.js";

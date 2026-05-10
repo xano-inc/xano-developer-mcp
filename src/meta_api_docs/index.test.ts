@@ -135,7 +135,11 @@ describe("meta_api_docs/index", () => {
     });
 
     it("should have valid inputSchema", () => {
-      const schema = metaApiDocsToolDefinition.inputSchema;
+      const schema = metaApiDocsToolDefinition.inputSchema as {
+        type: string;
+        properties: Record<string, unknown>;
+        required?: string[];
+      };
       expect(schema.type).toBe("object");
       expect(schema.properties).toHaveProperty("topic");
       expect(schema.properties).toHaveProperty("detail_level");
@@ -144,8 +148,10 @@ describe("meta_api_docs/index", () => {
     });
 
     it("should include all topic names in enum", () => {
-      const topicEnum = metaApiDocsToolDefinition.inputSchema.properties.topic.enum;
-      expect(topicEnum).toEqual(getTopicNames());
+      const schema = metaApiDocsToolDefinition.inputSchema as {
+        properties: { topic: { enum: string[] } };
+      };
+      expect(schema.properties.topic.enum).toEqual(getTopicNames());
     });
   });
 });

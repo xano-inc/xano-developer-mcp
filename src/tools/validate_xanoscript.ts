@@ -16,6 +16,8 @@ import { getSchemeFromContent } from "@xano/xanoscript-language-server/utils.js"
 import { readFileSync, existsSync, readdirSync } from "fs";
 import { join, resolve, basename } from "path";
 import { minimatch } from "minimatch";
+import { z } from "zod";
+import { defineTool } from "./define_tool.js";
 import type { ToolResult } from "./types.js";
 
 // =============================================================================
@@ -524,27 +526,35 @@ export function validateXanoscript(
 export function validateXanoscriptTool(args: ValidateXanoscriptArgs): ToolResult {
   const result = validateXanoscript(args);
   if (result.valid) {
+    const warnings = countWarnings(result);
     return {
       success: true,
       data: result.message,
-      structuredContent: { valid: true, message: result.message },
+      structuredContent: { valid: true, message: result.message, warnings },
     };
   }
   return { success: false, error: result.message };
+}
+
+function countWarnings(
+  result: ValidationResult | BatchValidationResult
+): number {
+  if ("errors" in result) {
+    return result.errors.filter((e) => e.severity === SEVERITY.WARNING).length;
+  }
+  return result.results.reduce(
+    (sum, r) =>
+      sum + r.errors.filter((e) => e.severity === SEVERITY.WARNING).length,
+    0
+  );
 }
 
 // =============================================================================
 // MCP Tool Definition
 // =============================================================================
 
-export const validateXanoscriptToolDefinition = {
+export const validateXanoscriptTool_spec = defineTool({
   name: "validate_xanoscript",
-  annotations: {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: true,
-    openWorldHint: false,
-  },
   description:
     "Validate XanoScript code for syntax errors. Supports multiple input methods:\n" +
     "- code: Raw XanoScript code as a string\n" +
@@ -553,59 +563,67 @@ export const validateXanoscriptToolDefinition = {
     "- directory: Validate all .xs files in a directory\n\n" +
     "Returns errors with line/column positions and helpful suggestions for common mistakes. " +
     "The language server auto-detects the object type from the code syntax.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      code: {
-        type: "string",
-        description:
-          "The XanoScript code to validate as a string. Use file_path instead if the code contains special characters that are hard to escape. " +
-          "Example: \"var $name:text = 'hello'\\nreturn $name\"",
-      },
-      file_path: {
-        type: "string",
-        description:
-          "Path to a single XanoScript file to validate. Easier than passing code directly - avoids escaping issues. " +
-          "Example: \"function/format.xs\"",
-      },
-      file_paths: {
-        type: "array",
-        items: { type: "string" },
-        description:
-          "Array of file paths for batch validation. Returns a summary with per-file results. " +
-          "Example: [\"api/users/get.xs\", \"api/users/create.xs\", \"function/format.xs\"]",
-      },
-      directory: {
-        type: "string",
-        description:
-          "Directory path to validate. Validates all .xs files recursively. Use with 'pattern' to filter specific subdirectories or files. " +
-          "Example: \"api/users\"",
-      },
-      pattern: {
-        type: "string",
-        description:
-          "Glob pattern to filter files when using 'directory' (default: \"**/*.xs\"). " +
-          "Examples: \"api/**/*.xs\" to match only API files, \"**/create.xs\" to match all create files.",
-      },
-    },
-    required: [],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
   },
-  outputSchema: {
-    type: "object",
-    properties: {
-      valid: {
-        type: "boolean",
-        description: "Whether the code passed validation without errors.",
-      },
-      message: {
-        type: "string",
-        description:
-          "Human-readable validation summary with error details if any.",
-      },
-    },
-    required: ["valid", "message"],
+  inputShape: {
+    code: z
+      .string()
+      .optional()
+      .describe(
+        "The XanoScript code to validate as a string. Use file_path instead if the code contains special characters that are hard to escape. " +
+          "Example: \"var $name:text = 'hello'\\nreturn $name\""
+      ),
+    file_path: z
+      .string()
+      .optional()
+      .describe(
+        "Path to a single XanoScript file to validate. Easier than passing code directly - avoids escaping issues. " +
+          'Example: "function/format.xs"'
+      ),
+    file_paths: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "Array of file paths for batch validation. Returns a summary with per-file results. " +
+          'Example: ["api/users/get.xs", "api/users/create.xs", "function/format.xs"]'
+      ),
+    directory: z
+      .string()
+      .optional()
+      .describe(
+        "Directory path to validate. Validates all .xs files recursively. Use with 'pattern' to filter specific subdirectories or files. " +
+          'Example: "api/users"'
+      ),
+    pattern: z
+      .string()
+      .optional()
+      .describe(
+        'Glob pattern to filter files when using \'directory\' (default: "**/*.xs"). ' +
+          'Examples: "api/**/*.xs" to match only API files, "**/create.xs" to match all create files.'
+      ),
   },
-};
+  outputShape: {
+    valid: z
+      .boolean()
+      .describe("Whether the code passed validation without errors."),
+    message: z
+      .string()
+      .describe(
+        "Human-readable validation summary with error details if any."
+      ),
+    warnings: z
+      .number()
+      .optional()
+      .describe("Number of non-fatal warnings encountered, if any."),
+  },
+});
+
+export const validateXanoscriptToolDefinition =
+  validateXanoscriptTool_spec.definition;
 
 // =============================================================================
 // Utility Exports

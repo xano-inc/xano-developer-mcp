@@ -8,6 +8,7 @@
 import {
   handleMetaApiDocs as _handleMetaApiDocs,
   metaApiDocsToolDefinition,
+  metaApiDocsTool_spec,
   topics,
   getTopicNames,
   getTopicDescriptions,
@@ -21,6 +22,7 @@ import type { ToolResult } from "./types.js";
 
 export {
   metaApiDocsToolDefinition,
+  metaApiDocsTool_spec,
   topics as metaApiTopics,
   getTopicNames as getMetaApiTopicNames,
   getTopicDescriptions as getMetaApiTopicDescriptions,

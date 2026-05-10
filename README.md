@@ -286,8 +286,9 @@ console.log(`Using version ${version}`);
 | `metaApiDocs` | Get Meta API documentation |
 | `cliDocs` | Get CLI documentation |
 | `mcpVersion` | Get the package version |
-| `toolDefinitions` | MCP tool definitions (for building custom MCP servers) |
-| `handleTool` | Tool dispatcher function (for building custom MCP servers) |
+| `toolDefinitions` | MCP tool definitions (JSON Schema, for building custom MCP servers) |
+| `toolSpecs` | Tool specs with Zod input/output shapes (preferred for new code — works directly with `McpServer.registerTool`) |
+| `handleTool` | Async tool dispatcher (`Promise<ToolResult>`) for building custom MCP servers |
 
 ### TypeScript Support
 
@@ -795,6 +796,38 @@ describe("myFunction", () => {
   });
 });
 ```
+
+## Upgrading from 1.x to 2.0
+
+Version 2 modernizes the MCP server internals. The tools, MCP wire protocol, and
+the high-level standalone functions (`validateXanoscript`, `xanoscriptDocs`,
+`metaApiDocs`, `cliDocs`, `mcpVersion`) are unchanged — most users do not need
+to do anything beyond upgrading.
+
+**Breaking changes affect only library consumers using `handleTool` directly:**
+
+- `handleTool(name, args)` is now `async` and returns `Promise<ToolResult>` instead
+  of `ToolResult`. Add `await` at each call site.
+
+  ```ts
+  // 1.x
+  const result = handleTool("xanoscript_docs", { topic: "syntax" });
+
+  // 2.0
+  const result = await handleTool("xanoscript_docs", { topic: "syntax" });
+  ```
+
+**Notable fixes and additions in 2.0:**
+
+- `xanoscript_docs` now correctly accepts the documented `tier` and `max_tokens`
+  parameters — previously they were silently dropped before reaching the handler.
+- The server is built on the modern `McpServer` API with Zod-derived schemas, so
+  the JSON Schema published over the wire can no longer drift from the runtime
+  parser.
+- New `toolSpecs` export exposes each tool's Zod input/output shape — use it
+  when registering tools in a custom `McpServer`.
+- `validate_xanoscript` results now include a `warnings` count in
+  `structuredContent` on success.
 
 ## License
 

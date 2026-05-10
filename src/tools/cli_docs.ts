@@ -8,6 +8,7 @@
 import {
   handleCliDocs as _handleCliDocs,
   cliDocsToolDefinition,
+  cliDocsTool_spec,
   topics,
   getTopicNames,
   getTopicDescriptions,
@@ -21,6 +22,7 @@ import type { ToolResult } from "./types.js";
 
 export {
   cliDocsToolDefinition,
+  cliDocsTool_spec,
   topics as cliTopics,
   getTopicNames as getCliTopicNames,
   getTopicDescriptions as getCliTopicDescriptions,

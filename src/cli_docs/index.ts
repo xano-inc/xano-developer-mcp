@@ -5,8 +5,10 @@
  * the cli_docs tool handler for the MCP server.
  */
 
+import { z } from "zod";
 import type { TopicDoc, DetailLevel, CliDocsArgs } from "./types.js";
 import { formatDocumentation } from "./format.js";
+import { defineTool } from "../tools/define_tool.js";
 
 // Import all topic documentation
 import { authDoc } from "./topics/auth.js";
@@ -81,14 +83,8 @@ export function handleCliDocs(args: CliDocsArgs): string {
 /**
  * Tool definition for MCP server
  */
-export const cliDocsToolDefinition = {
+export const cliDocsTool_spec = defineTool({
   name: "cli_docs",
-  annotations: {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: true,
-    openWorldHint: false,
-  },
   description: `Get documentation for the Xano CLI. Use this to understand how to use the CLI for local development, code sync, and XanoScript execution.
 
 ## Topics
@@ -99,39 +95,35 @@ ${getTopicDescriptions()}
 - Use "auth" or "profile" to understand authentication options
 - Use "integration" to understand when to use CLI vs Meta API
 - Use specific topics for command reference (workspace, sandbox, branch, release, tenant, function, etc.)`,
-
-  inputSchema: {
-    type: "object",
-    properties: {
-      topic: {
-        type: "string",
-        enum: getTopicNames(),
-        description:
-          "Documentation topic to retrieve. Start with 'start' for installation and setup. " +
-          "Example: topic='function' for function management commands, topic='sandbox' for the personal dev environment.",
-      },
-      detail_level: {
-        type: "string",
-        enum: ["overview", "detailed", "examples"],
-        default: "detailed",
-        description:
-          "Level of detail to return. " +
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  inputShape: {
+    topic: z
+      .enum(getTopicNames() as [string, ...string[]])
+      .describe(
+        "Documentation topic to retrieve. Start with 'start' for installation and setup. " +
+          "Example: topic='function' for function management commands, topic='sandbox' for the personal dev environment."
+      ),
+    detail_level: z
+      .enum(["overview", "detailed", "examples"])
+      .optional()
+      .describe(
+        "Level of detail to return. " +
           "'overview' = brief summary of commands and their purpose. " +
           "'detailed' = full command reference with flags and arguments. " +
           "'examples' = includes usage examples for each command. " +
-          "Default: 'detailed'.",
-      },
-    },
-    required: ["topic"],
+          "Default: 'detailed'."
+      ),
   },
-  outputSchema: {
-    type: "object",
-    properties: {
-      documentation: {
-        type: "string",
-        description: "The CLI documentation content for the requested topic.",
-      },
-    },
-    required: ["documentation"],
+  outputShape: {
+    documentation: z
+      .string()
+      .describe("The CLI documentation content for the requested topic."),
   },
-};
+});
+
+export const cliDocsToolDefinition = cliDocsTool_spec.definition;

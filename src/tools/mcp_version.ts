@@ -8,6 +8,8 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { z } from "zod";
+import { defineTool } from "./define_tool.js";
 import type { ToolResult } from "./types.js";
 
 // =============================================================================
@@ -104,30 +106,23 @@ export function mcpVersionTool(): ToolResult {
 // MCP Tool Definition
 // =============================================================================
 
-export const mcpVersionToolDefinition = {
+export const mcpVersionTool_spec = defineTool({
   name: "mcp_version",
+  description:
+    "Get the current version of the Xano Developer MCP server. " +
+    "Returns the version string from package.json.",
   annotations: {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
     openWorldHint: false,
   },
-  description:
-    "Get the current version of the Xano Developer MCP server. " +
-    "Returns the version string from package.json.",
-  inputSchema: {
-    type: "object",
-    properties: {},
-    required: [],
+  inputShape: {},
+  outputShape: {
+    version: z
+      .string()
+      .describe("The semantic version string of the MCP server."),
   },
-  outputSchema: {
-    type: "object",
-    properties: {
-      version: {
-        type: "string",
-        description: "The semantic version string of the MCP server.",
-      },
-    },
-    required: ["version"],
-  },
-};
+});
+
+export const mcpVersionToolDefinition = mcpVersionTool_spec.definition;
