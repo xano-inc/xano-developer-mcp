@@ -833,6 +833,23 @@ const result = handleTool("xanoscript_docs", { topic: "syntax" });
 const result = await handleTool("xano_xanoscript_docs", { topic: "syntax" });
 ```
 
+The individual `*ToolDefinition` exports (`validateXanoscriptToolDefinition`,
+`xanoscriptDocsToolDefinition`, `mcpVersionToolDefinition`,
+`metaApiDocsToolDefinition`, `cliDocsToolDefinition`) were removed in favor
+of a single source of truth. Use `toolSpecs[name].definition` instead:
+
+```ts
+// 1.x
+import { validateXanoscriptToolDefinition } from "@xano/developer-mcp";
+
+// 2.0
+import { toolSpecs } from "@xano/developer-mcp";
+const validateXanoscriptToolDefinition =
+  toolSpecs.xano_validate_xanoscript.definition;
+```
+
+A new `ToolName` type export enumerates every registered tool name.
+
 ### Notable fixes and additions
 
 - `xano_xanoscript_docs` now correctly accepts the documented `tier` and
