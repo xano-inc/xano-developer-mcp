@@ -56,17 +56,32 @@ export function getXanoscriptDocsPath(): string {
     join(__dirname, "..", "..", "xanoscript_docs"), // fallback
   ];
 
+  const errors: Array<{ path: string; code: string; message: string }> = [];
+
   for (const p of possiblePaths) {
     try {
       readFileSync(join(p, "version.json"));
       _docsPath = p;
       return p;
-    } catch {
-      continue;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException)?.code ?? "UNKNOWN";
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push({ path: p, code, message });
+      // ENOENT means "not this candidate, try next." Anything else is unusual
+      // (EACCES, malformed version.json) and worth surfacing.
+      if (code !== "ENOENT") {
+        console.error(
+          `[xanoscript_docs] Unexpected error reading ${p}/version.json: ${code} — ${message}`
+        );
+      }
     }
   }
 
-  // Default fallback
+  console.error(
+    "[xanoscript_docs] Could not locate version.json in any candidate path. " +
+      "Falling back to dist/xanoscript_docs. Candidates tried:\n" +
+      errors.map((e) => `  - ${e.path} (${e.code})`).join("\n")
+  );
   _docsPath = join(__dirname, "..", "xanoscript_docs");
   return _docsPath;
 }
@@ -188,7 +203,7 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
 
 const topicEnumValues = getTopicNames() as [string, ...string[]];
 
-export const xanoscriptDocsTool_spec = defineTool({
+export const xanoscriptDocsToolSpec = defineTool({
   name: "xano_xanoscript_docs",
   description:
     "Get XanoScript programming language documentation for AI code generation. " +
@@ -287,4 +302,3 @@ export const xanoscriptDocsTool_spec = defineTool({
   },
 });
 
-export const xanoscriptDocsToolDefinition = xanoscriptDocsTool_spec.definition;

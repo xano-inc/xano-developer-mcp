@@ -7,8 +7,7 @@
 
 import {
   handleCliDocs as _handleCliDocs,
-  cliDocsToolDefinition,
-  cliDocsTool_spec,
+  cliDocsToolSpec,
   topics,
   getTopicNames,
   getTopicDescriptions,
@@ -21,8 +20,7 @@ import type { ToolResult } from "./types.js";
 // =============================================================================
 
 export {
-  cliDocsToolDefinition,
-  cliDocsTool_spec,
+  cliDocsToolSpec,
   topics as cliTopics,
   getTopicNames as getCliTopicNames,
   getTopicDescriptions as getCliTopicDescriptions,
@@ -96,5 +94,3 @@ export function cliDocsTool(args: CliDocsArgs): ToolResult {
   }
 }
 
-// Re-export tool definition for MCP
-export { cliDocsToolDefinition as toolDefinition };

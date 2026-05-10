@@ -7,8 +7,7 @@
 
 import {
   handleMetaApiDocs as _handleMetaApiDocs,
-  metaApiDocsToolDefinition,
-  metaApiDocsTool_spec,
+  metaApiDocsToolSpec,
   topics,
   getTopicNames,
   getTopicDescriptions,
@@ -21,8 +20,7 @@ import type { ToolResult } from "./types.js";
 // =============================================================================
 
 export {
-  metaApiDocsToolDefinition,
-  metaApiDocsTool_spec,
+  metaApiDocsToolSpec,
   topics as metaApiTopics,
   getTopicNames as getMetaApiTopicNames,
   getTopicDescriptions as getMetaApiTopicDescriptions,
@@ -97,5 +95,3 @@ export function metaApiDocsTool(args: MetaApiDocsArgs): ToolResult {
   }
 }
 
-// Re-export tool definition for MCP
-export { metaApiDocsToolDefinition as toolDefinition };

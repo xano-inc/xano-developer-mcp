@@ -58,11 +58,22 @@ for (const spec of Object.values(toolSpecs)) {
       inputSchema: spec.inputShape,
       outputSchema: spec.outputShape,
     },
-    // The SDK has already parsed/validated args against inputShape, but handleTool
-    // re-parses defensively so it can be used directly from library code too.
+    // The SDK validates args against `inputShape` before invoking; handleTool
+    // re-parses defensively so it's also safe to call from library code.
+    // Any thrown error is converted into a structured ToolResult so the client
+    // sees a useful message instead of a transport-level failure.
     async (args: Record<string, unknown> | undefined) => {
-      const result = await handleTool(spec.name, args ?? {});
-      return toMcpResponse(result);
+      try {
+        const result = await handleTool(spec.name, args ?? {});
+        return toMcpResponse(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`[${spec.name}] handler threw:`, error);
+        return toMcpResponse({
+          success: false,
+          error: `Internal error in ${spec.name}: ${message}`,
+        });
+      }
     }
   );
 }
@@ -72,25 +83,38 @@ for (const spec of Object.values(toolSpecs)) {
 // =============================================================================
 
 for (const [key, config] of Object.entries(XANOSCRIPT_DOCS_V2)) {
+  const resourceUri = `xanoscript://docs/${key}`;
   server.registerResource(
     key,
-    `xanoscript://docs/${key}`,
+    resourceUri,
     {
       description: config.description,
       mimeType: "text/markdown",
     },
     async (uri) => {
-      const content = readFileSync(join(XANOSCRIPT_DOCS_PATH, config.file), "utf-8");
-      const version = getXanoscriptDocsVersion(XANOSCRIPT_DOCS_PATH);
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            mimeType: "text/markdown",
-            text: `${content}\n\n---\nDocumentation version: ${version}`,
-          },
-        ],
-      };
+      try {
+        const content = readFileSync(join(XANOSCRIPT_DOCS_PATH, config.file), "utf-8");
+        const version = getXanoscriptDocsVersion(XANOSCRIPT_DOCS_PATH);
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: "text/markdown",
+              text: `${content}\n\n---\nDocumentation version: ${version}`,
+            },
+          ],
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(
+          `[resource ${key}] Failed to read ${config.file} from ${XANOSCRIPT_DOCS_PATH}:`,
+          error
+        );
+        throw new Error(
+          `Failed to read XanoScript docs resource "${key}" (${uri.href}) ` +
+            `from ${join(XANOSCRIPT_DOCS_PATH, config.file)}: ${message}`
+        );
+      }
     }
   );
 }

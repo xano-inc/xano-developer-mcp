@@ -87,7 +87,7 @@ export function handleMetaApiDocs(args: MetaApiDocsArgs): string {
 /**
  * Tool definition for MCP server
  */
-export const metaApiDocsTool_spec = defineTool({
+export const metaApiDocsToolSpec = defineTool({
   name: "xano_meta_api_docs",
   description: `Get documentation for Xano's Meta API. Use this to understand how to programmatically manage Xano workspaces, databases, APIs, functions, agents, and more.
 
@@ -139,4 +139,3 @@ ${getTopicDescriptions()}
   },
 });
 
-export const metaApiDocsToolDefinition = metaApiDocsTool_spec.definition;

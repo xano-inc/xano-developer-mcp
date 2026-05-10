@@ -12,18 +12,27 @@ import { z } from "zod";
 export type ZodRawShape = Record<string, z.ZodTypeAny>;
 
 export interface ToolAnnotations {
-  readOnlyHint?: boolean;
-  destructiveHint?: boolean;
-  idempotentHint?: boolean;
-  openWorldHint?: boolean;
+  readonly readOnlyHint?: boolean;
+  readonly destructiveHint?: boolean;
+  readonly idempotentHint?: boolean;
+  readonly openWorldHint?: boolean;
 }
 
+/**
+ * Branded JSON Schema type. Anything emitted by `defineTool` is guaranteed
+ * to have passed through `z.toJSONSchema` and had wire-incompatible keys
+ * (`$schema`, `additionalProperties`) stripped.
+ */
+export type JsonSchema = Readonly<Record<string, unknown>> & {
+  readonly __jsonSchemaBrand: unique symbol;
+};
+
 export interface ToolDefinition {
-  name: string;
-  description: string;
-  annotations: ToolAnnotations;
-  inputSchema: Record<string, unknown>;
-  outputSchema: Record<string, unknown>;
+  readonly name: string;
+  readonly description: string;
+  readonly annotations: ToolAnnotations;
+  readonly inputSchema: JsonSchema;
+  readonly outputSchema: JsonSchema;
 }
 
 export interface ToolSpec<I extends ZodRawShape, O extends ZodRawShape> {
@@ -36,8 +45,20 @@ export interface ToolSpec<I extends ZodRawShape, O extends ZodRawShape> {
 
 export interface BuiltTool<I extends ZodRawShape, O extends ZodRawShape>
   extends ToolSpec<I, O> {
-  definition: ToolDefinition;
-  inputParser: z.ZodObject<I>;
+  readonly definition: ToolDefinition;
+  readonly inputParser: z.ZodObject<I>;
+}
+
+/**
+ * Strip keys that MCP clients/SDKs don't expect on tool schemas.
+ * - `$schema`: dialect URL added by zod 4 — not part of the MCP wire format.
+ * - `additionalProperties: false`: emitted by zod for `z.object`; we want
+ *   the wire schema to remain forward-compatible (extra keys ignored by the
+ *   parser anyway since `z.object` strips them).
+ */
+function sanitizeJsonSchema(schema: Record<string, unknown>): JsonSchema {
+  const { $schema: _$schema, additionalProperties: _ap, ...rest } = schema;
+  return rest as JsonSchema;
 }
 
 /**
@@ -54,8 +75,12 @@ export function defineTool<I extends ZodRawShape, O extends ZodRawShape>(
     name: spec.name,
     description: spec.description,
     annotations: spec.annotations,
-    inputSchema: z.toJSONSchema(inputParser) as Record<string, unknown>,
-    outputSchema: z.toJSONSchema(outputObj) as Record<string, unknown>,
+    inputSchema: sanitizeJsonSchema(
+      z.toJSONSchema(inputParser) as Record<string, unknown>
+    ),
+    outputSchema: sanitizeJsonSchema(
+      z.toJSONSchema(outputObj) as Record<string, unknown>
+    ),
   };
 
   return { ...spec, definition, inputParser };

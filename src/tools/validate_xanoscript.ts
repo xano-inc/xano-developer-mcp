@@ -24,18 +24,14 @@ import type { ToolResult } from "./types.js";
 // Types
 // =============================================================================
 
-export interface ValidateXanoscriptArgs {
-  /** The XanoScript code to validate (mutually exclusive with file_path/file_paths/directory) */
-  code?: string;
-  /** Path to a single XanoScript file to validate */
-  file_path?: string;
-  /** Array of file paths for batch validation */
-  file_paths?: string[];
-  /** Directory to validate (validates all .xs files recursively) */
-  directory?: string;
-  /** Glob pattern to filter files when using directory (default: "**\/*.xs") */
-  pattern?: string;
-}
+/**
+ * Arguments for `validateXanoscript`. Derived from the Zod input shape below
+ * (see `validateXanoscriptToolSpec`) so the runtime parser and the static
+ * type can never drift.
+ */
+export type ValidateXanoscriptArgs = z.infer<
+  typeof validateXanoscriptToolSpec.inputParser
+>;
 
 export const SEVERITY = {
   ERROR: 1,
@@ -553,7 +549,7 @@ function countWarnings(
 // MCP Tool Definition
 // =============================================================================
 
-export const validateXanoscriptTool_spec = defineTool({
+export const validateXanoscriptToolSpec = defineTool({
   name: "xano_validate_xanoscript",
   description:
     "Validate XanoScript code for syntax errors. Supports multiple input methods:\n" +
@@ -621,9 +617,6 @@ export const validateXanoscriptTool_spec = defineTool({
       .describe("Number of non-fatal warnings encountered, if any."),
   },
 });
-
-export const validateXanoscriptToolDefinition =
-  validateXanoscriptTool_spec.definition;
 
 // =============================================================================
 // Utility Exports

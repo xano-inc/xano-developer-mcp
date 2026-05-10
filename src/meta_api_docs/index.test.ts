@@ -4,8 +4,10 @@ import {
   getTopicNames,
   getTopicDescriptions,
   handleMetaApiDocs,
-  metaApiDocsToolDefinition,
+  metaApiDocsToolSpec,
 } from "./index.js";
+
+const metaApiDocsToolDefinition = metaApiDocsToolSpec.definition;
 
 describe("meta_api_docs/index", () => {
   describe("topics", () => {
@@ -127,15 +129,15 @@ describe("meta_api_docs/index", () => {
     });
   });
 
-  describe("metaApiDocsToolDefinition", () => {
+  describe("metaApiDocsToolSpec.definition", () => {
     it("should have required tool properties", () => {
-      expect(metaApiDocsToolDefinition).toHaveProperty("name", "xano_meta_api_docs");
-      expect(metaApiDocsToolDefinition).toHaveProperty("description");
-      expect(metaApiDocsToolDefinition).toHaveProperty("inputSchema");
+      expect(metaApiDocsToolSpec.definition).toHaveProperty("name", "xano_meta_api_docs");
+      expect(metaApiDocsToolSpec.definition).toHaveProperty("description");
+      expect(metaApiDocsToolSpec.definition).toHaveProperty("inputSchema");
     });
 
     it("should have valid inputSchema", () => {
-      const schema = metaApiDocsToolDefinition.inputSchema as {
+      const schema = metaApiDocsToolSpec.definition.inputSchema as unknown as {
         type: string;
         properties: Record<string, unknown>;
         required?: string[];
@@ -148,7 +150,7 @@ describe("meta_api_docs/index", () => {
     });
 
     it("should include all topic names in enum", () => {
-      const schema = metaApiDocsToolDefinition.inputSchema as {
+      const schema = metaApiDocsToolSpec.definition.inputSchema as unknown as {
         properties: { topic: { enum: string[] } };
       };
       expect(schema.properties.topic.enum).toEqual(getTopicNames());

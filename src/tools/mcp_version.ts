@@ -106,7 +106,7 @@ export function mcpVersionTool(): ToolResult {
 // MCP Tool Definition
 // =============================================================================
 
-export const mcpVersionTool_spec = defineTool({
+export const mcpVersionToolSpec = defineTool({
   name: "xano_version",
   description:
     "Get the current version of the Xano Developer MCP server. " +
@@ -125,4 +125,3 @@ export const mcpVersionTool_spec = defineTool({
   },
 });
 
-export const mcpVersionToolDefinition = mcpVersionTool_spec.definition;

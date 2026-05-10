@@ -100,18 +100,41 @@ describe("handleTool", () => {
     const result = await handleTool("xano_xanoscript_docs", { mode: 123 });
     expect(result.success).toBe(false);
     expect(result.error).toContain("Invalid arguments");
+    // Field name should appear so users can see what's wrong
+    expect(result.error).toContain("mode");
   });
 
   it("should return validation error for invalid enum value", async () => {
     const result = await handleTool("xano_xanoscript_docs", { mode: "invalid_mode" });
     expect(result.success).toBe(false);
     expect(result.error).toContain("Invalid arguments");
+    expect(result.error).toContain("mode");
   });
 
   it("should return validation error when meta_api_docs topic is wrong type", async () => {
     const result = await handleTool("xano_meta_api_docs", { topic: 123 });
     expect(result.success).toBe(false);
     expect(result.error).toContain("Invalid arguments");
+    expect(result.error).toContain("topic");
+  });
+});
+
+describe("validate_xanoscript warnings count", () => {
+  it("structuredContent.warnings is included on success", async () => {
+    // We don't bake a specific snippet's warning count into the test — the
+    // language server's warning rules change. The contract we *do* care about
+    // is that `warnings` is present on a successful validation result and is
+    // a number >= 0.
+    const result = await handleTool("xano_validate_xanoscript", {
+      code: "return 1",
+    });
+    if (result.success) {
+      expect(result.structuredContent).toBeDefined();
+      const sc = result.structuredContent as { warnings?: number; valid?: boolean };
+      expect(sc.valid).toBe(true);
+      expect(typeof sc.warnings).toBe("number");
+      expect(sc.warnings).toBeGreaterThanOrEqual(0);
+    }
   });
 });
 
