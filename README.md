@@ -286,8 +286,9 @@ console.log(`Using version ${version}`);
 | `metaApiDocs` | Get Meta API documentation |
 | `cliDocs` | Get CLI documentation |
 | `mcpVersion` | Get the package version |
-| `toolDefinitions` | MCP tool definitions (for building custom MCP servers) |
-| `handleTool` | Tool dispatcher function (for building custom MCP servers) |
+| `toolDefinitions` | MCP tool definitions (JSON Schema, for building custom MCP servers) |
+| `toolSpecs` | Tool specs with Zod input/output shapes (preferred for new code — works directly with `McpServer.registerTool`) |
+| `handleTool` | Async tool dispatcher (`Promise<ToolResult>`) for building custom MCP servers |
 
 ### TypeScript Support
 
@@ -322,7 +323,7 @@ import '@xano/developer-mcp/server';
 
 ## Available Tools
 
-### 1. `validate_xanoscript`
+### 1. `xano_validate_xanoscript`
 
 Validates XanoScript code for syntax errors. Supports multiple input methods. The language server auto-detects the object type from the code syntax.
 
@@ -340,24 +341,24 @@ Validates XanoScript code for syntax errors. Supports multiple input methods. Th
 **Examples:**
 ```
 // Validate code directly
-validate_xanoscript({ code: "var:result = 1 + 2" })
+xano_validate_xanoscript({ code: "var:result = 1 + 2" })
 
 // Validate a single file
-validate_xanoscript({ file_path: "function/utils/format.xs" })
+xano_validate_xanoscript({ file_path: "function/utils/format.xs" })
 
 // Validate multiple files
-validate_xanoscript({ file_paths: ["api/users/get.xs", "api/users/create.xs"] })
+xano_validate_xanoscript({ file_paths: ["api/users/get.xs", "api/users/create.xs"] })
 
 // Validate all .xs files in a directory
-validate_xanoscript({ directory: "api/users" })
+xano_validate_xanoscript({ directory: "api/users" })
 
 // Validate with a specific pattern
-validate_xanoscript({ directory: "src", pattern: "api/**/*.xs" })
+xano_validate_xanoscript({ directory: "src", pattern: "api/**/*.xs" })
 ```
 
 **Returns:** List of errors with line/column positions and helpful suggestions, or confirmation of validity.
 
-### 2. `xanoscript_docs`
+### 2. `xano_xanoscript_docs`
 
 Retrieves XanoScript programming language documentation with context-aware support.
 
@@ -415,37 +416,37 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 **Examples:**
 ```
 // Get overview
-xanoscript_docs()
+xano_xanoscript_docs()
 
 // Get survival kit for small context models (~800 tokens)
-xanoscript_docs({ tier: "survival" })
+xano_xanoscript_docs({ tier: "survival" })
 
 // Get working reference for medium context models (~3500 tokens)
-xanoscript_docs({ tier: "working" })
+xano_xanoscript_docs({ tier: "working" })
 
 // Get essentials (recommended first stop)
-xanoscript_docs({ topic: "essentials" })
+xano_xanoscript_docs({ topic: "essentials" })
 
 // Get specific topic
-xanoscript_docs({ topic: "functions" })
+xano_xanoscript_docs({ topic: "functions" })
 
 // Discover available topics with sizes
-xanoscript_docs({ mode: "index" })
+xano_xanoscript_docs({ mode: "index" })
 
 // Budget-aware: load docs up to token limit
-xanoscript_docs({ file_path: "api/users/create_post.xs", max_tokens: 2000 })
+xano_xanoscript_docs({ file_path: "api/users/create_post.xs", max_tokens: 2000 })
 
 // Context-aware: get all docs relevant to file being edited
-xanoscript_docs({ file_path: "api/users/create_post.xs" })
+xano_xanoscript_docs({ file_path: "api/users/create_post.xs" })
 
 // Context-aware with exclusions (skip already-loaded topics)
-xanoscript_docs({ file_path: "api/users/create_post.xs", exclude_topics: ["syntax", "essentials"] })
+xano_xanoscript_docs({ file_path: "api/users/create_post.xs", exclude_topics: ["syntax", "essentials"] })
 
 // Compact quick reference (uses less context)
-xanoscript_docs({ topic: "database", mode: "quick_reference" })
+xano_xanoscript_docs({ topic: "database", mode: "quick_reference" })
 ```
 
-### 3. `mcp_version`
+### 3. `xano_version`
 
 Get the current version of the Xano Developer MCP server.
 
@@ -455,10 +456,10 @@ Get the current version of the Xano Developer MCP server.
 
 **Example:**
 ```
-mcp_version()
+xano_version()
 ```
 
-### 4. `meta_api_docs`
+### 4. `xano_meta_api_docs`
 
 Get documentation for Xano's Meta API. Use this to understand how to programmatically manage Xano workspaces, databases, APIs, functions, agents, and more.
 
@@ -494,19 +495,19 @@ Get documentation for Xano's Meta API. Use this to understand how to programmati
 **Examples:**
 ```
 // Get overview of Meta API
-meta_api_docs({ topic: "start" })
+xano_meta_api_docs({ topic: "start" })
 
 // Get detailed table documentation
-meta_api_docs({ topic: "table", detail_level: "detailed" })
+xano_meta_api_docs({ topic: "table", detail_level: "detailed" })
 
 // Get examples without schemas (smaller context)
-meta_api_docs({ topic: "api", detail_level: "examples", include_schemas: false })
+xano_meta_api_docs({ topic: "api", detail_level: "examples", include_schemas: false })
 
 // Step-by-step workflow guides
-meta_api_docs({ topic: "workflows" })
+xano_meta_api_docs({ topic: "workflows" })
 ```
 
-### 5. `cli_docs`
+### 5. `xano_cli_docs`
 
 Get documentation for the Xano CLI. The CLI is **optional but recommended** for local development workflows. Not all users will have it installed.
 
@@ -544,16 +545,16 @@ Use this tool to understand CLI commands for local development, code synchroniza
 **Examples:**
 ```
 // Get CLI setup guide
-cli_docs({ topic: "start" })
+xano_cli_docs({ topic: "start" })
 
 // Learn when to use CLI vs Meta API
-cli_docs({ topic: "integration" })
+xano_cli_docs({ topic: "integration" })
 
 // Get workspace sync commands
-cli_docs({ topic: "workspace", detail_level: "detailed" })
+xano_cli_docs({ topic: "workspace", detail_level: "detailed" })
 
 // Profile management with examples
-cli_docs({ topic: "profile", detail_level: "examples" })
+xano_cli_docs({ topic: "profile", detail_level: "examples" })
 ```
 
 ## MCP Resources
@@ -688,22 +689,22 @@ MCP Protocol (JSON-RPC over stdio)
     ▼
 Xano Developer MCP Server
     │
-    ├─► validate_xanoscript → Parses code with XanoScript language server
+    ├─► xano_validate_xanoscript → Parses code with XanoScript language server
     │
-    ├─► xanoscript_docs → Context-aware docs from /xanoscript_docs/*.md
+    ├─► xano_xanoscript_docs → Context-aware docs from /xanoscript_docs/*.md
     │
-    ├─► meta_api_docs → Meta API documentation with detail levels
+    ├─► xano_meta_api_docs → Meta API documentation with detail levels
     │
-    ├─► cli_docs → CLI documentation for local development workflows
+    ├─► xano_cli_docs → CLI documentation for local development workflows
     │
-    ├─► mcp_version → Returns server version from package.json
+    ├─► xano_version → Returns server version from package.json
     │
     └─► MCP Resources → Direct access to XanoScript documentation
 ```
 
 ## Authentication
 
-The MCP server and library functions do not require authentication. However, when using the documented APIs (Meta API) to interact with actual Xano services, you will need appropriate Xano API credentials. See the `meta_api_docs` tool for authentication details.
+The MCP server and library functions do not require authentication. However, when using the documented APIs (Meta API) to interact with actual Xano services, you will need appropriate Xano API credentials. See the `xano_meta_api_docs` tool for authentication details.
 
 ## Development
 
@@ -795,6 +796,72 @@ describe("myFunction", () => {
   });
 });
 ```
+
+## Upgrading from 1.x to 2.0
+
+Version 2 modernizes the MCP server internals and normalizes all tool names
+under a single `xano_` namespace. The high-level standalone library functions
+(`validateXanoscript`, `xanoscriptDocs`, `metaApiDocs`, `cliDocs`, `mcpVersion`)
+are unchanged.
+
+### Tool renames (MCP clients)
+
+If your agent or MCP client config references tools by name, update them:
+
+| 1.x | 2.0 |
+|---|---|
+| `validate_xanoscript` | `xano_validate_xanoscript` |
+| `xanoscript_docs` | `xano_xanoscript_docs` |
+| `meta_api_docs` | `xano_meta_api_docs` |
+| `cli_docs` | `xano_cli_docs` |
+| `mcp_version` | `xano_version` |
+
+The single `xano_` prefix improves discoverability when multiple MCP servers
+are installed and lets clients filter Xano tools by name pattern.
+
+### Library API
+
+`handleTool(name, args)` is now `async` and returns `Promise<ToolResult>`
+instead of `ToolResult`. Update call sites to use `await` and the new tool
+names:
+
+```ts
+// 1.x
+const result = handleTool("xanoscript_docs", { topic: "syntax" });
+
+// 2.0
+const result = await handleTool("xano_xanoscript_docs", { topic: "syntax" });
+```
+
+The individual `*ToolDefinition` exports (`validateXanoscriptToolDefinition`,
+`xanoscriptDocsToolDefinition`, `mcpVersionToolDefinition`,
+`metaApiDocsToolDefinition`, `cliDocsToolDefinition`) were removed in favor
+of a single source of truth. Use `toolSpecs[name].definition` instead:
+
+```ts
+// 1.x
+import { validateXanoscriptToolDefinition } from "@xano/developer-mcp";
+
+// 2.0
+import { toolSpecs } from "@xano/developer-mcp";
+const validateXanoscriptToolDefinition =
+  toolSpecs.xano_validate_xanoscript.definition;
+```
+
+A new `ToolName` type export enumerates every registered tool name.
+
+### Notable fixes and additions
+
+- `xano_xanoscript_docs` now correctly accepts the documented `tier` and
+  `max_tokens` parameters — previously they were silently dropped before
+  reaching the handler.
+- The server is built on the modern `McpServer` API with Zod-derived schemas,
+  so the JSON Schema published over the wire can no longer drift from the
+  runtime parser.
+- New `toolSpecs` export exposes each tool's Zod input/output shape — use it
+  when registering tools in a custom `McpServer`.
+- `xano_validate_xanoscript` results now include a `warnings` count in
+  `structuredContent` on success.
 
 ## License
 

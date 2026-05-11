@@ -163,7 +163,7 @@ $data|csv_create                             // Create CSV string
 
 ## Security Filters
 
-> **Full reference:** See `xanoscript_docs({ topic: "security" })` for security best practices.
+> **Full reference:** See `xano_xanoscript_docs({ topic: "security" })` for security best practices.
 
 | Filter | Example |
 |--------|---------|

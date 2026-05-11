@@ -11,7 +11,7 @@ describe("meta_api_docs/format", () => {
       expect(META_API_CONFIG.baseUrlInfo).toContain(
         "https://<your-instance-subdomain>.xano.io/api:meta/"
       );
-      expect(META_API_CONFIG.toolName).toBe("meta_api_docs");
+      expect(META_API_CONFIG.toolName).toBe("xano_meta_api_docs");
     });
   });
 
@@ -235,7 +235,7 @@ describe("meta_api_docs/format", () => {
       const result = formatDocumentation(docWithRelated);
       expect(result).toContain("## Related Topics");
       expect(result).toContain("topic1, topic2, topic3");
-      expect(result).toContain("meta_api_docs");
+      expect(result).toContain("xano_meta_api_docs");
     });
 
     it("should use custom config", () => {

@@ -69,11 +69,11 @@ Caller provides { topic?, file_path?, mode? }
 - `getXanoscriptDocsPath()`: Resolves docs directory — tries `dist/xanoscript_docs/` first, falls back to `src/xanoscript_docs/`.
 - `xanoscriptDocs(args)`: Standalone function returning `{ documentation: string }`.
 - `xanoscriptDocsTool(args)`: Returns `ToolResult` (`{ success, data?, error? }`).
-- `xanoscriptDocsToolDefinition`: MCP tool schema with name, description, inputSchema.
+- `xanoscriptDocsToolSpec`: Built via `defineTool({ inputShape, outputShape, ... })` — the Zod shapes are the single source of truth, and `xanoscriptDocsToolSpec.definition` exposes the derived JSON Schema for clients.
 
 **`src/tools/index.ts`** — Registration:
-- `toolDefinitions` array registers all 6 tools
-- `handleTool(name, args)` dispatches by tool name
+- `toolSpecs` map (5 tools) is the single source of truth used by `McpServer.registerTool` in `src/index.ts`
+- `handleTool(name, args)` is async and dispatches via a typed `dispatch` table keyed off `toolSpecs` — adding to `toolSpecs` without a handler is a compile error
 - `toMcpResponse()` converts ToolResult to MCP format: `{ content: [{ type: "text", text }], isError? }`
 
 ### Build Process
@@ -201,7 +201,7 @@ applyTo: "pattern/**/*.xs"
 
 | Topic | Use For |
 |-------|---------|
-| [syntax](xanoscript_docs({ topic: "syntax" })) | Filters and operators |
+| [syntax](xano_xanoscript_docs({ topic: "syntax" })) | Filters and operators |
 ```
 
 ### Code Examples
@@ -216,8 +216,8 @@ applyTo: "pattern/**/*.xs"
 
 Reference other topics using this pattern:
 ```
-For details, see xanoscript_docs({ topic: "syntax" })
-For sub-topics: xanoscript_docs({ topic: "integrations/redis" })
+For details, see xano_xanoscript_docs({ topic: "syntax" })
+For sub-topics: xano_xanoscript_docs({ topic: "integrations/redis" })
 ```
 
 ### File Naming
@@ -264,7 +264,7 @@ Use `~` (tilde), not `+`. Parentheses required around filtered values in concate
 For changes to how documentation is served (not the content):
 
 ### Changing Tool Parameters
-Edit `xanoscriptDocsToolDefinition` in `src/tools/xanoscript_docs.ts`. The `inputSchema` follows JSON Schema format.
+Edit `xanoscriptDocsToolSpec` in `src/tools/xanoscript_docs.ts`. Parameters live in the Zod `inputShape` (with `.describe()` for docs); the JSON Schema sent to MCP clients is derived automatically via `z.toJSONSchema`.
 
 ### Changing Doc Resolution Logic
 Edit functions in `src/xanoscript.ts`:
@@ -276,8 +276,8 @@ Edit functions in `src/xanoscript.ts`:
 Edit `getXanoscriptDocsPath()` in `src/tools/xanoscript_docs.ts`. The fallback chain: `dist/xanoscript_docs/` → `src/xanoscript_docs/` → default.
 
 ### Adding a New MCP Tool
-1. Create `src/tools/my_tool.ts` with tool definition and handler
-2. Register in `src/tools/index.ts`: add to `toolDefinitions` array and `handleTool` switch
+1. Create `src/tools/my_tool.ts` — build the spec with `defineTool({ name: "xano_my_tool", inputShape, outputShape, ... })` and export the handler
+2. Register in `src/tools/index.ts`: add to the `toolSpecs` map and the typed `dispatch` table (TypeScript will fail to compile if you forget the handler)
 3. Export from `src/lib.ts` if needed for standalone usage
 
 ## Testing
@@ -303,7 +303,7 @@ Key things to test when modifying docs:
 | Edit existing doc content | Just the `.md` file in `src/xanoscript_docs/` |
 | Change which files a doc applies to | `xanoscript.ts` → topic's `applyTo` array |
 | Add integration sub-topic | New file in `integrations/` + register in `xanoscript.ts` |
-| Change tool description/schema | `src/tools/xanoscript_docs.ts` → `xanoscriptDocsToolDefinition` |
+| Change tool description/schema | `src/tools/xanoscript_docs.ts` → `xanoscriptDocsToolSpec` (edit the Zod `inputShape` / `outputShape`) |
 | Change doc resolution logic | `src/xanoscript.ts` → `readXanoscriptDocsV2()` or `getDocsForFilePath()` |
 | Update version | `src/xanoscript_docs/version.json` |
-| Add new MCP tool (non-docs) | New file in `src/tools/` + register in `src/tools/index.ts` |
+| Add new MCP tool (non-docs) | New file in `src/tools/` (use `defineTool`) + add to `toolSpecs` and `dispatch` in `src/tools/index.ts` |

@@ -1,6 +1,6 @@
 {
   "name": "@xano/developer-mcp",
-  "version": "1.0.75",
+  "version": "2.0.0",
   "description": "MCP server and library for Xano development - XanoScript validation, Meta API, Run API, and CLI documentation",
   "type": "module",
   "main": "dist/lib.js",
@@ -30,9 +30,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && cp -r src/xanoscript_docs dist/",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp -r src/xanoscript_docs dist/",
     "start": "node dist/index.js",
-    "dev": "tsc && node dist/index.js",
+    "dev": "npm run build && node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -62,7 +62,8 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@xano/xanoscript-language-server": "^12.0.0",
-    "minimatch": "^10.1.2"
+    "minimatch": "^10.1.2",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/minimatch": "^5.1.2",

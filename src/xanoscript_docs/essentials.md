@@ -52,7 +52,7 @@ var $api_response { value = "test" }
 
 XanoScript uses specific type names. Common aliases from other languages won't work.
 
-> **Type names:** Use `text` (not string), `int` (not integer), `bool` (not boolean), `decimal` (not float). Full list: `xanoscript_docs({ topic: "types" })`
+> **Type names:** Use `text` (not string), `int` (not integer), `bool` (not boolean), `decimal` (not float). Full list: `xano_xanoscript_docs({ topic: "types" })`
 
 ### Variable Declaration
 
@@ -166,7 +166,7 @@ db.del "user" {
 }
 ```
 
-> **Full reference:** See `xanoscript_docs({ topic: "database" })` for joins, bulk operations, transactions, and more.
+> **Full reference:** See `xano_xanoscript_docs({ topic: "database" })` for joins, bulk operations, transactions, and more.
 
 ### API Requests
 
@@ -231,7 +231,7 @@ throw {
 
 `?` after the **type** = nullable, `?` after the **variable name** = optional (not required).
 
-> **Full reference:** See `xanoscript_docs({ topic: "types" })` for complete input types and validation options.
+> **Full reference:** See `xano_xanoscript_docs({ topic: "types" })` for complete input types and validation options.
 
 ```xs
 input {
@@ -289,7 +289,7 @@ $val|first_notnull:"default"  // Default if null
 $val ?? "default"             // Nullish coalescing
 ```
 
-> **Full reference:** See `xanoscript_docs({ topic: "syntax" })` for all 100+ filters organized by category (string, array, object, type, date, encoding).
+> **Full reference:** See `xano_xanoscript_docs({ topic: "syntax" })` for all 100+ filters organized by category (string, array, object, type, date, encoding).
 
 ### String Concatenation
 
@@ -409,7 +409,7 @@ var $response_data {
 
 ### 5. Date/Time Operations
 
-> **Full reference:** See `xanoscript_docs({ topic: "syntax" })` for all date/time filters.
+> **Full reference:** See `xano_xanoscript_docs({ topic: "syntax" })` for all date/time filters.
 
 ```xs
 var $now { value = now }
@@ -644,7 +644,7 @@ Each `.xs` file must contain exactly **one** construct. Placing two constructs i
 
 ## Related Topics
 
-Explore more with `xanoscript_docs({ topic: "<topic>" })`:
+Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:
 
 | Topic | Description |
 |-------|-------------|

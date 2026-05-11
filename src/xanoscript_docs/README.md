@@ -93,7 +93,7 @@ project/
 
 Access with `$env.<name>`. Common built-in variables include `$env.$remote_ip`, `$env.$http_headers`, `$env.$request_method`, `$env.$datasource`, and `$env.$branch`. Custom environment variables are set in the Xano dashboard and accessed as `$env.MY_VAR`.
 
-For the complete list of system variables, see `xanoscript_docs({ topic: "syntax" })`.
+For the complete list of system variables, see `xano_xanoscript_docs({ topic: "syntax" })`.
 
 ## Core Syntax Patterns
 
@@ -118,7 +118,7 @@ $db.table.field     // Database field reference (in queries)
 $this               // Current item in loops/maps
 ```
 
-**Reserved Variables:** The following cannot be used as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`. See `xanoscript_docs({ topic: "essentials" })` for detailed variable access rules.
+**Reserved Variables:** The following cannot be used as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`. See `xano_xano_xanoscript_docs({ topic: "essentials" })` for detailed variable access rules.
 
 ### Type Names
 
@@ -183,7 +183,7 @@ This helps AI tools apply the correct documentation based on the file being edit
 
 For common patterns and quick examples, use:
 ```
-xanoscript_docs({ topic: "essentials" })
+xano_xanoscript_docs({ topic: "essentials" })
 ```
 
 This includes:
@@ -197,7 +197,7 @@ This includes:
 
 ## Documentation Index
 
-Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
+Use `xano_xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
 ### Tiers (for context-limited models)
 
@@ -206,7 +206,7 @@ Use `xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 | `survival` | Minimal syntax survival kit for models with <16K context     | ~3KB (~800 tokens) |
 | `working`  | Complete working reference for models with 16-64K context    | ~12KB (~3500 tokens) |
 
-Use `xanoscript_docs({ tier: "survival" })` or `xanoscript_docs({ tier: "working" })`.
+Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier: "working" })`.
 
 ### Core Language
 

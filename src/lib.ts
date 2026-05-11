@@ -123,10 +123,16 @@ export {
 
 export {
   toolDefinitions,
+  toolSpecs,
   handleTool,
-  validateXanoscriptToolDefinition,
-  xanoscriptDocsToolDefinition,
-  mcpVersionToolDefinition,
-  metaApiDocsToolDefinition,
-  cliDocsToolDefinition,
 } from "./tools/index.js";
+
+export type { ToolName } from "./tools/index.js";
+
+export type {
+  BuiltTool,
+  ToolDefinition,
+  ToolSpec,
+  ToolAnnotations,
+  JsonSchema,
+} from "./tools/define_tool.js";

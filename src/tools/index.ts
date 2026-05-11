@@ -1,42 +1,17 @@
 /**
  * Xano Developer MCP Tools
  *
- * This module exports all tools for both MCP server usage and standalone library usage.
- *
- * @example MCP Server Usage (internal)
- * ```ts
- * import { toolDefinitions, handleTool } from './tools/index.js';
- *
- * // Register tools with MCP server
- * server.setRequestHandler(ListToolsRequestSchema, () => ({
- *   tools: toolDefinitions
- * }));
- * ```
- *
- * @example Library Usage (external)
- * ```ts
- * import {
- *   validateXanoscript,
- *   xanoscriptDocs,
- *   metaApiDocs,
- *   cliDocs,
- *   mcpVersion
- * } from '@xano/developer-mcp';
- *
- * // Use tools directly
- * const result = validateXanoscript({ code: 'return 1 + 1' });
- * const docs = xanoscriptDocs({ topic: 'syntax' });
- * ```
+ * Exports all tools for both MCP server usage and standalone library usage.
+ * Tool registration goes through `toolSpecs` and `handleTool` below — the
+ * `toolSpecs` map is the single source of truth for which tools exist and
+ * the dispatch table in `handleTool` is statically required to cover every
+ * key, so a new tool cannot be registered without being routed.
  */
-
-// =============================================================================
-// Tool Imports
-// =============================================================================
 
 import {
   validateXanoscript,
   validateXanoscriptTool,
-  validateXanoscriptToolDefinition,
+  validateXanoscriptToolSpec,
   TYPE_ALIASES,
   RESERVED_VARIABLES,
   type ValidateXanoscriptArgs,
@@ -49,7 +24,7 @@ import {
 import {
   xanoscriptDocs,
   xanoscriptDocsTool,
-  xanoscriptDocsToolDefinition,
+  xanoscriptDocsToolSpec,
   getXanoscriptDocsPath,
   setXanoscriptDocsPath,
   type XanoscriptDocsArgs,
@@ -60,7 +35,7 @@ import {
 import {
   mcpVersion,
   mcpVersionTool,
-  mcpVersionToolDefinition,
+  mcpVersionToolSpec,
   getServerVersion,
   setServerVersion,
   type McpVersionResult,
@@ -69,7 +44,7 @@ import {
 import {
   metaApiDocs,
   metaApiDocsTool,
-  metaApiDocsToolDefinition,
+  metaApiDocsToolSpec,
   metaApiTopics,
   getMetaApiTopicNames,
   getMetaApiTopicDescriptions,
@@ -80,7 +55,7 @@ import {
 import {
   cliDocs,
   cliDocsTool,
-  cliDocsToolDefinition,
+  cliDocsToolSpec,
   cliTopics,
   getCliTopicNames,
   getCliTopicDescriptions,
@@ -90,6 +65,7 @@ import {
 
 import { type ToolResult, toMcpResponse } from "./types.js";
 import { z } from "zod";
+import type { BuiltTool, ZodRawShape } from "./define_tool.js";
 
 // =============================================================================
 // Standalone Tool Functions (for library usage)
@@ -154,116 +130,102 @@ export {
 };
 
 // =============================================================================
-// MCP Tool Definitions
+// Tool Registry — single source of truth
 // =============================================================================
-
-export {
-  validateXanoscriptToolDefinition,
-  xanoscriptDocsToolDefinition,
-  mcpVersionToolDefinition,
-  metaApiDocsToolDefinition,
-  cliDocsToolDefinition,
-};
 
 /**
- * All tool definitions for MCP server registration
+ * Full tool specs (Zod shapes + derived JSON Schema). Use these to register
+ * tools with `McpServer.registerTool` — descriptions live in the shapes and
+ * the JSON Schema can never drift from the parser.
  */
-export const toolDefinitions = [
-  validateXanoscriptToolDefinition,
-  xanoscriptDocsToolDefinition,
-  mcpVersionToolDefinition,
-  metaApiDocsToolDefinition,
-  cliDocsToolDefinition,
-];
+export const toolSpecs = {
+  xano_validate_xanoscript: validateXanoscriptToolSpec,
+  xano_xanoscript_docs: xanoscriptDocsToolSpec,
+  xano_version: mcpVersionToolSpec,
+  xano_meta_api_docs: metaApiDocsToolSpec,
+  xano_cli_docs: cliDocsToolSpec,
+} as const;
+
+export type ToolName = keyof typeof toolSpecs;
+
+/**
+ * Tool definitions array (derived from toolSpecs). Kept for callers that
+ * want a flat list to advertise.
+ */
+export const toolDefinitions = Object.values(toolSpecs).map(
+  (spec) => spec.definition
+);
 
 // =============================================================================
-// Argument Schemas (Zod validation)
+// Tool Handler (typed dispatch — adding to toolSpecs without adding here is
+// a compile error)
 // =============================================================================
 
-const validateXanoscriptSchema = z.object({
-  code: z.string().optional(),
-  file_path: z.string().optional(),
-  file_paths: z.array(z.string()).optional(),
-  directory: z.string().optional(),
-  pattern: z.string().optional(),
-});
-
-const xanoscriptDocsSchema = z.object({
-  topic: z.string().optional(),
-  file_path: z.string().optional(),
-  mode: z.enum(["full", "quick_reference", "index"]).optional(),
-  exclude_topics: z.array(z.string()).optional(),
-});
-
-const metaApiDocsSchema = z.object({
-  topic: z.string(),
-  detail_level: z.enum(["overview", "detailed", "examples"]).optional(),
-  include_schemas: z.boolean().optional(),
-});
-
-const cliDocsSchema = z.object({
-  topic: z.string(),
-  detail_level: z.enum(["overview", "detailed", "examples"]).optional(),
-});
-
-function parseArgs<T>(
-  schema: z.ZodType<T>,
+function parseWithSpec<I extends ZodRawShape, O extends ZodRawShape>(
+  spec: BuiltTool<I, O>,
   args: Record<string, unknown>
-): { ok: true; data: T } | { ok: false; error: ToolResult } {
-  const result = schema.safeParse(args);
+): { ok: true; data: z.infer<z.ZodObject<I>> } | { ok: false; error: ToolResult } {
+  const result = spec.inputParser.safeParse(args);
   if (!result.success) {
     const issues = result.error.issues
-      .map((i) => `${i.path.join(".")}: ${i.message}`)
+      .map((i) => {
+        const path = i.path.join(".") || "(root)";
+        return `${path} [${i.code}]: ${i.message}`;
+      })
       .join("; ");
-    return { ok: false, error: { success: false, error: `Invalid arguments: ${issues}` } };
+    return {
+      ok: false,
+      error: { success: false, error: `Invalid arguments: ${issues}` },
+    };
   }
-  return { ok: true, data: result.data };
+  return { ok: true, data: result.data as z.infer<z.ZodObject<I>> };
 }
 
-// =============================================================================
-// Tool Handler (for MCP server)
-// =============================================================================
+/**
+ * Dispatch table — every key in `toolSpecs` must have a handler here, or
+ * TypeScript will fail to compile. Adding a tool means: add to `toolSpecs`,
+ * then add a handler entry below.
+ */
+const dispatch: { [K in ToolName]: (args: Record<string, unknown>) => Promise<ToolResult> } = {
+  async xano_validate_xanoscript(args) {
+    const parsed = parseWithSpec(validateXanoscriptToolSpec, args);
+    if (!parsed.ok) return parsed.error;
+    return validateXanoscriptTool(parsed.data as ValidateXanoscriptArgs);
+  },
+  async xano_xanoscript_docs(args) {
+    const parsed = parseWithSpec(xanoscriptDocsToolSpec, args);
+    if (!parsed.ok) return parsed.error;
+    return xanoscriptDocsTool(parsed.data as XanoscriptDocsArgs);
+  },
+  async xano_version() {
+    return mcpVersionTool();
+  },
+  async xano_meta_api_docs(args) {
+    const parsed = parseWithSpec(metaApiDocsToolSpec, args);
+    if (!parsed.ok) return parsed.error;
+    return metaApiDocsTool(parsed.data as MetaApiDocsArgs);
+  },
+  async xano_cli_docs(args) {
+    const parsed = parseWithSpec(cliDocsToolSpec, args);
+    if (!parsed.ok) return parsed.error;
+    return cliDocsTool(parsed.data as CliDocsArgs);
+  },
+};
+
+function isToolName(name: string): name is ToolName {
+  return name in dispatch;
+}
 
 /**
  * Handle a tool call by name and return the result.
- * This is used by the MCP server to dispatch tool calls.
+ * Async to allow future tools that perform I/O without breaking the signature.
  */
-export function handleTool(
+export async function handleTool(
   name: string,
   args: Record<string, unknown>
-): ToolResult {
-  switch (name) {
-    case "validate_xanoscript": {
-      const parsed = parseArgs(validateXanoscriptSchema, args);
-      if (!parsed.ok) return parsed.error;
-      return validateXanoscriptTool(parsed.data);
-    }
-
-    case "xanoscript_docs": {
-      const parsed = parseArgs(xanoscriptDocsSchema, args);
-      if (!parsed.ok) return parsed.error;
-      return xanoscriptDocsTool(parsed.data);
-    }
-
-    case "mcp_version":
-      return mcpVersionTool();
-
-    case "meta_api_docs": {
-      const parsed = parseArgs(metaApiDocsSchema, args);
-      if (!parsed.ok) return parsed.error;
-      return metaApiDocsTool(parsed.data);
-    }
-
-    case "cli_docs": {
-      const parsed = parseArgs(cliDocsSchema, args);
-      if (!parsed.ok) return parsed.error;
-      return cliDocsTool(parsed.data);
-    }
-
-    default:
-      return {
-        success: false,
-        error: `Unknown tool: ${name}`,
-      };
+): Promise<ToolResult> {
+  if (!isToolName(name)) {
+    return { success: false, error: `Unknown tool: ${name}` };
   }
+  return dispatch[name](args);
 }

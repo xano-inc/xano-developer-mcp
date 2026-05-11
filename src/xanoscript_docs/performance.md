@@ -137,7 +137,7 @@ db.bulk.add "order_item" {
 
 ## Caching Strategies
 
-> See `xanoscript_docs({ topic: "integrations/redis" })` for full Redis caching patterns (get/set, invalidation, computed value caching).
+> See `xano_xanoscript_docs({ topic: "integrations/redis" })` for full Redis caching patterns (get/set, invalidation, computed value caching).
 
 ---
 
@@ -157,7 +157,7 @@ db.query "product" {
 
 ## Rate Limiting
 
-For basic rate limiting setup, see `xanoscript_docs({ topic: "security" })`. Below are performance-focused patterns.
+For basic rate limiting setup, see `xano_xanoscript_docs({ topic: "security" })`. Below are performance-focused patterns.
 
 ### Tiered Limits
 
@@ -187,7 +187,7 @@ redis.ratelimit {
 
 For large responses, use `return = { type: "stream" }` with `api.stream` to avoid loading into memory. Large JSON responses are automatically compressed when clients support it.
 
-> See `xanoscript_docs({ topic: "streaming" })` for streaming patterns.
+> See `xano_xanoscript_docs({ topic: "streaming" })` for streaming patterns.
 
 ---
 
@@ -195,7 +195,7 @@ For large responses, use `return = { type: "stream" }` with `api.stream` to avoi
 
 Use `now|to_ms` before and after operations to measure duration, and `debug.log` to log slow queries.
 
-> See `xanoscript_docs({ topic: "debugging" })` for timing and logging patterns.
+> See `xano_xanoscript_docs({ topic: "debugging" })` for timing and logging patterns.
 
 ---
 

@@ -66,7 +66,7 @@ tool "get_user_by_email" {
 
 ## Input Block
 
-For complete type reference, use `xanoscript_docs({ topic: "types" })`. For tools, input `description` fields are sent to the AI, so write them clearly:
+For complete type reference, use `xano_xanoscript_docs({ topic: "types" })`. For tools, input `description` fields are sent to the AI, so write them clearly:
 
 ```xs
 input {
@@ -256,7 +256,7 @@ tool "get_order_with_items" {
 
 ## Error Handling
 
-For complete error handling reference (preconditions, try-catch, throw, error types), see `xanoscript_docs({ topic: "syntax" })`.
+For complete error handling reference (preconditions, try-catch, throw, error types), see `xano_xanoscript_docs({ topic: "syntax" })`.
 
 ```xs
 tool "cancel_order" {

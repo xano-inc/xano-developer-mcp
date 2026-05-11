@@ -107,7 +107,7 @@ curl -H "Authorization: Bearer $TOKEN" https://instance.xano.io/api:meta/workspa
         "Init git: `cd xano && git init && git add . && git commit -m 'Initial'`",
         "Create feature branch: `git checkout -b feature/new-api`",
         "Edit .xs files in your IDE",
-        "Validate with MCP: Use `validate_xanoscript` tool",
+        "Validate with MCP: Use `xano_validate_xanoscript` tool",
         "Push to Xano: `xano workspace push -d ./xano`",
         "Test in Xano dashboard",
         "Commit changes: `git add . && git commit -m 'Add new API'`"

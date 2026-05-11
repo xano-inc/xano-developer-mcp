@@ -280,7 +280,7 @@ middleware "cache_response" {
 
 ## Applying Middleware
 
-Middleware is configured at the branch level. See `xanoscript_docs({ topic: "branch" })` for configuration details.
+Middleware is configured at the branch level. See `xano_xanoscript_docs({ topic: "branch" })` for configuration details.
 
 ```xs
 branch "production" {

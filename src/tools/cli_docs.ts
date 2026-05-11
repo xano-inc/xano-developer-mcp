@@ -7,7 +7,7 @@
 
 import {
   handleCliDocs as _handleCliDocs,
-  cliDocsToolDefinition,
+  cliDocsToolSpec,
   topics,
   getTopicNames,
   getTopicDescriptions,
@@ -20,7 +20,7 @@ import type { ToolResult } from "./types.js";
 // =============================================================================
 
 export {
-  cliDocsToolDefinition,
+  cliDocsToolSpec,
   topics as cliTopics,
   getTopicNames as getCliTopicNames,
   getTopicDescriptions as getCliTopicDescriptions,
@@ -74,7 +74,7 @@ export function cliDocsTool(args: CliDocsArgs): ToolResult {
   if (!args?.topic) {
     return {
       success: false,
-      error: "Error: 'topic' parameter is required. Use cli_docs with topic='start' for overview.",
+      error: "Error: 'topic' parameter is required. Use xano_cli_docs with topic='start' for overview.",
     };
   }
 
@@ -94,5 +94,3 @@ export function cliDocsTool(args: CliDocsArgs): ToolResult {
   }
 }
 
-// Re-export tool definition for MCP
-export { cliDocsToolDefinition as toolDefinition };

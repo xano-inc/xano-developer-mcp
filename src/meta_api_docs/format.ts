@@ -22,7 +22,7 @@ https://<your-instance-subdomain>.xano.io/api:meta/<endpoint>
 \`\`\`
 Authorization: \`Bearer <your-access-token>\`
 `,
-  toolName: "meta_api_docs",
+  toolName: "xano_meta_api_docs",
 };
 
 function formatParameter(param: NonNullable<EndpointDoc["parameters"]>[0]): string {

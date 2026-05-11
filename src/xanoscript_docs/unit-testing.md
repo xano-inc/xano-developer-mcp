@@ -366,7 +366,7 @@ function "create_user" {
 }
 ```
 
-For a full breakdown of what each required/optional/nullable combination accepts, see `xanoscript_docs({ topic: "types" })`.
+For a full breakdown of what each required/optional/nullable combination accepts, see `xano_xanoscript_docs({ topic: "types" })`.
 
 ---
 

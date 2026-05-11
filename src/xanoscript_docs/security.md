@@ -258,7 +258,7 @@ security.jws_decode {
 } as $claims
 ```
 
-> See `xanoscript_docs({ topic: "integrations/utilities" })` for JWE, key generation, and other security utilities.
+> See `xano_xanoscript_docs({ topic: "integrations/utilities" })` for JWE, key generation, and other security utilities.
 
 ---
 

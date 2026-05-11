@@ -4,7 +4,7 @@ applyTo: "**/*.xs"
 
 # XanoScript Survival Kit
 
-> Minimal reference for writing valid XanoScript. For more: `xanoscript_docs({ topic: "<topic>" })`.
+> Minimal reference for writing valid XanoScript. For more: `xano_xanoscript_docs({ topic: "<topic>" })`.
 
 ## Quick Reference
 

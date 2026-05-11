@@ -7,7 +7,7 @@
 
 import {
   handleMetaApiDocs as _handleMetaApiDocs,
-  metaApiDocsToolDefinition,
+  metaApiDocsToolSpec,
   topics,
   getTopicNames,
   getTopicDescriptions,
@@ -20,7 +20,7 @@ import type { ToolResult } from "./types.js";
 // =============================================================================
 
 export {
-  metaApiDocsToolDefinition,
+  metaApiDocsToolSpec,
   topics as metaApiTopics,
   getTopicNames as getMetaApiTopicNames,
   getTopicDescriptions as getMetaApiTopicDescriptions,
@@ -75,7 +75,7 @@ export function metaApiDocsTool(args: MetaApiDocsArgs): ToolResult {
   if (!args?.topic) {
     return {
       success: false,
-      error: "Error: 'topic' parameter is required. Use meta_api_docs with topic='start' for overview.",
+      error: "Error: 'topic' parameter is required. Use xano_meta_api_docs with topic='start' for overview.",
     };
   }
 
@@ -95,5 +95,3 @@ export function metaApiDocsTool(args: MetaApiDocsArgs): ToolResult {
   }
 }
 
-// Re-export tool definition for MCP
-export { metaApiDocsToolDefinition as toolDefinition };

@@ -636,7 +636,7 @@ try_catch {
 
 ## Related Topics
 
-Explore more with `xanoscript_docs({ topic: "<topic>" })`:
+Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:
 
 | Topic | Description |
 |-------|-------------|
