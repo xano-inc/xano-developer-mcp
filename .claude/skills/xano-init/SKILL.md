@@ -1,7 +1,7 @@
 ---
 name: xano-init
 description: Discover and profile a Xano workspace to understand how to develop safely with it using the sandbox workflow
-allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, Agent, mcp__xano-developer__meta_api_docs, mcp__xano-developer__cli_docs, mcp__xano-developer__xanoscript_docs, mcp__xano-developer__validate_xanoscript, mcp__xano-developer__mcp_version, WebFetch, ToolSearch, AskUserQuestion]
+allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, Agent, mcp__xano__xano_meta_api_docs, mcp__xano__xano_cli_docs, mcp__xano__xano_xanoscript_docs, mcp__xano__xano_validate_xanoscript, mcp__xano__xano_version, WebFetch, ToolSearch, AskUserQuestion]
 ---
 
 # Xano Workspace Init
@@ -23,7 +23,7 @@ Run these checks silently before asking the user anything. Gather all results in
 - **Xano Developer MCP** npm package: `@xano/developer-mcp` — install: `claude mcp add xano -- npx -y @xano/developer-mcp`
 
 ### 1a. MCP Availability & Version
-- Use `ToolSearch` to check if `mcp__xano-developer__mcp_version` is available
+- Use `ToolSearch` to check if `mcp__xano__xano_version` is available
 - If available, call it to get the installed version
 - Run `npm view @xano/developer-mcp version` to get the latest published version
 - Compare: if installed < latest, flag as outdated
@@ -208,7 +208,7 @@ If the user chose sandbox in 2d, the deployment workflow is already established 
 Run quick smoke tests to confirm the development workflow actually functions. Do these in parallel where possible.
 
 ### 3a. Validate XanoScript
-If there are existing `.xs` files, pick one and run `mcp__xano-developer__validate_xanoscript` to confirm validation works.
+If there are existing `.xs` files, pick one and run `mcp__xano__xano_validate_xanoscript` to confirm validation works.
 
 ### 3b. Test Deployment Access
 Make a read-only Meta API call (e.g., list API groups) to confirm the auth token and instance URL work for the workspace.
@@ -280,7 +280,7 @@ generated: [ISO date]
 1. Always deploy via sandbox: `sandbox push` → `sandbox review` → promote. Never push directly to workspace.
 2. Always work on the `dev` branch — never modify the live branch directly
 3. Always use `-p [profile]` with CLI commands to target the correct workspace and branch
-4. Validate all XanoScript with `validate_xanoscript` before pushing to sandbox
+4. Validate all XanoScript with `xano_validate_xanoscript` before pushing to sandbox
 5. Never modify the `user` or `account` table schemas — they're in production
 6. Run `sandbox unit_test run_all` before promoting changes
 7. If sandbox gets into a bad state, reset with `sandbox reset -p [profile] -f`
@@ -295,7 +295,7 @@ If the user opted for workspace push instead of sandbox, adjust rules accordingl
 #### Editing an existing endpoint or function
 1. Pull workspace locally: `xano workspace pull ./xano -p [profile] -b [dev-branch]`
 2. Edit the relevant `.xs` files
-3. Validate: use `validate_xanoscript` MCP tool
+3. Validate: use `xano_validate_xanoscript` MCP tool
 4. Push to sandbox: `xano sandbox push ./xano -p [profile]`
 5. Run tests in sandbox: `xano sandbox unit_test run_all -p [profile]`
 6. Review in browser: `xano sandbox review -p [profile]`
@@ -426,6 +426,6 @@ End with: **"You're all set. I'll follow the development playbook for all future
 - **Don't over-generate.** A solo dev on a pre-launch app doesn't need 15 safety rules. Scale the playbook to the actual risk level.
 - **Validate, don't assume.** If you see a branch called `live`, confirm with the user that it's actually the production branch.
 - **Respect existing setup.** If there's already a CLAUDE.md with Xano config, preserve what's there and augment it — don't overwrite.
-- **Tool priority:** MCP tools (`mcp__xano-developer__*`) → CLI (`xano` commands) → Meta API via curl → ask the user. Use MCP for docs/validation; use CLI for workspace/branch/function/sandbox operations. Both can coexist.
+- **Tool priority:** MCP tools (`mcp__xano__xano_*`) → CLI (`xano` commands) → Meta API via curl → ask the user. Use MCP for docs/validation; use CLI for workspace/branch/function/sandbox operations. Both can coexist.
 - **Prescriptive but adaptable.** Default to sandbox, but respect the user's choice if they prefer workspace push or another method. The user has final say.
 - **If the user provides args** (e.g., `/xano-init workspace 43`), skip the workspace selection step and use the provided ID.

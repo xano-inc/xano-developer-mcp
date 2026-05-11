@@ -60,7 +60,7 @@ applyTo: "pattern/**/*.xs"
 
 | Topic | Use For |
 |-------|---------|
-| [topic](xanoscript_docs({ topic: "name" })) | Description |
+| [topic](xano_xanoscript_docs({ topic: "name" })) | Description |
 ```
 
 ## Frontmatter
@@ -224,13 +224,13 @@ Use markdown tables for structured data. Common formats:
 ### To Other Topics
 
 ```markdown
-For complete filter reference, see xanoscript_docs({ topic: "syntax" })
+For complete filter reference, see xano_xanoscript_docs({ topic: "syntax" })
 ```
 
 ### To Sub-Topics
 
 ```markdown
-For AWS S3 operations, see xanoscript_docs({ topic: "integrations/cloud-storage" })
+For AWS S3 operations, see xano_xanoscript_docs({ topic: "integrations/cloud-storage" })
 ```
 
 ### Related Topics Table
@@ -242,8 +242,8 @@ Always end docs with:
 
 | Topic | Use For |
 |-------|---------|
-| [syntax](xanoscript_docs({ topic: "syntax" })) | Operators, filters, expressions |
-| [database](xanoscript_docs({ topic: "database" })) | All db.* operations |
+| [syntax](xano_xanoscript_docs({ topic: "syntax" })) | Operators, filters, expressions |
+| [database](xano_xanoscript_docs({ topic: "database" })) | All db.* operations |
 ```
 
 ## Common Mistakes Sections
