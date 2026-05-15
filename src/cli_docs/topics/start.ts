@@ -81,8 +81,9 @@ Destructive commands and flags are prefixed with one of two imperative markers i
 When you see either marker, pause and acknowledge it to the user before invoking the command — do not auto-accept it just because the broader task was approved.
 
 Examples of where these markers appear:
-- \`[CRITICAL]\` flags: \`--force\` on any \`delete\`, \`workspace push --sync --delete\`, \`--truncate\`, \`--no-transaction\`, \`--records\` (when pushing live data), \`tenant backup restore\`, \`tenant cluster delete\`, \`sandbox reset\`, \`env set_all --clean\`.
-- \`[IMPORTANT]\` base commands: \`workspace push\`, \`sandbox push\`, \`branch set_live\`, \`release import\`, \`release push\`.
+- \`[CRITICAL]\` flags: \`--force\` on any \`delete\`, \`workspace push --sync --delete\`, \`--truncate\`, \`--no-transaction\`, \`--records\` (when pushing live data).
+- \`[CRITICAL]\` commands: \`tenant backup restore\`, \`tenant cluster delete\`, \`tenant deploy_platform\`, \`tenant env set_all\`, \`sandbox env set_all\`, \`sandbox reset\`, \`sandbox delete\`, \`workspace delete\`.
+- \`[IMPORTANT]\` base commands: \`workspace push\`, \`sandbox push\`, \`branch set_live\`, \`release import\`, \`release push\`, \`release deploy\`.
 
 ## Command Categories
 
