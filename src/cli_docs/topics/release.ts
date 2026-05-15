@@ -185,24 +185,23 @@ Xano CLI commands are SPACE-separated (e.g. \`xano release list\`), not colon-se
     },
     {
       name: "release push",
-      description: "Push a local directory as a new release. Directory is the -d/--directory flag (default: current directory), not a positional argument.",
+      description: "Push a local directory as a new release. Directory is the -d/--directory flag (default: current directory), not a positional argument. The release is bound to the directory's branch — there is no `--branch` flag.",
       usage: "xano release push -n <name> [options]",
       flags: [
         { name: "name", short: "n", type: "string", required: true, description: "Name for the new release" },
-        { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Local directory containing files to push as a release (defaults to current directory)" },
-        { name: "branch", short: "b", type: "string", required: false, description: "Branch to associate the release with" },
+        { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Local directory containing .xs documents to push as a release (defaults to current directory)" },
         { name: "hotfix", type: "boolean", required: false, default: "false", description: "Mark this release as a hotfix" },
         { name: "description", type: "string", required: false, description: "Description for the release" },
         { name: "records", type: "boolean", required: false, default: "true", description: "Include records (default: true; use --no-records to exclude)" },
         { name: "env", type: "boolean", required: false, default: "true", description: "Include environment variables (default: true; use --no-env to exclude)" },
-        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile workspace if not provided)" },
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (optional if set in profile)" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" },
         { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" }
       ],
       examples: [
         "xano release push -n v1.0.0",
         "xano release push -d ./release-v1 -n v1.0.0",
-        'xano release push -d ./release-v1 -n v1.1.0 -b dev --description "Staging release"',
+        'xano release push -d ./release-v1 -n v1.1.0 --description "Staging release"',
         "xano release push -n hotfix-1 --hotfix --no-records --no-env"
       ]
     },

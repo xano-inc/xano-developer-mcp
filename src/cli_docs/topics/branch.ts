@@ -52,11 +52,13 @@ Xano CLI commands are SPACE-separated (e.g. \`xano branch list\`), not colon-sep
       flags: [
         { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile workspace if not provided)" },
         { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" },
+        { name: "backups", type: "boolean", required: false, default: "false", description: "Include backup branches in the output" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
       ],
       examples: [
         "xano branch list",
         "xano branch list -w 123",
+        "xano branch list --backups",
         "xano branch list --output json"
       ]
     },
