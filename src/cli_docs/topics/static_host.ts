@@ -75,19 +75,19 @@ export const staticHostDoc: TopicDoc = {
     },
     {
       name: "static_host build get",
-      description: "Get details of a specific build",
-      usage: "xano static_host build get <host_name> <build_id>",
+      description: "Get details of a specific build. Positional order is `<build_id> <static_host>` per the CLI's argument schema.",
+      usage: "xano static_host build get <build_id> <static_host>",
       args: [
-        { name: "host_name", required: true, description: "Static host name" },
-        { name: "build_id", required: true, description: "Build ID" }
+        { name: "build_id", required: true, description: "Build ID" },
+        { name: "static_host", required: true, description: "Static host name" }
       ],
       flags: [
         { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (optional if set in profile)" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
       ],
       examples: [
-        "xano static_host build get my-app 52",
-        "xano static_host build get my-app 52 -o json"
+        "xano static_host build get 52 my-app",
+        "xano static_host build get 52 my-app -o json"
       ]
     }
   ],

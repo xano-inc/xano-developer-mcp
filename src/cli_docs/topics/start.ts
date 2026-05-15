@@ -71,6 +71,20 @@ All commands support:
 - \`XANO_CONFIG\` - Override the credentials file path (same effect as \`-c\`)
 - \`XANO_VERBOSE\` - Enable verbose logging (same effect as \`-v\`)
 
+## Safety Markers (\`[CRITICAL]\` and \`[IMPORTANT]\`)
+
+Destructive commands and flags are prefixed with one of two imperative markers in their description, usage, and help text. These are not stylistic — they signal required agent behavior:
+
+- **\`[CRITICAL]\`** — Irreversible or large-blast-radius operation (data loss, destroyed restore points, truncated tables, disabled rollback, removed clusters, replaced env vars). **NEVER run a \`[CRITICAL]\` command or flag without explicit user confirmation in the current turn.** Prior approval of a similar command does not carry over. The accompanying imperative verb (\`NEVER\`, \`STOP\`, \`DO NOT\`) tells you the exact required action.
+- **\`[IMPORTANT]\`** — Mutates shared/live state but is reversible or has a preview path. **ALWAYS run \`--dry-run\` first (when available) and surface the output to the user before proceeding.** Confirm intent if the user has not already approved this specific action.
+
+When you see either marker, pause and acknowledge it to the user before invoking the command — do not auto-accept it just because the broader task was approved.
+
+Examples of where these markers appear:
+- \`[CRITICAL]\` flags: \`--force\` on any \`delete\`, \`workspace push --sync --delete\`, \`--truncate\`, \`--no-transaction\`, \`--records\` (when pushing live data).
+- \`[CRITICAL]\` commands: \`tenant backup restore\`, \`tenant cluster delete\`, \`tenant deploy_platform\`, \`tenant env set_all\`, \`sandbox env set_all\`, \`sandbox reset\`, \`sandbox delete\`, \`workspace delete\`.
+- \`[IMPORTANT]\` base commands: \`workspace push\`, \`sandbox push\`, \`branch set_live\`, \`release import\`, \`release push\`, \`release deploy\`.
+
 ## Command Categories
 
 | Category | Description |
@@ -89,7 +103,9 @@ All commands support:
 | \`static_host\` | Deploy static sites |
 | \`update\` | Update CLI to latest version |`,
 
-  ai_hints: `**Important:** The CLI is optional - not all users will have it installed. Before suggesting CLI commands, check if the user has it available or ask if they'd like to install it. The Meta API can accomplish the same tasks programmatically.
+  ai_hints: `**Safety markers (full definitions in description above):** When you see \`[CRITICAL]\` on a command or flag, NEVER run it without explicit user confirmation in the current turn — prior approval does not carry over. When you see \`[IMPORTANT]\`, ALWAYS run \`--dry-run\` first (when available) and show the user the output before the real run. The imperative verb in the marker (\`NEVER\`, \`ALWAYS\`, \`STOP\`, \`DO NOT\`) is the literal required action.
+
+**Important:** The CLI is optional - not all users will have it installed. Before suggesting CLI commands, check if the user has it available or ask if they'd like to install it. The Meta API can accomplish the same tasks programmatically.
 
 **When to use CLI vs Meta API:**
 - Use CLI for: local development, code sync, quick execution, scripting
