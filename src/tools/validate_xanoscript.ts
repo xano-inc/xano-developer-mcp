@@ -147,7 +147,7 @@ const SYNTAX_SUGGESTIONS: Array<{
 /**
  * Enhance error message with helpful suggestions
  */
-function enhanceErrorMessage(
+export function enhanceErrorMessage(
   message: string,
   code: string,
   lineNumber: number
@@ -156,11 +156,81 @@ function enhanceErrorMessage(
   const lines = code.split("\n");
   const errorLine = lines[lineNumber] || "";
 
+  const addSuggestion = (suggestion: string) => {
+    if (!enhanced.includes(suggestion)) {
+      enhanced += `\n\n💡 Suggestion: ${suggestion}`;
+    }
+  };
+
+  if (/missing an input clause/i.test(message)) {
+    addSuggestion('Add an input block, even if it is empty: input {}. Complete query/function-style constructs need input, stack, and response clauses.');
+  }
+
+  if (/missing a response clause/i.test(message)) {
+    addSuggestion('Add a response assignment, for example: response = $result. Complete query/function-style constructs need input, stack, and response clauses.');
+  }
+
+  if (/missing a stack clause/i.test(message)) {
+    addSuggestion('Add a stack block, even if it is empty: stack {}');
+  }
+
+  if (/`as <variable>` is missing/i.test(message)) {
+    addSuggestion('Store the operation result with as $variable, for example: db.query "user" { ... } as $users');
+  }
+
+  if (/wrapped in parentheses when combining filters and tests/i.test(message)) {
+    addSuggestion('Wrap filtered expressions in parentheses before comparing or concatenating, for example: (($items|count) > 0)');
+  }
+
+  if (/Unknown filter function ['"]includes['"]/i.test(message)) {
+    addSuggestion('Do not use includes as an expression filter. For string values use |contains:"text"; inside db.query where clauses use the operator form: $db.table.field includes "text" (no pipe).');
+  }
+
+  if (/Unknown filter function ['"]timestamp_/i.test(message)) {
+    addSuggestion('Timestamp-part filters such as timestamp_day_of_week are DB-query filters, not general expression filters. For a timestamp value, use format_timestamp, for example: $ts|format_timestamp:"N":"UTC".');
+  }
+
+  if (/The argument ['"]async['"] is not valid in this context/i.test(message)) {
+    addSuggestion('Do not add async = true to function.run or api.request unless current docs prove it. Use a synchronous function.run call or a scheduled task/status-table pattern for background work.');
+  }
+
+  if (/found -->\s*['"]?run['"]?\s*<--/i.test(message) && /run\.job/i.test(errorLine)) {
+    addSuggestion('Do not invent run.job/task.run syntax. Use documented task files for schedules, or call reusable functions with function.run.');
+  }
+
+  if (/The argument ['"]mock['"] is not valid in this context/i.test(message)) {
+    addSuggestion('Put mock blocks on the stack operation being mocked, not on the test block.');
+  }
+
+  if (/The argument ['"]value['"] is not valid in this context/i.test(message)) {
+    addSuggestion('Only use { value = ... } on assertions that accept a comparison value. No-property assertions do not take value.');
+  }
+
+  if (/found -->\s*['"]?\/\//i.test(message)) {
+    addSuggestion('Move comments out of arrays, object literals, schema fields, index arrays, and inner operation config blocks. Safe positions are file top, above inputs, and immediately above stack operation lines, not inside db.query/return/join/index blocks.');
+  }
+
+  if (/found -->\s*['"]?else['"]?\s*<--/i.test(message)) {
+    addSuggestion('Use Xano conditional block syntax with elseif as one word: conditional { if (...) { ... } elseif (...) { ... } else { ... } }. Do not write JavaScript-style "} else {".');
+  }
+
+  if (/query name must not be empty/i.test(message)) {
+    addSuggestion('Give the endpoint a non-empty query name, for example: query "items" verb=GET { ... }');
+  }
+
+  if (/Expected value of `type` to be one of/i.test(message)) {
+    addSuggestion('Use a documented table index type such as primary, btree, btree|unique, gin, search, or vector.');
+  }
+
+  if (/Filter ['"]to_lower['"] cannot be applied to input of type ['"]text['"]/i.test(message)) {
+    addSuggestion('For input validation filters use lower; for expression filters use to_lower on a variable value.');
+  }
+
   // Check for type aliases
   for (const [alias, correct] of Object.entries(TYPE_ALIASES)) {
     const regex = new RegExp(`\\b${alias}\\b`, "i");
     if (regex.test(errorLine)) {
-      enhanced += `\n\n💡 Suggestion: Use "${correct}" instead of "${alias}"`;
+      addSuggestion(`Use "${correct}" instead of "${alias}"`);
       break;
     }
   }
@@ -171,7 +241,7 @@ function enhanceErrorMessage(
       errorLine.includes(`var ${reserved}`) ||
       errorLine.includes(`var.update ${reserved}`)
     ) {
-      enhanced += `\n\n💡 "${reserved}" is a reserved variable name. Try a different name like "${reserved.replace("$", "$my_")}"`;
+      addSuggestion(`"${reserved}" is a reserved variable name. Try a different name like "${reserved.replace("$", "$my_")}"`);
       break;
     }
   }
@@ -179,7 +249,7 @@ function enhanceErrorMessage(
   // Check for common syntax mistakes
   for (const { pattern, suggestion } of SYNTAX_SUGGESTIONS) {
     if (pattern.test(errorLine) || pattern.test(code)) {
-      enhanced += `\n\n💡 Suggestion: ${suggestion}`;
+      addSuggestion(suggestion);
       break;
     }
   }
@@ -558,7 +628,8 @@ export const validateXanoscriptToolSpec = defineTool({
     "- file_paths: Array of file paths for batch validation\n" +
     "- directory: Validate all .xs files in a directory\n\n" +
     "Returns errors with line/column positions and helpful suggestions for common mistakes. " +
-    "The language server auto-detects the object type from the code syntax.",
+    "The language server auto-detects the object type from the code syntax. " +
+    "This validates only the code or files supplied to this tool; it does not prove that a later write_file or replace_string_in_file call saved the same content.",
   annotations: {
     readOnlyHint: true,
     destructiveHint: false,

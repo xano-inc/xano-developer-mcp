@@ -32,7 +32,10 @@ table "<name>" {
 
 ### Index Types
 
-`primary`, `btree`, `btree|unique`, `gin`
+`primary`, `btree`, `btree|unique`, `gin`, `search`, `vector`
+
+Do not place comments inside the `index = [...]` array or inside index objects.
+Put comments above the table or above the whole index section instead.
 
 ---
 

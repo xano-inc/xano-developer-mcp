@@ -42,6 +42,21 @@ $this             — current item in loops/maps
 
 ### Syntax Traps
 
+**Trap 0: Complete constructs need required clauses**
+```xs
+// WRONG: query with only stack/response
+// query "items" verb=GET { stack { } response = [] }
+// WRONG: validating only a partial query body/snippet as if it were a file
+
+// RIGHT: include input, stack, and response even when input is empty
+query "items" verb=GET {
+  api_group = "items"
+  input {}
+  stack {}
+  response = []
+}
+```
+
 **Trap 1: `elseif` not `else if`**
 ```xs
 // WRONG: conditional { if (...) { } else if (...) { } }
@@ -62,6 +77,12 @@ if (($arr|count) > 0) { }
 // WRONG: var $msg { value = $val|to_text ~ " items" }
 // RIGHT:
 var $msg { value = ($val|to_text) ~ " items" }
+
+// WRONG: filter continuation starts on a new line with |
+// var $match { value = $items
+//   |find:$$.id == $input.id }
+// RIGHT:
+var $match { value = $items|find:$$.id == $input.id }
 ```
 
 **Trap 3: Object literals use `:` — block properties use `=`**
@@ -88,6 +109,55 @@ api.request { url = "..." method = "POST" params = $payload } as $result
 // WRONG: input { boolean active  integer count  string name }
 // RIGHT:
 input { bool active  int count  text name }
+```
+
+**Trap 6: Comments only in safe positions**
+```xs
+// Safe: file top, above inputs, immediately above stack operation lines
+// WRONG: comments inside object literals, arrays, schema fields, index arrays,
+//        or inside db.query/return/join/sort config blocks
+// index = [
+//   // invalid here
+//   {type: "primary", field: [{name: "id"}]}
+// ]
+// db.query "user" {
+//   // invalid here
+//   return = {type: "list"}
+// } as $users
+```
+
+**Trap 7: Stack operations often need `as $variable`**
+```xs
+// WRONG: db.query "user" { where = $db.user.active == true }
+// RIGHT:
+db.query "user" { where = $db.user.active == true } as $users
+```
+
+**Trap 8: Unit-test args belong in the right block**
+```xs
+// Mocks go inside the stack operation being mocked, not on the test block.
+// Assertion values go inside assertions that accept { value = ... }.
+test "returns user" {
+  input = { id: 1 }
+  expect.to_equal ($response.id) { value = 1 }
+}
+```
+
+**Trap 9: PATCH endpoints must not write blank text unless intended**
+```xs
+var $updates { value = {} }
+conditional {
+  if ($input.cover_letter != null && ($input.cover_letter|trim) != "") {
+    var.update $updates {
+      value = $updates|set:"cover_letter":$input.cover_letter
+    }
+  }
+}
+db.patch "application" {
+  field_name = "id"
+  field_value = $input.application_id
+  data = $updates
+} as $application
 ```
 
 ### Canonical Function Example
@@ -158,4 +228,4 @@ input {
 
 ### Available Topics
 
-survival, working, readme, essentials, syntax, syntax/string-filters, syntax/array-filters, syntax/functions, types, database, functions, apis, tables, tasks, triggers, agents, tools, mcp-servers, security, performance, debugging, unit-testing, workflow-tests, middleware, addons, realtime, streaming, schema, integrations, integrations/cloud-storage, integrations/search, integrations/redis, integrations/external-apis, integrations/utilities, workspace, branch, run, frontend
+survival, working, readme, essentials, syntax, syntax/string-filters, syntax/array-filters, syntax/functions, types, database, functions, apis, tables, tasks, triggers, agents, tools, mcp-servers, security, performance, debugging, unit-testing, workflow-tests, middleware, addons, realtime, streaming, integrations, integrations/cloud-storage, integrations/search, integrations/redis, integrations/external-apis, integrations/utilities, workspace, branch, frontend

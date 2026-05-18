@@ -308,13 +308,19 @@ $count || 10                     // Returns 10 (0 is falsy)
 | `add_ms_to_timestamp` | `$ts\|add_ms_to_timestamp:1000` | Add milliseconds |
 
 ### Timestamp Parts
+
+For a timestamp value in an expression, use `format_timestamp` to extract parts.
+Do not use `timestamp_year`, `timestamp_month`, or `timestamp_day_of_week` as
+general expression filters; those timestamp-part filters are only valid in the
+database query context shown below.
+
 ```xs
-$ts|timestamp_year           // Year
-$ts|timestamp_month          // Month (1-12)
-$ts|timestamp_day_of_month   // Day (1-31)
-$ts|timestamp_hour           // Hour (0-23)
-$ts|timestamp_minute         // Minute (0-59)
-$ts|timestamp_day_of_week    // Day (0=Sunday)
+$ts|format_timestamp:"Y":"UTC"   // Year
+$ts|format_timestamp:"m":"UTC"   // Month (01-12)
+$ts|format_timestamp:"d":"UTC"   // Day of month
+$ts|format_timestamp:"H":"UTC"   // Hour (00-23)
+$ts|format_timestamp:"i":"UTC"   // Minute (00-59)
+$ts|format_timestamp:"N":"UTC"   // Day of week (1=Monday, 7=Sunday)
 ```
 
 ---
@@ -323,13 +329,18 @@ $ts|timestamp_day_of_week    // Day (0=Sunday)
 
 > **Full reference:** For complete database operations, see `xano_xanoscript_docs({ topic: "database" })`.
 
-Used in `db.query` where clauses:
+Used in `db.query` where clauses.
+
+Important: some DB query constructs are **operators**, not pipe filters. Do not
+write `$db.name|includes:"phone"` or `$db.tags|contains:"featured"` in a
+`where` clause. Use `$db.name includes "phone"` and
+`$db.tags contains "featured"`.
 
 | Filter | Example | Description |
 |--------|---------|-------------|
-| `contains` | `$db.tags\|contains:"featured"` | Array contains value |
-| `includes` | `$db.title\|includes:"tutorial"` | String includes text |
-| `overlaps` | `$db.tags\|overlaps:["a","b"]` | Arrays share elements |
+| `contains` | `$db.product.tags contains "featured"` | Array contains value |
+| `includes` | `$db.product.name includes "phone"` | String includes text |
+| `overlaps` | `$db.product.tags overlaps ["a","b"]` | Arrays share elements |
 | `between` | `$db.price\|between:10:100` | Value in range |
 | `within` | `$db.geo\|within:$point:1000` | Geo within radius (meters) |
 | `distance` | `$db.geo\|distance:$point` | Geo distance (meters) |

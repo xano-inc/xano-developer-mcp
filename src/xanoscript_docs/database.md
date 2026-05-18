@@ -270,6 +270,8 @@ db.edit "product" {
 } as $product
 ```
 
+Use `db.edit` when you intentionally want every field in `data` to be written. If a PATCH-style API should ignore omitted or blank fields, build a dynamic object and use `db.patch` instead; otherwise empty strings overwrite existing values.
+
 ---
 
 ## db.patch
@@ -280,7 +282,7 @@ Update a record with a variable data object. Preferred for dynamic updates.
 var $updates { value = { updated_at: now } }
 
 conditional {
-  if ($input.name != null) {
+  if ($input.name != null && ($input.name|trim) != "") {
     var.update $updates { value = $updates|set:"name":$input.name }
   }
 }
@@ -296,6 +298,8 @@ db.patch "product" {
   data = $updates
 } as $product
 ```
+
+For optional text fields, `null` and `""` are different. Use `!= null` to skip omitted fields, and add `($input.field|trim) != ""` when blank text should also leave the existing database value unchanged.
 
 ---
 
@@ -470,79 +474,75 @@ db.external.oracle.direct_query { ... }
 
 ## Bulk Operations
 
-Perform batch operations on multiple records efficiently.
+Bulk operation syntax is version-sensitive. Do not invent `db.bulk.*` argument
+names such as `data = [...]` or `where = ...` unless the exact form validates in
+your workspace. Trace failures repeatedly came from SQL/ORM-style bulk syntax
+that looked plausible but failed validation.
 
-### db.bulk.add
+When validation rejects a bulk operation, fall back to documented primitives:
+loop over the records and use `db.add`, `db.patch`, `db.edit`, or `db.del` with
+explicit field mappings.
 
-Insert multiple records in a single operation.
-
-```xs
-db.bulk.add "product" {
-  data = [
-    { name: "Product A", price: 10.00, sku: "SKU-A" },
-    { name: "Product B", price: 20.00, sku: "SKU-B" },
-    { name: "Product C", price: 30.00, sku: "SKU-C" }
-  ]
-} as $inserted
-```
-
-### db.bulk.update
-
-Update multiple records matching conditions.
+### Safe batch insert fallback
 
 ```xs
-db.bulk.update "product" {
-  where = $db.product.category_id == $input.category_id
-  data = {
-    is_featured: true,
-    updated_at: now
-  }
-} as $count
-```
-
-### db.bulk.patch
-
-Patch multiple records with variable data.
-
-```xs
-var $updates { value = { updated_at: now } }
-
-conditional {
-  if ($input.discount != null) {
-    var.update $updates { value = $updates|set:"discount":$input.discount }
+foreach ($input.items) {
+  each as $item {
+    db.add "product" {
+      data = {
+        name: $item.name,
+        price: $item.price,
+        sku: $item.sku
+      }
+    } as $created
   }
 }
-
-db.bulk.patch "product" {
-  where = $db.product.category_id == $input.category_id
-  data = $updates
-} as $count
 ```
 
-### db.bulk.delete
-
-Delete multiple records matching conditions.
+### Safe batch patch fallback
 
 ```xs
-db.bulk.delete "temp_session" {
-  where = $db.temp_session.expires_at < now
-} as $deleted_count
+foreach ($input.items) {
+  each as $item {
+    db.patch "product" {
+      field_name = "id"
+      field_value = $item.id
+      data = {
+        price: $item.price,
+        updated_at: now
+      }
+    } as $updated
+  }
+}
 ```
 
-### Bulk with Transaction
+### Bulk syntax guard
+
+If you use a `db.bulk.*` operation from workspace-specific documentation, keep
+the validated snippet with the change. If validation reports "The argument
+'data' is not valid in this context" or "Expected a null", stop using the guessed
+bulk form and switch to a loop with explicit field mappings.
+
+```xs
+// Avoid guessed forms like this unless a retrieved doc snippet validates:
+// db.bulk.add "product" { data = [...] }
+// db.bulk.update "product" { where = ... data = {...} }
+```
+
+### Batch write transaction
 
 ```xs
 db.transaction {
   stack {
-    db.bulk.delete "order_item" {
-      where = $db.order_item.order_id == $input.order_id
-    }
-
-    db.bulk.add "order_item" {
-      data = $input.items|map:{
-        order_id: $input.order_id,
-        product_id: $$.product_id,
-        quantity: $$.quantity
+    foreach ($input.items) {
+      each as $item {
+        db.add "order_item" {
+          data = {
+            order_id: $input.order_id,
+            product_id: $item.product_id,
+            quantity: $item.quantity
+          }
+        } as $created
       }
     }
   }
@@ -629,7 +629,7 @@ try_catch {
 ## Best Practices
 
 1. **Use null-safe operators** - `==?` for optional filters avoids manual null checks
-2. **Use bulk operations for batch processing** - More efficient than loops with individual db calls
+2. **Validate bulk syntax before using it** - If bulk arguments fail validation, use explicit looped writes
 3. **Use transactions for atomicity** - Ensure all-or-nothing operations across multiple tables
 
 ---

@@ -313,6 +313,30 @@ function "validate_age" {
 
 ## Common Mistakes
 
+### Putting `mock` Or `value` On The Wrong Block
+
+`mock` belongs on the stack operation being mocked, such as `api.request`,
+`db.get`, or a variable block. It is not a `test` block property.
+
+`value` belongs inside assertion blocks that require a comparison value. It is
+not valid on no-property assertions such as `expect.to_be_true ($response.ok)`.
+
+```xs
+// Wrong
+// test "returns product" {
+//   input = { id: 1 }
+//   mock = { product: { id: 1 } }
+//   expect.to_be_true ($response.ok) { value = true }
+// }
+
+// Correct
+test "returns product" {
+  input = { id: 1 }
+  expect.to_equal ($response.id) { value = 1 }
+  expect.to_be_true ($response.ok)
+}
+```
+
 ### Testing Required Fields with Empty Strings
 
 A required input field (no `?` after the name) rejects both `null` and empty strings at the platform level — **before your stack runs**. Writing a test that sends `""` to a required field will always get a validation error, never your custom precondition or error logic.

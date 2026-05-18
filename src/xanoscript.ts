@@ -19,6 +19,7 @@ export interface DocConfig {
   applyTo: string[];
   description: string;
   priority?: number;
+  aliases?: string[];
 }
 
 export interface XanoscriptDocsArgs {
@@ -42,12 +43,32 @@ function buildDocsConfig(): Record<string, DocConfig> {
       applyTo: topic.applyTo,
       description: topic.description,
       priority: (topic as Record<string, unknown>).priority as number | undefined,
+      aliases: (topic as Record<string, unknown>).aliases as string[] | undefined,
     };
   }
   return config;
 }
 
 export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = buildDocsConfig();
+
+/**
+ * Resolve a requested topic name to a canonical docs topic.
+ *
+ * docs_index.json carries aliases for model-friendly names like "auth",
+ * "filters", and "comments"; topic lookup must honor them so callers do not
+ * need to perfectly remember canonical topic IDs.
+ */
+export function resolveTopicName(topic: string): string | undefined {
+  if (XANOSCRIPT_DOCS_V2[topic]) return topic;
+
+  for (const [name, config] of Object.entries(XANOSCRIPT_DOCS_V2)) {
+    if (config.aliases?.includes(topic)) {
+      return name;
+    }
+  }
+
+  return undefined;
+}
 
 // =============================================================================
 // Content Cache
@@ -258,18 +279,20 @@ export function readXanoscriptDocsV2(
   }
 
   // Topic-based: return specific doc
-  const config = XANOSCRIPT_DOCS_V2[args!.topic!];
+  const requestedTopic = args!.topic!;
+  const resolvedTopic = resolveTopicName(requestedTopic);
+  const config = resolvedTopic ? XANOSCRIPT_DOCS_V2[resolvedTopic] : undefined;
 
   if (!config) {
     const availableTopics = Object.keys(XANOSCRIPT_DOCS_V2).join(", ");
     throw new Error(
-      `Unknown topic "${args!.topic}".\n\nAvailable topics: ${availableTopics}`
+      `Unknown topic "${requestedTopic}".\n\nAvailable topics: ${availableTopics}`
     );
   }
 
   const content = cachedReadFile(join(docsPath, config.file));
   const doc = mode === "quick_reference"
-    ? extractQuickReference(content, args!.topic!)
+    ? extractQuickReference(content, resolvedTopic!)
     : content;
 
   return `${doc}\n\n---\nDocumentation version: ${version}`;

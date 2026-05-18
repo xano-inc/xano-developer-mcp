@@ -38,6 +38,8 @@ Event-driven handlers that execute in response to system events. Triggers allow 
 
 Each trigger type has a **predefined read-only input block**. These input structures are automatically provided by the system and **cannot be modified**. When creating a trigger, use the predefined input block as-is.
 
+Do not omit the `input` clause, and do not paste `input { ... }` into a real file. Use the exact predefined block for the trigger type.
+
 ### Table Trigger Input
 
 ```xs

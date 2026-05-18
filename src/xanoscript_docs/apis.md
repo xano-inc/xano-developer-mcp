@@ -37,11 +37,15 @@ query "endpoint-path" verb=<METHOD> {
   api_group = "<GroupName>"     // Required: API group for organization
   description = "What this endpoint does"
   auth = "<table>"              // Optional: table with auth = true (usually "user")
-  input { ... }
+  input { ... }                  // Required, even when empty: input {}
   stack { ... }
   response = $result
 }
 ```
+
+Every `query` must include `input`, `stack`, and `response`. For endpoints with no parameters, write `input {}`; omitting the input clause is invalid.
+
+When validating or repairing an endpoint, validate the complete `query ... { input {} stack {} response = ... }` file, not only the stack body. A stack-only snippet will fail with missing `input` and `response` clauses even if the stack operations are valid.
 
 ### Query Name (Required, Non-Empty)
 
@@ -140,7 +144,7 @@ query "products" verb=GET {
 
 ## Input Block
 
-> **Input block rules:** Empty and single-input blocks can be one-liners. Multiple inputs must be on separate lines. For complete type reference, validation filters, and schema definitions, see `xano_xanoscript_docs({ topic: "types" })`.
+> **Input block rules:** Never omit the input block. Empty and single-input blocks can be one-liners. Multiple inputs must be on separate lines. For complete type reference, validation filters, and schema definitions, see `xano_xanoscript_docs({ topic: "types" })`.
 
 ```xs
 // OK - empty or single input as one-liner
@@ -163,6 +167,7 @@ input {
 ```xs
 query "status" verb=GET {
   api_group = "System"
+  input {}
   stack { }
   response = { status: "ok" }
 }
@@ -176,6 +181,7 @@ The `auth` attribute references a table that has `auth = true` in its definition
 query "profile" verb=GET {
   api_group = "Users"
   auth = "user"                 // Must reference a table with auth = true
+  input {}
   stack {
     db.get "user" {
       field_name = "id"
@@ -326,8 +332,13 @@ query "products/{product_id}" verb=PATCH {
     var $updates { value = {} }
 
     conditional {
-      if ($input.name != null) {
+      if ($input.name != null && ($input.name|trim) != "") {
         var.update $updates.name { value = $input.name }
+      }
+    }
+    conditional {
+      if ($input.description != null && ($input.description|trim) != "") {
+        var.update $updates.description { value = $input.description }
       }
     }
     conditional {
@@ -349,6 +360,8 @@ query "products/{product_id}" verb=PATCH {
   response = $product
 }
 ```
+
+For PATCH endpoints where blank text should mean "leave the existing value unchanged", check both `!= null` and `($input.field|trim) != ""` before adding that field to `$updates`. `db.edit` with inline `data = { field: $input.field }` will overwrite with blank strings.
 
 ### Delete (DELETE)
 

@@ -35,39 +35,39 @@
       "description": "Expressions, operators, and filters for all XanoScript code",
       "applyTo": ["**/*.xs"],
       "priority": 2,
-      "aliases": ["filters", "operators", "expressions"]
+      "aliases": ["filters", "operators", "expressions", "comments", "syntax/comments", "logic", "syntax/date-filters"]
     },
     "syntax/string-filters": {
       "file": "syntax/string-filters.md",
       "description": "String filters, regex, encoding, security filters, text functions",
       "applyTo": [],
-      "aliases": ["string", "regex", "encoding", "security-filters"]
+      "aliases": ["string", "strings", "regex", "encoding", "security-filters"]
     },
     "syntax/array-filters": {
       "file": "syntax/array-filters.md",
       "description": "Array filters, functional operations, and array functions",
       "applyTo": [],
-      "aliases": ["array", "map", "filter", "reduce", "sort"]
+      "aliases": ["array", "arrays", "map", "filter", "reduce", "sort"]
     },
     "syntax/functions": {
       "file": "syntax/functions.md",
       "description": "Math filters/functions, object functions, bitwise operations",
       "applyTo": [],
-      "aliases": ["math", "object", "bitwise"]
+      "aliases": ["math", "object", "objects", "object-filters", "syntax/object-filters", "bitwise"]
     },
     "types": {
       "file": "types.md",
       "description": "Data types, input blocks, and validation",
       "applyTo": ["function/**/*.xs", "api/**/*.xs", "ai/tool/*.xs", "ai/agent/*.xs"],
       "priority": 4,
-      "aliases": ["validation", "input", "data-types"]
+      "aliases": ["validation", "input", "inputs", "data-types"]
     },
     "tables": {
       "file": "tables.md",
       "description": "Database schema definitions with indexes and relationships",
       "applyTo": ["table/*.xs"],
       "priority": 8,
-      "aliases": ["schema", "fields", "indexes"]
+      "aliases": ["schema", "schemas", "fields", "indexes"]
     },
     "functions": {
       "file": "functions.md",
@@ -81,14 +81,14 @@
       "description": "HTTP endpoint definitions with authentication and CRUD patterns",
       "applyTo": ["api/**/*.xs"],
       "priority": 7,
-      "aliases": ["endpoints", "http", "rest", "query"]
+      "aliases": ["endpoints", "http", "rest", "query", "api_group", "api_groups"]
     },
     "tasks": {
       "file": "tasks.md",
       "description": "Scheduled and cron jobs",
       "applyTo": ["task/*.xs"],
       "priority": 10,
-      "aliases": ["scheduled", "jobs", "cron"]
+      "aliases": ["scheduled", "jobs", "cron", "run"]
     },
     "triggers": {
       "file": "triggers.md",
@@ -116,20 +116,20 @@
       "description": "AI tools for agents and MCP servers",
       "applyTo": ["ai/tool/*.xs"],
       "priority": 12,
-      "aliases": ["ai-tools", "agent-tools"]
+      "aliases": ["ai-tools", "ai_tools", "agent-tools", "agent_tools"]
     },
     "mcp-servers": {
       "file": "mcp-servers.md",
       "description": "MCP server definitions exposing tools",
       "applyTo": ["ai/mcp_server/*.xs"],
       "priority": 15,
-      "aliases": ["mcp", "model-context-protocol"]
+      "aliases": ["mcp", "ai_mcp_servers", "mcp_servers", "model-context-protocol"]
     },
     "unit-testing": {
       "file": "unit-testing.md",
       "description": "Unit tests, mocks, and assertions within functions, APIs, and middleware",
       "applyTo": ["function/**/*.xs", "api/**/*.xs", "middleware/*.xs"],
-      "aliases": ["tests", "unit-tests", "mocks", "assertions"]
+      "aliases": ["testing", "test", "tests", "unit-testing", "unit_testing", "unit-tests", "mocks", "assertions"]
     },
     "workflow-tests": {
       "file": "workflow-tests.md",
@@ -165,13 +165,13 @@
       "file": "integrations/external-apis.md",
       "description": "HTTP requests with api.request patterns",
       "applyTo": [],
-      "aliases": ["http", "api", "request", "fetch"]
+      "aliases": ["http", "api", "request", "fetch", "external_api_calls"]
     },
     "integrations/utilities": {
       "file": "integrations/utilities.md",
       "description": "Local storage, email, zip, and Lambda utilities",
       "applyTo": [],
-      "aliases": ["email", "zip", "lambda", "archive"]
+      "aliases": ["email", "zip", "lambda", "archive", "syntax/utilities"]
     },
     "frontend": {
       "file": "frontend.md",
@@ -207,7 +207,7 @@
       "file": "security.md",
       "description": "Security best practices for authentication and authorization",
       "applyTo": ["function/**/*.xs", "api/**/*.xs"],
-      "aliases": ["auth", "authorization", "permissions"]
+      "aliases": ["auth", "authentication", "authorization", "permissions"]
     },
     "streaming": {
       "file": "streaming.md",

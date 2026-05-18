@@ -10,6 +10,7 @@ import {
   readXanoscriptDocsStructured,
   getTopicNames,
   getTopicDescriptions,
+  resolveTopicName,
 } from "./xanoscript.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -71,6 +72,49 @@ describe("xanoscript module", () => {
         expect(typeof config.description).toBe("string");
         expect(config.file).toMatch(/\.md$/);
       }
+    });
+  });
+
+  describe("resolveTopicName", () => {
+    it("should return canonical topics unchanged", () => {
+      expect(resolveTopicName("syntax")).toBe("syntax");
+      expect(resolveTopicName("security")).toBe("security");
+    });
+
+    it("should resolve trace-observed topic aliases", () => {
+      const cases: Record<string, string> = {
+        auth: "security",
+        authentication: "security",
+        filters: "syntax",
+        expressions: "syntax",
+        comments: "syntax",
+        "syntax/comments": "syntax",
+        logic: "syntax",
+        "syntax/object-filters": "syntax/functions",
+        "syntax/date-filters": "syntax",
+        "syntax/utilities": "integrations/utilities",
+        index: "readme",
+        ai: "agents",
+        api_group: "apis",
+        api_groups: "apis",
+        testing: "unit-testing",
+        ai_tools: "tools",
+        ai_mcp_servers: "mcp-servers",
+        external_api_calls: "integrations/external-apis",
+        files: "integrations/cloud-storage",
+        strings: "syntax/string-filters",
+        array: "syntax/array-filters",
+        inputs: "types",
+        run: "tasks",
+      };
+
+      for (const [alias, canonical] of Object.entries(cases)) {
+        expect(resolveTopicName(alias)).toBe(canonical);
+      }
+    });
+
+    it("should return undefined for unknown topics", () => {
+      expect(resolveTopicName("nonexistent")).toBeUndefined();
     });
   });
 
@@ -284,6 +328,18 @@ Even more content.
     it("should return specific topic documentation", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH, { topic: "syntax" });
       expect(result).toContain("Documentation version:");
+    });
+
+    it("should return documentation for topic aliases", () => {
+      const authResult = readXanoscriptDocsV2(DOCS_PATH, { topic: "auth" });
+      expect(authResult).toContain("# Security");
+
+      const commentsResult = readXanoscriptDocsV2(DOCS_PATH, {
+        topic: "comments",
+        mode: "quick_reference",
+      });
+      expect(commentsResult).toContain("# syntax");
+      expect(commentsResult).toContain("Documentation version:");
     });
 
     it("should throw for unknown topic", () => {

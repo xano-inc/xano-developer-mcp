@@ -351,7 +351,8 @@ precondition ($input.email|contains:"@") {
 ### 2. Optional Field Handling
 
 ```xs
-// Build object with optional fields
+// Build object with optional fields.
+// For PATCH endpoints, use db.patch with a dynamic object so omitted fields do not overwrite existing values.
 var $data { value = { required_field: $input.required } }
 
 conditional {
@@ -363,6 +364,18 @@ conditional {
 // Or use set_ifnotnull
 var $data {
   value = { required: $input.required }|set_ifnotnull:"optional":$input.optional
+}
+```
+
+If blank text should mean "do not update this field", check for both omitted and blank values:
+
+```xs
+conditional {
+  if ($input.cover_letter != null && ($input.cover_letter|trim) != "") {
+    var.update $data {
+      value = $data|set:"cover_letter":$input.cover_letter
+    }
+  }
 }
 ```
 
@@ -579,17 +592,18 @@ db.query "dad_jokes" {
 } as $joke
 ```
 
-### 10. Using $env in run.job input blocks
+### 10. Do not invent background job invocation syntax
 ```xs
-// Wrong - $env not allowed in input blocks
-// run.job "my_job" { input { text api_key = $env.API_KEY } }
+// Wrong - these are unsupported unless exact workspace docs prove otherwise:
+// run.job "my_job" { ... }
+// task.run "my_task" { ... }
+// function.run "send_notification" { async = true ... }
 
-// Correct - access $env in the stack instead
-run.job "my_job" {
-  stack {
-    var $api_key { value = $env.API_KEY }
-  }
-}
+// Correct - call a function synchronously, or build a scheduled task/status
+// table pattern for background work.
+function.run "send_notification" {
+  input = { user_id: $auth.id, message: "Done" }
+} as $result
 ```
 
 ### 11. Using `object` type without schema
@@ -626,7 +640,34 @@ stack {
 }
 ```
 
-### 13. Multiple constructs in one file
+### 13. Omitting required clauses
+```xs
+// Wrong - query is missing input
+// query "items" verb=GET { stack {} response = [] }
+
+// Correct - include input even when empty
+query "items" verb=GET {
+  api_group = "items"
+  input {}
+  stack {}
+  response = []
+}
+```
+
+### 14. Breaking a filter chain onto a leading pipe line
+```xs
+// Wrong - the continuation line starts with a pipe and can parse as a new token
+// var $match { value = $items
+//   |find:$$.id == $input.id }
+
+// Correct - keep the chain as one expression
+var $match { value = $items|find:$$.id == $input.id }
+
+// Correct - wrap the whole expression when used inside larger expressions
+var $has_items { value = (($items|count) > 0) }
+```
+
+### 15. Multiple constructs in one file
 
 Each `.xs` file must contain exactly **one** construct. Placing two constructs in the same file causes a parse error.
 
@@ -651,7 +692,7 @@ Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:
 | `syntax` | Complete filter reference, operators, system variables |
 | `types` | Data types, input validation, schema definitions |
 | `database` | All db.* operations: query, get, add, edit, delete |
-| `functions` | Reusable function stacks, async patterns, loops |
+| `functions` | Reusable function stacks, recursion, loops |
 | `apis` | HTTP endpoints, authentication, CRUD patterns |
 | `security` | Security best practices and authentication |
 | `integrations` | External API patterns (OpenAI, Stripe, etc.) |

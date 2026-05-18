@@ -158,6 +158,8 @@ function empty {
 
 **Note:** XanoScript only supports `//` for comments. Other comment styles like `#` are not supported.
 
+Do not place comments inside arrays, object literals, schema fields, index arrays, or inside a stack operation's inner config block. "Above a stack item" means immediately before the operation line such as `db.query "user" {`, not inside that operation before `where`, `return`, `join`, or `sort`.
+
 ### Filters (Pipe Syntax)
 
 ```xs
@@ -218,7 +220,7 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 | `syntax/array-filters`  | Array manipulation filters                  | Map, Filter, Sort, Group |
 | `syntax/functions`      | Built-in functions                          | Math, Date, Crypto, JSON |
 | `types`      | Data types, validation, input blocks                 | Validation Filters, Input Blocks |
-| `functions`  | Reusable function stacks, async, loops               | Loops, Async Patterns |
+| `functions`  | Reusable function stacks, calls, loops               | Loops, Function Calls |
 
 ### Data
 
@@ -275,4 +277,3 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 | ------------- | ------------------------------------------------------------ | ------------ |
 | `performance` | Performance optimization best practices                      | Caching, Query Optimization |
 | `security`    | Security best practices for authentication and authorization | Auth Patterns, Token Handling |
-

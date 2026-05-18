@@ -7,6 +7,7 @@ import {
   xanoscriptDocs,
   xanoscriptDocsTool,
 } from "./xanoscript_docs.js";
+import { validateXanoscript } from "./validate_xanoscript.js";
 import { toMcpResponse } from "./types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -64,6 +65,108 @@ describe("xanoscriptDocs", () => {
     expect(result.documentation).toContain("Documentation version:");
   });
 
+  it("should return topic documentation for aliases", () => {
+    const result = xanoscriptDocs({ topic: "auth" });
+    expect(result.documentation).toContain("# Security");
+    expect(result.documentation).toContain("Documentation version:");
+  });
+
+  it("should include trace-driven API guidance for empty inputs and blank PATCH fields", () => {
+    const result = xanoscriptDocs({ topic: "apis" });
+    expect(result.documentation).toContain("Every `query` must include `input`, `stack`, and `response`");
+    expect(result.documentation).toContain('blank text should mean "leave the existing value unchanged"');
+  });
+
+  it("should not teach invalid expression filters or guessed async primitives", () => {
+    const syntax = xanoscriptDocs({ topic: "syntax" }).documentation;
+    const working = xanoscriptDocs({ topic: "working" }).documentation;
+    const functions = xanoscriptDocs({ topic: "functions" }).documentation;
+
+    expect(syntax).toContain('$ts|format_timestamp:"N":"UTC"');
+    expect(syntax).toContain('$db.product.name includes "phone"');
+    expect(syntax).not.toContain('$db.title\\|includes:"tutorial"');
+    expect(syntax).not.toContain('$ts|timestamp_day_of_week    // Day');
+
+    expect(working).toContain("Do not invent background job invocation syntax");
+    expect(working).not.toContain('run.job "my_job" { stack');
+    expect(functions).toContain("Do not add `async = true`");
+    expect(functions).not.toContain("await $request as $result");
+  });
+
+  it("should steer invalid bulk operation guesses to validated loop fallbacks", () => {
+    const database = xanoscriptDocs({ topic: "database" }).documentation;
+    const performance = xanoscriptDocs({ topic: "performance" }).documentation;
+
+    expect(database).toContain("Bulk operation syntax is version-sensitive");
+    expect(database).toContain("db.add \"product\"");
+    expect(database).not.toContain('db.bulk.add "product" {\n  data = [');
+    expect(performance).toContain("explicit batch write loops");
+    expect(performance).not.toContain("db.add_bulk");
+  });
+
+  it("should keep trace-critical docs snippets valid against the parser", () => {
+    const snippets = [
+      `function "docs/date_parts" {
+  input {}
+  stack {
+    var $ts { value = "now"|to_timestamp }
+    var $dow { value = $ts|format_timestamp:"N":"UTC" }
+  }
+  response = $dow
+}`,
+      `function "docs/db_where_ops" {
+  input {
+    text query?
+  }
+  stack {
+    db.query "product" {
+      where = $db.product.name includes $input.query && $db.product.tags contains "featured" && $db.product.tags overlaps ["a","b"] && $db.product.price|between:10:100
+      return = {type: "list"}
+    } as $products
+  }
+  response = $products
+}`,
+      `function "docs/batch_insert_loop" {
+  input {
+    json[] items
+  }
+  stack {
+    foreach ($input.items) {
+      each as $item {
+        db.add "product" {
+          data = {
+            name: $item.name,
+            price: $item.price,
+            sku: $item.sku
+          }
+        } as $created
+      }
+    }
+  }
+  response = true
+}`,
+      `function "docs/function_run_sync" {
+  input {
+    int order_id
+  }
+  stack {
+    function.run "process_order" {
+      input = { order_id: $input.order_id }
+    } as $result
+  }
+  response = $result
+}`,
+    ];
+
+    for (const snippet of snippets) {
+      const result = validateXanoscript({ code: snippet });
+      expect(result.valid, result.message).toBe(true);
+      if ("errors" in result) {
+        expect(result.errors, result.message).toHaveLength(0);
+      }
+    }
+  });
+
   it("should return context-aware docs for file_path", () => {
     const result = xanoscriptDocs({ file_path: "api/users/create.xs" });
     expect(result.documentation).toContain("XanoScript Documentation for:");
@@ -99,6 +202,12 @@ describe("xanoscriptDocsTool", () => {
 
   it("should return success with topic docs", () => {
     const result = xanoscriptDocsTool({ topic: "syntax" });
+    expect(result.success).toBe(true);
+    expect(result.data).toContain("Documentation version:");
+  });
+
+  it("should return success with alias topic docs", () => {
+    const result = xanoscriptDocsTool({ topic: "comments" });
     expect(result.success).toBe(true);
     expect(result.data).toContain("Documentation version:");
   });

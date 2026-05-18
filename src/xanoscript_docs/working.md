@@ -128,11 +128,17 @@ throw {
 var $obj { value = { name: "Alice", age: 30 } }
 ```
 
-### 10. Using $env in run.job input blocks
+### 10. Do not invent background job invocation syntax
 ```xs
-// WRONG: run.job "my_job" { input { text api_key = $env.API_KEY } }
-// RIGHT — access $env in the stack:
-run.job "my_job" { stack { var $api_key { value = $env.API_KEY } } }
+// WRONG: run.job "my_job" { ... }
+// WRONG: task.run "my_task" { ... }
+// WRONG: function.run "send_notification" { async = true ... }
+
+// RIGHT: use a documented synchronous function call, or create a scheduled task
+// and a status table/endpoint for background work.
+function.run "send_notification" {
+  input = { user_id: $auth.id, message: "Done" }
+} as $result
 ```
 
 ### 11. Using `object` type without schema
@@ -373,14 +379,11 @@ function.run "calculate_total" {
   input = { prices: [10, 20, 30], tax_rate: 0.08 }
 } as $result
 
-// Async (fire and forget)
-function.run "send_notification" {
-  async = true
-  input = { user_id: $auth.id, message: "Done" }
-}
+// Background jobs are not started by adding async=true to function.run.
+// Use a scheduled task/status table pattern or a documented task trigger.
 ```
 
-> For async patterns, recursion, and advanced function features: `xano_xanoscript_docs({ topic: "functions" })`
+> For background job patterns, recursion, and advanced function features: `xano_xanoscript_docs({ topic: "functions" })`
 
 ---
 
@@ -449,12 +452,14 @@ db.edit "product" {
 ```xs
 var $updates { value = { updated_at: now } }
 conditional {
-  if ($input.name != null) {
+  if ($input.name != null && ($input.name|trim) != "") {
     var.update $updates { value = $updates|set:"name":$input.name }
   }
 }
 db.patch "product" { field_name = "id" field_value = $input.id data = $updates } as $product
 ```
+
+For PATCH APIs, use `db.patch` and add fields to `$updates` only when they should change. `db.edit` with inline `data` writes blank strings and overwrites existing values.
 
 ### db.del — Delete
 ```xs
@@ -624,6 +629,12 @@ precondition ($auth.id != null) {
 var $data {
   value = { required: $input.required }|set_ifnotnull:"optional":$input.optional
 }
+
+conditional {
+  if ($input.cover_letter != null && ($input.cover_letter|trim) != "") {
+    var.update $data { value = $data|set:"cover_letter":$input.cover_letter }
+  }
+}
 ```
 
 ### Building Complex Objects
@@ -648,7 +659,7 @@ var $msg { value = ($status|to_text) ~ ": " ~ ($data|json_encode) }
 | `syntax/array-filters` | Array filters, functional operations | ~7KB |
 | `types` | Type system, input validation | ~11KB |
 | `database` | All db.* operations, joins, transactions | ~13KB |
-| `functions` | Function stacks, async, recursion | ~9KB |
+| `functions` | Function stacks, recursion, calls | ~9KB |
 | `apis` | HTTP endpoints, authentication | ~12KB |
 | `tables` | Database schema definitions | ~7KB |
 | `tasks` | Scheduled/cron jobs | ~6KB |

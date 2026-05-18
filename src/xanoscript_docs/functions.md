@@ -329,22 +329,19 @@ function "validate_email_unique" {
 
 ---
 
-## Async Operations
+## Background Work
 
-### await
+Do not add `async = true` to `function.run` or `api.request` unless a retrieved
+workspace-specific doc snippet proves that syntax for the current runtime.
+Validation rejects guessed async arguments in common traces.
 
-Wait for an asynchronous operation to complete.
+For background work, use a documented scheduled task/status-table pattern or a
+synchronous `function.run` call:
 
 ```xs
-stack {
-  api.request {
-    url = "https://api.example.com/data"
-    method = "GET"
-    async = true
-  } as $request
-
-  await $request as $result
-}
+function.run "process_order" {
+  input = { order_id: $input.order_id }
+} as $result
 ```
 
 ### group (Organizational Block)

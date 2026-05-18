@@ -6,7 +6,7 @@ applyTo: "function/**/*.xs, api/**/*.xs"
 
 Best practices for building fast, efficient XanoScript applications.
 
-> **TL;DR:** Index frequently queried fields. Use `select` to fetch only needed columns. Use `db.add_bulk`/`db.edit_bulk` for batch operations. Cache with Redis. Paginate large result sets.
+> **TL;DR:** Index frequently queried fields. Use `select` to fetch only needed columns. Cache expensive reads. Paginate large result sets. Use explicit batch write loops unless a retrieved bulk-operation snippet validates in the current workspace.
 
 ---
 
@@ -117,21 +117,26 @@ db.query "order" {
 } as $orders
 ```
 
-### Use Bulk Operations
+### Batch Writes
 
 ```xs
-// Bad: Individual inserts in loop
+// Safe fallback: explicit fields inside a loop
 foreach ($items) {
   each as $item {
-    db.add "order_item" { data = $item }
+    db.add "order_item" {
+      data = {
+        order_id: $item.order_id,
+        product_id: $item.product_id,
+        quantity: $item.quantity
+      }
+    } as $created
   }
 }
-
-// Good: Bulk insert
-db.bulk.add "order_item" {
-  data = $items
-}
 ```
+
+Bulk operations can be faster, but their syntax is version-sensitive. Do not
+guess `db.bulk.*` forms such as `data = $items`; if validation rejects a bulk
+argument, use the explicit loop fallback above.
 
 ---
 
@@ -202,7 +207,7 @@ Use `now|to_ms` before and after operations to measure duration, and `debug.log`
 ## Best Practices Summary
 
 1. **Index frequently queried columns** - Use `select` for only needed fields; use `count`/`exists` return types
-2. **Avoid N+1 queries** - Use joins or bulk operations (`db.bulk.add`, `db.bulk.edit`)
+2. **Avoid N+1 reads** - Use joins, `select`, and pagination; use batch write loops unless a retrieved and validated bulk-operation snippet is available
 3. **Paginate large results** - Never return unbounded lists; cache expensive computations with Redis
 
 ---

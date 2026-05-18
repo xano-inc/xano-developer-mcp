@@ -66,6 +66,26 @@ Complete reference for XanoScript array filters, functional operations, and stat
 [1,2,3,4]|reduce:$$+$result:0               // 10
 ```
 
+### Filter Chains In Expressions
+
+Keep a filter chain as one expression. Do not start a new line with `|find`, `|map`, `|filter`, or another pipe after a bare variable; that can parse as a new token instead of a continuation.
+
+```xs
+// Wrong
+// var $payment_method {
+//   value = $program.payment_method_list
+//     |find:$$.uuid == $payment_method_uuid
+// }
+
+// Correct
+var $payment_method {
+  value = ($program.payment_method_list ?? [])|find:$$.uuid == $payment_method_uuid
+}
+
+// Correct when comparing counts or composing with other operators
+if ((($items|count) > 0) && $input.active) { }
+```
+
 ### Array Element Access: `|get` vs `|slice`
 
 > **`|get:N`** returns a **single element** by zero-based index.
