@@ -47,17 +47,31 @@ query "endpoint-path" verb=<METHOD> {
 
 The query name is **required** and **must be a non-empty string**. Empty names (`query "" verb=...`) are invalid. The name defines the endpoint path after the API group canonical.
 
-**Full URL path structure:**
+**Full public URL:**
 
 ```
-/<api_group canonical>/<query name>
+<api_baseurl>/api:<canonical>[:<branch>]/<query_name>
 ```
+
+Where:
+- `<api_baseurl>` — instance base URL (value of `$env.$api_baseurl` at runtime)
+- `<canonical>` — the `canonical` property of the API group
+- `<branch>` — **optional** branch name (value of `$env.$branch` at runtime). Omit the entire `:<branch>` segment (including the colon) to target the live branch.
+- `<query_name>` — the query's `name` (may contain slashes for nested paths)
+
+Example: `https://example.xano.io/api:blog-api:v2/categories`
+- `<api_baseurl>` → `https://example.xano.io`
+- `<canonical>` → `blog-api`
+- `<branch>` → `v2`
+- `<query_name>` → `categories`
+
+Live-branch example (no branch segment): `https://example.xano.io/api:blog-api/categories`
 
 The query name can include slashes for nested paths:
 
-- `query "list" verb=GET` → `/<canonical>/list`
-- `query "users/{id}" verb=GET` → `/<canonical>/users/{id}`
-- `query "admin/reports/daily" verb=GET` → `/<canonical>/admin/reports/daily`
+- `query "list" verb=GET` → `/api:<canonical>/list`
+- `query "users/{id}" verb=GET` → `/api:<canonical>/users/{id}`
+- `query "admin/reports/daily" verb=GET` → `/api:<canonical>/admin/reports/daily`
 
 ### HTTP Methods
 
@@ -104,16 +118,16 @@ api_group Authentication {
 api/
 ├── users/
 │   ├── api_group.xs            # Defines group (canonical = "myapp-users")
-│   ├── list_get.xs             # GET /myapp-users/list
-│   └── by_id_get.xs            # GET /myapp-users/{id}
+│   ├── list_get.xs             # GET /api:myapp-users/list
+│   └── by_id_get.xs            # GET /api:myapp-users/by_id/{id}  (query name "by_id/{id}" — static prefix avoids collisions)
 └── products/
     ├── api_group.xs            # Defines group (canonical = "myapp-products")
-    └── search_get.xs           # GET /myapp-products/search
+    └── search_get.xs           # GET /api:myapp-products/search
 ```
 
 **Naming convention:** Endpoint files use `{name}_{verb}.xs` format (e.g., `list_get.xs`, `create_post.xs`).
 
-Full URL: `/<canonical>/<query name>` (e.g., `/myapp-users/profile`)
+Public URL: `<api_baseurl>/api:<canonical>[:<branch>]/<query_name>` (e.g., `https://example.xano.io/api:myapp-users/profile`, or `https://example.xano.io/api:myapp-users:v2/profile` to target branch `v2`). See [Query Name](#query-name-required-non-empty) above for the full placeholder legend.
 
 ---
 
