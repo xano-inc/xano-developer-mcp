@@ -456,26 +456,26 @@ Built-in variables available in the execution context.
 
 ### Request Context
 
-| Variable | Description |
-|----------|-------------|
-| `$remote_ip` | Client IP address |
-| `$remote_port` | Client port number |
-| `$remote_host` | Remote hostname |
-| `$request_method` | HTTP method (GET, POST, etc.) |
-| `$request_uri` | Full request URI |
-| `$request_querystring` | Query string portion |
-| `$http_headers` | Request headers object |
-| `$request_auth_token` | Authorization token (if present) |
+| Variable | Type | Description |
+|----------|------|-------------|
+| `$remote_ip` | text | Client IP address |
+| `$request_method` | text | HTTP method (GET, POST, etc.) |
+| `$request_uri` | text | Full request URI |
+| `$request_querystring` | text | Query string portion |
+| `$http_headers` | object | Request headers object |
+| `$request_auth_token` | text | Authorization token (if present) |
 
 ### System Context
 
-| Variable | Description |
-|----------|-------------|
-| `$datasource` | Current data source name |
-| `$branch` | Current branch name |
-| `$tenant` | Tenant ID (multi-tenant apps) |
-| `$api_baseurl` | API base URL |
-| `$webflow` | Webflow context (if applicable) |
+| Variable | Type | Description |
+|----------|------|-------------|
+| `$datasource` | text | Current data source name |
+| `$branch` | text | Current branch name |
+| `$tenant` | text | Tenant ID (multi-tenant apps) |
+| `$api_baseurl` | text | API base URL |
+| `$release` | int | Current release number |
+| `$platform` | int | Platform identifier |
+| `$debugger` | bool | True when running under the debugger |
 
 ### Access via $env
 
@@ -487,6 +487,8 @@ var $headers { value = $env.$http_headers }
 var $current_branch { value = $env.$branch }
 
 // Custom environment variables (set in Xano dashboard)
+// Note: user-defined env var names have no `$` prefix — only built-in
+// system vars use `$`. Access them as `$env.<name>`, not `$env.$<name>`.
 var $api_key { value = $env.MY_API_KEY }
 ```
 

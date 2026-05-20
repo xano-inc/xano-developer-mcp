@@ -44,11 +44,11 @@ project/
 ├── api/
 │   └── users/                       # API group folder
 │       ├── api_group.xs             # API group definition
-│       ├── get_all_get.xs           # GET /users
-│       ├── get_one_get.xs           # GET /users/:id
-│       ├── create_post.xs           # POST /users
+│       ├── get_all_get.xs           # GET /api:users/get_all
+│       ├── get_one_get.xs           # GET /api:users/get_one/{id}  (query name "get_one/{id}" — static prefix avoids collisions with other path-param queries in the group)
+│       ├── create_post.xs           # POST /api:users/create
 │       └── nested/
-│           └── profile_get.xs       # Nested endpoint: GET /users/nested/profile
+│           └── profile_get.xs       # Nested endpoint: GET /api:users/nested/profile
 ├── function/
 │   └── validate_token.xs            # Reusable functions
 ├── task/
