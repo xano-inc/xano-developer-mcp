@@ -47,6 +47,7 @@ describe("xanoscript module", () => {
         "integrations/redis",
         "integrations/external-apis",
         "integrations/utilities",
+        "file-uploads",
         "frontend",
         "addons",
         "debugging",

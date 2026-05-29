@@ -41,24 +41,29 @@ storage.delete_file { pathname = "temp/old-file.txt" }
 
 ### Image/Attachment Handling
 
+> **⚠️ Upload inputs must be typed `file?`, not `image?`/`attachment?`.** Only `file` populates `.path` on a multipart upload; the others pass the raw object and `storage.*` fails with `Missing param: path`. Use `storage.create_attachment` (any file type) over `storage.create_image` (image extensions only). Full pattern: `xano_xanoscript_docs({ topic: "file-uploads" })`.
+
 ```xs
-# Create image metadata
+# The upload input is declared `file?` so Xano populates `.path` first.
+# input { file? upload }
+
+# Create image metadata (images only: JPEG/PNG/GIF/WEBP)
 storage.create_image {
-  value = $input.image
+  value = $input.upload
   access = "public"
-  filename = "profile.jpg"
+  filename = $input.upload.name
 } as $image_meta
 
-# Create attachment metadata
+# Create attachment metadata (any file type — recommended default)
 storage.create_attachment {
-  value = $input.file
+  value = $input.upload
   access = "private"
-  filename = "document.pdf"
+  filename = $input.upload.name
 } as $attachment_meta
 
-# Sign private URL
+# Sign private URL (use the stored .path, never a hand-built path)
 storage.sign_private_url {
-  pathname = "private/document.pdf"
+  pathname = $attachment_meta.path
   ttl = 300
 } as $signed_url
 ```

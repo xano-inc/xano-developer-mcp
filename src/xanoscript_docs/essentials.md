@@ -640,6 +640,30 @@ Each `.xs` file must contain exactly **one** construct. Placing two constructs i
 // function/helper_b.xs -> contains only "helper_b"
 ```
 
+### 14. Using `image?` for file uploads (the `.path` footgun)
+
+Upload inputs **must** be typed `file?`. `image?`/`attachment?`/`video?`/`audio?` pass the raw upload object (which has `tmp_name` but no `.path`), so `storage.*` fails at runtime with `Missing param: path`. The validator does **not** catch this — it is syntactically valid.
+
+```xs
+// Wrong - image? input; storage op fails with "Missing param: path"
+// input { image? photo }
+// storage.create_image { value = $input.photo } as $f
+
+// Also wrong - hand-setting .path from a hallucinated .tmp_name property
+// |set:"path":$input.photo.tmp_name
+
+// Correct - file? input populates .path; create_attachment accepts any type
+stack {
+  storage.create_attachment {
+    value    = $input.photo
+    filename = $input.photo.name
+  } as $f
+}
+// input { file? photo }
+```
+
+See `xano_xanoscript_docs({ topic: "file-uploads" })` for the full pattern.
+
 ---
 
 ## Related Topics
@@ -653,5 +677,6 @@ Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:
 | `database` | All db.* operations: query, get, add, edit, delete |
 | `functions` | Reusable function stacks, async patterns, loops |
 | `apis` | HTTP endpoints, authentication, CRUD patterns |
+| `file-uploads` | Uploading files to Xano storage (`file?`, create_attachment, signed URLs) |
 | `security` | Security best practices and authentication |
 | `integrations` | External API patterns (OpenAI, Stripe, etc.) |

@@ -147,9 +147,9 @@
     },
     "integrations/cloud-storage": {
       "file": "integrations/cloud-storage.md",
-      "description": "AWS S3, Azure Blob, and GCP Storage operations",
+      "description": "AWS S3, Azure Blob, and GCP Storage operations (external buckets, not native Xano storage)",
       "applyTo": [],
-      "aliases": ["s3", "azure", "gcp", "files", "upload"]
+      "aliases": ["s3", "azure", "gcp", "external-storage", "bucket"]
     },
     "integrations/search": {
       "file": "integrations/search.md",
@@ -174,6 +174,13 @@
       "description": "Local storage, email, zip, and Lambda utilities",
       "applyTo": [],
       "aliases": ["email", "zip", "lambda", "archive"]
+    },
+    "file-uploads": {
+      "file": "file-uploads.md",
+      "description": "Uploading files to native Xano storage: file? input, create_attachment, sign_private_url",
+      "applyTo": ["api/**/*.xs", "function/**/*.xs"],
+      "priority": 9,
+      "aliases": ["file-upload", "upload", "uploads", "attachment", "attachments", "file", "files", "private-storage", "storage", "multipart"]
     },
     "frontend": {
       "file": "frontend.md",
@@ -369,6 +376,12 @@
     "util.get_env": { "file": "integrations/utilities.md" },
     "util.get_all_input": { "file": "integrations/utilities.md" },
     "util.get_input": { "file": "integrations/utilities.md" },
+    "storage.create_attachment": { "file": "file-uploads.md" },
+    "storage.create_image": { "file": "file-uploads.md" },
+    "storage.sign_private_url": { "file": "file-uploads.md" },
+    "storage.create_file_resource": { "file": "integrations/utilities.md" },
+    "storage.read_file_resource": { "file": "integrations/utilities.md" },
+    "storage.delete_file": { "file": "integrations/utilities.md" },
     "cloud.aws.s3.upload_file": { "file": "integrations/cloud-storage.md" },
     "cloud.aws.s3.read_file": { "file": "integrations/cloud-storage.md" },
     "cloud.aws.s3.sign_url": { "file": "integrations/cloud-storage.md" },
@@ -398,7 +411,7 @@
     "rate_limiting": ["security.md", "integrations/redis.md"],
     "error_handling": ["syntax.md", "essentials.md"],
     "pagination": ["database.md", "apis.md"],
-    "file_upload": ["integrations/cloud-storage.md", "streaming.md"],
+    "file_upload": ["file-uploads.md", "integrations/cloud-storage.md", "streaming.md"],
     "caching": ["performance.md", "integrations/redis.md"],
     "search": ["integrations/search.md"],
     "email": ["integrations/utilities.md"],
