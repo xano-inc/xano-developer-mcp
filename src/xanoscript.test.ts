@@ -9,6 +9,8 @@ import {
   readXanoscriptDocsV2,
   readXanoscriptDocsStructured,
   getTopicNames,
+  getAliasNames,
+  resolveTopic,
   getTopicDescriptions,
   getTierFacts,
 } from "./xanoscript.js";
@@ -602,6 +604,45 @@ Even more content.
       expect(facts.survival.tokens).toMatch(/tokens$/);
       // The index Next-steps line must use the derived token figure verbatim.
       expect(readXanoscriptDocsV2(DOCS_PATH)).toContain(facts.working.tokens);
+    });
+  });
+
+  describe("topic alias resolution", () => {
+    it("resolves file-uploads aliases to the canonical topic", () => {
+      for (const alias of ["upload", "uploads", "attachment", "storage", "multipart", "private-storage"]) {
+        expect(resolveTopic(alias)).toBe("file-uploads");
+      }
+    });
+
+    it("returns canonical names unchanged", () => {
+      expect(resolveTopic("file-uploads")).toBe("file-uploads");
+      expect(resolveTopic("database")).toBe("database");
+    });
+
+    it("returns unknown input unchanged so the Unknown-topic error can fire", () => {
+      expect(resolveTopic("definitely-not-a-topic")).toBe("definitely-not-a-topic");
+    });
+
+    it("never maps an alias onto a real canonical topic name", () => {
+      const canonical = new Set(getTopicNames());
+      for (const alias of getAliasNames()) {
+        expect(canonical.has(alias)).toBe(false);
+      }
+    });
+
+    it("resolves cross-topic alias collisions deterministically (first-writer-wins)", () => {
+      // These aliases are declared on two topics each; lock in the winners so a
+      // future reorder of docs_index.json cannot silently flip them.
+      expect(resolveTopic("http")).toBe("apis");
+      expect(resolveTopic("query")).toBe("apis");
+      expect(resolveTopic("hooks")).toBe("triggers");
+    });
+
+    it("serves the file-uploads doc when requested via an alias", () => {
+      const viaAlias = readXanoscriptDocsV2(DOCS_PATH, { topic: "upload" });
+      const viaCanonical = readXanoscriptDocsV2(DOCS_PATH, { topic: "file-uploads" });
+      expect(viaAlias).toBe(viaCanonical);
+      expect(viaAlias).toContain("File Uploads");
     });
   });
 });

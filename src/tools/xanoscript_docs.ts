@@ -14,6 +14,7 @@ import {
   readXanoscriptDocsStructured,
   getXanoscriptDocsVersion,
   getTopicNames,
+  getAliasNames,
   getTopicDescriptions,
   getTierFacts,
   type XanoscriptDocsArgs,
@@ -202,7 +203,11 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
 // MCP Tool Definition
 // =============================================================================
 
-const topicEnumValues = getTopicNames() as [string, ...string[]];
+// Accept canonical topic names AND their aliases (e.g. "upload", "storage" ->
+// "file-uploads"). Aliases are resolved to canonical names inside the resolver.
+const topicEnumValues = [
+  ...new Set([...getTopicNames(), ...getAliasNames()]),
+] as [string, ...string[]];
 
 // Derive tier size facts from the actual files so the advertised numbers can
 // never drift stale (see getTierFacts). Computed once at module load.

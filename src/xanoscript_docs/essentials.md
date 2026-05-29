@@ -653,9 +653,11 @@ Upload inputs **must** be typed `file?`. `image?`/`attachment?`/`video?`/`audio?
 // |set:"path":$input.photo.tmp_name
 
 // Correct - file? input populates .path; create_attachment accepts any type
+// (value, access, and filename are all required on storage.create_attachment)
 stack {
   storage.create_attachment {
     value    = $input.photo
+    access   = "private"
     filename = $input.photo.name
   } as $f
 }
