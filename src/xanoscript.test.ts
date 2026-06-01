@@ -486,4 +486,60 @@ Even more content.
       expect(quickTotal).toBeLessThanOrEqual(fullTotal);
     });
   });
+
+  describe("context efficiency (regression guards)", () => {
+    const COMMON_PATHS = [
+      "api/users/create.xs",
+      "function/format.xs",
+      "table/users.xs",
+      "ai/agent/support_bot.xs",
+      "task/cleanup.xs",
+      "addon/related.xs",
+    ];
+
+    it("does not auto-bundle the tier digests (survival/working) into file_path results", () => {
+      // survival/working are whole-corpus digests reachable via tier=/topic= only.
+      // Auto-bundling them duplicated the granular topics and bloated every result.
+      for (const fp of COMMON_PATHS) {
+        const topics = getDocsForFilePath(fp);
+        expect(topics, fp).not.toContain("survival");
+        expect(topics, fp).not.toContain("working");
+      }
+    });
+
+    it("keeps common file_path quick_reference payloads under a token ceiling", () => {
+      // Guards against doc bloat or an over-broad applyTo pattern regressing context size.
+      const CEILING_TOKENS = 8000;
+      for (const fp of COMMON_PATHS) {
+        const docs = readXanoscriptDocsStructured(DOCS_PATH, { file_path: fp });
+        const bytes = docs.reduce((sum, d) => sum + d.content.length, 0);
+        const estTokens = Math.ceil(bytes / 4);
+        expect(estTokens, `${fp} ~${estTokens} tokens`).toBeLessThan(CEILING_TOKENS);
+      }
+    });
+
+    it("ranks a file's construct doc above cross-cutting and advisory docs", () => {
+      // Under a token budget, lower priority loads first and survives truncation.
+      // The construct doc for the file must outrank generic supporting docs.
+      const pri = (t: string) => XANOSCRIPT_DOCS_V2[t].priority ?? 99;
+      expect(pri("syntax")).toBeLessThan(pri("essentials"));
+      for (const construct of ["apis", "functions", "tables", "tasks", "agents", "addons"]) {
+        expect(pri(construct), `${construct} vs database`).toBeLessThan(pri("database"));
+        expect(pri(construct), `${construct} vs types`).toBeLessThan(pri("types"));
+        expect(pri(construct), `${construct} vs security`).toBeLessThan(pri("security"));
+        expect(pri(construct), `${construct} vs debugging`).toBeLessThan(pri("debugging"));
+      }
+    });
+
+    it("loads topics in non-decreasing priority order when max_tokens is set", () => {
+      const docs = readXanoscriptDocsStructured(DOCS_PATH, {
+        file_path: "api/users/create.xs",
+        max_tokens: 99999,
+      });
+      const priorities = docs.map((d) => XANOSCRIPT_DOCS_V2[d.topic].priority ?? 99);
+      const sorted = [...priorities].sort((a, b) => a - b);
+      expect(priorities).toEqual(sorted);
+      expect(docs[0].topic).toBe("syntax");
+    });
+  });
 });
