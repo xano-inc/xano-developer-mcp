@@ -1,5 +1,5 @@
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Machine-readable index for XanoScript documentation (version mirrors version.json)",
 
   "topics": {
@@ -178,7 +178,7 @@
     "file-uploads": {
       "file": "file-uploads.md",
       "description": "Uploading files to native Xano storage: file? input, create_attachment, sign_private_url",
-      "applyTo": ["api/**/*.xs", "function/**/*.xs"],
+      "applyTo": [],
       "priority": 9,
       "aliases": ["file-upload", "upload", "uploads", "attachment", "attachments", "file", "files", "private-storage", "storage", "multipart"]
     },
