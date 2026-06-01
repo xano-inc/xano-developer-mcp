@@ -399,6 +399,32 @@ Even more content.
       expect(result).toContain("# XanoScript Documentation Index");
     });
 
+    it("mode='index' takes precedence over topic and file_path", () => {
+      // Documented precedence: when mode='index' is set, the index wins and the
+      // topic/file_path args are ignored (rather than returning their docs).
+      const withTopic = readXanoscriptDocsV2(DOCS_PATH, {
+        mode: "index",
+        topic: "syntax",
+      });
+      const withFilePath = readXanoscriptDocsV2(DOCS_PATH, {
+        mode: "index",
+        file_path: "api/users/create.xs",
+      });
+      expect(withTopic).toContain("# XanoScript Documentation Index");
+      expect(withFilePath).toContain("# XanoScript Documentation Index");
+      expect(withFilePath).not.toContain("XanoScript Documentation for:");
+    });
+
+    it("omits the tier digests (survival/working) from the index table", () => {
+      // Tier digests are reachable via tier=, not topic= — listing them as table
+      // rows invites topic='survival' calls down a different code path.
+      const index = readXanoscriptDocsV2(DOCS_PATH);
+      expect(index).not.toContain("| survival |");
+      expect(index).not.toContain("| working |");
+      // ...but they remain discoverable in the Next steps pointers.
+      expect(index).toContain("tier='survival'");
+    });
+
     it("should return index that is significantly smaller than full docs", () => {
       const index = readXanoscriptDocsV2(DOCS_PATH, { mode: "index" });
       const full = readXanoscriptDocsV2(DOCS_PATH, { topic: "syntax", mode: "full" });
