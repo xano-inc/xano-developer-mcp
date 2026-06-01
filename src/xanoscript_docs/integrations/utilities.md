@@ -23,42 +23,70 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/*.xs"
 
 ### File Operations
 
+> **⚠️ XanoScript comments use `//`, never `#`.** A `#` inside a `.xs` file is a parse error. Also: comments are not allowed inside an operation's `{ ... }` argument block — keep them on their own line above the op.
+
 ```xs
-# Create file resource
+// create_file_resource turns in-stack data (CSV/JSON/zip output) into a FILE
+// RESOURCE — the same value type a `file?` input produces. It is NOT a stored
+// vault file and has no servable URL/path of its own; to persist or serve it,
+// pass it to storage.create_attachment (see "Storing a generated file" below).
 storage.create_file_resource {
   filename = "report.csv"
   filedata = $csv_content
-} as $file
+} as $resource
 
-# Read file resource
+// read_file_resource returns the contents of a file resource (e.g. to parse it).
 storage.read_file_resource {
-  value = $input.file
+  value = $input.upload
 } as $content
 
-# Delete file
-storage.delete_file { pathname = "temp/old-file.txt" }
+// Delete a stored vault file by its `.path` (the value saved on the DB record).
+storage.delete_file { pathname = $stored_file.path }
 ```
+
+#### Storing a generated file (so it has a URL)
+
+A `create_file_resource` value cannot be served directly. Store it via `storage.create_attachment` (or `create_image`), then serve it like any uploaded file — `sign_private_url` for private, or instance URL + `.path` for public:
+
+```xs
+storage.create_file_resource {
+  filename = "export.csv"
+  filedata = $csv_content
+} as $resource
+storage.create_attachment {
+  value    = $resource
+  access   = "public"
+  filename = "export.csv"
+} as $stored_file
+```
+
+Then return `($env.PUBLIC_BASE_URL ~ $stored_file.path)` for public, or `storage.sign_private_url` for private. See `xano_xanoscript_docs({ topic: "file-uploads" })`.
 
 ### Image/Attachment Handling
 
+> **⚠️ Upload inputs must be typed `file?`, not `image?`/`attachment?`.** Only `file` populates `.path` on a multipart upload; the others pass the raw object and `storage.*` fails with `Missing param: path`. Use `storage.create_attachment` (any file type) over `storage.create_image` (image extensions only). Full pattern: `xano_xanoscript_docs({ topic: "file-uploads" })`.
+
 ```xs
-# Create image metadata
+// The upload input is declared `file?` so Xano populates `.path` first.
+// input { file? upload }
+
+// Create image metadata (images only: JPEG/PNG/GIF/WEBP)
 storage.create_image {
-  value = $input.image
+  value = $input.upload
   access = "public"
-  filename = "profile.jpg"
+  filename = $input.upload.name
 } as $image_meta
 
-# Create attachment metadata
+// Create attachment metadata (any file type — recommended default)
 storage.create_attachment {
-  value = $input.file
+  value = $input.upload
   access = "private"
-  filename = "document.pdf"
+  filename = $input.upload.name
 } as $attachment_meta
 
-# Sign private URL
+// Sign private URL (use the stored .path, never a hand-built path)
 storage.sign_private_url {
-  pathname = "private/document.pdf"
+  pathname = $attachment_meta.path
   ttl = 300
 } as $signed_url
 ```
@@ -70,12 +98,12 @@ storage.sign_private_url {
 ### Password Hashing
 
 ```xs
-# Password is auto-hashed on insert
+// Password is auto-hashed on insert
 db.add "user" {
   data = { email: $input.email, password: $input.password }
 }
 
-# Verify password
+// Verify password
 security.check_password {
   text_password = $input.password
   hash_password = $user.password
@@ -85,7 +113,7 @@ security.check_password {
 ### Encryption
 
 ```xs
-# Encrypt
+// Encrypt
 security.encrypt {
   data = $sensitive_data
   algorithm = "aes-256-cbc"
@@ -93,7 +121,7 @@ security.encrypt {
   iv = $env.ENCRYPTION_IV
 } as $encrypted
 
-# Decrypt
+// Decrypt
 security.decrypt {
   data = $encrypted
   algorithm = "aes-256-cbc"
@@ -105,7 +133,7 @@ security.decrypt {
 ### JWT (JWS/JWE)
 
 ```xs
-# Sign JWT
+// Sign JWT
 security.jws_encode {
   claims = { user_id: $user.id, role: $user.role }
   key = $env.JWT_SECRET
@@ -113,7 +141,7 @@ security.jws_encode {
   ttl = 3600
 } as $token
 
-# Verify JWT
+// Verify JWT
 security.jws_decode {
   token = $input.token
   key = $env.JWT_SECRET
@@ -264,9 +292,21 @@ query "export_data" {
     storage.create_file_resource {
       filename = "export.zip"
       filedata = $archive
+    } as $resource
+
+    // create_file_resource is not directly servable — store it to get a vault path.
+    storage.create_attachment {
+      value    = $resource
+      access   = "private"
+      filename = "export.zip"
     } as $download
+
+    storage.sign_private_url {
+      pathname = $download.path
+      ttl      = 600
+    } as $download_url
   }
-  response = { download_url: $download.url }
+  response = { download_url: $download_url }
 }
 ```
 

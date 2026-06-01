@@ -204,14 +204,25 @@ object[] items {
 ```
 
 ### File Types
+
+> **⚠️ For uploaded files, always use `file`.** Only `file` pre-processes a multipart upload and populates `.path`; `image`/`attachment`/`video`/`audio` pass the raw upload object, so any `storage.*` op fails with `Missing param: path`. The names look like semantic choices but are technical. See `xano_xanoscript_docs({ topic: "file-uploads" })`.
+
 ```xs
+// ✅ use `file` for ALL uploads — only `file` populates .path
+file generic_file
+// optional upload
+file? document
+// multiple uploads
+file[]? attachments
+
+// image/attachment/video/audio exist but DO NOT populate .path on upload —
+// they are mainly useful as table column types for stored file metadata.
 image photo {
   description = "Profile photo"
 }
 attachment document
 video recording
 audio clip
-file generic_file
 ```
 
 ### Geographic Types

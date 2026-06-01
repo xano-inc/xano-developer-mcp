@@ -54,6 +54,43 @@ function buildDocsConfig(): Record<string, DocConfig> {
 
 export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = buildDocsConfig();
 
+/**
+ * Map of alias -> canonical topic name, built from the `aliases` arrays in
+ * docs_index.json. Lets callers pass a natural synonym (e.g. "upload",
+ * "storage", "attachment") and have it resolve to the canonical topic
+ * ("file-uploads"). An alias that shadows a real topic name is skipped, and
+ * cross-topic collisions are resolved first-writer-wins.
+ */
+const ALIAS_TO_TOPIC: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  for (const [key, topic] of Object.entries(docsIndex.topics)) {
+    const aliases = (topic as { aliases?: string[] }).aliases;
+    if (!aliases) continue;
+    for (const alias of aliases) {
+      if (alias in XANOSCRIPT_DOCS_V2) continue; // never shadow a canonical topic name
+      if (alias in map) continue; // first-writer-wins on cross-topic collisions
+      map[alias] = key;
+    }
+  }
+  return map;
+})();
+
+/**
+ * Resolve a topic name or alias to a canonical topic name. Returns the input
+ * unchanged when it is already canonical or unknown, so callers can still
+ * surface the existing "Unknown topic" error for genuinely bad input.
+ */
+export function resolveTopic(input?: string): string | undefined {
+  if (!input) return input;
+  if (input in XANOSCRIPT_DOCS_V2) return input;
+  return ALIAS_TO_TOPIC[input] ?? input;
+}
+
+/** Get all alias names (keys of the alias -> canonical topic map). */
+export function getAliasNames(): string[] {
+  return Object.keys(ALIAS_TO_TOPIC);
+}
+
 // =============================================================================
 // Content Cache
 // =============================================================================
@@ -334,8 +371,9 @@ export function readXanoscriptDocsV2(
     return header + docs.join("\n\n---\n\n");
   }
 
-  // Topic-based: return specific doc
-  const config = XANOSCRIPT_DOCS_V2[args!.topic!];
+  // Topic-based: return specific doc (resolve aliases to canonical names first)
+  const canonicalTopic = resolveTopic(args!.topic!)!;
+  const config = XANOSCRIPT_DOCS_V2[canonicalTopic];
 
   if (!config) {
     const availableTopics = Object.keys(XANOSCRIPT_DOCS_V2).join(", ");
@@ -346,7 +384,7 @@ export function readXanoscriptDocsV2(
 
   const content = cachedReadFile(join(docsPath, config.file));
   const doc = mode === "quick_reference"
-    ? extractQuickReference(content, args!.topic!)
+    ? extractQuickReference(content, canonicalTopic)
     : content;
 
   return `${doc}\n\n---\nDocumentation version: ${version}`;

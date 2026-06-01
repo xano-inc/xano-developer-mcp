@@ -13,7 +13,6 @@ import {
   readXanoscriptDocsV2,
   readXanoscriptDocsStructured,
   getXanoscriptDocsVersion,
-  getTopicNames,
   getTopicDescriptions,
   getTierFacts,
   type XanoscriptDocsArgs,
@@ -202,8 +201,6 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
 // MCP Tool Definition
 // =============================================================================
 
-const topicEnumValues = getTopicNames() as [string, ...string[]];
-
 // Derive tier size facts from the actual files so the advertised numbers can
 // never drift stale (see getTierFacts). Computed once at module load.
 const tierFacts = getTierFacts(getXanoscriptDocsPath());
@@ -226,11 +223,12 @@ export const xanoscriptDocsToolSpec = defineTool({
   },
   inputShape: {
     topic: z
-      .enum(topicEnumValues)
+      .string()
       .optional()
       .describe(
         "Documentation topic to retrieve. Call without any parameters to get the compact topic index; use topic='readme' for the full prose overview. " +
-          "Example: topic='syntax' for language syntax, topic='database' for database operations, topic='types' for type system.\n\n" +
+          "Example: topic='syntax' for language syntax, topic='database' for database operations, topic='types' for type system. " +
+          "Common synonyms are accepted and resolved automatically (e.g. 'upload'/'storage' -> 'file-uploads'); an unrecognized topic returns the list of valid topics.\n\n" +
           "Available topics:\n" +
           getTopicDescriptions()
       ),

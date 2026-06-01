@@ -238,6 +238,7 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 | Topic      | Description                                                     | Key Sections |
 | ---------- | --------------------------------------------------------------- | ------------ |
 | `apis`     | HTTP endpoint definitions with authentication and CRUD patterns | Decision Tree, CRUD Examples |
+| `file-uploads` | Uploading files to native Xano storage                     | `file?` input, create_attachment, signed URLs |
 | `tasks`    | Scheduled and cron jobs                                         | Cron Syntax, Input Handling |
 | `triggers` | Event-driven handlers (table, realtime, workspace, agent, MCP)  | Predefined Inputs, Event Types |
 | `realtime` | Real-time channels and events for push updates                  | Channels, Events |
