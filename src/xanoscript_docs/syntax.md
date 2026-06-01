@@ -29,6 +29,8 @@ For detailed references on specific filter categories, use:
 - `xano_xanoscript_docs({ topic: "syntax/array-filters" })` — Array filters, functional operations, array functions
 - `xano_xanoscript_docs({ topic: "syntax/functions" })` — Math filters/functions, object functions, bitwise operations
 
+**The `guid` field (backend-managed — ignore it):** Any construct may carry a top-level `guid = "..."` (e.g. `guid = "tgGYuUFKbBz4_6DIkDR5hUUCRno"`) — a stable identifier Xano assigns and maintains automatically. **Leave it exactly as-is when editing, omit it when writing new code (the backend adds one on save), and never add, change, or remove one unless explicitly asked.**
+
 ## CRITICAL: Filters Are Type-Specific
 
 > **Filters only work on the correct input type.** String filters and array filters are NOT interchangeable. Using the wrong filter type will produce errors or incorrect results.

@@ -30,6 +30,8 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 
 **Important:** Each `.xs` file must contain exactly one definition. You cannot define multiple tables, functions, queries, or other constructs in a single file.
 
+**The `guid` field (backend-managed — ignore it):** Any construct may carry a top-level `guid = "..."` — a stable identifier Xano assigns and maintains automatically. **Leave it exactly as-is when editing, omit it when writing new code (the backend adds one on save), and never add, change, or remove one unless explicitly asked.**
+
 ## Workspace Structure
 
 After pulling from Xano, files are organized using `snake_case` naming:
