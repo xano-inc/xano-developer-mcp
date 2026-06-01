@@ -52,10 +52,11 @@ describe("setXanoscriptDocsPath", () => {
 });
 
 describe("xanoscriptDocs", () => {
-  it("should return README when called with no args", () => {
+  it("should return the compact index when called with no args", () => {
     const result = xanoscriptDocs();
     expect(result).toHaveProperty("documentation");
     expect(typeof result.documentation).toBe("string");
+    expect(result.documentation).toContain("# XanoScript Documentation Index");
     expect(result.documentation).toContain("Documentation version:");
   });
 
@@ -95,6 +96,25 @@ describe("xanoscriptDocsTool", () => {
     expect(result.data).toBeDefined();
     expect(typeof result.data).toBe("string");
     expect(result.error).toBeUndefined();
+    // The no-arg wrapper call must surface the compact index, not the README.
+    expect(result.data).toContain("# XanoScript Documentation Index");
+  });
+
+  it("should return tier docs for tier=survival", () => {
+    const result = xanoscriptDocsTool({ tier: "survival" });
+    expect(result.success).toBe(true);
+    expect(typeof result.data).toBe("string");
+    expect(result.data as string).toContain("Documentation version:");
+  });
+
+  it("should return tier docs for tier=working, larger than survival", () => {
+    const survival = xanoscriptDocsTool({ tier: "survival" });
+    const working = xanoscriptDocsTool({ tier: "working" });
+    expect(working.success).toBe(true);
+    expect(typeof working.data).toBe("string");
+    expect((working.data as string).length).toBeGreaterThan(
+      (survival.data as string).length
+    );
   });
 
   it("should return success with topic docs", () => {

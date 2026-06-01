@@ -15,6 +15,7 @@ import {
   getXanoscriptDocsVersion,
   getTopicNames,
   getTopicDescriptions,
+  getTierFacts,
   type XanoscriptDocsArgs,
   type TopicDoc,
 } from "../xanoscript.js";
@@ -107,8 +108,8 @@ export function setXanoscriptDocsPath(path: string): void {
  * ```ts
  * import { xanoscriptDocs } from '@xano/developer-mcp';
  *
- * // Get overview
- * const overview = xanoscriptDocs();
+ * // Get compact topic index (use topic: 'readme' for the full prose overview)
+ * const index = xanoscriptDocs();
  *
  * // Get specific topic
  * const syntaxDocs = xanoscriptDocs({ topic: 'syntax' });
@@ -203,12 +204,16 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
 
 const topicEnumValues = getTopicNames() as [string, ...string[]];
 
+// Derive tier size facts from the actual files so the advertised numbers can
+// never drift stale (see getTierFacts). Computed once at module load.
+const tierFacts = getTierFacts(getXanoscriptDocsPath());
+
 export const xanoscriptDocsToolSpec = defineTool({
   name: "xano_xanoscript_docs",
   description:
     "Get XanoScript programming language documentation for AI code generation. " +
-    "Call without parameters for overview (README). " +
-    "For context-limited models: use tier='survival' (~800 tokens) or tier='working' (~3500 tokens). " +
+    "Call without parameters for a compact index of all topics (~4KB, ~1K tokens); then drill in with topic= or file_path=. Use topic='readme' for the full prose overview (previously the no-arg default). " +
+    `For context-limited models: use tier='survival' (~${tierFacts.survival.tokens}) or tier='working' (~${tierFacts.working.tokens}). ` +
     "Use 'topic' for specific documentation, or 'file_path' for context-aware docs based on the file you're editing. " +
     "Use mode='quick_reference' for compact syntax reference (recommended for context efficiency). " +
     "Use max_tokens to limit documentation size to fit your context budget. " +
@@ -224,7 +229,7 @@ export const xanoscriptDocsToolSpec = defineTool({
       .enum(topicEnumValues)
       .optional()
       .describe(
-        "Documentation topic to retrieve. Call without any parameters to get the README overview. " +
+        "Documentation topic to retrieve. Call without any parameters to get the compact topic index; use topic='readme' for the full prose overview. " +
           "Example: topic='syntax' for language syntax, topic='database' for database operations, topic='types' for type system.\n\n" +
           "Available topics:\n" +
           getTopicDescriptions()
@@ -244,7 +249,8 @@ export const xanoscriptDocsToolSpec = defineTool({
       .describe(
         "'full' = complete documentation with explanations and examples. " +
           "'quick_reference' = compact reference with just syntax patterns and signatures. " +
-          "'index' = compact topic listing with descriptions and byte sizes (~1KB). " +
+          "'index' = compact topic listing with descriptions and byte sizes (~4KB, ~1K tokens). " +
+          "When set, 'index' takes precedence over topic and file_path. " +
           "Use 'index' to discover available topics before loading them. " +
           "Use 'quick_reference' to save context window space when you just need a reminder. " +
           "Default: 'full' for topic mode, 'quick_reference' for file_path mode."
@@ -254,8 +260,8 @@ export const xanoscriptDocsToolSpec = defineTool({
       .optional()
       .describe(
         "Pre-packaged documentation tier for context-limited models. " +
-          "'survival' (~3KB, ~800 tokens): minimum syntax to write valid XanoScript. " +
-          "'working' (~12KB, ~3500 tokens): complete reference for common tasks. " +
+          `'survival' (~${tierFacts.survival.kb}, ~${tierFacts.survival.tokens}): minimum syntax to write valid XanoScript. ` +
+          `'working' (~${tierFacts.working.kb}, ~${tierFacts.working.tokens}): complete reference for common tasks. ` +
           "Overrides topic/file_path/mode when set. " +
           "Use 'survival' for models with <16K context, 'working' for 16-64K context."
       ),
@@ -281,7 +287,7 @@ export const xanoscriptDocsToolSpec = defineTool({
     documentation: z
       .string()
       .optional()
-      .describe("The documentation content (topic or README mode)."),
+      .describe("The documentation content (index, topic, tier, or file_path mode)."),
     file_path: z
       .string()
       .optional()

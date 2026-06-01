@@ -10,6 +10,7 @@ import {
   readXanoscriptDocsStructured,
   getTopicNames,
   getTopicDescriptions,
+  getTierFacts,
 } from "./xanoscript.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -271,14 +272,24 @@ Even more content.
   });
 
   describe("readXanoscriptDocsV2", () => {
-    it("should return README when no args provided", () => {
+    it("should return the compact index when no args provided", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH);
+      expect(result).toContain("# XanoScript Documentation Index");
       expect(result).toContain("Documentation version:");
     });
 
-    it("should return README when empty args provided", () => {
+    it("should return the compact index when empty args provided", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH, {});
-      expect(result).toContain("Documentation version:");
+      expect(result).toContain("# XanoScript Documentation Index");
+    });
+
+    it("should default to the index rather than the full README (context efficiency)", () => {
+      const index = readXanoscriptDocsV2(DOCS_PATH);
+      const readme = readXanoscriptDocsV2(DOCS_PATH, { topic: "readme" });
+      // README must still be reachable explicitly...
+      expect(readme).toContain("Workspace Structure");
+      // ...but the no-arg default must be much smaller than it.
+      expect(index.length).toBeLessThan(readme.length / 2);
     });
 
     it("should return specific topic documentation", () => {
@@ -370,7 +381,8 @@ Even more content.
     it("should return compact index with mode: index", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH, { mode: "index" });
       expect(result).toContain("# XanoScript Documentation Index");
-      expect(result).toContain("Version:");
+      // Version appears once, in the canonical footer (matches every other mode).
+      expect(result).toContain("Documentation version:");
       expect(result).toContain("Topics:");
       expect(result).toContain("| Topic | Description | Size | Est. Tokens |");
       // Should contain some known topics
@@ -385,6 +397,32 @@ Even more content.
       const result = readXanoscriptDocsV2(DOCS_PATH, { mode: "index" });
       // Index mode ignores topic/file_path — just returns the listing
       expect(result).toContain("# XanoScript Documentation Index");
+    });
+
+    it("mode='index' takes precedence over topic and file_path", () => {
+      // Documented precedence: when mode='index' is set, the index wins and the
+      // topic/file_path args are ignored (rather than returning their docs).
+      const withTopic = readXanoscriptDocsV2(DOCS_PATH, {
+        mode: "index",
+        topic: "syntax",
+      });
+      const withFilePath = readXanoscriptDocsV2(DOCS_PATH, {
+        mode: "index",
+        file_path: "api/users/create.xs",
+      });
+      expect(withTopic).toContain("# XanoScript Documentation Index");
+      expect(withFilePath).toContain("# XanoScript Documentation Index");
+      expect(withFilePath).not.toContain("XanoScript Documentation for:");
+    });
+
+    it("omits the tier digests (survival/working) from the index table", () => {
+      // Tier digests are reachable via tier=, not topic= — listing them as table
+      // rows invites topic='survival' calls down a different code path.
+      const index = readXanoscriptDocsV2(DOCS_PATH);
+      expect(index).not.toContain("| survival |");
+      expect(index).not.toContain("| working |");
+      // ...but they remain discoverable in the Next steps pointers.
+      expect(index).toContain("tier='survival'");
     });
 
     it("should return index that is significantly smaller than full docs", () => {
@@ -484,6 +522,85 @@ Even more content.
       const quickTotal = quickResult.reduce((sum, d) => sum + d.content.length, 0);
       const fullTotal = fullResult.reduce((sum, d) => sum + d.content.length, 0);
       expect(quickTotal).toBeLessThanOrEqual(fullTotal);
+    });
+  });
+
+  describe("context efficiency (regression guards)", () => {
+    const COMMON_PATHS = [
+      "api/users/create.xs",
+      "function/format.xs",
+      "table/users.xs",
+      "ai/agent/support_bot.xs",
+      "task/cleanup.xs",
+      "addon/related.xs",
+    ];
+
+    it("does not auto-bundle the tier digests (survival/working) into file_path results", () => {
+      // survival/working are whole-corpus digests reachable via tier=/topic= only.
+      // Auto-bundling them duplicated the granular topics and bloated every result.
+      for (const fp of COMMON_PATHS) {
+        const topics = getDocsForFilePath(fp);
+        expect(topics, fp).not.toContain("survival");
+        expect(topics, fp).not.toContain("working");
+      }
+    });
+
+    it("keeps common file_path quick_reference payloads under a token ceiling", () => {
+      // Guards against doc bloat or an over-broad applyTo pattern regressing context size.
+      const CEILING_TOKENS = 8000;
+      for (const fp of COMMON_PATHS) {
+        const docs = readXanoscriptDocsStructured(DOCS_PATH, { file_path: fp });
+        const bytes = docs.reduce((sum, d) => sum + d.content.length, 0);
+        const estTokens = Math.ceil(bytes / 4);
+        expect(estTokens, `${fp} ~${estTokens} tokens`).toBeLessThan(CEILING_TOKENS);
+      }
+    });
+
+    it("ranks a file's construct doc above cross-cutting and advisory docs", () => {
+      // Under a token budget, lower priority loads first and survives truncation.
+      // The construct doc for the file must outrank generic supporting docs.
+      const pri = (t: string) => XANOSCRIPT_DOCS_V2[t].priority ?? 99;
+      expect(pri("syntax")).toBeLessThan(pri("essentials"));
+      for (const construct of ["apis", "functions", "tables", "tasks", "agents", "addons"]) {
+        expect(pri(construct), `${construct} vs database`).toBeLessThan(pri("database"));
+        expect(pri(construct), `${construct} vs types`).toBeLessThan(pri("types"));
+        expect(pri(construct), `${construct} vs security`).toBeLessThan(pri("security"));
+        expect(pri(construct), `${construct} vs debugging`).toBeLessThan(pri("debugging"));
+      }
+    });
+
+    it("loads topics in non-decreasing priority order when max_tokens is set", () => {
+      const docs = readXanoscriptDocsStructured(DOCS_PATH, {
+        file_path: "api/users/create.xs",
+        max_tokens: 99999,
+      });
+      const priorities = docs.map((d) => XANOSCRIPT_DOCS_V2[d.topic].priority ?? 99);
+      const sorted = [...priorities].sort((a, b) => a - b);
+      expect(priorities).toEqual(sorted);
+      expect(docs[0].topic).toBe("syntax");
+    });
+
+    it("surfaces the budget levers (max_tokens, exclude_topics) in the index output", () => {
+      // The index is the first thing many agents see; the params this tool is
+      // built to optimize for must be discoverable from it.
+      const index = readXanoscriptDocsV2(DOCS_PATH);
+      expect(index).toContain("max_tokens");
+      expect(index).toContain("exclude_topics");
+    });
+
+    it("derives tier facts from the actual files (single source of truth)", () => {
+      // getTierFacts is the one place size/token facts come from. Deriving from
+      // real file sizes is what stops the advertised numbers drifting stale.
+      const facts = getTierFacts(DOCS_PATH);
+      const survivalBytes = readXanoscriptDocsV2(DOCS_PATH, { tier: "survival" }).length;
+      const workingBytes = readXanoscriptDocsV2(DOCS_PATH, { tier: "working" }).length;
+      // working is the larger tier, and the derived KB strings are non-empty.
+      expect(workingBytes).toBeGreaterThan(survivalBytes);
+      expect(facts.survival.kb).toMatch(/^\d+KB$/);
+      expect(facts.working.kb).toMatch(/^\d+KB$/);
+      expect(facts.survival.tokens).toMatch(/tokens$/);
+      // The index Next-steps line must use the derived token figure verbatim.
+      expect(readXanoscriptDocsV2(DOCS_PATH)).toContain(facts.working.tokens);
     });
   });
 });

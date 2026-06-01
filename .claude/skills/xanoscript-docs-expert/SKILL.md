@@ -26,7 +26,7 @@ src/
 │   ├── mcp_version.ts          # Version tool
 │   └── types.ts                # Shared ToolResult type
 ├── xanoscript_docs/            # 34 documentation topics (THE CONTENT)
-│   ├── README.md               # Overview (returned when no args)
+│   ├── README.md               # Overview (topic="readme"; previously the no-args default)
 │   ├── version.json            # { "version": "2.0.0", "updated": "2025-02-06" }
 │   ├── docs_index.json         # Machine-readable index with aliases, filters, constructs
 │   ├── cheatsheet.md, syntax.md, quickstart.md, types.md  # Core language docs
@@ -47,9 +47,11 @@ src/
 ### Request Flow
 
 ```
-Caller provides { topic?, file_path?, mode? }
+Caller provides { topic?, file_path?, mode?, tier?, max_tokens?, exclude_topics? }
     │
-    ├── No args → Return README.md
+    ├── tier="survival"|"working" → Return the pre-built tier digest (overrides everything)
+    ├── mode="index" OR no topic/file_path → Return the compact topic index (~4KB)
+    │       (the no-arg default; README is reachable via topic="readme")
     ├── topic="syntax" → Return syntax.md content
     ├── file_path="api/users/create.xs" → minimatch applyTo patterns → return all matching docs
     └── mode="quick_reference" → Extract only "## Quick Reference" sections

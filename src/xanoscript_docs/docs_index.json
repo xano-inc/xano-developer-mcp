@@ -1,19 +1,19 @@
 {
-  "version": "1.0.0",
-  "description": "Machine-readable index for XanoScript documentation",
+  "version": "2.2.0",
+  "description": "Machine-readable index for XanoScript documentation (version mirrors version.json)",
 
   "topics": {
     "survival": {
       "file": "survival.md",
-      "description": "Minimal syntax survival kit for writing valid XanoScript (~3KB)",
-      "applyTo": ["**/*.xs"],
+      "description": "Minimal syntax survival kit for writing valid XanoScript",
+      "applyTo": [],
       "priority": 0,
       "aliases": ["minimal", "tiny", "nano", "small"]
     },
     "working": {
       "file": "working.md",
-      "description": "Complete working reference for common XanoScript tasks (~12KB)",
-      "applyTo": ["**/*.xs"],
+      "description": "Complete working reference for common XanoScript tasks",
+      "applyTo": [],
       "priority": 0,
       "aliases": ["compact", "reference", "medium"]
     },
@@ -27,14 +27,14 @@
       "file": "essentials.md",
       "description": "Common patterns, quick reference, and common mistakes to avoid",
       "applyTo": ["**/*.xs"],
-      "priority": 1,
+      "priority": 2,
       "aliases": ["quick", "common", "basics", "start", "cheatsheet", "quickstart", "patterns", "mistakes"]
     },
     "syntax": {
       "file": "syntax.md",
       "description": "Expressions, operators, and filters for all XanoScript code",
       "applyTo": ["**/*.xs"],
-      "priority": 2,
+      "priority": 1,
       "aliases": ["filters", "operators", "expressions"]
     },
     "syntax/string-filters": {
@@ -59,42 +59,42 @@
       "file": "types.md",
       "description": "Data types, input blocks, and validation",
       "applyTo": ["function/**/*.xs", "api/**/*.xs", "ai/tool/*.xs", "ai/agent/*.xs"],
-      "priority": 4,
+      "priority": 5,
       "aliases": ["validation", "input", "data-types"]
     },
     "tables": {
       "file": "tables.md",
       "description": "Database schema definitions with indexes and relationships",
       "applyTo": ["table/*.xs"],
-      "priority": 8,
+      "priority": 3,
       "aliases": ["schema", "fields", "indexes"]
     },
     "functions": {
       "file": "functions.md",
       "description": "Reusable function stacks with inputs and responses",
       "applyTo": ["function/**/*.xs"],
-      "priority": 6,
+      "priority": 3,
       "aliases": ["fn", "reusable", "stack"]
     },
     "apis": {
       "file": "apis.md",
       "description": "HTTP endpoint definitions with authentication and CRUD patterns",
       "applyTo": ["api/**/*.xs"],
-      "priority": 7,
+      "priority": 3,
       "aliases": ["endpoints", "http", "rest", "query"]
     },
     "tasks": {
       "file": "tasks.md",
       "description": "Scheduled and cron jobs",
       "applyTo": ["task/*.xs"],
-      "priority": 10,
+      "priority": 3,
       "aliases": ["scheduled", "jobs", "cron"]
     },
     "triggers": {
       "file": "triggers.md",
       "description": "Event-driven handlers (table, realtime, workspace, agent, MCP)",
       "applyTo": ["*/trigger/*.xs", "ai/*/trigger/*.xs", "realtime/trigger/*.xs"],
-      "priority": 10,
+      "priority": 3,
       "aliases": ["events", "hooks", "handlers"]
     },
     "database": {
@@ -108,33 +108,35 @@
       "file": "agents.md",
       "description": "AI agent configuration with LLM providers and tools",
       "applyTo": ["ai/agent/*.xs"],
-      "priority": 12,
+      "priority": 3,
       "aliases": ["ai", "llm", "chatbot"]
     },
     "tools": {
       "file": "tools.md",
       "description": "AI tools for agents and MCP servers",
       "applyTo": ["ai/tool/*.xs"],
-      "priority": 12,
+      "priority": 3,
       "aliases": ["ai-tools", "agent-tools"]
     },
     "mcp-servers": {
       "file": "mcp-servers.md",
       "description": "MCP server definitions exposing tools",
       "applyTo": ["ai/mcp_server/*.xs"],
-      "priority": 15,
+      "priority": 3,
       "aliases": ["mcp", "model-context-protocol"]
     },
     "unit-testing": {
       "file": "unit-testing.md",
       "description": "Unit tests, mocks, and assertions within functions, APIs, and middleware",
       "applyTo": ["function/**/*.xs", "api/**/*.xs", "middleware/*.xs"],
+      "priority": 7,
       "aliases": ["tests", "unit-tests", "mocks", "assertions"]
     },
     "workflow-tests": {
       "file": "workflow-tests.md",
       "description": "End-to-end workflow tests with data source selection and tags",
       "applyTo": ["workflow_test/*.xs"],
+      "priority": 3,
       "aliases": ["e2e", "workflow", "integration-tests"]
     },
     "integrations": {
@@ -177,36 +179,42 @@
       "file": "frontend.md",
       "description": "Static frontend development and deployment",
       "applyTo": ["static/**/*"],
+      "priority": 3,
       "aliases": ["static", "html", "css", "web"]
     },
     "addons": {
       "file": "addons.md",
       "description": "Reusable subqueries for fetching related data",
       "applyTo": ["addon/*.xs"],
+      "priority": 3,
       "aliases": ["subqueries", "relations"]
     },
     "debugging": {
       "file": "debugging.md",
       "description": "Logging, inspecting, and debugging XanoScript execution",
       "applyTo": ["**/*.xs"],
+      "priority": 8,
       "aliases": ["logs", "debug", "trace"]
     },
     "performance": {
       "file": "performance.md",
       "description": "Performance optimization best practices",
       "applyTo": ["function/**/*.xs", "api/**/*.xs"],
+      "priority": 7,
       "aliases": ["optimization", "speed", "caching"]
     },
     "realtime": {
       "file": "realtime.md",
       "description": "Real-time channels and events for push updates",
       "applyTo": ["realtime/channel/*.xs", "realtime/trigger/*.xs"],
+      "priority": 3,
       "aliases": ["websocket", "channels", "pubsub"]
     },
     "security": {
       "file": "security.md",
       "description": "Security best practices for authentication and authorization",
       "applyTo": ["function/**/*.xs", "api/**/*.xs"],
+      "priority": 6,
       "aliases": ["auth", "authorization", "permissions"]
     },
     "streaming": {
@@ -219,18 +227,21 @@
       "file": "middleware.md",
       "description": "Request/response interceptors for functions, queries, tasks, and tools",
       "applyTo": ["middleware/*.xs"],
+      "priority": 3,
       "aliases": ["interceptors", "hooks"]
     },
     "branch": {
       "file": "branch.md",
       "description": "Branch-level settings: middleware, history retention, visual styling",
       "applyTo": ["branch.xs"],
+      "priority": 3,
       "aliases": ["settings", "config"]
     },
     "workspace": {
       "file": "workspace.md",
       "description": "Workspace-level settings: environment variables, preferences, realtime",
       "applyTo": ["workspace/**/*.xs"],
+      "priority": 3,
       "aliases": ["env", "environment", "preferences"]
     }
   },
