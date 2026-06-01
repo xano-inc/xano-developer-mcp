@@ -5,14 +5,14 @@
   "topics": {
     "survival": {
       "file": "survival.md",
-      "description": "Minimal syntax survival kit for writing valid XanoScript (~5KB)",
+      "description": "Minimal syntax survival kit for writing valid XanoScript",
       "applyTo": [],
       "priority": 0,
       "aliases": ["minimal", "tiny", "nano", "small"]
     },
     "working": {
       "file": "working.md",
-      "description": "Complete working reference for common XanoScript tasks (~18KB)",
+      "description": "Complete working reference for common XanoScript tasks",
       "applyTo": [],
       "priority": 0,
       "aliases": ["compact", "reference", "medium"]

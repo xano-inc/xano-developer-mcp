@@ -203,10 +203,12 @@ Use `xano_xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
 ### Tiers (for context-limited models)
 
+Approximate sizes below; the tool reports exact live sizes in the `mode: "index"` listing and derives the advertised token counts from the actual files at runtime.
+
 | Topic      | Description                                                  | Size |
 | ---------- | ------------------------------------------------------------ | ---- |
 | `survival` | Minimal syntax survival kit for models with <16K context     | ~5KB (~1.2K tokens) |
-| `working`  | Complete working reference for models with 16-64K context    | ~18KB (~4.4K tokens) |
+| `working`  | Complete working reference for models with 16-64K context    | ~17KB (~4.4K tokens) |
 
 Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier: "working" })`.
 

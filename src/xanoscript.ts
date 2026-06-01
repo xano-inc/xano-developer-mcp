@@ -73,6 +73,42 @@ function cachedReadFile(filePath: string): string {
   return content;
 }
 
+export interface TierFact {
+  /** Human-readable size, e.g. "5KB". */
+  kb: string;
+  /** Human-readable token estimate, e.g. "1.2K tokens" or "320 tokens". */
+  tokens: string;
+}
+
+/**
+ * Single source of truth for the survival/working tier size facts.
+ *
+ * These numbers are advertised in the tool spec, the index output, and the
+ * README. Deriving them from the actual files (instead of hand-syncing literals
+ * in four places) is what stops them drifting stale — the recurring bug this
+ * helper exists to kill. Estimate ratio matches the tool spec: ~250 tokens/KB.
+ */
+export function getTierFacts(docsPath: string): {
+  survival: TierFact;
+  working: TierFact;
+} {
+  const fact = (file: string): TierFact => {
+    let size = 0;
+    try {
+      size = cachedReadFile(join(docsPath, file)).length;
+    } catch {
+      size = 0;
+    }
+    const estTokens = size / 4;
+    const tokens =
+      estTokens >= 1000
+        ? `${(estTokens / 1000).toFixed(1)}K tokens`
+        : `${Math.ceil(estTokens)} tokens`;
+    return { kb: `${Math.round(size / 1024)}KB`, tokens };
+  };
+  return { survival: fact("survival.md"), working: fact("working.md") };
+}
+
 // =============================================================================
 // Core Functions
 // =============================================================================
@@ -173,7 +209,7 @@ export function readXanoscriptDocsV2(
 
   // Index mode — also the default when no topic/file_path is given.
   // Returns a compact topic listing with byte sizes and token estimates plus
-  // orientation pointers, so a bare discovery call costs ~1KB instead of the
+  // orientation pointers, so a bare discovery call costs ~4KB instead of the
   // full README. The README is still reachable via topic='readme'.
   if (args?.mode === "index" || (!args?.topic && !args?.file_path)) {
     const rows = Object.entries(XANOSCRIPT_DOCS_V2).map(([name, config]) => {
@@ -187,12 +223,12 @@ export function readXanoscriptDocsV2(
       const estTokens = Math.ceil(size / 4);
       return `| ${name} | ${config.description} | ${sizeKb} KB | ~${estTokens} |`;
     });
+    const tiers = getTierFacts(docsPath);
     return [
       `# XanoScript Documentation Index`,
       ``,
       `XanoScript is the declarative language for Xano backends (tables, APIs, functions, tasks, AI agents).`,
       ``,
-      `Version: ${version}`,
       `Topics: ${rows.length}`,
       ``,
       `| Topic | Description | Size | Est. Tokens |`,
@@ -203,8 +239,10 @@ export function readXanoscriptDocsV2(
       `- topic='readme' — full overview (workspace structure, core syntax patterns, type names)`,
       `- topic='<name>' — load one topic (e.g. 'syntax', 'database', 'apis')`,
       `- file_path='api/users/create.xs' — auto-select the docs for the file you're editing`,
-      `- tier='survival' (~1.2K tokens) or tier='working' (~4.4K tokens) for context-limited models`,
+      `- tier='survival' (~${tiers.survival.tokens}) or tier='working' (~${tiers.working.tokens}) for context-limited models`,
       `- mode='quick_reference' — compact output when you only need a reminder`,
+      `- max_tokens=4000 with file_path= — stop loading once the budget is reached`,
+      `- exclude_topics=['syntax'] with file_path= — skip topics you've already loaded`,
       ``,
       `---`,
       `Documentation version: ${version}`,

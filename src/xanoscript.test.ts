@@ -10,6 +10,7 @@ import {
   readXanoscriptDocsStructured,
   getTopicNames,
   getTopicDescriptions,
+  getTierFacts,
 } from "./xanoscript.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -380,7 +381,8 @@ Even more content.
     it("should return compact index with mode: index", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH, { mode: "index" });
       expect(result).toContain("# XanoScript Documentation Index");
-      expect(result).toContain("Version:");
+      // Version appears once, in the canonical footer (matches every other mode).
+      expect(result).toContain("Documentation version:");
       expect(result).toContain("Topics:");
       expect(result).toContain("| Topic | Description | Size | Est. Tokens |");
       // Should contain some known topics
@@ -550,6 +552,29 @@ Even more content.
       const sorted = [...priorities].sort((a, b) => a - b);
       expect(priorities).toEqual(sorted);
       expect(docs[0].topic).toBe("syntax");
+    });
+
+    it("surfaces the budget levers (max_tokens, exclude_topics) in the index output", () => {
+      // The index is the first thing many agents see; the params this tool is
+      // built to optimize for must be discoverable from it.
+      const index = readXanoscriptDocsV2(DOCS_PATH);
+      expect(index).toContain("max_tokens");
+      expect(index).toContain("exclude_topics");
+    });
+
+    it("derives tier facts from the actual files (single source of truth)", () => {
+      // getTierFacts is the one place size/token facts come from. Deriving from
+      // real file sizes is what stops the advertised numbers drifting stale.
+      const facts = getTierFacts(DOCS_PATH);
+      const survivalBytes = readXanoscriptDocsV2(DOCS_PATH, { tier: "survival" }).length;
+      const workingBytes = readXanoscriptDocsV2(DOCS_PATH, { tier: "working" }).length;
+      // working is the larger tier, and the derived KB strings are non-empty.
+      expect(workingBytes).toBeGreaterThan(survivalBytes);
+      expect(facts.survival.kb).toMatch(/^\d+KB$/);
+      expect(facts.working.kb).toMatch(/^\d+KB$/);
+      expect(facts.survival.tokens).toMatch(/tokens$/);
+      // The index Next-steps line must use the derived token figure verbatim.
+      expect(readXanoscriptDocsV2(DOCS_PATH)).toContain(facts.working.tokens);
     });
   });
 });
