@@ -656,7 +656,7 @@ var $msg { value = ($status|to_text) ~ ": " ~ ($data|json_encode) }
 | `agents` | AI agent configuration | ~9KB |
 | `tools` | AI tools for agents | ~7KB |
 | `mcp-servers` | MCP server definitions | ~4KB |
-| `security` | Auth patterns, encryption | ~12KB |
+| `security` | Auth patterns, encryption | ~8KB |
 | `integrations` | External APIs, cloud storage, Redis | ~varies |
 | `unit-testing` | Unit tests, mocks, assertions | ~10KB |
 | `workflow-tests` | E2E workflow tests | ~11KB |

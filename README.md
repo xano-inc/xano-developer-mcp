@@ -224,9 +224,12 @@ console.log(`${dirResult.valid_files}/${dirResult.total_files} files valid`);
 ```typescript
 import { xanoscriptDocs } from '@xano/developer-mcp';
 
-// Get overview (README)
-const overview = xanoscriptDocs();
-console.log(overview.documentation);
+// Get the compact topic index (the no-arg default; ~4KB / ~1K tokens)
+const index = xanoscriptDocs();
+console.log(index.documentation);
+
+// Get the full prose overview (the previous no-arg default)
+const overview = xanoscriptDocs({ topic: 'readme' });
 
 // Get specific topic
 const syntaxDocs = xanoscriptDocs({ topic: 'syntax' });
@@ -236,9 +239,6 @@ const apiDocs = xanoscriptDocs({ file_path: 'api/users/create_post.xs' });
 
 // Get compact quick reference
 const quickRef = xanoscriptDocs({ topic: 'database', mode: 'quick_reference' });
-
-// Get topic index with sizes
-const index = xanoscriptDocs({ mode: 'index' });
 ```
 
 ### Get Meta API Documentation
@@ -360,7 +360,7 @@ xano_validate_xanoscript({ directory: "src", pattern: "api/**/*.xs" })
 
 ### 2. `xano_xanoscript_docs`
 
-Retrieves XanoScript programming language documentation with context-aware support.
+Retrieves XanoScript programming language documentation with context-aware support. Called with no parameters, it returns a compact topic index (~4KB / ~1K tokens) for orientation; use `topic='readme'` for the full prose overview, or `topic=`/`file_path=` to drill in.
 
 **Parameters:**
 | Parameter | Type | Required | Description |
@@ -368,7 +368,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `topic` | string | No | Specific documentation topic to retrieve |
 | `file_path` | string | No | File path being edited for context-aware docs (e.g., `api/users/create_post.xs`) |
 | `mode` | string | No | `full` (default), `quick_reference` for compact syntax reference, or `index` for topic listing with sizes |
-| `tier` | string | No | Pre-packaged documentation tier for context-limited models: `survival` (~800 tokens) or `working` (~3500 tokens). Overrides topic/file_path/mode when set |
+| `tier` | string | No | Pre-packaged documentation tier for context-limited models: `survival` (~1.2K tokens) or `working` (~4.4K tokens). Overrides topic/file_path/mode when set |
 | `max_tokens` | number | No | Maximum estimated token budget. Loads topics in priority order until budget is reached. Helps prevent context overflow for small-window models |
 | `exclude_topics` | string[] | No | Topic names to exclude from `file_path` results (e.g., topics already loaded) |
 
@@ -376,8 +376,8 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 
 | Topic | Description |
 |-------|-------------|
-| `survival` | Minimal syntax survival kit (~3KB, ~800 tokens) for models with <16K context |
-| `working` | Complete working reference (~12KB, ~3500 tokens) for models with 16-64K context |
+| `survival` | Minimal syntax survival kit (~5KB, ~1.2K tokens) for models with <16K context — reach via `tier='survival'` |
+| `working` | Complete working reference (~17KB, ~4.4K tokens) for models with 16-64K context — reach via `tier='working'` |
 | `readme` | XanoScript overview, workspace structure, and quick reference |
 | `essentials` | Common patterns, quick reference, and common mistakes to avoid |
 | `syntax` | Expressions, operators, and filters for all XanoScript code |
@@ -415,13 +415,16 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 
 **Examples:**
 ```
-// Get overview
+// Get the compact topic index (no-arg default)
 xano_xanoscript_docs()
 
-// Get survival kit for small context models (~800 tokens)
+// Get the full prose overview (previous no-arg default)
+xano_xanoscript_docs({ topic: "readme" })
+
+// Get survival kit for small context models (~1.2K tokens)
 xano_xanoscript_docs({ tier: "survival" })
 
-// Get working reference for medium context models (~3500 tokens)
+// Get working reference for medium context models (~4.4K tokens)
 xano_xanoscript_docs({ tier: "working" })
 
 // Get essentials (recommended first stop)
@@ -563,8 +566,8 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 
 | Resource URI | Description |
 |--------------|-------------|
-| `xanoscript://docs/survival` | Minimal syntax survival kit (~800 tokens) |
-| `xanoscript://docs/working` | Complete working reference (~3500 tokens) |
+| `xanoscript://docs/survival` | Minimal syntax survival kit (~1.2K tokens) |
+| `xanoscript://docs/working` | Complete working reference (~4.4K tokens) |
 | `xanoscript://docs/readme` | Overview and quick reference |
 | `xanoscript://docs/essentials` | Common patterns, quick reference, and common mistakes to avoid |
 | `xanoscript://docs/syntax` | Expressions, operators, and filters |
