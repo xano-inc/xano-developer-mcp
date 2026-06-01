@@ -28,6 +28,8 @@ workflow_test "<name>" {
 
 Call functions invoke Xano constructs and capture their results. Each returns a result that can be stored with `as $variable`.
 
+> **Where these belong:** Call functions are for **workflow tests**. Don't reach for them in API endpoints, functions, or tasks. (To call a function from a regular stack, use `function.run` — see the [`function.call`](#functioncall) note below.)
+
 | Call Function     | Description                    | Required Properties                  |
 | ----------------- | ------------------------------ | ------------------------------------ |
 | `api.call`        | Call an API endpoint           | `api_group`, `verb` (on call), optional `headers` |

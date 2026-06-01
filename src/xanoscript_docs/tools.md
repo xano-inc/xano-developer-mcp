@@ -82,6 +82,8 @@ input {
 
 ## Tool-Specific Statements
 
+> **Where these belong:** `api.call`, `task.call`, and `tool.call` are for **tools**. Use them to compose a tool from other Xano constructs. Don't reach for them in API endpoints, functions, or tasks. (To call a function from a regular stack, use `function.run`.)
+
 ### api.call
 Call an API endpoint:
 
