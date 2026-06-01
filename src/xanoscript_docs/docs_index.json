@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "description": "Machine-readable index for XanoScript documentation",
+  "version": "2.2.0",
+  "description": "Machine-readable index for XanoScript documentation (version mirrors version.json)",
 
   "topics": {
     "survival": {

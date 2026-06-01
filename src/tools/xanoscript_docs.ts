@@ -207,7 +207,7 @@ export const xanoscriptDocsToolSpec = defineTool({
   name: "xano_xanoscript_docs",
   description:
     "Get XanoScript programming language documentation for AI code generation. " +
-    "Call without parameters for overview (README). " +
+    "Call without parameters for a compact index of all topics (~1KB); then drill in with topic= or file_path=. Use topic='readme' for the full prose overview. " +
     "For context-limited models: use tier='survival' (~1.2K tokens) or tier='working' (~4.4K tokens). " +
     "Use 'topic' for specific documentation, or 'file_path' for context-aware docs based on the file you're editing. " +
     "Use mode='quick_reference' for compact syntax reference (recommended for context efficiency). " +
@@ -224,7 +224,7 @@ export const xanoscriptDocsToolSpec = defineTool({
       .enum(topicEnumValues)
       .optional()
       .describe(
-        "Documentation topic to retrieve. Call without any parameters to get the README overview. " +
+        "Documentation topic to retrieve. Call without any parameters to get the compact topic index; use topic='readme' for the full prose overview. " +
           "Example: topic='syntax' for language syntax, topic='database' for database operations, topic='types' for type system.\n\n" +
           "Available topics:\n" +
           getTopicDescriptions()

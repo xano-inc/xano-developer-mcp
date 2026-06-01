@@ -271,14 +271,24 @@ Even more content.
   });
 
   describe("readXanoscriptDocsV2", () => {
-    it("should return README when no args provided", () => {
+    it("should return the compact index when no args provided", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH);
+      expect(result).toContain("# XanoScript Documentation Index");
       expect(result).toContain("Documentation version:");
     });
 
-    it("should return README when empty args provided", () => {
+    it("should return the compact index when empty args provided", () => {
       const result = readXanoscriptDocsV2(DOCS_PATH, {});
-      expect(result).toContain("Documentation version:");
+      expect(result).toContain("# XanoScript Documentation Index");
+    });
+
+    it("should default to the index rather than the full README (context efficiency)", () => {
+      const index = readXanoscriptDocsV2(DOCS_PATH);
+      const readme = readXanoscriptDocsV2(DOCS_PATH, { topic: "readme" });
+      // README must still be reachable explicitly...
+      expect(readme).toContain("Workspace Structure");
+      // ...but the no-arg default must be much smaller than it.
+      expect(index.length).toBeLessThan(readme.length / 2);
     });
 
     it("should return specific topic documentation", () => {

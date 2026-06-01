@@ -120,7 +120,7 @@ $db.table.field     // Database field reference (in queries)
 $this               // Current item in loops/maps
 ```
 
-**Reserved Variables:** The following cannot be used as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`. See `xano_xano_xanoscript_docs({ topic: "essentials" })` for detailed variable access rules.
+**Reserved Variables:** The following cannot be used as variable names: `$response`, `$output`, `$input`, `$auth`, `$env`, `$db`, `$this`, `$result`, `$index`. See `xano_xanoscript_docs({ topic: "essentials" })` for detailed variable access rules.
 
 ### Type Names
 
@@ -205,8 +205,8 @@ Use `xano_xanoscript_docs({ topic: "<topic>" })` to retrieve documentation.
 
 | Topic      | Description                                                  | Size |
 | ---------- | ------------------------------------------------------------ | ---- |
-| `survival` | Minimal syntax survival kit for models with <16K context     | ~3KB (~800 tokens) |
-| `working`  | Complete working reference for models with 16-64K context    | ~12KB (~3500 tokens) |
+| `survival` | Minimal syntax survival kit for models with <16K context     | ~5KB (~1.2K tokens) |
+| `working`  | Complete working reference for models with 16-64K context    | ~18KB (~4.4K tokens) |
 
 Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier: "working" })`.
 

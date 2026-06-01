@@ -171,8 +171,11 @@ export function readXanoscriptDocsV2(
     return `${content}\n\n---\nDocumentation version: ${version}`;
   }
 
-  // Index mode: return compact topic listing with byte sizes and token estimates
-  if (args?.mode === "index") {
+  // Index mode — also the default when no topic/file_path is given.
+  // Returns a compact topic listing with byte sizes and token estimates plus
+  // orientation pointers, so a bare discovery call costs ~1KB instead of the
+  // full README. The README is still reachable via topic='readme'.
+  if (args?.mode === "index" || (!args?.topic && !args?.file_path)) {
     const rows = Object.entries(XANOSCRIPT_DOCS_V2).map(([name, config]) => {
       let size: number;
       try {
@@ -187,6 +190,8 @@ export function readXanoscriptDocsV2(
     return [
       `# XanoScript Documentation Index`,
       ``,
+      `XanoScript is the declarative language for Xano backends (tables, APIs, functions, tasks, AI agents).`,
+      ``,
       `Version: ${version}`,
       `Topics: ${rows.length}`,
       ``,
@@ -194,20 +199,21 @@ export function readXanoscriptDocsV2(
       `|-------|-------------|------|-------------|`,
       ...rows,
       ``,
-      `Use topic='<name>' to load a specific topic. Use mode='quick_reference' for compact output.`,
-      `Use tier='survival' (~800 tokens) or tier='working' (~3500 tokens) for context-limited models.`,
+      `Next steps:`,
+      `- topic='readme' — full overview (workspace structure, core syntax patterns, type names)`,
+      `- topic='<name>' — load one topic (e.g. 'syntax', 'database', 'apis')`,
+      `- file_path='api/users/create.xs' — auto-select the docs for the file you're editing`,
+      `- tier='survival' (~1.2K tokens) or tier='working' (~4.4K tokens) for context-limited models`,
+      `- mode='quick_reference' — compact output when you only need a reminder`,
+      ``,
+      `---`,
+      `Documentation version: ${version}`,
     ].join("\n");
   }
 
   // Default to quick_reference for file_path mode (loads many topics),
   // full for topic mode (loads single topic)
   const mode = args?.mode || (args?.file_path ? "quick_reference" : "full");
-
-  // Default: return README
-  if (!args?.topic && !args?.file_path) {
-    const readme = cachedReadFile(join(docsPath, "README.md"));
-    return `${readme}\n\n---\nDocumentation version: ${version}`;
-  }
 
   // Context-aware: return docs matching file pattern
   if (args?.file_path) {

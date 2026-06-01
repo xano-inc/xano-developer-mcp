@@ -52,10 +52,11 @@ describe("setXanoscriptDocsPath", () => {
 });
 
 describe("xanoscriptDocs", () => {
-  it("should return README when called with no args", () => {
+  it("should return the compact index when called with no args", () => {
     const result = xanoscriptDocs();
     expect(result).toHaveProperty("documentation");
     expect(typeof result.documentation).toBe("string");
+    expect(result.documentation).toContain("# XanoScript Documentation Index");
     expect(result.documentation).toContain("Documentation version:");
   });
 
