@@ -105,9 +105,10 @@ export const sandboxDoc: TopicDoc = {
       usage: "xano sandbox review [options]",
       flags: [
         { name: "url-only", short: "u", type: "boolean", required: false, description: "Print the URL without opening the browser" },
+        { name: "insecure", short: "k", type: "boolean", required: false, description: "Skip TLS certificate verification (for self-signed certificates)" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
       ],
-      examples: ["xano sandbox review", "xano sandbox review --url-only"]
+      examples: ["xano sandbox review", "xano sandbox review --url-only", "xano sandbox review --insecure"]
     },
     {
       name: "sandbox impersonate",
