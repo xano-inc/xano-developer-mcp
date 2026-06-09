@@ -34,7 +34,7 @@ npm link
 \`\`\`bash
 xano auth
 \`\`\`
-Opens your browser to log in. Automatically creates a profile.
+Opens your browser to log in. Automatically creates a profile. On remote/SSH/Docker hosts where the browser can't reach the CLI, use \`xano auth --no-browser\` (prints a URL; paste back the code shown in the browser).
 
 **Option 2: Interactive wizard**
 \`\`\`bash
@@ -71,6 +71,10 @@ All commands support:
 - \`XANO_CONFIG\` - Override the credentials file path (same effect as \`-c\`)
 - \`XANO_VERBOSE\` - Enable verbose logging (same effect as \`-v\`)
 
+## Project-Local Profile (\`profile.yaml\`)
+
+A project can be pinned to a specific profile (and optional workspace/branch/origin overrides) by a \`profile.yaml\` at the project root — generated with \`xano profile use <name>\`. The CLI discovers it by walking up parent directories. It contains no secrets (the token always comes from credentials.yaml), and an explicit \`-p\`/\`XANO_PROFILE\` overrides it entirely. See the "profile" topic for details.
+
 ## Safety Markers (\`[CRITICAL]\` and \`[IMPORTANT]\`)
 
 Destructive commands and flags are prefixed with one of two imperative markers in their description, usage, and help text. These are not stylistic — they signal required agent behavior:
@@ -100,7 +104,7 @@ Examples of where these markers appear:
 | \`unit_test\` | Run unit tests |
 | \`workflow_test\` | Run workflow tests |
 | \`platform\` | View available platform versions |
-| \`static_host\` | Deploy static sites |
+| \`static_host\` | Manage static hosts, push builds, deploy to dev/prod |
 | \`update\` | Update CLI to latest version |`,
 
   ai_hints: `**Safety markers (full definitions in description above):** When you see \`[CRITICAL]\` on a command or flag, NEVER run it without explicit user confirmation in the current turn — prior approval does not carry over. When you see \`[IMPORTANT]\`, ALWAYS run \`--dry-run\` first (when available) and show the user the output before the real run. The imperative verb in the marker (\`NEVER\`, \`ALWAYS\`, \`STOP\`, \`DO NOT\`) is the literal required action.
@@ -121,7 +125,10 @@ Examples of where these markers appear:
 **Profile selection priority:**
 1. \`-p\` flag on command
 2. \`XANO_PROFILE\` environment variable
-3. Default profile in credentials.yaml`,
+3. Project-local \`profile.yaml\` (created with \`xano profile use\`; discovered by walking up parent directories)
+4. Default profile in credentials.yaml
+
+An explicit \`-p\` or \`XANO_PROFILE\` ignores \`profile.yaml\` entirely. When a profile.yaml is in effect, commands print the active target (e.g. \`Using profile 'staging' (workspace 110) · profile.yaml\`).`,
 
   related_topics: ["auth", "profile", "workspace", "sandbox", "integration"],
 
