@@ -19,6 +19,8 @@ The authentication flow has a 5-minute timeout.
 
 On remote/SSH sessions, Docker containers, or locked-down networks where the browser can't reach the CLI's loopback address, use \`--no-browser\`: the CLI prints a login URL, you open it in any browser, and paste back the code it displays. No local callback server required.
 
+When stdin is piped (not a TTY), \`--no-browser\` reads the code directly from stdin instead of prompting, so scripts and AI agents can complete the flow without an interactive terminal: \`echo "$CODE" | xano auth --no-browser -i my-instance -w 5 -b dev -p staging\`.
+
 ## Pre-selecting with Flags
 
 Each interactive picker can be pre-answered with a flag: \`-i/--instance\` (instance name), \`-w/--workspace\` (workspace ID or name), \`-b/--branch\` (branch label), and \`-p/--profile\` (profile name to save). An empty value (\`""\`) takes the picker's default answer: \`-w ""\` skips workspace selection, \`-b ""\` skips and uses the live branch, \`-p ""\` uses the default profile name. With all four set alongside \`--no-browser\`, the only input is pasting the code from the browser — useful for scripted or remote setups.`,
@@ -34,6 +36,7 @@ Each interactive picker can be pre-answered with a flag: \`-i/--instance\` (inst
 - User doesn't have an access token handy
 - User prefers browser-based login
 - User is in a headless/SSH environment: use \`xano auth --no-browser\`
+- Script or agent needs to complete headless auth non-interactively: pipe the code on stdin, e.g. \`echo "$CODE" | xano auth --no-browser ...\` (with -i/-w/-b/-p set, no prompts remain)
 
 **When to suggest profile wizard/create instead:**
 - User already has an access token
@@ -69,7 +72,8 @@ The sandbox is a free-tier personal dev environment (auto-provisioned singleton 
         "xano auth -k  # for self-signed certificates",
         "xano auth --no-browser  # headless: paste the code shown in the browser",
         "xano auth -i my-instance -w 5 -b dev -p staging  # pre-answer all pickers",
-        "xano auth --no-browser -i my-instance -w \"\" -b \"\" -p \"\"  # scripted setup, only the code prompt remains"
+        "xano auth --no-browser -i my-instance -w \"\" -b \"\" -p \"\"  # scripted setup, only the code prompt remains",
+        "echo \"$CODE\" | xano auth --no-browser -i my-instance -w 5 -b dev -p staging  # fully scripted: code read from piped stdin, no prompt at all"
       ]
     }
   ],
@@ -96,7 +100,7 @@ xano profile me`
       steps: [
         "Run: `xano auth --no-browser` (add -i/-w/-b/-p to skip the pickers)",
         "Open the printed URL in any browser and log in",
-        "Copy the code shown in the browser and paste it into the CLI prompt",
+        "Copy the code shown in the browser and paste it into the CLI prompt (or pipe it on stdin: `echo \"$CODE\" | xano auth --no-browser ...`)",
         "Verify: `xano profile me`"
       ],
       example: `xano auth --no-browser -i my-instance -w 5 -b dev -p staging
