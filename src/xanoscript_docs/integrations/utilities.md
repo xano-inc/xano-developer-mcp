@@ -330,6 +330,8 @@ api.lambda {
 | `code` | string | Code to execute (required) |
 | `timeout` | integer | Execution timeout in seconds (optional) |
 
+For running JS per array element inside a filter pipeline, use the `lambda_*` higher-order filters (`lambda_map`, `lambda_filter`, `lambda_reduce`, ...) — see `xano_xanoscript_docs({ topic: "syntax/array-filters" })`.
+
 ---
 
 ## Utilities
