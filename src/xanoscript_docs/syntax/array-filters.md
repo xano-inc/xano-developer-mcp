@@ -41,7 +41,18 @@ Complete reference for XanoScript array filters, functional operations, and stat
 ($start..$end)                              // Dynamic range with variables
 ```
 
-### Functional Operations
+### Higher-Order Filters: Expression vs Lambda (CRITICAL)
+
+XanoScript has **two families** of higher-order array filters. They are different filters with different syntax — never mix them:
+
+| Family | Filters | Argument | Element var | Accumulator |
+|--------|---------|----------|-------------|-------------|
+| **Expression** | `map`, `filter`, `some`, `every`, `find`, `findIndex`, `reduce` | Inline **XanoScript expression** (no quotes, no `return`) | `$$` (alias `$this`) | `$result` (reduce) |
+| **Lambda (JS)** | `lambda_map`, `lambda_filter`, `lambda_some`, `lambda_every`, `lambda_find`, `lambda_findIndex`, `lambda_reduce` | Quoted **string of JavaScript/TypeScript code** that must `return` a value | `$this` | `$result` (lambda_reduce) |
+
+### Expression-Based Filters
+
+The argument is an inline XanoScript expression evaluated per element. Context variables: `$$` (current element, alias `$this`), `$index` (position), `$parent` (whole array), and `$result` (previous result, `reduce` only).
 
 ```xs
 // Map - transform each element
@@ -62,8 +73,69 @@ Complete reference for XanoScript array filters, functional operations, and stat
 // Every - all elements match?
 [2,4,6]|every:$$%2==0                       // true
 
-// Reduce - accumulate to single value
+// Reduce - accumulate to single value (expression FIRST, initial value LAST)
 [1,2,3,4]|reduce:$$+$result:0               // 10
+```
+
+`transform` is the single-value sibling — it applies an expression to any value (not per element): `2|transform:$$+3` → `5`.
+
+### Lambda Filters (JavaScript Code)
+
+Each `lambda_*` filter takes a **string of JS/TS code** executed in Xano's Lambda runtime (requires Lambda support on the instance). The code must `return` a value. An optional final argument sets a timeout in seconds (default 10). Context variables: `$this` (current element), `$index` (position), `$parent` (whole array), and `$result` (previous result, `lambda_reduce` only).
+
+```xs
+[1,2,3]|lambda_map:"return $this * 2"                    // [2,4,6]
+[1,2,3,4]|lambda_filter:"return $this % 2"               // [1,3]
+[1,2,3]|lambda_some:"return $this > 2"                   // true
+[2,4,6]|lambda_every:"return $this % 2 === 0"            // true
+[1,2,3,8,9]|lambda_find:"return $this === 8"             // 8
+[1,2,3,8,9]|lambda_findIndex:"return $this === 8"        // 3
+
+// lambda_reduce: initial value FIRST, then code (opposite of expression reduce!)
+[1,2,3,4,5]|lambda_reduce:[]:"return [...$result, $this + 1];"   // [2,3,4,5,6]
+
+// Optional trailing timeout (seconds)
+$items|lambda_map:"return $this * 2":10
+```
+
+The single-value sibling is `lambda` — it runs JS code with `$this` bound to the piped value: `$val|lambda:"return $this.toUpperCase()"`.
+
+### Common Mistakes: Mixing the Two Families
+
+❌ **Wrong — JS syntax in an expression filter:**
+```xs
+$items|map:"return $this * 2"        // map expects an expression, not a JS string
+$items|filter:$this.active === true  // === is JS; expressions use ==
+```
+
+✅ **Correct:**
+```xs
+$items|map:$$ * 2
+$items|filter:$$.active == true
+```
+
+❌ **Wrong — expression syntax in a lambda filter:**
+```xs
+$items|lambda_map:$$.name            // lambda_map expects a quoted JS code string
+$items|lambda_filter:"$this > 2"     // missing return
+```
+
+✅ **Correct:**
+```xs
+$items|lambda_map:"return $this.name"
+$items|lambda_filter:"return $this > 2"
+```
+
+❌ **Wrong — `reduce` argument order confusion:**
+```xs
+$nums|reduce:0:$$+$result                          // expression reduce: expression first, initial last
+$nums|lambda_reduce:"return $result + $this":0     // lambda_reduce: initial first, code second
+```
+
+✅ **Correct:**
+```xs
+$nums|reduce:$$+$result:0                          // expression: expr, then initial
+$nums|lambda_reduce:0:"return $result + $this"     // lambda: initial, then code
 ```
 
 ### Array Element Access: `|get` vs `|slice`

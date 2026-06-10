@@ -26,7 +26,7 @@ Complete reference for XanoScript expressions, operators, and core filters. For 
 
 For detailed references on specific filter categories, use:
 - `xano_xanoscript_docs({ topic: "syntax/string-filters" })` — String filters, regex, encoding, security filters, text functions
-- `xano_xanoscript_docs({ topic: "syntax/array-filters" })` — Array filters, functional operations, array functions
+- `xano_xanoscript_docs({ topic: "syntax/array-filters" })` — Array filters, expression vs lambda (JS) higher-order filters, array functions
 - `xano_xanoscript_docs({ topic: "syntax/functions" })` — Math filters/functions, object functions, bitwise operations
 
 **The `guid` field (backend-managed — ignore it):** Any construct may carry a top-level `guid = "..."` (e.g. `guid = "tgGYuUFKbBz4_6DIkDR5hUUCRno"`) — a stable identifier Xano assigns and maintains automatically. **Leave it exactly as-is when editing, omit it when writing new code (the backend adds one on save), and never add, change, or remove one unless explicitly asked.**
@@ -63,7 +63,9 @@ Working with...
 │   ├── Transform all? → map (filter) or array.map (statement)
 │   ├── Keep some? → filter (filter) or array.filter (statement)
 │   ├── Find one? → find (filter) or array.find (statement)
-│   ├── Combine? → reduce
+│   ├── Combine? → reduce (expression first, initial last: $arr|reduce:$$+$result:0)
+│   ├── Need JS/TS code instead of an expression? → lambda_map, lambda_filter,
+│   │     lambda_reduce, ... (quoted JS string with return — see syntax/array-filters)
 │   ├── Reverse? → reverse (NOT available on strings)
 │   ├── Sort? → sort
 │   └── Statement-level ops? → See syntax/array-filters topic

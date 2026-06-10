@@ -189,9 +189,11 @@ filter:expr: keep matching — `$arr|filter:$$.active`
 find:expr: first match — `$arr|find:$$.id == 5`
 some:expr: any match? — `$arr|some:$$.active`
 every:expr: all match? — `$arr|every:$$.valid`
-reduce:init:expr: accumulate — `$arr|reduce:0:$$ + $$2`
+reduce:expr:init: accumulate — `$arr|reduce:$$ + $result:0` (expression first, initial last)
 join:delim: array to string — `$arr|join:","`
 push:val: append — `$arr|push:"new"`
+
+`map`/`filter`/`some`/`every`/`find`/`findIndex`/`reduce` take inline XanoScript expressions (`$$` = element, `$index`, `$result` in reduce) — NOT JavaScript. For JS code use the lambda variants: `lambda_map`/`lambda_filter`/`lambda_some`/`lambda_every`/`lambda_find`/`lambda_findIndex` take a quoted JS string with `return` (`$arr|lambda_map:"return $this * 2"`); `lambda_reduce` takes the initial value FIRST (`$arr|lambda_reduce:0:"return $result + $this"`). See `syntax/array-filters`.
 
 ### Object Filters
 get:key: get property — `$obj|get:"key"` or `$obj|get:"key":"default"`
