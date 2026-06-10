@@ -34,7 +34,7 @@ npm link
 \`\`\`bash
 xano auth
 \`\`\`
-Opens your browser to log in. Automatically creates a profile. On remote/SSH/Docker hosts where the browser can't reach the CLI, use \`xano auth --no-browser\` (prints a URL; paste back the code shown in the browser).
+Opens your browser to log in. Automatically creates a profile. On remote/SSH/Docker hosts where the browser can't reach the CLI, use \`xano auth --no-browser\` (prints a URL; paste back the code shown in the browser). Scripts and AI agents should use the one-shot form instead: \`xano auth --code "$CODE" -i <instance> -w <workspace> --json\` (see the auth topic).
 
 **Option 2: Interactive wizard**
 \`\`\`bash
