@@ -47,11 +47,13 @@ With \`--json\`, the command prints a machine-readable result (profile name, use
 
   ai_hints: `**Agent setup recipe (no TTY, no waiting process):**
 1. Install: \`npm install -g @xano/cli\` (or \`@xano/cli@beta\`)
-2. Send the user to \`<origin>/login?dest=cli&display=code\` (origin defaults to https://app.xano.com) and ask them to paste back the code shown after login
+2. Send the user to \`https://app.xano.com/login?dest=cli&display=code\` (swap the origin for self-hosted/custom origins) and ask them to paste back the code shown after login
 3. Run one command: \`xano auth --code "$CODE" -i <instance> -w <workspace-id> --json\`
 4. Verify: \`xano profile me\`
 
 If the Xano MCP server is connected, call its \`xano_me\` tool first: pass its \`instanceUrl\` value directly to \`-i\` (URLs/hostnames match by instance origin) and its \`workspaceId\` to \`-w\`. Do NOT run \`xano auth --no-browser\` interactively and wait at the masked code prompt — use \`--code\` (or pipe the code on stdin) instead.
+
+**Recovery on failure:** with \`--json\`, a wrong \`-i\`/\`-w\`/\`-b\` fails with the available options listed in the error — correct the flag and rerun. If the code itself is rejected, send the user back to the login URL for a fresh code.
 
 **auth vs profile wizard:**
 - \`xano auth\` - Browser-based OAuth login (recommended for interactive use)
@@ -69,7 +71,7 @@ If the Xano MCP server is connected, call its \`xano_me\` tool first: pass its \
 
 **When to suggest profile wizard/create instead:**
 - User already has an access token
-- User needs fully non-interactive setup (CI/CD) — \`profile create\` requires no prompts at all
+- Fully unattended runs with no human in the loop (CI/CD) — \`profile create\` uses a stored token and needs no login step, while \`--code\` still needs a human to log in once and supply the code
 
 **Flag meaning caution:** On \`xano auth\`, \`-p/--profile\` is the *profile name to save*, not the profile-selection flag that other commands use. Backup branches are filtered out of the branch picker.
 

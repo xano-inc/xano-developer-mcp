@@ -91,9 +91,11 @@ xano update
 The sandbox workflow (`xano sandbox *`) is the recommended safe deployment method. If sandbox commands are not recognized after updating, the user's CLI may need a fresh install: `npm install -g @xano/cli`.
 
 **Not authenticated:**
+Send the user to `https://app.xano.com/login?dest=cli&display=code`, ask them to paste back the code shown after login, then run:
 ```bash
-xano auth   # opens browser for OAuth login
+xano auth --code "$CODE" -i <instance> -w <workspace-id> --json
 ```
+If the Xano MCP is connected, get `-i` and `-w` from `xano_me` (`instanceUrl` and `workspaceId`). Do not run bare `xano auth` from an agent — it blocks waiting on a browser callback to a local server.
 
 Critical = no CLI (sandbox workflow requires it), or no auth (can't do anything without it), or no sandbox support (CLI too old — must update).
 
