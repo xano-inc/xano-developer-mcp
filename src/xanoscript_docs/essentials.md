@@ -668,6 +668,12 @@ See `xano_xanoscript_docs({ topic: "file-uploads" })` for the full pattern.
 
 ---
 
+## Validation is syntax-only
+
+`xano_validate_xanoscript` checks syntax, not runtime behavior. A `valid` result means the code parses — it can still fail at execution (often a 500). Validation is necessary but not sufficient: after it passes, `push` and run the endpoint once (`validate → push → run`) before trusting the code.
+
+---
+
 ## Related Topics
 
 Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:

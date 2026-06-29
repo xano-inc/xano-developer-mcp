@@ -223,13 +223,13 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace push",
-      description: "Upload local XanoScript files to a workspace. Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument.",
+      description: "Upload local XanoScript files to a workspace. Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview.",
       usage: "xano workspace push [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Directory containing documents to push (defaults to current directory)" },
         { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile default if not set)" },
         { name: "branch", short: "b", type: "string", required: false, description: "Branch label to push to (defaults to live branch or profile branch)" },
-        { name: "sync", type: "boolean", required: false, default: "false", description: "Full push (default is partial/changed-only). Required for --delete." },
+        { name: "sync", type: "boolean", required: false, default: "false", description: "Full push (default is partial/changed-only). Required for --delete and for destructive schema changes (a partial push never drops or relaxes anything)." },
         { name: "delete", type: "boolean", required: false, default: "false", description: "Delete remote objects not present in local files (requires --sync)" },
         { name: "dry-run", type: "boolean", required: false, default: "false", description: "Preview changes without applying" },
         { name: "force", type: "boolean", required: false, default: "false", description: "Skip preview and confirmation prompt (for CI/CD)" },
