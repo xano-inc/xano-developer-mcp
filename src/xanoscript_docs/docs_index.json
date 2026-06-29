@@ -184,10 +184,10 @@
     },
     "frontend": {
       "file": "frontend.md",
-      "description": "Static frontend development and deployment",
+      "description": "Static frontend development and deployment (static hosting)",
       "applyTo": ["static/**/*"],
       "priority": 3,
-      "aliases": ["static", "html", "css", "web"]
+      "aliases": ["static", "html", "css", "web", "spa", "hosting", "static-host", "deploy"]
     },
     "addons": {
       "file": "addons.md",

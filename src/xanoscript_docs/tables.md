@@ -323,6 +323,7 @@ table "order" {
 2. **Use `auth = true`** only for the authentication table (typically just `user`)
 3. **Add indexes** for fields used in `db.query` WHERE clauses and JOINs to avoid full table scans
 4. **Add new fields to the bottom of the schema** - When adding new fields to an existing table, append them to the end of the schema block rather than inserting them in the middle. This preserves column ordering consistency and avoids unexpected side effects
+5. **`workspace push` is additive, not declarative** - A partial push (the default) adds and updates schema but makes no destructive changes — it won't drop a column you removed or relax an existing constraint, so local files and the live table can diverge. Use `xano workspace push --sync` for destructive schema changes.
 
 ---
 
