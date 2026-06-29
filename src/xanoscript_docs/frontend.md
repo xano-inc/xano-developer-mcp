@@ -22,7 +22,7 @@ It also drives typed-client codegen in the starter below.
 ## Two starting points
 
 - **Opinionated starter (recommended for apps)** — clone
-  [`xano-labs/static_template`](https://github.com/xano-labs/static_template) into
+  [`xano-inc/static_template`](https://github.com/xano-inc/static_template) into
   `static/`: a Vite + React + TS SPA with auth and typed API hooks (generated from
   your Swagger) already wired. Point it at your instance (`VITE_XANO_API_BASE` +
   `VITE_XANO_SWAGGER_URL`) and build. It ships its own docs — follow those.
@@ -31,14 +31,14 @@ It also drives typed-client codegen in the starter below.
   in one client module that prefixes a base URL and attaches the auth token:
 
   ```javascript
-  const API_BASE = 'https://your-instance.xano.io/api:group';
+  const API_BASE = "https://your-instance.xano.io/api:group";
 
   async function apiCall(endpoint, options = {}) {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem("auth_token");
     const res = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
@@ -82,8 +82,8 @@ version asset URLs (e.g. `app.js?v=2`) when an update must take effect immediate
 
 ## Related Topics
 
-| Topic | Description |
-|-------|-------------|
-| `apis` | Backend API endpoints |
+| Topic       | Description             |
+| ----------- | ----------------------- |
+| `apis`      | Backend API endpoints   |
 | `workspace` | Workspace configuration |
-| `security` | CORS and authentication |
+| `security`  | CORS and authentication |
