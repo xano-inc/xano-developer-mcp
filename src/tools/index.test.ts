@@ -117,6 +117,32 @@ describe("handleTool", () => {
     expect(result.error).toContain("Invalid arguments");
     expect(result.error).toContain("topic");
   });
+
+  it("should return validation error when xano_knowledge_get is missing 'name'", async () => {
+    const result = await handleTool("xano_knowledge_get", {});
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Invalid arguments");
+    expect(result.error).toContain("name");
+  });
+
+  it("should return validation error for invalid xano_knowledge_list type enum", async () => {
+    const result = await handleTool("xano_knowledge_list", { type: "invalid_type" });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Invalid arguments");
+    expect(result.error).toContain("type");
+  });
+
+  it("should surface a graceful error from xano_knowledge_list (no CLI, or CLI without the knowledge subcommand)", async () => {
+    const result = await handleTool("xano_knowledge_list", {});
+    expect(result.success).toBe(false);
+    expect(typeof result.error).toBe("string");
+  });
+
+  it("should surface a graceful error from xano_knowledge_get (no CLI, or CLI without the knowledge subcommand)", async () => {
+    const result = await handleTool("xano_knowledge_get", { name: "some-skill" });
+    expect(result.success).toBe(false);
+    expect(typeof result.error).toBe("string");
+  });
 });
 
 describe("validate_xanoscript warnings count", () => {
@@ -195,8 +221,8 @@ describe("toMcpResponse", () => {
 });
 
 describe("toolDefinitions", () => {
-  it("should contain all 5 tools", async () => {
-    expect(toolDefinitions).toHaveLength(5);
+  it("should contain all 7 tools", async () => {
+    expect(toolDefinitions).toHaveLength(7);
   });
 
   it("should have unique tool names", async () => {
@@ -211,6 +237,8 @@ describe("toolDefinitions", () => {
     expect(names).toContain("xano_version");
     expect(names).toContain("xano_meta_api_docs");
     expect(names).toContain("xano_cli_docs");
+    expect(names).toContain("xano_knowledge_list");
+    expect(names).toContain("xano_knowledge_get");
   });
 
   it("should have annotations on all tools", async () => {

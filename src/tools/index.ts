@@ -63,6 +63,19 @@ import {
   type CliDocsResult,
 } from "./cli_docs.js";
 
+import {
+  xanoKnowledgeList,
+  xanoKnowledgeListTool,
+  xanoKnowledgeListToolSpec,
+  xanoKnowledgeGet,
+  xanoKnowledgeGetTool,
+  xanoKnowledgeGetToolSpec,
+  type XanoKnowledgeListArgs,
+  type XanoKnowledgeListResult,
+  type XanoKnowledgeGetArgs,
+  type XanoKnowledgeGetResult,
+} from "./xano_knowledge.js";
+
 import { type ToolResult, toMcpResponse } from "./types.js";
 import { z } from "zod";
 import type { BuiltTool, ZodRawShape } from "./define_tool.js";
@@ -112,6 +125,14 @@ export {
   type CliDocsArgs,
   type CliDocsResult,
 
+  // Workspace Knowledge
+  xanoKnowledgeList,
+  xanoKnowledgeGet,
+  type XanoKnowledgeListArgs,
+  type XanoKnowledgeListResult,
+  type XanoKnowledgeGetArgs,
+  type XanoKnowledgeGetResult,
+
   // Utility types
   type ToolResult,
   toMcpResponse,
@@ -127,6 +148,8 @@ export {
   mcpVersionTool,
   metaApiDocsTool,
   cliDocsTool,
+  xanoKnowledgeListTool,
+  xanoKnowledgeGetTool,
 };
 
 // =============================================================================
@@ -144,6 +167,8 @@ export const toolSpecs = {
   xano_version: mcpVersionToolSpec,
   xano_meta_api_docs: metaApiDocsToolSpec,
   xano_cli_docs: cliDocsToolSpec,
+  xano_knowledge_list: xanoKnowledgeListToolSpec,
+  xano_knowledge_get: xanoKnowledgeGetToolSpec,
 } as const;
 
 export type ToolName = keyof typeof toolSpecs;
@@ -209,6 +234,16 @@ const dispatch: { [K in ToolName]: (args: Record<string, unknown>) => Promise<To
     const parsed = parseWithSpec(cliDocsToolSpec, args);
     if (!parsed.ok) return parsed.error;
     return cliDocsTool(parsed.data as CliDocsArgs);
+  },
+  async xano_knowledge_list(args) {
+    const parsed = parseWithSpec(xanoKnowledgeListToolSpec, args);
+    if (!parsed.ok) return parsed.error;
+    return xanoKnowledgeListTool(parsed.data as XanoKnowledgeListArgs);
+  },
+  async xano_knowledge_get(args) {
+    const parsed = parseWithSpec(xanoKnowledgeGetToolSpec, args);
+    if (!parsed.ok) return parsed.error;
+    return xanoKnowledgeGetTool(parsed.data as XanoKnowledgeGetArgs);
   },
 };
 
