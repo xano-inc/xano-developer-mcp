@@ -117,6 +117,52 @@ describe("handleTool", () => {
     expect(result.error).toContain("Invalid arguments");
     expect(result.error).toContain("topic");
   });
+
+  it("should return validation error when xano_knowledge_get is missing 'name'", async () => {
+    const result = await handleTool("xano_knowledge_get", {});
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Invalid arguments");
+    expect(result.error).toContain("name");
+  });
+
+  it("should return validation error for invalid xano_knowledge_list type enum", async () => {
+    const result = await handleTool("xano_knowledge_list", { type: "invalid_type" });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Invalid arguments");
+    expect(result.error).toContain("type");
+  });
+
+  it("should return the xano knowledge list command without executing it", async () => {
+    const result = await handleTool("xano_knowledge_list", {
+      workspace: "123",
+      type: "skill",
+      enabled_only: false,
+      output: "json",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data).toContain("xano knowledge list -w 123 -t skill --no-enabled-only -o json");
+    expect(result.structuredContent).toMatchObject({
+      command: "xano knowledge list -w 123 -t skill --no-enabled-only -o json",
+    });
+  });
+
+  it("should return the xano knowledge get command without executing it", async () => {
+    const result = await handleTool("xano_knowledge_get", {
+      name: "some-skill",
+      branch: "main",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data).toContain("xano knowledge get some-skill -b main -o text");
+    expect(result.structuredContent).toMatchObject({
+      command: "xano knowledge get some-skill -b main -o text",
+    });
+  });
+
+  it("should quote xano knowledge get names/values containing spaces", async () => {
+    const result = await handleTool("xano_knowledge_get", { name: "my skill" });
+    expect(result.success).toBe(true);
+    expect(result.data).toContain('xano knowledge get "my skill" -o text');
+  });
 });
 
 describe("validate_xanoscript warnings count", () => {
@@ -195,8 +241,8 @@ describe("toMcpResponse", () => {
 });
 
 describe("toolDefinitions", () => {
-  it("should contain all 5 tools", async () => {
-    expect(toolDefinitions).toHaveLength(5);
+  it("should contain all 7 tools", async () => {
+    expect(toolDefinitions).toHaveLength(7);
   });
 
   it("should have unique tool names", async () => {
@@ -211,6 +257,8 @@ describe("toolDefinitions", () => {
     expect(names).toContain("xano_version");
     expect(names).toContain("xano_meta_api_docs");
     expect(names).toContain("xano_cli_docs");
+    expect(names).toContain("xano_knowledge_list");
+    expect(names).toContain("xano_knowledge_get");
   });
 
   it("should have annotations on all tools", async () => {
