@@ -1,14 +1,14 @@
 /**
  * Xano Workspace Knowledge Tools
  *
- * Wraps the `xano knowledge list` and `xano knowledge get` CLI subcommands,
- * which read a Xano workspace's knowledge base (skills, docs, agents.md).
+ * This MCP server has no shell access, so these tools don't run the CLI
+ * themselves — they return the exact `xano knowledge list` / `xano knowledge
+ * get` command to run, along with a short pointer on what it does.
  */
 
 import { z } from "zod";
 import { defineTool } from "./define_tool.js";
 import type { ToolResult } from "./types.js";
-import { runXanoCli } from "../lib/run_xano_cli.js";
 
 // =============================================================================
 // Types
@@ -33,21 +33,28 @@ export interface XanoKnowledgeGetArgs {
 }
 
 export interface XanoKnowledgeListResult {
-  result: string;
+  command: string;
 }
 
 export interface XanoKnowledgeGetResult {
-  result: string;
+  command: string;
 }
 
 // =============================================================================
-// Standalone Tool Functions (for library usage)
+// Command building
 // =============================================================================
 
-export async function xanoKnowledgeList(
-  args: XanoKnowledgeListArgs
-): Promise<XanoKnowledgeListResult> {
-  const cliArgs = ["knowledge", "list"];
+/** Quote an argv entry for display in a copy-pasteable shell command. */
+function shellQuote(value: string): string {
+  return /[^\w./-]/.test(value) ? `"${value.replace(/(["\\$`])/g, "\\$1")}"` : value;
+}
+
+function formatCommand(args: string[]): string {
+  return args.map(shellQuote).join(" ");
+}
+
+export function xanoKnowledgeList(args: XanoKnowledgeListArgs): XanoKnowledgeListResult {
+  const cliArgs = ["xano", "knowledge", "list"];
   if (args.workspace) cliArgs.push("-w", args.workspace);
   if (args.branch) cliArgs.push("-b", args.branch);
   if (args.type) cliArgs.push("-t", args.type);
@@ -55,50 +62,34 @@ export async function xanoKnowledgeList(
   cliArgs.push("-o", args.output ?? "markdown");
   if (args.profile) cliArgs.push("-p", args.profile);
 
-  const result = await runXanoCli(cliArgs);
-  return { result };
+  return { command: formatCommand(cliArgs) };
 }
 
-export async function xanoKnowledgeGet(
-  args: XanoKnowledgeGetArgs
-): Promise<XanoKnowledgeGetResult> {
-  const cliArgs = ["knowledge", "get", args.name];
+export function xanoKnowledgeGet(args: XanoKnowledgeGetArgs): XanoKnowledgeGetResult {
+  const cliArgs = ["xano", "knowledge", "get", args.name];
   if (args.workspace) cliArgs.push("-w", args.workspace);
   if (args.branch) cliArgs.push("-b", args.branch);
   if (args.file) cliArgs.push("-f", args.file);
   cliArgs.push("-o", args.output ?? "text");
   if (args.profile) cliArgs.push("-p", args.profile);
 
-  const result = await runXanoCli(cliArgs);
-  return { result };
+  return { command: formatCommand(cliArgs) };
 }
 
 // =============================================================================
 // Tool Result Functions (for internal MCP usage)
 // =============================================================================
 
-function parseJsonStructuredContent(text: string): Record<string, unknown> | undefined {
-  try {
-    const parsed = JSON.parse(text);
-    return { parsed };
-  } catch {
-    return undefined;
-  }
+export function xanoKnowledgeListTool(args: XanoKnowledgeListArgs): ToolResult {
+  const { command } = xanoKnowledgeList(args);
+  return {
+    success: true,
+    data: `Run this command to list the workspace's knowledge base (skills, docs, agents.md):\n\n${command}`,
+    structuredContent: { command },
+  };
 }
 
-export async function xanoKnowledgeListTool(args: XanoKnowledgeListArgs): Promise<ToolResult> {
-  try {
-    const { result } = await xanoKnowledgeList(args);
-    const structuredContent =
-      args.output === "json" ? parseJsonStructuredContent(result) : undefined;
-    return { success: true, data: result, structuredContent };
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return { success: false, error: `Error listing workspace knowledge: ${errorMessage}` };
-  }
-}
-
-export async function xanoKnowledgeGetTool(args: XanoKnowledgeGetArgs): Promise<ToolResult> {
+export function xanoKnowledgeGetTool(args: XanoKnowledgeGetArgs): ToolResult {
   if (!args?.name) {
     return {
       success: false,
@@ -106,15 +97,12 @@ export async function xanoKnowledgeGetTool(args: XanoKnowledgeGetArgs): Promise<
     };
   }
 
-  try {
-    const { result } = await xanoKnowledgeGet(args);
-    const structuredContent =
-      args.output === "json" ? parseJsonStructuredContent(result) : undefined;
-    return { success: true, data: result, structuredContent };
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return { success: false, error: `Error getting knowledge item: ${errorMessage}` };
-  }
+  const { command } = xanoKnowledgeGet(args);
+  return {
+    success: true,
+    data: `Run this command to fetch the knowledge item's content:\n\n${command}`,
+    structuredContent: { command },
+  };
 }
 
 // =============================================================================
@@ -123,11 +111,11 @@ export async function xanoKnowledgeGetTool(args: XanoKnowledgeGetArgs): Promise<
 
 export const xanoKnowledgeListToolSpec = defineTool({
   name: "xano_knowledge_list",
-  description: `List a Xano workspace's knowledge base: skills, docs, and the agents.md file.
+  description: `Get the CLI command to list a Xano workspace's knowledge base: skills, docs, and the agents.md file. This tool does not run the command itself — it returns the exact \`xano knowledge list\` command to run in a shell, so you can invoke it and read its output.
 
 Use this to get an overview of what knowledge/skills exist before answering questions about workspace conventions, or before deciding whether a new skill/doc needs to be created (to avoid duplicating existing ones).
 
-Always-on items (mode=always) are returned with full content; on-demand items are returned with just name+description — use xano_knowledge_get to fetch an on-demand item's full content when it becomes relevant.`,
+Always-on items (mode=always) are returned by the command with full content; on-demand items are returned with just name+description — use xano_knowledge_get to get the command for fetching an on-demand item's full content when it becomes relevant.`,
   annotations: {
     readOnlyHint: true,
     destructiveHint: false,
@@ -167,13 +155,13 @@ Always-on items (mode=always) are returned with full content; on-demand items ar
       .describe("CLI credential profile to use. Optional; falls back to XANO_PROFILE env var or the credentials file default."),
   },
   outputShape: {
-    result: z.string().describe("The knowledge list output (markdown or JSON text, per the requested output format)."),
+    command: z.string().describe("The `xano knowledge list` command to run to get the workspace's knowledge base."),
   },
 });
 
 export const xanoKnowledgeGetToolSpec = defineTool({
   name: "xano_knowledge_get",
-  description: `Fetch the full content of one named knowledge item (a skill, doc, or agents.md), or one of a skill's attached reference files.
+  description: `Get the CLI command to fetch the full content of one named knowledge item (a skill, doc, or agents.md), or one of a skill's attached reference files. This tool does not run the command itself — it returns the exact \`xano knowledge get\` command to run in a shell, so you can invoke it and read its output.
 
 Use this after xano_knowledge_list has identified an on-demand item whose full content is now needed, or when a skill's step tells you to consult a specific reference file (via @filename syntax in the skill content).`,
   annotations: {
@@ -214,6 +202,6 @@ Use this after xano_knowledge_list has identified an on-demand item whose full c
       .describe("CLI credential profile to use."),
   },
   outputShape: {
-    result: z.string().describe("The knowledge item's content (text or JSON text, per the requested output format)."),
+    command: z.string().describe("The `xano knowledge get` command to run to fetch the knowledge item's content."),
   },
 });

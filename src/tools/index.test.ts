@@ -132,16 +132,36 @@ describe("handleTool", () => {
     expect(result.error).toContain("type");
   });
 
-  it("should surface a graceful error from xano_knowledge_list (no CLI, or CLI without the knowledge subcommand)", async () => {
-    const result = await handleTool("xano_knowledge_list", {});
-    expect(result.success).toBe(false);
-    expect(typeof result.error).toBe("string");
+  it("should return the xano knowledge list command without executing it", async () => {
+    const result = await handleTool("xano_knowledge_list", {
+      workspace: "123",
+      type: "skill",
+      enabled_only: false,
+      output: "json",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data).toContain("xano knowledge list -w 123 -t skill --no-enabled-only -o json");
+    expect(result.structuredContent).toMatchObject({
+      command: "xano knowledge list -w 123 -t skill --no-enabled-only -o json",
+    });
   });
 
-  it("should surface a graceful error from xano_knowledge_get (no CLI, or CLI without the knowledge subcommand)", async () => {
-    const result = await handleTool("xano_knowledge_get", { name: "some-skill" });
-    expect(result.success).toBe(false);
-    expect(typeof result.error).toBe("string");
+  it("should return the xano knowledge get command without executing it", async () => {
+    const result = await handleTool("xano_knowledge_get", {
+      name: "some-skill",
+      branch: "main",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data).toContain("xano knowledge get some-skill -b main -o text");
+    expect(result.structuredContent).toMatchObject({
+      command: "xano knowledge get some-skill -b main -o text",
+    });
+  });
+
+  it("should quote xano knowledge get names/values containing spaces", async () => {
+    const result = await handleTool("xano_knowledge_get", { name: "my skill" });
+    expect(result.success).toBe(true);
+    expect(result.data).toContain('xano knowledge get "my skill" -o text');
   });
 });
 
