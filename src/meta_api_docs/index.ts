@@ -18,6 +18,7 @@ import { apigroupDoc } from "./topics/apigroup.js";
 import { apiDoc } from "./topics/api.js";
 import { tableDoc } from "./topics/table.js";
 import { functionDoc } from "./topics/function.js";
+import { debugDoc } from "./topics/debug.js";
 import { taskDoc } from "./topics/task.js";
 import { agentDoc } from "./topics/agent.js";
 import { toolDoc } from "./topics/tool.js";
@@ -40,6 +41,7 @@ export const topics: Record<string, TopicDoc> = {
   api: apiDoc,
   table: tableDoc,
   function: functionDoc,
+  debug: debugDoc,
   task: taskDoc,
   agent: agentDoc,
   tool: toolDoc,

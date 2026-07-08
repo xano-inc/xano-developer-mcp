@@ -20,6 +20,7 @@ describe("meta_api_docs/index", () => {
         "api",
         "table",
         "function",
+        "debug",
         "task",
         "agent",
         "tool",
