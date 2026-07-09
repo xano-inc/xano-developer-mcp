@@ -46,17 +46,19 @@ export const unitTestDoc: TopicDoc = {
     },
     {
       name: "unit_test run",
-      description: "Run a single unit test by ID",
+      description: "Run a single unit test by ID. The test runs against the resolved branch (--branch, then profile branch, then live). Summary output prints PASS/FAIL with error details and exits 1 on failure.",
       usage: "xano unit_test run <unit_test_id> [options]",
       args: [
         { name: "unit_test_id", required: true, description: "ID of the unit test to run" }
       ],
       flags: [
+        { name: "branch", short: "b", type: "string", required: false, description: "Branch the unit test belongs to (uses profile branch if not provided, then the live branch)" },
         { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile workspace if not provided)" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
       ],
       examples: [
         "xano unit_test run 123",
+        "xano unit_test run 123 -b dev",
         "xano unit_test run 123 -o json"
       ]
     },

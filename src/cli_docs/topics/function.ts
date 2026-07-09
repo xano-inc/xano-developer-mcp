@@ -3,7 +3,7 @@ import type { TopicDoc } from "../types.js";
 export const functionDoc: TopicDoc = {
   topic: "function",
   title: "Xano CLI - Function Management",
-  description: `Function commands let you list, view, create, and edit individual Xano functions. This is useful for quick edits or when you don't need to sync the entire workspace.
+  description: `Function commands let you list, view, create, edit, and run individual Xano functions. This is useful for quick edits or when you don't need to sync the entire workspace.
 
 ## Syntax note
 
@@ -27,7 +27,15 @@ Xano CLI commands are SPACE-separated (e.g. \`xano function list\`), not colon-s
 
 **Draft / publish:**
 - \`function edit\` publishes by default; use \`--no-publish\` to save as draft only
-- Use \`--include_draft\` on \`function get\` / \`function list\` to see draft versions`,
+- Use \`--include_draft\` on \`function get\` / \`function list\` to see draft versions
+
+**Running functions (\`function run\`):**
+- Functions are run by NAME, not ID: \`xano function run my_function\`
+- Build the input JSON with repeatable \`-d\` pairs: \`key=value\` for strings, \`key:=raw_json\` for numbers/booleans/objects/arrays, \`key@file\` for file contents
+- Or pass a whole object: \`--json '{...}'\`, \`--json @file.json\`, or \`--stdin\`; \`-d\` pairs override keys from the JSON object
+- Default output is the bare result value as JSON (pipe-friendly, e.g. \`| jq\`); use \`-o summary\` for status + result, \`--logs\` for debugger logs
+- The CLI checks inputs against the function's declared schema and prompts for missing required inputs on a TTY; in scripts, pass all required inputs (or \`--no-input-check\` to send as-is)
+- Exit code 1 when the execution status is not ok — safe to use in CI`,
 
   related_topics: ["workspace", "sandbox", "branch"],
 
@@ -116,6 +124,33 @@ Xano CLI commands are SPACE-separated (e.g. \`xano function list\`), not colon-s
         "xano function edit 145 -f ./updated_function.xs --edit",
         "xano function edit 145 -f ./draft.xs --no-publish"
       ]
+    },
+    {
+      name: "function run",
+      description: "Run (execute) a named function in a workspace and print its result. Functions are selected by NAME (not ID). Input is a JSON object assembled from --json/--stdin plus repeatable --data pairs (--data overrides). Unless --no-input-check, the CLI validates the payload against the function's declared inputs, warns on mismatches, and prompts for missing required inputs on a TTY (non-TTY errors instead). Exits 1 if the execution status is not ok.",
+      usage: "xano function run [name] [options]",
+      args: [
+        { name: "name", required: false, description: "Name of the function to run (interactive picker if omitted and --name unset)" }
+      ],
+      flags: [
+        { name: "name", short: "n", type: "string", required: false, description: "Name of the function to run (alternative to the positional argument)" },
+        { name: "data", short: "d", type: "string", required: false, description: "Input field as key=value (string), key:=json (raw JSON), or key@file (file contents). Repeatable; layered on top of --json/--stdin." },
+        { name: "json", type: "string", required: false, description: "Input as a JSON object: inline, @file.json, or '-' for stdin. Mutually exclusive with --stdin." },
+        { name: "stdin", short: "s", type: "boolean", required: false, default: "false", description: "Read the input JSON object from stdin (same as --json -). Mutually exclusive with --json." },
+        { name: "branch", type: "string", required: false, description: "Branch to run from (defaults to profile branch, then main)" },
+        { name: "logs", type: "boolean", required: false, default: "false", description: "Print the execution logs returned by the debugger" },
+        { name: "no-input-check", type: "boolean", required: false, default: "false", description: "Skip local schema validation and interactive prompting; send the payload as-is" },
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile workspace if not provided)" },
+        { name: "output", short: "o", type: "string", required: false, default: "json", description: "Output format: json (prints just the result value) or summary (status + result)" },
+        { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" }
+      ],
+      examples: [
+        "xano function run validate_token -d token=abc123",
+        "xano function run calc_totals -d amount:=42.5 -d items:='[1,2,3]'",
+        "xano function run import_users --json @input.json",
+        "echo '{\"user_id\": 7}' | xano function run get_profile --stdin",
+        "xano function run send_digest -d body@./email.html --branch dev --logs"
+      ]
     }
   ],
 
@@ -139,6 +174,18 @@ xano function edit 145 -f auth_check.xs`
         "Write your XanoScript function in a .xs file",
         "Create in Xano: `xano function create -f template.xs`"
       ]
+    },
+    {
+      name: "Run a Function with Inputs",
+      description: "Execute a function and consume its result in a script",
+      steps: [
+        "Run with inline inputs: `xano function run my_function -d user_id:=7`",
+        "Or pipe a JSON object: `echo '{\"user_id\": 7}' | xano function run my_function --stdin`",
+        "Default output is the bare result JSON — pipe to jq or capture in a variable",
+        "Check the exit code: non-ok execution status exits 1"
+      ],
+      example: `RESULT=$(xano function run calc_totals -d items:='[1,2,3]')
+echo "$RESULT" | jq .total`
     },
     {
       name: "Draft Then Publish",

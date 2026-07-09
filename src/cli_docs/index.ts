@@ -17,6 +17,7 @@ import { profileDoc } from "./topics/profile.js";
 import { workspaceDoc } from "./topics/workspace.js";
 import { branchDoc } from "./topics/branch.js";
 import { functionDoc } from "./topics/function.js";
+import { knowledgeDoc } from "./topics/knowledge.js";
 import { releaseDoc } from "./topics/release.js";
 import { tenantDoc } from "./topics/tenant.js";
 import { unitTestDoc } from "./topics/unit_test.js";
@@ -37,6 +38,7 @@ export const topics: Record<string, TopicDoc> = {
   workspace: workspaceDoc,
   branch: branchDoc,
   function: functionDoc,
+  knowledge: knowledgeDoc,
   release: releaseDoc,
   tenant: tenantDoc,
   unit_test: unitTestDoc,

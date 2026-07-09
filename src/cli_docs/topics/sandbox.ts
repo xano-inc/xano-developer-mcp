@@ -33,7 +33,11 @@ export const sandboxDoc: TopicDoc = {
 
 **Partial push is the default** — only changed files are sent. Use \`--sync\` for a full push, \`--sync --delete\` to also remove remote objects missing locally, and \`--dry-run\` to preview.
 
-**Glob filters** (\`-i\` include, \`-e\` exclude) are repeatable and match relative paths from the push directory.
+**No glob filters on sandbox push:** unlike \`workspace push\`, the \`-i\`/\`-e\` include/exclude flags are intentionally NOT supported — partial pushes can hide deletions during review and cause data loss when promoted to the workspace.
+
+**Workspace mismatch prompt:** pushing into a sandbox that currently holds a DIFFERENT workspace than your active profile triggers a warning and confirmation prompt (in non-interactive mode it errors instead). Run \`xano sandbox reset\` first to start clean.
+
+**Knowledge sync is automatic:** \`sandbox pull\`/\`push\` sync knowledge and skills markdown under \`knowledge/\` alongside .xs files (see the \`knowledge\` topic). \`sandbox reset\` also clears the sandbox's knowledge files.
 
 **Transaction / GUID flags:** push wraps imports in a database transaction by default (\`--no-transaction\` to disable) and writes server-assigned GUIDs back to local files by default (\`--no-guids\` to disable).
 
@@ -41,7 +45,7 @@ export const sandboxDoc: TopicDoc = {
 
 **\`sandbox impersonate\` is a hidden alias for \`sandbox review\`** — prefer \`sandbox review\`.`,
 
-  related_topics: ["workspace", "tenant", "start", "integration"],
+  related_topics: ["workspace", "tenant", "start", "knowledge", "integration"],
 
   commands: [
     {
@@ -55,7 +59,7 @@ export const sandboxDoc: TopicDoc = {
     },
     {
       name: "sandbox pull",
-      description: "Pull sandbox contents to a local directory, splitting multidoc output into individual .xs files organized by type.",
+      description: "Pull sandbox contents to a local directory, splitting multidoc output into individual .xs files organized by type. Knowledge/skills markdown is written under knowledge/ automatically.",
       usage: "xano sandbox pull [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Output directory for pulled documents" },
@@ -71,7 +75,7 @@ export const sandboxDoc: TopicDoc = {
     },
     {
       name: "sandbox push",
-      description: "Push local documents to the sandbox via multidoc import. Partial (changed-only) by default; shows a preview unless --force.",
+      description: "Push local documents to the sandbox via multidoc import. Partial (changed-only) by default; shows a preview unless --force. Include/exclude glob filters are intentionally NOT supported (unlike workspace push) — partial pushes can hide deletions during review and lead to data loss when promoted to the workspace. Pushing into a sandbox that currently holds a different workspace prompts for confirmation (errors in non-interactive mode); run `xano sandbox reset` first to start clean. Knowledge under knowledge/ is synced automatically.",
       usage: "xano sandbox push [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Directory containing documents to push" },
@@ -84,8 +88,6 @@ export const sandboxDoc: TopicDoc = {
         { name: "truncate", type: "boolean", required: false, description: "Truncate tables before importing records" },
         { name: "transaction", type: "boolean", required: false, default: "true", description: "Wrap import in a database transaction (--no-transaction to disable)" },
         { name: "guids", type: "boolean", required: false, default: "true", description: "Write server-assigned GUIDs back to local files after push (--no-guids to disable)" },
-        { name: "include", short: "i", type: "string", required: false, description: "Glob pattern to include (repeatable)" },
-        { name: "exclude", short: "e", type: "string", required: false, description: "Glob pattern to exclude (repeatable)" },
         { name: "review", type: "boolean", required: false, description: "After pushing, open sandbox in the browser to review" }
       ],
       examples: [
@@ -94,9 +96,7 @@ export const sandboxDoc: TopicDoc = {
         "xano sandbox push --sync",
         "xano sandbox push --sync --delete",
         "xano sandbox push --dry-run",
-        "xano sandbox push --review",
-        "xano sandbox push -i 'function/*' -i 'table/*'",
-        "xano sandbox push -e 'table/*' --records"
+        "xano sandbox push --review"
       ]
     },
     {
@@ -118,7 +118,7 @@ export const sandboxDoc: TopicDoc = {
     },
     {
       name: "sandbox reset",
-      description: "Reset the sandbox — clears all workspace data and drafts but keeps the sandbox itself.",
+      description: "Reset the sandbox — clears all workspace data, drafts, and knowledge files, but keeps the sandbox itself. Run this before pushing a different workspace into the sandbox.",
       usage: "xano sandbox reset [--force]",
       flags: [
         { name: "force", short: "f", type: "boolean", required: false, description: "Skip confirmation prompt" }

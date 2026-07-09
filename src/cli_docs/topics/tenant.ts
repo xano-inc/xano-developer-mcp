@@ -12,6 +12,7 @@ export const tenantDoc: TopicDoc = {
 - **Deployments**: Tenants receive updates via named releases or platform versions.
 - **Environment variables**: Managed per-tenant for configuration isolation.
 - **Backups**: Per-tenant backup and restore for disaster recovery.
+- **Snapshots**: Instant database clones per tenant. Swap the live database to a snapshot (and back) for fast, reversible rollbacks — e.g. before a risky deployment.
 - **Pull**: Read-only export of tenant contents (same multidoc format as \`workspace pull\`).
 - **Push**: Direct tenant push is NOT supported. Use a release deployment or the sandbox workflow instead.
 
@@ -40,6 +41,7 @@ Tenants are identified by their **name** (not numeric IDs).`,
 - Deployment: deploy_release, deploy_platform
 - Configuration: env list, env get, env set, env delete, env get_all, env set_all
 - Backups: backup create, backup list, backup export, backup import, backup restore, backup delete
+- Snapshots: snapshot create, snapshot list, snapshot swap, snapshot delete (instant DB clones; swap is reversible — swap back to the original name to roll back)
 - Infrastructure: cluster create, cluster list, cluster get, cluster edit, cluster delete, cluster license get, cluster license set
 - License: license get, license set
 - Testing: unit_test list/run/run_all, workflow_test list/run/run_all
@@ -355,6 +357,64 @@ Tenants are identified by their **name** (not numeric IDs).`,
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
       ],
       examples: ["xano tenant backup delete my-tenant --backup_id 123 --force"]
+    },
+    // Snapshots
+    {
+      name: "tenant snapshot list",
+      description: "List database snapshots for a tenant. Output marks the [ORIGINAL] database and the currently [LIVE] one.",
+      usage: "xano tenant snapshot list <tenant_name> [options]",
+      args: [{ name: "tenant_name", required: true, description: "Tenant name to list snapshots for" }],
+      flags: [
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile workspace if not provided)" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: ["xano tenant snapshot list my-tenant", "xano tenant snapshot list my-tenant -o json"]
+    },
+    {
+      name: "tenant snapshot create",
+      description: "Create a database snapshot for a tenant — an instant clone of the tenant's database (much faster than a full backup).",
+      usage: "xano tenant snapshot create <tenant_name> [options]",
+      args: [{ name: "tenant_name", required: true, description: "Tenant name to snapshot" }],
+      flags: [
+        { name: "label", short: "l", type: "string", required: false, description: "Optional label appended to the snapshot description (alphanumeric)" },
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile workspace if not provided)" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: [
+        "xano tenant snapshot create my-tenant --label before-v2",
+        "xano tenant snapshot create my-tenant -l before-v2 -o json"
+      ]
+    },
+    {
+      name: "tenant snapshot swap",
+      description: "Swap a tenant's live database to a snapshot. This repoints the tenant; the current live database is left untouched, so you can swap back. To roll back, swap to the original database name. Prompts for confirmation unless --force.",
+      usage: "xano tenant snapshot swap <tenant_name> --snapshot <name> [options]",
+      args: [{ name: "tenant_name", required: true, description: "Tenant name to swap" }],
+      flags: [
+        { name: "snapshot", type: "string", required: true, description: "Snapshot database name to swap to (use the original tenant name to roll back)" },
+        { name: "force", short: "f", type: "boolean", required: false, description: "Skip confirmation prompt" },
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile workspace if not provided)" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: [
+        "xano tenant snapshot swap my-tenant --snapshot my-tenant_bk_20260603_203614",
+        "xano tenant snapshot swap my-tenant --snapshot my-tenant --force  # roll back to original"
+      ]
+    },
+    {
+      name: "tenant snapshot delete",
+      description: "Delete a snapshot permanently — this drops the snapshot database and cannot be undone. The live and original databases cannot be deleted. Prompts for confirmation unless --force.",
+      usage: "xano tenant snapshot delete <tenant_name> --snapshot <name> [options]",
+      args: [{ name: "tenant_name", required: true, description: "Tenant name that owns the snapshot" }],
+      flags: [
+        { name: "snapshot", type: "string", required: true, description: "Snapshot database name to delete" },
+        { name: "force", short: "f", type: "boolean", required: false, description: "[CRITICAL] NEVER run without explicit user confirmation. Skips the confirmation prompt." },
+        { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (uses profile workspace if not provided)" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
+      ],
+      examples: [
+        "xano tenant snapshot delete my-tenant --snapshot my-tenant_bk_20260603_203614"
+      ]
     },
     // License
     {

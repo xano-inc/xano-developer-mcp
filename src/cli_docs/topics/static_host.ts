@@ -20,6 +20,8 @@ export const staticHostDoc: TopicDoc = {
 
 **Prefer \`build push\` over \`build create\`:** \`build create\` is deprecated and hidden — \`build push -f <file>\` covers the zip-upload case, and \`build push -d <dir>\` (or no flag for the current directory) zips and uploads a directory for you. The build name is optional (auto-generated from the timestamp). For package.json builds, push waits for the build to finish unless \`--no-wait\`.
 
+**\`.gitignore\` is respected on directory pushes:** files matched by the source directory's root \`.gitignore\` are skipped (and \`.git/\` is always excluded). Use \`--no-gitignore\` to push everything. If every file is ignored, the push errors with a hint to use \`--no-gitignore\`.
+
 **build get/delete/deploy take \`--build_id\` as a flag**, not a positional argument (older CLI versions used positionals).
 
 **\`build pull\` source selection:** defaults to the original uploaded source (including package.json); use \`--source built\` for the compiled/served output. Select the build by \`--build_id\`, \`--latest\`, or \`--env dev|prod\` (the build currently deployed there).
@@ -109,7 +111,7 @@ export const staticHostDoc: TopicDoc = {
     },
     {
       name: "static_host build push",
-      description: "Push a directory or zip file as a new static host build. Defaults to the current directory; the build name is auto-generated from the timestamp if omitted. For package.json builds, waits for the build to finish unless --no-wait.",
+      description: "Push a directory or zip file as a new static host build. Defaults to the current directory; the build name is auto-generated from the timestamp if omitted. When pushing a directory, files matched by the root .gitignore are excluded by default (use --no-gitignore to push everything; .git/ is always excluded). For package.json builds, waits for the build to finish unless --no-wait.",
       usage: "xano static_host build push <static_host> [options]",
       args: [
         { name: "static_host", required: true, description: "Static host name" }
@@ -119,6 +121,7 @@ export const staticHostDoc: TopicDoc = {
         { name: "file", short: "f", type: "string", required: false, description: "Path to a zip file to upload (alternative to -d). Mutually exclusive with --directory." },
         { name: "name", short: "n", type: "string", required: false, description: "Build name (auto-generated from the current timestamp if omitted)" },
         { name: "description", type: "string", required: false, description: "Build description" },
+        { name: "no-gitignore", type: "boolean", required: false, default: "false", description: "Push every file in the directory, including those matched by .gitignore (the .git/ folder is always excluded)" },
         { name: "no-wait", type: "boolean", required: false, description: "Return immediately after upload instead of waiting for the build to finish" },
         { name: "workspace", short: "w", type: "string", required: false, description: "Workspace ID (optional if set in profile)" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" }
@@ -127,6 +130,7 @@ export const staticHostDoc: TopicDoc = {
         "xano static_host build push my-app -d ./dist -n 'v1.0.0'",
         "xano static_host build push my-app  # current dir, auto-named",
         "xano static_host build push my-app -f ./build.zip -n 'v1.0.0'",
+        "xano static_host build push my-app -d ./site --no-gitignore",
         "xano static_host build push my-app -n 'release' --description 'Production build'"
       ]
     },

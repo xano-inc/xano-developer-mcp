@@ -98,9 +98,10 @@ Examples of where these markers appear:
 | \`workspace\` | Sync workspaces (pull/push), git integration |
 | \`sandbox\` | Personal auto-provisioned dev environment (free-tier friendly) |
 | \`branch\` | Manage workspace branches |
-| \`function\` | Manage individual functions |
+| \`function\` | Manage and run individual functions |
+| \`knowledge\` | Read workspace knowledge & skills (AI context docs) |
 | \`release\` | Create and manage named releases |
-| \`tenant\` | Manage tenants, deployments, backups, env vars |
+| \`tenant\` | Manage tenants, deployments, backups, snapshots, env vars |
 | \`unit_test\` | Run unit tests |
 | \`workflow_test\` | Run workflow tests |
 | \`platform\` | View available platform versions |

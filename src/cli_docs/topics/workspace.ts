@@ -58,12 +58,24 @@ After \`workspace pull\`, files are organized using snake_case naming:
 │   │       └── on_connect.xs     # MCP server triggers
 │   └── tool/
 │       └── my_tool.xs            # AI tools
-└── realtime/
-    ├── channel/
-    │   └── my_channel.xs         # Realtime channels
-    └── trigger/
-        └── on_connect.xs         # Realtime triggers
+├── realtime/
+│   ├── channel/
+│   │   └── my_channel.xs         # Realtime channels
+│   └── trigger/
+│       └── on_connect.xs         # Realtime triggers
+└── knowledge/                    # Knowledge & skills (markdown, synced automatically)
+    ├── agents.md                 # Workspace AGENTS.md
+    ├── docs/
+    │   └── api_conventions.md    # Knowledge docs
+    └── skills/
+        └── my_skill/
+            ├── SKILL.md
+            └── references/
 \`\`\`
+
+## Knowledge Sync
+
+\`workspace pull\` and \`workspace push\` automatically sync knowledge and skills (markdown files under \`knowledge/\`) alongside XanoScript — no extra flag. Knowledge participates in push previews, \`--sync\`/\`--delete\`, and \`--include\`/\`--exclude\` globs. See the \`knowledge\` topic for the file layout and frontmatter format.
 
 ## Syntax note
 
@@ -108,6 +120,15 @@ For lighter-weight iterative development without pulling the whole workspace, se
 - \`--include/-i\` and \`--exclude/-e\`: Glob patterns for selective push (repeatable)
 - \`--no-transaction\` and \`--no-guids\` disable the default transaction wrapping and GUID write-back
 
+**Knowledge sync (automatic):**
+- \`pull\` writes knowledge/skills markdown under \`knowledge/\`; \`push\` sends it back — no flag needed
+- Knowledge respects \`--include\`/\`--exclude\` (match against \`knowledge/**\`), \`--sync\`, and \`--delete\`
+- A knowledge-only push works with no .xs files: \`xano workspace push -i "knowledge/**"\`
+- Frontmatter uses \`inclusion: always | on demand | manual\` — see the \`knowledge\` topic
+
+**Long pushes:**
+- Large multidoc pushes are no longer capped by a hidden 300s fetch timeout; if a request does time out, raise it with the \`XANO_CLI_REQUEST_TIMEOUT_MS\` env var (0 disables)
+
 **Git integration:**
 - \`workspace git pull\` pulls XanoScript directly from GitHub/GitLab repos
 - Supports private repos with \`-t/--token\` flag (falls back to GITHUB_TOKEN env var)
@@ -117,7 +138,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
 - \`sandbox\` is a lighter-weight alternative for ephemeral, isolated iteration
 - Use workspace pull/push for canonical sync, version control, and CI/CD`,
 
-  related_topics: ["start", "branch", "function", "release", "sandbox", "integration"],
+  related_topics: ["start", "branch", "function", "release", "sandbox", "knowledge", "integration"],
 
   commands: [
     {
@@ -203,7 +224,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace pull",
-      description: "Download workspace code to a local directory. Splits the multidoc response into individual .xs files organized by type. The target directory is the -d/--directory flag (default: current directory), not a positional argument.",
+      description: "Download workspace code to a local directory. Splits the multidoc response into individual .xs files organized by type, and also writes workspace knowledge/skills markdown under knowledge/. The target directory is the -d/--directory flag (default: current directory), not a positional argument.",
       usage: "xano workspace pull [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Output directory for pulled documents (defaults to current directory)" },
@@ -223,7 +244,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace push",
-      description: "Upload local XanoScript files to a workspace. Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview.",
+      description: "Upload local XanoScript files to a workspace, including knowledge/skills markdown under knowledge/ (synced automatically, shown in the preview). Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview.",
       usage: "xano workspace push [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Directory containing documents to push (defaults to current directory)" },
