@@ -84,11 +84,11 @@ export const taskDoc: TopicDoc = {
           xanoscript: `task cleanup_old_sessions {
   stack {
     var $cutoff {
-      value = now() - 30.days
+      value = now|transform_timestamp:"-30 days"
     }
-    db.sessions.query()
-      .where("created_at", "<", $cutoff)
-      .delete()
+    db.bulk.delete "sessions" {
+      where = $db.sessions.created_at < $cutoff
+    } as $deleted_count
   }
 }`
         }

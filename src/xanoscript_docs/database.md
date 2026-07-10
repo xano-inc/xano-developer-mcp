@@ -21,8 +21,9 @@ Need to...
 │   ├── Update known fields? → db.edit
 │   └── Update dynamic fields? → db.patch
 ├── Delete data?
-│   ├── Single record? → db.del
-│   └── All records? → db.truncate
+│   ├── Single record (by field)? → db.del
+│   ├── Multiple records (by condition)? → db.bulk.delete
+│   └── Every record in the table? → db.truncate
 └── Complex query?
     ├── Join tables? → db.query with join
     ├── Aggregate? → db.query with evals
@@ -40,8 +41,11 @@ Need to...
 | `db.edit`        | Update record (inline data)   | Updated record           |
 | `db.patch`       | Update record (variable data) | Updated record           |
 | `db.add_or_edit` | Upsert record                 | Record                   |
-| `db.del`         | Delete record                 | None                     |
-| `db.truncate`    | Delete all records            | None                     |
+| `db.del`         | Delete one record by field    | None                     |
+| `db.bulk.delete` | Delete many records by `where`| Deleted count            |
+| `db.truncate`    | Delete every record in table  | None                     |
+
+> **Delete syntax:** the operations are `db.del`, `db.bulk.delete`, and `db.truncate`. There is **no** `db.delete`, `db.delete_all`, or fluent `db.<table>.query()...delete()` — those do not parse. See [db.del](#dbdel) and [db.bulk.delete](#dbbulkdelete).
 
 ---
 
@@ -319,7 +323,7 @@ db.add_or_edit "setting" {
 
 ## db.del
 
-Delete a record.
+Delete a single record, matched by a field/value pair.
 
 ```xs
 db.del "product" {
@@ -327,6 +331,13 @@ db.del "product" {
   field_value = $input.product_id
 }
 ```
+
+To delete many records matching a condition, use [db.bulk.delete](#dbbulkdelete); to empty an entire table, use [db.truncate](#dbtruncate).
+
+> **Common mistakes:** `db.delete`, `db.delete_all`, and fluent chains like
+> `db.product.query().where(...).delete()` are **not** valid XanoScript and fail to
+> parse. Use `db.del` (one record), `db.bulk.delete` (many by `where`), or
+> `db.truncate` (all).
 
 ---
 
