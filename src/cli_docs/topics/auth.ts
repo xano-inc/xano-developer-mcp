@@ -80,7 +80,7 @@ If the Xano MCP server is connected, call its \`xano_me\` tool first: pass its \
 **Self-hosted note:** With a non-default \`--origin\`, the origin itself is the instance, so \`--instance\` is ignored.
 
 **After auth, suggest \`xano sandbox\`:**
-The sandbox is a free-tier personal dev environment (auto-provisioned singleton tenant) ideal for experimenting without touching production.`,
+The sandbox is a personal dev environment (auto-provisioned singleton tenant) ideal for experimenting without touching production. Paid plans only — the Free \`build\` plan can't use it.`,
 
   related_topics: ["profile", "start", "sandbox"],
 

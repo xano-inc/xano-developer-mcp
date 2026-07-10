@@ -3,13 +3,13 @@ import type { TopicDoc } from "../types.js";
 export const sandboxDoc: TopicDoc = {
   topic: "sandbox",
   title: "Xano CLI - Sandbox Environment",
-  description: `Sandbox is a personal, auto-provisioned development environment tied to your Xano account. It's a singleton per user — there's exactly one sandbox, and the CLI creates it on first use. Designed for free-tier users and local iteration, sandbox supports the full pull/push multidoc workflow without the ceremony of workspace/tenant management.
+  description: `Sandbox is a personal, auto-provisioned development environment tied to your Xano account. It's a singleton per user — there's exactly one sandbox, and the CLI creates it on first use. Available on paid plans only (the Free \`build\` plan can't provision a sandbox), it supports the full pull/push multidoc workflow without the ceremony of workspace/tenant management.
 
 ## Key Concepts
 
 - **Singleton**: Each user has exactly one sandbox. No name/ID to manage.
 - **Auto-provisioned**: \`xano sandbox get\` creates it on first call if it doesn't exist.
-- **Free-tier friendly**: Available without paid plan, scoped to the authenticated user.
+- **Paid plans only**: Requires a paid plan; the Free (\`build\`) plan can't provision a sandbox. Scoped to the authenticated user.
 - **Review-driven**: After pushing, open the sandbox in a browser to review and promote changes to a real workspace.
 - **Multidoc push/pull**: Same file layout as \`xano workspace pull/push\` — API groups, functions, tables, agents, etc. split into \`.xs\` files.
 
@@ -19,7 +19,7 @@ export const sandboxDoc: TopicDoc = {
 - Use **workspace** for: team collaboration, production code, release management, tenant deployments.`,
 
   ai_hints: `**Prefer sandbox for AI-assisted development and code experimentation:**
-- It's free-tier, auto-created, and disposable (\`sandbox reset\` wipes it clean).
+- It's auto-created and disposable (\`sandbox reset\` wipes it clean), and requires a paid plan (Free \`build\` accounts can't use it).
 - The push/pull interface mirrors \`workspace\`, so workflows translate directly.
 - Use \`sandbox push --review\` to push and immediately open the browser to verify changes.
 - Use \`sandbox reset\` to start over without recreating the sandbox.

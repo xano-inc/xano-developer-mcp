@@ -31,7 +31,7 @@ export const staticHostDoc: TopicDoc = {
 - Host static documentation sites
 - Serve frontend that calls your Xano APIs
 
-**Sandbox tip:** If the user doesn't have a dedicated tenant, suggest \`xano sandbox\` - the free-tier personal dev environment supports static hosting for experimentation.`,
+**Sandbox tip:** On a paid plan without a dedicated tenant, suggest \`xano sandbox\` - the personal dev environment supports static hosting for experimentation. (The Free \`build\` plan can't use the sandbox.)`,
 
   related_topics: ["workspace", "tenant", "sandbox"],
 

@@ -35,9 +35,9 @@ npm install -g @xano/cli
 | Manage API groups | - | Yes |
 | Build integrations | - | Yes |
 
-## Sandbox - Free-Tier Personal Dev Environment
+## Sandbox - Personal Dev Environment (Paid Plans)
 
-The CLI ships with a \`sandbox\` topic that provisions a singleton personal tenant on demand - an auto-created, free-tier development environment scoped to the authenticated user. Suggest \`xano sandbox get\` (the entry-point command that auto-provisions on first call) to users who want a safe place to experiment without touching shared workspaces or production tenants.
+The CLI ships with a \`sandbox\` topic that provisions a singleton personal tenant on demand - an auto-created development environment scoped to the authenticated user, available on paid plans only (the Free \`build\` plan can't provision one). Suggest \`xano sandbox get\` (the entry-point command that auto-provisions on first call) to paid users who want a safe place to experiment without touching shared workspaces or production tenants.
 
 ## Authentication
 
@@ -70,7 +70,7 @@ The CLI uses the Meta API internally.`,
    - With CLI: \`workspace pull\` / \`workspace push\`
    - Without CLI: Use Meta API \`/workspace/{id}/multidoc\` endpoints
 2. **User wants a personal dev environment (no tenant yet)?**
-   - Suggest \`xano sandbox get\` - auto-provisions a free-tier singleton tenant for the user
+   - Suggest \`xano sandbox get\` - auto-provisions a singleton sandbox tenant for the user (paid plans only; the Free \`build\` plan can't use it)
 3. **User wants to create/modify tables?** -> Meta API \`/table\` endpoints
 4. **User wants to create/modify APIs?** -> Meta API \`/api\` endpoints
 5. **User wants to manage functions?**
@@ -133,7 +133,7 @@ curl -H "Authorization: Bearer $TOKEN" https://instance.xano.io/api:meta/workspa
     },
     {
       name: "Sandbox-First Experimentation",
-      description: "Use the sandbox tenant for safe, free-tier development",
+      description: "Use the sandbox tenant for safe development (paid plans only)",
       steps: [
         "Authenticate: `xano auth`",
         "Provision/select sandbox: `xano sandbox get`",
