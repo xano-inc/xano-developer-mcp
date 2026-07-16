@@ -99,7 +99,7 @@ POST /workspace/1/agent
   "name": "cleanup_old_sessions",
   "schedule": "0 3 * * *",
   "active": true,
-  "xanoscript": "task cleanup_old_sessions {\\n  stack {\\n    db.sessions.query().where('created_at', '<', now() - 30.days).delete()\\n  }\\n}"
+  "xanoscript": "task cleanup_old_sessions {\\n  stack {\\n    var $cutoff {\\n      value = now|transform_timestamp:\\"-30 days\\"\\n    }\\n    db.bulk.delete \\"sessions\\" {\\n      where = $db.sessions.created_at < $cutoff\\n    } as $deleted_count\\n  }\\n}"
 }`
     },
     {

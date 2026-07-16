@@ -666,6 +666,33 @@ stack {
 
 See `xano_xanoscript_docs({ topic: "file-uploads" })` for the full pattern.
 
+### 15. Wrong delete operation names
+
+There is no `db.delete`, no `db.delete_all`, and no fluent `db.<table>.query()...delete()`. The parser rejects all three. Pick by scope: one record, many-by-condition, or the whole table.
+
+```xs
+// Wrong - "db.delete" / "db.delete_all" are not operations; ".query().delete()" is not valid
+// db.delete "session" { field_name = "id" field_value = $input.id }
+// db.delete_all "session" { }
+// db.session.query().where("expires_at", "<", now).delete()
+
+// Correct - one record by field
+db.del "session" {
+  field_name = "id"
+  field_value = $input.id
+}
+
+// Correct - many records by condition (returns the deleted count)
+db.bulk.delete "session" {
+  where = $db.session.expires_at < now
+} as $deleted_count
+
+// Correct - empty the whole table
+db.truncate "session" { reset = true }
+```
+
+See `xano_xanoscript_docs({ topic: "database" })` for all delete operations.
+
 ---
 
 ## Validation is syntax-only

@@ -117,6 +117,26 @@ const SYNTAX_SUGGESTIONS: Array<{
   suggestion: string;
 }> = [
   {
+    pattern: /\bdb\.delete_all\b/,
+    suggestion:
+      'There is no "db.delete_all". Use "db.bulk.delete" to delete many records by condition (db.bulk.delete "table" { where = ... }), or "db.truncate" to empty the whole table',
+  },
+  {
+    pattern: /\bdb\.\w+\.query\s*\([^)]*\)[\s\S]*\.delete\s*\(/,
+    suggestion:
+      'XanoScript has no fluent ".query()...delete()" chain. Use "db.del \\"table\\" { field_name = ... field_value = ... }" for one record, or "db.bulk.delete \\"table\\" { where = ... }" for many',
+  },
+  {
+    pattern: /\bdb\.delete\b(?!_)/,
+    suggestion:
+      'There is no "db.delete". Use "db.del" to delete a single record by field, or "db.bulk.delete" to delete multiple records by condition',
+  },
+  {
+    pattern: /\.delete\s*\(/,
+    suggestion:
+      'XanoScript deletes use block statements, not a ".delete()" method. Use "db.del \\"table\\" { ... }" (one record) or "db.bulk.delete \\"table\\" { where = ... }" (many)',
+  },
+  {
     pattern: /else\s+if/,
     suggestion: 'Use "elseif" (one word) instead of "else if"',
   },
