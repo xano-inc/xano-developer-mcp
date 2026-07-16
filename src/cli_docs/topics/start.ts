@@ -96,7 +96,7 @@ Examples of where these markers appear:
 | \`auth\` | Browser-based OAuth login |
 | \`profile\` | Manage authentication profiles |
 | \`workspace\` | Sync workspaces (pull/push), git integration |
-| \`sandbox\` | Personal auto-provisioned dev environment (free-tier friendly) |
+| \`sandbox\` | Personal auto-provisioned dev environment (paid plans only) |
 | \`branch\` | Manage workspace branches |
 | \`function\` | Manage and run individual functions |
 | \`knowledge\` | Read workspace knowledge & skills (AI context docs) |

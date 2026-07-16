@@ -533,7 +533,7 @@ Use this tool to understand CLI commands for local development, code synchroniza
 | `auth` | Browser-based OAuth authentication |
 | `profile` | Profile management - credentials and multi-environment setup |
 | `workspace` | Workspace operations - pull/push code sync, git integration |
-| `sandbox` | Personal auto-provisioned dev environment (free-tier friendly) |
+| `sandbox` | Personal auto-provisioned dev environment (paid plans only) |
 | `branch` | Branch management - list, switch, create, and delete branches |
 | `function` | Function management - list, get, create, edit |
 | `release` | Release management - create, export, import, pull, push |
