@@ -1,0 +1,28 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.xano-inc/xano-developer-mcp",
+  "description": "Xano dev toolkit: XanoScript docs & validation, Meta API and CLI docs, workflow guides.",
+  "repository": {
+    "url": "https://github.com/xano-inc/xano-developer-mcp",
+    "source": "github"
+  },
+  "version": "2.2.4",
+  "websiteUrl": "https://github.com/xano-inc/xano-developer-mcp#readme",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@xano/developer-mcp",
+      "version": "2.2.4",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.xano.com"
+    }
+  ]
+}

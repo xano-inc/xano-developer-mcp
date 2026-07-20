@@ -1,7 +1,8 @@
 {
   "name": "@xano/developer-mcp",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "description": "MCP server and library for Xano development - XanoScript validation, Meta API, Run API, and CLI documentation",
+  "mcpName": "io.github.xano-inc/xano-developer-mcp",
   "type": "module",
   "main": "dist/lib.js",
   "module": "dist/lib.js",
