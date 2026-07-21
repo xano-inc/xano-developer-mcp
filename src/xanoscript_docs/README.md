@@ -221,6 +221,8 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 | `syntax/string-filters` | String manipulation filters                 | Case, Trim, Split, Replace |
 | `syntax/array-filters`  | Array manipulation filters                  | Map, Filter, Sort, Group |
 | `syntax/functions`      | Built-in functions                          | Math, Date, Crypto, JSON |
+| `expressions` | Xano expression language: inline data transformations | `$$` Filters, Anchoring Variables, Transformers, `set` |
+| `expressions/filters` | Signatures and examples for all 210 expression filters | Math, Array, Text, Manipulation, Transform, Security, Timestamp |
 | `types`      | Data types, validation, input blocks                 | Validation Filters, Input Blocks |
 | `functions`  | Reusable function stacks, async, loops               | Loops, Async Patterns |
 

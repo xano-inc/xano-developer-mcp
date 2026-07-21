@@ -212,6 +212,7 @@ export const xanoscriptDocsToolSpec = defineTool({
     "Call without parameters for a compact index of all topics (~4KB, ~1K tokens); then drill in with topic= or file_path=. Use topic='readme' for the full prose overview (previously the no-arg default). " +
     `For context-limited models: use tier='survival' (~${tierFacts.survival.tokens}) or tier='working' (~${tierFacts.working.tokens}). ` +
     "Use 'topic' for specific documentation, or 'file_path' for context-aware docs based on the file you're editing. " +
+    "Use 'filter' to fetch just one or a few expression filter signatures by name (e.g. filter='round') instead of the whole filter reference. " +
     "Use mode='quick_reference' for compact syntax reference (recommended for context efficiency). " +
     "Use max_tokens to limit documentation size to fit your context budget. " +
     "file_path mode defaults to 'quick_reference' to reduce context size; use mode='full' to get complete docs.",
@@ -240,6 +241,15 @@ export const xanoscriptDocsToolSpec = defineTool({
           "Uses applyTo pattern matching to select applicable topics. " +
           "Example: 'api/users/create.xs' returns API, database, and syntax docs. " +
           "'function/format.xs' returns function and syntax docs."
+      ),
+    filter: z
+      .string()
+      .optional()
+      .describe(
+        "One or more expression filter (transformer) names, comma-separated, to retrieve just those entries from the expression filter reference: signature, arguments with defaults, and a worked example. " +
+          "Accepts display names and canonical aliases, case-insensitive (e.g. filter='round', filter='fsort' or 'sort', filter='to_upper,split,map'). " +
+          "Much cheaper than loading topic='expressions/filters' (~12.7K tokens) when you only need a few signatures. " +
+          "Takes precedence over topic and file_path; an unknown name returns suggestions."
       ),
     mode: z
       .enum(["full", "quick_reference", "index"])

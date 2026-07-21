@@ -28,6 +28,7 @@ For detailed references on specific filter categories, use:
 - `xano_xanoscript_docs({ topic: "syntax/string-filters" })` — String filters, regex, encoding, security filters, text functions
 - `xano_xanoscript_docs({ topic: "syntax/array-filters" })` — Array filters, expression vs lambda (JS) higher-order filters, array functions
 - `xano_xanoscript_docs({ topic: "syntax/functions" })` — Math filters/functions, object functions, bitwise operations
+- `xano_xanoscript_docs({ topic: "expressions" })` — Xano expression language: `$$` array filters, anchoring variables (`$0`, `$1`, …), auto-flattening paths, transformer pipes, `set`/assignment updates
 
 **The `guid` field (backend-managed — ignore it):** Any construct may carry a top-level `guid = "..."` (e.g. `guid = "tgGYuUFKbBz4_6DIkDR5hUUCRno"`) — a stable identifier Xano assigns and maintains automatically. **Leave it exactly as-is when editing, omit it when writing new code (the backend adds one on save), and never add, change, or remove one unless explicitly asked.**
 
@@ -199,6 +200,8 @@ conditional {
 
 Backticks enter **expression mode** — use them only when you need inline evaluation of a complex expression, not for regular conditionals or variable assignments.
 
+For the full Xano expression language — `[condition]` array filtering with `$$`, anchoring variables (`$0`, `$1`, …), auto-flattening path navigation, `..` ranges, spread, and `set`/assignment updates — see `xano_xanoscript_docs({ topic: "expressions" })`.
+
 ```xs
 // ✅ Regular conditionals — no backticks needed
 conditional {
@@ -211,8 +214,10 @@ var $total { value = $input.qty * $input.price }
 
 ### Comparison
 ```xs
-$a == $b      // Equal
-$a != $b      // Not equal
+$a == $b      // Equal (loose, type-coercing: 100 == "100" is true)
+$a === $b     // Equal (strict, type-sensitive: 100 === "100" is false)
+$a != $b      // Not equal (loose)
+$a !== $b     // Not equal (strict)
 $a > $b       // Greater than
 $a >= $b      // Greater or equal
 $a < $b       // Less than
