@@ -123,8 +123,35 @@ $products|set:listing[$1.msrp > $$.price].is_discounted:true
 $products.listing.price = $$.price * 1.1    // returns $products with all prices +10%
 ```
 
+## Keeping Expressions Simple
+
+Expressions pack a lot of power into one line, and that power cuts both ways: a long chain of filters, nested `[condition]` blocks, and anchoring variables is hard to read, hard to debug (there is no way to inspect an intermediate value inside a single expression), and hard to modify safely. Prefer short, simple expressions.
+
+When an expression grows, **decompose it into intermediate variables** — each step gets a name and can be inspected on its own:
+
+```xs
+// ❌ One dense expression — works, but opaque and undebuggable
+var $cheapest {
+  value = `$products[$$.name === "pixel 8"].listing[$$.price == ($1.listing.price|min)]|first`
+}
+
+// ✅ Decomposed — each step is named, inspectable, and independently testable
+var $pixel     { value = `$products[$$.name === "pixel 8"]|first` }
+var $min_price { value = `$pixel.listing.price|min` }
+var $cheapest  { value = `$pixel.listing[$$.price == $min_price]|first` }
+```
+
+Decomposition also removes the need for anchoring variables in many cases (above, `$1.listing.price` becomes plain `$pixel.listing.price`), which is a readability win on its own.
+
+Decomposition is not always possible — a single expression field in the visual builder, a filter argument, or a `set` value must stay one expression. In those cases:
+
+- Build the expression incrementally and verify each stage's output before adding the next (the expression playground is ideal for this).
+- Format long expressions across multiple lines (chained `|set:` calls especially).
+- Reach for `$$` over `$n` anchors wherever both work — and if you find yourself three anchor levels deep, treat it as a signal to restructure.
+
 ## Common Mistakes
 
+- Long chained expressions are hard to debug — keep expressions short, and decompose into intermediate variables when the context allows (see Keeping Expressions Simple).
 - `+` on strings is wrong — use `~`: `$first ~ " " ~ $last`.
 - `==` coerces types; use `===` for exactness.
 - Filter results are always arrays, even for a single match — unwrap before accessing properties: `($stores[$$.id == $x]|first).category`.
