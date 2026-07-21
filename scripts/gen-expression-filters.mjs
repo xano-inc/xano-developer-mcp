@@ -33,7 +33,15 @@ const GROUP_TITLES = {
   timestamp: "Timestamp",
 };
 
-const stripHtml = (s) => (s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+// strip until stable so removed fragments cannot recombine into a new tag
+const stripHtml = (s) => {
+  let out = s || "";
+  for (let prev = null; out !== prev; ) {
+    prev = out;
+    out = out.replace(/<[^>]*>/g, "");
+  }
+  return out.replace(/\s+/g, " ").trim();
+};
 const fmtType = (t) => (Array.isArray(t) ? t.join(" | ") : (t ?? "any"));
 
 // known data typo: stray trailing quote in the transform example
