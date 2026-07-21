@@ -552,7 +552,10 @@ Even more content.
 
     it("keeps common file_path quick_reference payloads under a token ceiling", () => {
       // Guards against doc bloat or an over-broad applyTo pattern regressing context size.
-      const CEILING_TOKENS = 8000;
+      // Raised 8000 -> 8300 when the expressions topic (DEV-6594) joined the **/*.xs
+      // auto-load set: its Quick Reference + Choosing + Common Mistakes extraction is a
+      // deliberate ~300-token addition steering agents toward filters over expressions.
+      const CEILING_TOKENS = 8300;
       for (const fp of COMMON_PATHS) {
         const docs = readXanoscriptDocsStructured(DOCS_PATH, { file_path: fp });
         const bytes = docs.reduce((sum, d) => sum + d.content.length, 0);

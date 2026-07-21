@@ -4,7 +4,11 @@ applyTo: "**/*.xs"
 
 # Xano Expressions
 
-> **TL;DR:** Xano expressions are inline, single-expression data transformations (no statements, no loops, no variable declarations). One expression evaluates against a context of variables and returns one value. In XanoScript they appear inside backtick expression mode, value assignments, and expression-argument filters (`map`, `filter`, `reduce`, `transform`); the same engine powers the "expression" value type in the visual builder.
+> **TL;DR:** Xano expressions are inline, single-expression data transformations (no statements, no loops, no variable declarations). One expression evaluates against a context of variables and returns one value. In XanoScript they appear inside backtick expression mode, value assignments, and expression-argument filters (`map`, `filter`, `reduce`, `transform`); the same engine powers the "expression" value type in the visual builder. **For new code, prefer plain filter chains and stack operations — reach for expressions mainly when one already exists and needs changing.**
+
+## Choosing: Filters vs Expressions
+
+For new code, **default to plain XanoScript**: filter chains (`$name|to_upper|split:" "`), `var` steps, and stack functions (`db.*`, `array.*`) — fully parser-validated. Use the expression engine's advanced constructs (`[condition]` filtering, anchors, `set` paths) mainly to understand or modify an expression that **already exists** (builder expression field, `|transform:` arg, `set` value). Embedded expressions are not fully parser-validated — invented syntax can look valid yet fail at runtime. Never invent operators or filter names: if it is not in this doc or the filter reference, it does not exist.
 
 ## Quick Reference
 
@@ -21,7 +25,7 @@ applyTo: "**/*.xs"
 | Logical    | `&&` `\|\|` `!`   | and / or / not          | `$a > 21 && $b == "USA"`          |
 | Null       | `??`              | null-coalescing default | `$maybeNull ?? 0`                 |
 
-Key syntax: `$name` variable refs (no scope prefix) · `[n]`/`.n` index, negative from end · auto-flattening paths (`$products.listing.price` → flat array) · `[condition]` array filter with `$$` as current element · `$0`/`$1`/… anchor outer path levels · `value|transformer:arg` pipes · `|set:path:value` copies-with-update · `path = expr` assignment form.
+Key syntax: `$name` refs (no scope prefix) · `[n]`/`.n` index, negative from end · auto-flattening paths · `[condition]` filter with `$$` as current element · `$0`/`$1`/… anchor outer path levels · `|transformer:arg` pipes · `|set:path:value` · `path = expr` assignment form.
 
 ## Context & Variable References
 
@@ -151,13 +155,13 @@ Decomposition is not always possible — a single expression field in the visual
 
 ## Common Mistakes
 
-- Long chained expressions are hard to debug — keep expressions short, and decompose into intermediate variables when the context allows (see Keeping Expressions Simple).
+- Keep expressions short — decompose into intermediate variables when possible (see Keeping Expressions Simple).
 - `+` on strings is wrong — use `~`: `$first ~ " " ~ $last`.
 - `==` coerces types; use `===` for exactness.
 - Filter results are always arrays, even for a single match — unwrap before accessing properties: `($stores[$$.id == $x]|first).category`.
 - Lookups can miss → `null`; default with `??` before doing math: `($lookup.price ?? 0) * 1.1`.
 - Transformer chain order matters; each stage must receive the type the next transformer expects.
-- Prefer `$$` for the current element; reserve `$1`/`$3` etc. for reaching outer path levels, and derive the number by writing out the explicit path (`$products.0.listing.0.…`) and counting levels from `$0`.
+- Prefer `$$` for the current element; use `$n` only to reach outer path levels (derive n by writing out the explicit path and counting from `$0`).
 
 ## Appendix: Filter Catalog
 
