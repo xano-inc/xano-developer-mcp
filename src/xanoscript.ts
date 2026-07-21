@@ -29,6 +29,7 @@ export interface DocConfig {
 export interface XanoscriptDocsArgs {
   topic?: string;
   file_path?: string;
+  filter?: string;
   mode?: "full" | "quick_reference" | "index";
   tier?: "survival" | "working";
   max_tokens?: number;
@@ -217,6 +218,88 @@ export function extractQuickReference(content: string, topic: string): string {
 }
 
 /**
+ * Extract individual filter entries from the expression filter reference
+ * (expressions/filters.md) by name. Accepts display names and canonical
+ * aliases, case-insensitive, comma-separated for multiple filters. A name that
+ * maps to more than one entry (e.g. "min" is both the canonical alias of
+ * array_min and the display name of num_min) returns all matching entries,
+ * since the engine picks by input type.
+ */
+export function extractFilterDocs(docsPath: string, filterQuery: string): string {
+  const content = cachedReadFile(join(docsPath, "expressions/filters.md"));
+  const lines = content.split("\n");
+
+  interface FilterSection {
+    names: string[];
+    start: number;
+    end: number;
+  }
+  const headingRe = /^### `([^`]+)`(?: \(alias `([^`]+)`\))?/;
+  const sections: FilterSection[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(headingRe);
+    if (!m) continue;
+    let end = lines.findIndex(
+      (l, j) => j > i && (l.startsWith("### ") || l.startsWith("## "))
+    );
+    if (end === -1) end = lines.length;
+    const names = [m[1].toLowerCase()];
+    if (m[2]) names.push(m[2].toLowerCase());
+    sections.push({ names, start: i, end });
+  }
+
+  const requested = filterQuery
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (requested.length === 0) {
+    throw new Error(
+      "filter must name at least one filter, e.g. filter='round' or filter='to_upper,split'"
+    );
+  }
+
+  const picked: FilterSection[] = [];
+  const notFound: string[] = [];
+  for (const name of requested) {
+    const lower = name.toLowerCase();
+    const matches = sections.filter((s) => s.names.includes(lower));
+    if (matches.length === 0) {
+      notFound.push(name);
+      continue;
+    }
+    for (const s of matches) {
+      if (!picked.includes(s)) picked.push(s);
+    }
+  }
+
+  if (notFound.length > 0) {
+    const allNames = [...new Set(sections.flatMap((s) => s.names))];
+    const suggestions = [
+      ...new Set(
+        notFound.flatMap((n) => {
+          const q = n.toLowerCase();
+          return allNames.filter(
+            (a) => a.includes(q) || (a.length >= 3 && q.includes(a))
+          );
+        })
+      ),
+    ];
+    throw new Error(
+      `Unknown filter${notFound.length > 1 ? "s" : ""}: ${notFound.join(", ")}.` +
+        (suggestions.length > 0 ? ` Did you mean: ${suggestions.join(", ")}?` : "") +
+        ` Use topic='expressions/filters' with mode='quick_reference' for the full name list.`
+    );
+  }
+
+  picked.sort((a, b) => a.start - b.start);
+  const body = picked
+    .map((s) => lines.slice(s.start, s.end).join("\n").trim())
+    .join("\n\n---\n\n");
+  return `# Expression Filter Documentation: ${requested.join(", ")}\n\n${body}`;
+}
+
+/**
  * Get the documentation version from the version.json file
  */
 export function getXanoscriptDocsVersion(docsPath: string): string {
@@ -304,7 +387,10 @@ export function readXanoscriptDocsV2(
   // Returns a compact topic listing with byte sizes and token estimates plus
   // orientation pointers, so a bare discovery call costs ~4KB instead of the
   // full README. The README is still reachable via topic='readme'.
-  if (args?.mode === "index" || (!args?.topic && !args?.file_path)) {
+  if (
+    args?.mode === "index" ||
+    (!args?.topic && !args?.file_path && !args?.filter)
+  ) {
     // survival/working are whole-corpus digests reached via tier=, not granular
     // topic= targets — listing them as table rows invites topic='survival' calls
     // (a different, non-tier code path). They are surfaced in Next steps instead.
@@ -337,6 +423,7 @@ export function readXanoscriptDocsV2(
       `- topic='readme' — full overview (workspace structure, core syntax patterns, type names)`,
       `- topic='<name>' — load one topic (e.g. 'syntax', 'database', 'apis')`,
       `- file_path='api/users/create.xs' — auto-select the docs for the file you're editing`,
+      `- filter='round' — one expression filter's signature and example (comma-separate for several, e.g. filter='to_upper,split')`,
       `- tier='survival' (~${tiers.survival.tokens}) or tier='working' (~${tiers.working.tokens}) for context-limited models`,
       `- mode='quick_reference' — compact output when you only need a reminder`,
       `- max_tokens=4000 with file_path= — stop loading once the budget is reached`,
@@ -345,6 +432,13 @@ export function readXanoscriptDocsV2(
       `---`,
       `Documentation version: ${version}`,
     ].join("\n");
+  }
+
+  // Filter lookup: return individual entries from the expression filter
+  // reference instead of a whole topic
+  if (args?.filter) {
+    const doc = extractFilterDocs(docsPath, args.filter);
+    return `${doc}\n\n---\nDocumentation version: ${version}`;
   }
 
   // Default to quick_reference for file_path mode (loads many topics),

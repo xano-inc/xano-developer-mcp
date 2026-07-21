@@ -54,6 +54,8 @@ XanoScript has **two families** of higher-order array filters. They are differen
 
 The argument is an inline XanoScript expression evaluated per element. Context variables: `$$` (current element, alias `$this`), `$index` (position), `$parent` (whole array), and `$result` (previous result, `reduce` only).
 
+For the full expression language these arguments use — operators, path navigation with auto-flattening, `[condition]` array filtering, anchoring variables — see `xano_xanoscript_docs({ topic: "expressions" })`.
+
 ```xs
 // Map - transform each element
 [{v:1},{v:2}]|map:$$.v*2                    // [2,4]
@@ -105,13 +107,13 @@ The single-value sibling is `lambda` — it runs JS code with `$this` bound to t
 ❌ **Wrong — JS syntax in an expression filter:**
 ```xs
 $items|map:"return $this * 2"        // map expects an expression, not a JS string
-$items|filter:$this.active === true  // === is JS; expressions use ==
+$items|filter:(x) => x.active        // arrow functions are JS; use an inline expression with $$
 ```
 
 ✅ **Correct:**
 ```xs
 $items|map:$$ * 2
-$items|filter:$$.active == true
+$items|filter:$$.active == true      // == coerces; === is strict (100 === "100" is false)
 ```
 
 ❌ **Wrong — expression syntax in a lambda filter:**

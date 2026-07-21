@@ -28,6 +28,8 @@ describe("xanoscript module", () => {
         "readme",
         "essentials",
         "syntax",
+        "expressions",
+        "expressions/filters",
         "syntax/string-filters",
         "syntax/array-filters",
         "syntax/functions",
@@ -370,7 +372,7 @@ Even more content.
       expect(() =>
         readXanoscriptDocsV2(DOCS_PATH, {
           file_path: "branch.xs",
-          exclude_topics: ["syntax", "essentials", "debugging", "branch", "survival", "working"],
+          exclude_topics: ["syntax", "essentials", "expressions", "debugging", "branch", "survival", "working"],
         })
       ).toThrow("No documentation found");
     });
@@ -508,7 +510,7 @@ Even more content.
       expect(() =>
         readXanoscriptDocsStructured(DOCS_PATH, {
           file_path: "branch.xs",
-          exclude_topics: ["syntax", "essentials", "debugging", "branch", "survival", "working"],
+          exclude_topics: ["syntax", "essentials", "expressions", "debugging", "branch", "survival", "working"],
         })
       ).toThrow("No documentation found");
     });
@@ -643,6 +645,58 @@ Even more content.
       const viaCanonical = readXanoscriptDocsV2(DOCS_PATH, { topic: "file-uploads" });
       expect(viaAlias).toBe(viaCanonical);
       expect(viaAlias).toContain("File Uploads");
+    });
+  });
+
+  describe("filter lookup (filter parameter)", () => {
+    it("returns a single filter entry by display name", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, { filter: "round" });
+      expect(result).toContain("### `round`");
+      expect(result).toContain("precision");
+      expect(result).toContain("2.5432|round:1");
+      // Only the requested entry, not the whole reference
+      expect(result).not.toContain("### `floor`");
+      expect(result.length).toBeLessThan(2000);
+    });
+
+    it("resolves canonical aliases to the same entry", () => {
+      const viaAlias = readXanoscriptDocsV2(DOCS_PATH, { filter: "fsort" });
+      const viaDisplay = readXanoscriptDocsV2(DOCS_PATH, { filter: "sort" });
+      expect(viaAlias).toContain("### `sort` (alias `fsort`)");
+      expect(viaDisplay).toContain("### `sort` (alias `fsort`)");
+    });
+
+    it("is case-insensitive", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, { filter: "ROUND" });
+      expect(result).toContain("### `round`");
+    });
+
+    it("returns multiple entries for comma-separated names", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, {
+        filter: "to_upper, split",
+      });
+      expect(result).toContain("### `to_upper`");
+      expect(result).toContain("### `split`");
+    });
+
+    it("returns all entries for an ambiguous name (min = array_min + num_min)", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, { filter: "min" });
+      expect(result).toContain("### `array_min` (alias `min`)");
+      expect(result).toContain("### `min` (alias `num_min`)");
+    });
+
+    it("throws with suggestions for an unknown name", () => {
+      expect(() =>
+        readXanoscriptDocsV2(DOCS_PATH, { filter: "uppercase" })
+      ).toThrow(/Unknown filter/);
+      expect(() =>
+        readXanoscriptDocsV2(DOCS_PATH, { filter: "regex" })
+      ).toThrow(/Did you mean.*regex_replace/);
+    });
+
+    it("does not fall through to the index when only filter is given", () => {
+      const result = readXanoscriptDocsV2(DOCS_PATH, { filter: "round" });
+      expect(result).not.toContain("XanoScript Documentation Index");
     });
   });
 });

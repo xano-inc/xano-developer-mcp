@@ -1,5 +1,5 @@
 {
-  "version": "2.3.0",
+  "version": "2.7.0",
   "description": "Machine-readable index for XanoScript documentation (version mirrors version.json)",
 
   "topics": {
@@ -35,7 +35,20 @@
       "description": "Expressions, operators, and filters for all XanoScript code",
       "applyTo": ["**/*.xs"],
       "priority": 1,
-      "aliases": ["filters", "operators", "expressions"]
+      "aliases": ["filters", "operators"]
+    },
+    "expressions": {
+      "file": "expressions.md",
+      "description": "Xano expression language: inline data transformations with $$ filters, anchoring variables, and transformer pipes",
+      "applyTo": ["**/*.xs"],
+      "priority": 6,
+      "aliases": ["expression", "expr", "xano-expressions", "transformers", "anchoring"]
+    },
+    "expressions/filters": {
+      "file": "expressions/filters.md",
+      "description": "Signatures, arguments, and worked examples for all 210 expression filters (transformers)",
+      "applyTo": [],
+      "aliases": ["filter-reference", "transformer-reference", "filter-signatures", "expression-filters"]
     },
     "syntax/string-filters": {
       "file": "syntax/string-filters.md",
@@ -422,6 +435,7 @@
     "authorization": ["security.md"],
     "rate_limiting": ["security.md", "integrations/redis.md"],
     "error_handling": ["syntax.md", "essentials.md"],
+    "data_transformation": ["expressions.md", "syntax/array-filters.md"],
     "pagination": ["database.md", "apis.md"],
     "file_upload": ["file-uploads.md", "integrations/cloud-storage.md", "streaming.md"],
     "caching": ["performance.md", "integrations/redis.md"],
