@@ -70,7 +70,7 @@ Tool names must exactly match `.xs` file names in `ai/tool/`.
 
 Each entry is an object. Only `name` is required — the rest configure how this
 server exposes that tool. These settings apply to this server only; they do not
-change the tool itself or how other servers/agents expose it.
+change the tool itself or how any other server exposes it.
 
 | Field | Purpose | Default |
 |-------|---------|---------|
