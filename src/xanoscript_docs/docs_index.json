@@ -1,5 +1,5 @@
 {
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "Machine-readable index for XanoScript documentation (version mirrors version.json)",
 
   "topics": {
