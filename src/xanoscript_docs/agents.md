@@ -202,6 +202,37 @@ tools = [
 
 **Important:** Do not describe tools in system_prompt or prompt. Tool descriptions are automatically provided to the LLM.
 
+### Tool Entry Fields
+
+Only `name` is required. The other fields configure how this agent connects to the
+tool and apply to this agent only:
+
+| Field | Purpose | Default |
+|-------|---------|---------|
+| `name` | Tool file name in `ai/tool/` | — (required) |
+| `active` | Whether the agent may call this entry | `true` |
+| `auth` | Name of an auth-enabled table required to call it | omitted = no auth |
+| `type` | `"tool"` or `"resource"` | `"tool"` |
+| `resource_uri` | URI identifying the resource (`type: "resource"` only) | `""` |
+| `tool_meta` | MCP `_meta` payload attached to the tool (`type: "tool"` only) | `""` |
+
+```xs
+tools = [
+  { name: "get_user_by_email" }
+  { name: "update_order_status", auth: "user" }
+  { name: "legacy_lookup", active: false }
+  {
+    name        : "product_catalog"
+    type        : "resource"
+    resource_uri: "file:///catalog.json"
+  }
+  { name: "send_notification", tool_meta: "{\"audience\":[\"admin\"]}" }
+]
+```
+
+These are the same tool-connection fields used by `mcp_server` — see the
+`mcp-servers` topic for full details on `type`, `resource_uri`, and `tool_meta`.
+
 ---
 
 ## Prompting
