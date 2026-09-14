@@ -279,6 +279,25 @@ function validateCode(
   code: string,
   filePath?: string
 ): SingleFileValidationResult {
+  // Recognize the document header only; policy grammar and check schemas are
+  // owned by the instance. Never turn unsupported local syntax into a pass.
+  if (/^(?:\s|\/\/[^\r\n]*(?:\r?\n|$)|\/\*[\s\S]*?\*\/)*policy(?:\s|$)/.test(code)) {
+    const message = "Policy validation requires the native platform parser. " +
+      "Use xano_parse_policy on the authenticated Xano MCP, `xano policy parse --file <path>` " +
+      "with the policy-enabled official CLI, or POST /api:meta/workspace/{id}/policy/parse " +
+      "with {source}. This bundled language server does not validate policy documents.";
+    return {
+      valid: false,
+      errors: [{
+        severity: SEVERITY.ERROR,
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+        message,
+        source: "Native policy validation required",
+      }],
+      message,
+      file_path: filePath,
+    };
+  }
   try {
     const text = code;
     const scheme = getSchemeFromContent(text);

@@ -3,6 +3,13 @@
   "description": "Machine-readable index for XanoScript documentation (version mirrors version.json)",
 
   "topics": {
+    "policies": {
+      "file": "policies.md",
+      "description": "MVP workspace policies: human descriptions and deterministic rules, native validation, independent template seeds",
+      "applyTo": ["**/policies/**/*.xs", "policies/*.xs"],
+      "priority": 0,
+      "aliases": ["policy", "governance"]
+    },
     "survival": {
       "file": "survival.md",
       "description": "Minimal syntax survival kit for writing valid XanoScript",

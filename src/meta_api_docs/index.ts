@@ -28,6 +28,7 @@ import { realtimeDoc } from "./topics/realtime.js";
 import { fileDoc } from "./topics/file.js";
 import { historyDoc } from "./topics/history.js";
 import { workflowsDoc } from "./topics/workflows.js";
+import { policyDoc } from "./topics/policy.js";
 
 /**
  * All available documentation topics
@@ -50,6 +51,7 @@ export const topics: Record<string, TopicDoc> = {
   file: fileDoc,
   history: historyDoc,
   workflows: workflowsDoc,
+  policy: policyDoc,
 };
 
 /**
@@ -138,4 +140,3 @@ ${getTopicDescriptions()}
       ),
   },
 });
-
