@@ -30,6 +30,7 @@ describe("meta_api_docs/index", () => {
         "file",
         "history",
         "workflows",
+        "policy",
       ];
 
       expect(Object.keys(topics)).toEqual(expectedTopics);

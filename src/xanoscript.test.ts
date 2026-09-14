@@ -23,6 +23,7 @@ describe("xanoscript module", () => {
   describe("XANOSCRIPT_DOCS_V2", () => {
     it("should have all expected topics", () => {
       const expectedTopics = [
+        "policies",
         "survival",
         "working",
         "readme",

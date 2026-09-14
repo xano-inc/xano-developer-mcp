@@ -27,6 +27,7 @@ import { platformDoc } from "./topics/platform.js";
 import { staticHostDoc } from "./topics/static_host.js";
 import { updateDoc } from "./topics/update.js";
 import { integrationDoc } from "./topics/integration.js";
+import { policyDoc } from "./topics/policy.js";
 
 /**
  * All available documentation topics
@@ -48,6 +49,7 @@ export const topics: Record<string, TopicDoc> = {
   static_host: staticHostDoc,
   update: updateDoc,
   integration: integrationDoc,
+  policy: policyDoc,
 };
 
 /**
@@ -127,4 +129,3 @@ ${getTopicDescriptions()}
       .describe("The CLI documentation content for the requested topic."),
   },
 });
-
