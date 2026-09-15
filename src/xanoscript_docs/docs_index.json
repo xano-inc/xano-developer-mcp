@@ -6,7 +6,7 @@
     "policies": {
       "file": "policies.md",
       "description": "MVP workspace policies: human descriptions and deterministic rules, native validation, independent template seeds",
-      "applyTo": ["**/policies/**/*.xs", "policies/*.xs"],
+      "applyTo": ["**/policies/**/*.xs"],
       "priority": 0,
       "aliases": ["policy", "governance"]
     },

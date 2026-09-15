@@ -244,7 +244,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace push",
-      description: "Upload local XanoScript files to a workspace, including knowledge/skills markdown under knowledge/ (synced automatically, shown in the preview). Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview.",
+      description: "Upload local XanoScript files to a workspace, including knowledge/skills markdown under knowledge/ (synced automatically, shown in the preview). Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview. On a policy-enabled instance the import response carries policy_check feedback, printed after the import: mandatory findings exit 2 and missing or unavailable feedback exits 1 (unless --allow_missing_policy_check), but the import has already completed and is not rolled back.",
       usage: "xano workspace push [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Directory containing documents to push (defaults to current directory)" },
@@ -261,6 +261,8 @@ For lighter-weight iterative development without pulling the whole workspace, se
         { name: "guids", type: "boolean", required: false, default: "true", description: "Write server-assigned GUIDs back to local files after push (--no-guids to disable)" },
         { name: "include", short: "i", type: "string", required: false, description: "Glob pattern to include files, matched against relative paths (repeatable)" },
         { name: "exclude", short: "e", type: "string", required: false, description: "Glob pattern to exclude files, matched against relative paths (repeatable)" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "summary or json; JSON retains the complete import response and policy_check feedback" },
+        { name: "allow_missing_policy_check", type: "boolean", required: false, default: "false", description: "Allow a missing or unavailable policy check after import (exit 0 instead of 1); never overrides mandatory findings" },
         { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" }
       ],
       examples: [
@@ -271,7 +273,9 @@ For lighter-weight iterative development without pulling the whole workspace, se
         "xano workspace push --sync --delete --force",
         'xano workspace push -i "api/**" -i "function/**"',
         'xano workspace push -e "table/**" --records --truncate',
-        "xano workspace push --no-transaction --no-guids"
+        "xano workspace push --no-transaction --no-guids",
+        "xano workspace push --force -o json",
+        "xano workspace push --allow_missing_policy_check"
       ]
     },
     {
