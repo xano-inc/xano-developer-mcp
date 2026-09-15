@@ -57,6 +57,7 @@ describe("xanoscript module", () => {
         "debugging",
         "performance",
         "realtime",
+        "realtime-v2",
         "security",
         "streaming",
         "middleware",

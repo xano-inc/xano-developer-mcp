@@ -243,7 +243,8 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 | `file-uploads` | Uploading files to native Xano storage                     | `file?` input, create_attachment, signed URLs |
 | `tasks`    | Scheduled and cron jobs                                         | Cron Syntax, Input Handling |
 | `triggers` | Event-driven handlers (table, realtime, workspace, agent, MCP)  | Predefined Inputs, Event Types |
-| `realtime` | Real-time channels and events for push updates                  | Channels, Events |
+| `realtime` | Legacy V1 channels and events | Channels, Events |
+| `realtime-v2` | V2 servers, channels, message handlers, and publishing | WebSocket Client, Authentication, Join Triggers |
 
 ### AI & Agents
 
@@ -282,4 +283,3 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 | ------------- | ------------------------------------------------------------ | ------------ |
 | `performance` | Performance optimization best practices                      | Caching, Query Optimization |
 | `security`    | Security best practices for authentication and authorization | Auth Patterns, Token Handling |
-

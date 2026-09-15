@@ -2,8 +2,10 @@ import type { TopicDoc } from "../types.js";
 
 export const realtimeDoc: TopicDoc = {
   topic: "realtime",
-  title: "Realtime Channel Management",
-  description: `Realtime channels enable WebSocket-based push notifications and live updates to connected clients.
+  title: "Legacy Realtime Channel Management",
+  description: `These endpoints describe legacy Realtime. For Realtime V2, use xano_xanoscript_docs({ topic: "realtime-v2" }) and the workspace XanoScript push/pull workflow.
+
+Realtime channels enable WebSocket-based push notifications and live updates to connected clients.
 
 ## Key Concepts
 - Channels are WebSocket endpoints for real-time communication

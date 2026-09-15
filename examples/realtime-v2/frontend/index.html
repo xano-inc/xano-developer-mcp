@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Xano · Realtime V2 Lab</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><a class="brand" href="#">xano<span> / </span>LABS</a><span class="version">REALTIME V2</span><a href="https://github.com/xano-inc/xano-developer-mcp">Developer MCP ↗</a></header>
+<main>
+<div class="intro"><div><p class="eyebrow">ONE CHANNEL. TWO PERSPECTIVES.</p><h1>See it happen.<br><span>In realtime.</span></h1><p class="subtitle">Two independent clients, connected to one Xano backend.<br>Send a message and watch it arrive on the other side.</p></div><div class="connection"><span id="overall" class="pill">Disconnected</span><p>Native WebSocket · V2 protocol</p><small id="destination"></small></div></div>
+<section class="toolbar" aria-label="Connection settings"><label>Room<input id="room" type="number" value="42" min="1" step="1"></label><button id="connect">Connect both clients <span>↗</span></button><button id="disconnect" class="secondary" disabled>Disconnect</button><span class="toolbar-note">Each panel has its own socket.</span></section>
+<div id="notice" role="status">Ready to connect. Messages below will come from the live backend.</div>
+<section class="clients" aria-label="Live clients">
+<article class="client" data-client="0"><div class="client-head"><div class="avatar">A</div><div><h2>Alice</h2><p>Client A · Sender</p></div><span class="client-status" id="status-0">Offline</span></div><div class="messages" id="messages-0" aria-live="polite"><div class="empty">Your conversation starts here.<br><small>Connect to join the room.</small></div></div><form id="form-0"><label class="sr-only" for="input-0">Alice's message</label><input id="input-0" placeholder="Write a message as Alice…" autocomplete="off" required maxlength="2000"><button disabled id="send-0" aria-label="Send as Alice">↑</button></form><button id="echo-0" disabled class="echo">Test sender-only echo ↩</button></article>
+<article class="client" data-client="1"><div class="client-head"><div class="avatar blue">B</div><div><h2>Bob</h2><p>Client B · Receiver</p></div><span class="client-status" id="status-1">Offline</span></div><div class="messages" id="messages-1" aria-live="polite"><div class="empty">A second view of the same room.<br><small>No polling. No simulated messages.</small></div></div><form id="form-1"><label class="sr-only" for="input-1">Bob's message</label><input id="input-1" placeholder="Write a message as Bob…" autocomplete="off" required maxlength="2000"><button disabled id="send-1" aria-label="Send as Bob">↑</button></form><button id="echo-1" disabled class="echo">Test sender-only echo ↩</button></article>
+</section>
+<section class="backend-panel"><div><p class="eyebrow">FROM THE BACKEND</p><h2>Let the server speak.</h2><p>Call an API that runs <code>realtime.publish</code>.<br>Both connected clients should receive the announcement.</p></div><form id="publish-form"><label class="sr-only" for="announcement">Announcement</label><input id="announcement" value="Hello from the Xano backend." required maxlength="2000"><button id="publish" disabled>Publish announcement ↗</button></form></section>
+<section class="diagnostics"><div class="section-heading"><h2>Wire activity <span id="frame-count">0 frames</span></h2><button id="clear" class="text-button">Clear log</button></div><div id="events" role="log" aria-label="WebSocket event log"><p class="muted">Connection events and real incoming frames appear here.</p></div><div class="middleware"><div><strong>Post middleware check</strong><p>Execute an API and inspect the post-processing result.</p></div><button id="check" class="secondary">Run check</button><pre id="check-result">Not run yet.</pre></div></section>
+<footer>Built with XanoScript & native WebSockets <span>DEV ENVIRONMENT · WORKSPACE 74</span></footer>
+</main><script type="module" src="app.js"></script>
+</body></html>
