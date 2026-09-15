@@ -32,7 +32,7 @@ Read, parse and evaluate require the dedicated workspace:policy read scope. Crea
 
 The native platform parses and formats policy source. Send source alone inside data, or structured fields without source. Never send both. Versions and canonical source are server-owned. An evaluation stores a run and its findings; it does not modify the policy. Mandatory findings block a merge, and push feedback follows the import rather than rolling it back. Evaluation infrastructure errors are reported separately from findings.
 
-Only static checks are supported. Runtime guards, decision logs and executable policy test blocks are reserved for future releases. A check passing is not proof of runtime behavior or compliance.`,
+Checks are static: they inspect stored definitions and nothing runs at request time. A check passing is not proof of runtime behavior or compliance.`,
   ai_hints: `Use the authenticated Xano MCP policy tools when available. Their workspace and instance come from the authenticated request, not tool arguments. The standalone developer MCP offers documentation and local language-server validation; it does not carry a workspace credential. Validate policy source with the native policy/parse endpoint, not a second local policy grammar. Do not infer current status from a run made before the most recent policy or workspace changes.`,
   related_topics: ["workspace", "branch", "authentication"],
   endpoints: [
@@ -58,10 +58,10 @@ Only static checks are supported. Runtime guards, decision logs and executable p
       method: "POST", path: prefix + "/evaluate", description: "Evaluate active policies against the selected branch and store the run.", parameters: [workspace],
       request_body: { type: "object", properties: {
         branch: { type: "string", description: "Branch label; empty selects live" },
-        trigger: { type: "string", description: "manual for an explicit check; push for post-import feedback" },
+        trigger: { type: "string", description: "What caused the run (default manual): manual for an explicit check, push for post-import feedback; merge and test are accepted but reserved for platform use" },
       }, example: { branch: "dev", trigger: "manual" } },
     },
-    { method: "GET", path: prefix + "/run", description: "List retained runs newest first; at most twenty runs are retained per branch.", parameters: [workspace, branch, { name: "limit", type: "integer", in: "query", description: "Maximum number of runs to return" }] },
+    { method: "GET", path: prefix + "/run", description: "List retained runs newest first; at most twenty runs are retained per branch.", parameters: [workspace, branch, { name: "limit", type: "integer", in: "query", default: "25", description: "Maximum number of runs to return (1-200)" }] },
     { method: "GET", path: prefix + "/run/{run_id}", description: "Read one retained run on the selected branch.", parameters: [workspace, branch, { name: "run_id", type: "integer", required: true, in: "path", description: "Run ID" }] },
   ],
 };

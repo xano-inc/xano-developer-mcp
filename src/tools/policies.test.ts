@@ -37,6 +37,11 @@ describe("policy developer tools", () => {
     expect(result.valid).toBe(true);
   });
 
+  it("does not treat a first token that merely starts with policy as a policy document", () => {
+    const result = validateXanoscript({ code: "policy_x foo {\n}" });
+    expect(result.message).not.toContain("native platform parser");
+  });
+
   it("reports native validation needed for policy files in a mixed directory", () => {
     const dir = mkdtempSync(join(tmpdir(), "xano-policy-validation-"));
     try {

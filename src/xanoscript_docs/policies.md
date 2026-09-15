@@ -19,7 +19,7 @@ policy AUTH-EXAMPLE {
 }
 ```
 
-Use `advisory` while customizing a seed. `mandatory` findings participate in gates. A `draft` policy is not evaluated; an `active` policy is eligible. Policies can also include rationale, narrative, domain, owner, scope and framework mappings. Each rule selects a built-in check and supplies literal parameters. Free-form policy `scope` describes intent; actual check selection is determined by the check's parameters.
+Use `advisory` while customizing a seed. `mandatory` findings participate in gates. A `draft` policy is not evaluated; an `active` policy is eligible. Policies can also include rationale, narrative, domain, owner, scope and framework mappings. Long text such as `narrative` can use a `"""` triple-quoted multiline string. `mappings` is a list of objects, for example `mappings = [ { framework: "soc2", criterion: "CC6.1", label: "Logical access security" } ]`. Each rule selects a built-in check and supplies literal parameters. A rule may also carry its own `title`, a `severity` that overrides the policy's for that rule, and a `remediation` sentence that is echoed with the rule's findings. Free-form policy `scope` describes intent; actual check selection is determined by the check's parameters.
 
 ## Authoring workflow
 
@@ -39,8 +39,8 @@ Read the live catalogue instead of copying guessed parameter names. Deterministi
 
 ## Validation and access
 
-The standalone developer MCP's bundled language server does not yet validate policy syntax. It must not report these files as successfully validated. Use native policy parsing; do not rewrite a policy into another object type to satisfy the local validator.
+The standalone developer MCP's bundled language server does not validate policy syntax. It must not report these files as successfully validated. Use native policy parsing; do not rewrite a policy into another object type to satisfy the local validator.
 
 Read, parse and evaluate need `workspace:policy` read access. Writes additionally need the matching operation scope and an admin/explore role. Existing tokens may need reissuing. The authenticated MCP takes instance and workspace from its request authentication; it does not accept arbitrary targets.
 
-Runtime `guard` blocks and policy `test` blocks are reserved and rejected in this MVP. Do not generate them. L3 test execution and L4 runtime enforcement are future extensions, separate from the current description-and-rules authoring flow.
+A policy is its description plus deterministic check rules. Checks inspect stored definitions and nothing runs at request time.
