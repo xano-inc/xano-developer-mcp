@@ -225,10 +225,35 @@
     },
     "realtime": {
       "file": "realtime.md",
-      "description": "Real-time channels and events for push updates",
-      "applyTo": ["realtime/channel/*.xs", "realtime/trigger/*.xs"],
+      "description": "Legacy Realtime V1 channels and events; use realtime-v2 for servers, channels, and message handlers",
+      "applyTo": [
+        "realtime/channel/*.xs",
+        "realtime/trigger/*.xs"
+      ],
       "priority": 3,
-      "aliases": ["websocket", "channels", "pubsub"]
+      "aliases": [
+        "realtime-v1",
+        "legacy-realtime"
+      ]
+    },
+    "realtime-v2": {
+      "file": "realtime-v2.md",
+      "description": "Realtime V2 servers, typed channel paths, message handlers, native WebSocket clients, publishing, and join authorization",
+      "applyTo": [
+        "realtime_server/**/*.xs",
+        "channel/**/*.xs",
+        "message/**/*.xs",
+        "channel_trigger/**/*.xs",
+        "realtime_server_trigger/**/*.xs"
+      ],
+      "priority": 3,
+      "aliases": [
+        "websocket",
+        "channels",
+        "pubsub",
+        "realtime2",
+        "realtime_v2"
+      ]
     },
     "security": {
       "file": "security.md",
@@ -245,7 +270,7 @@
     },
     "middleware": {
       "file": "middleware.md",
-      "description": "Request/response interceptors for functions, queries, tasks, and tools",
+      "description": "API post middleware attachment, fixed inputs, and merge/replace response handling",
       "applyTo": ["middleware/*.xs"],
       "priority": 3,
       "aliases": ["interceptors", "hooks"]
@@ -337,10 +362,17 @@
     "mcp_server_trigger": { "file": "triggers.md", "section": "mcp-server-trigger" },
     "addon": { "file": "addons.md" },
     "middleware": { "file": "middleware.md" },
-    "realtime_channel": { "file": "realtime.md" }
+    "realtime_channel": { "file": "realtime.md" },
+    "realtime_server": { "file": "realtime-v2.md" },
+    "channel": { "file": "realtime-v2.md" },
+    "message": { "file": "realtime-v2.md" },
+    "channel_trigger": { "file": "realtime-v2.md" },
+    "realtime_server_trigger": { "file": "realtime-v2.md" }
   },
 
   "operations": {
+    "realtime.publish": { "file": "realtime-v2.md" },
+    "realtime.get_session": { "file": "realtime-v2.md" },
     "db.query": { "file": "database.md" },
     "db.get": { "file": "database.md" },
     "db.has": { "file": "database.md" },

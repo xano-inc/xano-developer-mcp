@@ -4,314 +4,151 @@ applyTo: "middleware/*.xs"
 
 # Middleware
 
-Middleware intercepts and processes requests before and after your functions, queries, tasks, and tools execute.
+> **TL;DR:** Define a middleware, then attach it inside the API's `query` declaration with `middleware = {post: [{name: "docs_post"}]}`. Post middleware receives the response envelope in `$input.vars`; the successful endpoint result is `$input.vars.result`.
 
 ## Quick Reference
 
-```xs
-middleware "<name>" {
-  description = "What this middleware does"
-  exception_policy = "silent" | "rethrow" | "critical"
-  response_strategy = "merge" | "replace"
-  input { ... }
-  stack { ... }
-  response = $result
-}
-```
+| Need | Syntax |
+|------|--------|
+| Attach to one API | `middleware = {post: [{name: "docs_post"}]}` alongside `response` |
+| Middleware inputs | `json vars` and `enum type { values = ["pre", "post"] }` |
+| Current phase | `$input.type` |
+| Successful post result | `$input.vars.result` |
+| Add response fields | `response_strategy = "merge"` |
+| Replace response | `response_strategy = "replace"` |
+| Surface middleware errors | `exception_policy = "rethrow"` |
 
-### Required Blocks
-| Block | Purpose |
-|-------|---------|
-| `input` | Define parameters passed to middleware |
-| `stack` | Processing logic |
-| `response` | Output returned to caller |
+Use an array of `{name: "..."}` objects, not an array of strings. Declare the referenced middleware before attaching it. The name must match exactly.
 
-### Optional Attributes
-| Attribute | Values | Default | Description |
-|-----------|--------|---------|-------------|
-| `description` | text | - | Documents middleware purpose |
-| `exception_policy` | `silent`, `rethrow`, `critical` | `rethrow` | How to handle errors |
-| `response_strategy` | `merge`, `replace` | `merge` | How response combines with original |
+## Attach Post Middleware to an API
 
----
+Create each declaration in its own `.xs` file. This example needs no database table.
 
-## Basic Structure
+### 1. Define the middleware
 
 ```xs
-middleware "log_request" {
-  description = "Logs all incoming requests"
-
-  input {
-    json request_data
-  }
-
-  stack {
-    debug.log {
-      value = {
-        timestamp: now,
-        data: $input.request_data
-      }
-    }
-  }
-
-  response = null
-}
-```
-
----
-
-## Exception Policies
-
-Control how middleware handles errors:
-
-### silent
-Errors are caught and ignored. Execution continues normally.
-
-```xs
-middleware "optional_enrichment" {
-  exception_policy = "silent"
-
-  input {
-    int user_id
-  }
-
-  stack {
-    // If this fails, request continues without enrichment
-    api.call "external_service" {
-      url = "https://api.example.com/enrich/" ~ $input.user_id
-    } as $enriched
-  }
-
-  response = $enriched
-}
-```
-
-### rethrow (default)
-Errors are passed through to the caller. Standard error handling applies.
-
-```xs
-middleware "validate_token" {
+middleware docs_post {
   exception_policy = "rethrow"
-
-  input {
-    text token
-  }
-
-  stack {
-    precondition ($input.token|strlen > 0) {
-      error_type = "accessdenied"
-      error = "Token required"
-    }
-  }
-
-  response = { valid: true }
-}
-```
-
-### critical
-Errors are treated as critical failures. Request is immediately terminated.
-
-```xs
-middleware "security_check" {
-  exception_policy = "critical"
-
-  input {
-    text ip_address
-  }
-
-  stack {
-    db.query "blocked_ips" {
-      where = $db.blocked_ips.ip == $input.ip_address
-      return = { type: "exists" }
-    } as $is_blocked
-
-    precondition (!$is_blocked) {
-      error_type = "accessdenied"
-      error = "Access denied"
-    }
-  }
-
-  response = { allowed: true }
-}
-```
-
----
-
-## Response Strategies
-
-Control how middleware response combines with the original response:
-
-### merge (default)
-Middleware response is merged with original response.
-
-```xs
-middleware "add_metadata" {
   response_strategy = "merge"
-
   input {
-  }
-
-  stack {
-    var $meta {
-      value = {
-        server_time: now,
-        version: "1.0.0"
-      }
+    json vars
+    enum type {
+      values = ["pre", "post"]
     }
   }
-
-  response = { _meta: $meta }
-}
-// Original: { data: [...] }
-// Result: { data: [...], _meta: { server_time: ..., version: "1.0.0" } }
-```
-
-### replace
-Middleware response completely replaces original response.
-
-```xs
-middleware "transform_response" {
-  response_strategy = "replace"
-
-  input {
-    json original_response
-  }
-
   stack {
-    var $transformed {
-      value = {
-        success: true,
-        payload: $input.original_response
-      }
-    }
+    var $observed { value = $input.vars }
   }
-
-  response = $transformed
+  response = {middleware_phase: $input.type, observed: $observed}
 }
 ```
 
----
+`input`, `stack`, and `response` are required by the MCP validator. The server supplies the fixed `vars` and `type` inputs. Custom middleware inputs are not a way to pass parameters from an API.
 
-## Common Patterns
-
-### Request Logging
+### 2. Create an API group
 
 ```xs
-middleware "audit_log" {
-  description = "Logs all API requests for audit trail"
-  exception_policy = "silent"
-
-  input {
-    text endpoint
-    text method
-    json request_body?
-    int user_id?
-  }
-
-  stack {
-    db.add "audit_log" {
-      data = {
-        endpoint: $input.endpoint,
-        method: $input.method,
-        request_body: $input.request_body,
-        user_id: $input.user_id,
-        ip_address: $env.$remote_ip,
-        created_at: now
-      }
-    }
-  }
-
-  response = null
+api_group docs_audit {
+  canonical = "docs-demo"
 }
 ```
 
-### Rate Limiting
+Use a unique canonical for a new group. Preserve the existing canonical when editing a group.
+
+### 3. Attach the middleware inside the query
 
 ```xs
-middleware "rate_limit" {
-  description = "Enforces rate limits per user"
+query check verb=GET {
+  api_group = "docs_audit"
+  input {
+  }
+  stack {
+    var $result { value = {ok: true} }
+  }
+  response = $result
+  middleware = {post: [{name: "docs_post"}]}
+}
+```
+
+The middleware block is a sibling of `input`, `stack`, and `response`. Do not put it inside `stack`, and do not add `type = "post"` to the middleware declaration.
+
+Request `GET /api:docs-demo/check` on the instance. The live response is:
+
+```json
+{
+  "ok": true,
+  "middleware_phase": "post",
+  "observed": {"status": "ok", "result": {"ok": true}}
+}
+```
+
+The `ok` field comes from the API. The other fields prove that the middleware ran in the post phase and saw the endpoint's response. Returning an object with `merge` adds its fields to the successful response object. This example deliberately echoes the envelope for inspection; a production middleware should return only the intended public fields.
+
+## Response Envelope and Replacement
+
+For the successful API above, `$input.vars` is `{status: "ok", result: {ok: true}}`. To wrap the endpoint's payload, use `$input.vars.result`, not the whole envelope. Do not assume this successful-response shape describes an error path or the pre phase.
+
+```xs
+middleware docs_wrap {
   exception_policy = "rethrow"
-
+  response_strategy = "replace"
   input {
-    int user_id
-    int max_requests?=100
-    int window_seconds?=60
-  }
-
-  stack {
-    redis.ratelimit {
-      key = "ratelimit:" ~ $input.user_id
-      max = $input.max_requests
-      ttl = $input.window_seconds
-      error = "Rate limit exceeded"
+    json vars
+    enum type {
+      values = ["pre", "post"]
     }
   }
-
-  response = null
+  stack {
+    var $payload { value = $input.vars.result }
+  }
+  response = {success: true, payload: $payload}
 }
 ```
 
-### Response Caching
+Attach `docs_wrap` as the query's post middleware:
 
 ```xs
-middleware "cache_response" {
-  description = "Caches responses in Redis"
-  exception_policy = "silent"
-
+query wrap verb=GET {
+  api_group = "docs_audit"
   input {
-    text cache_key
-    int ttl_seconds?=300
-    json response_data
   }
-
   stack {
-    redis.set {
-      key = $input.cache_key
-      value = $input.response_data|json_encode
-      expire = $input.ttl_seconds
-    }
+    var $result { value = {ok: true} }
   }
-
-  response = null
+  response = $result
+  middleware = {post: [{name: "docs_wrap"}]}
 }
 ```
 
----
+Request `GET /api:docs-demo/wrap`. The expected response is:
 
-## Applying Middleware
-
-Middleware is configured at the branch level. See `xano_xanoscript_docs({ topic: "branch" })` for configuration details.
-
-```xs
-branch "production" {
-  middleware = {
-    query: {
-      pre: ["validate_token", "rate_limit"],
-      post: ["audit_log", "cache_response"]
-    },
-    function: {
-      pre: ["validate_token"],
-      post: ["audit_log"]
-    }
-  }
-}
+```json
+{"success": true, "payload": {"ok": true}}
 ```
 
----
+With `replace`, the middleware's response becomes the endpoint response. With `merge`, the original successful response fields remain alongside middleware fields.
 
-## Best Practices
+## Validate and Verify
 
-1. **Keep middleware focused** - Each middleware should do one thing well
-2. **Use appropriate exception policies** - Critical for security, silent for optional enrichment
-3. **Consider performance** - Middleware runs on every request; log even silent failures
+1. Validate every definition with `xano_validate_xanoscript`.
+2. Preview the scoped workspace push with `--dry-run`, then push the middleware, group, and API together.
+3. Pull the workspace again and inspect the query's `middleware` attachment.
+4. Call the real endpoint and assert the final HTTP response. Parsing or a successful push alone does not prove that middleware executed.
 
----
+The repository's `examples/realtime-v2/verify.mjs` exercises both merge and replace against a live workspace. Its target is configured in `examples/realtime-v2/frontend/config.json`.
+
+## Common Mistakes
+
+- **Defining without attaching:** a middleware declaration alone does not attach it to an API. Put the `middleware` block inside the query.
+- **Using string entries:** use `post: [{name: "docs_post"}]`, not `post: ["docs_post"]`.
+- **Inventing middleware inputs:** read the server-provided `$input.vars` and `$input.type`.
+- **Wrapping the wrong value:** for a successful post response, wrap `$input.vars.result`; `$input.vars` also includes execution status.
+- **Trusting validation alone:** check the pulled attachment and execute the endpoint after pushing.
 
 ## Related Topics
 
 | Topic | Description |
 |-------|-------------|
-| `branch` | Branch-level middleware configuration |
-| `security` | Authentication and authorization patterns |
-| `apis` | API endpoint request/response lifecycle |
-| `performance` | Performance optimization strategies |
+| `apis` | API declarations and responses |
+| `realtime-v2` | Message handlers and live server publishing |
+| `security` | Authentication and authorization |

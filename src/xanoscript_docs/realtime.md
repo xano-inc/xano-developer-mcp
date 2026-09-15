@@ -2,11 +2,15 @@
 applyTo: "realtime/channel/*.xs, realtime/trigger/*.xs, function/**/*.xs, api/**/*.xs"
 ---
 
-# Realtime
+# Realtime (Legacy V1)
+
+For **Realtime V2** servers, typed channels, message handlers, and `realtime.publish`, use `xano_xanoscript_docs({ topic: "realtime-v2" })`. This topic describes the separate legacy system. The visual editor labels its publishing statement **Realtime Event (v1)** (`api.realtime_event`). For V2, choose **Realtime Publish** (`realtime.publish`) and provide both a server name and resolved channel path. Realtime Event can succeed without delivering anything to V2 subscribers.
 
 Push real-time updates to connected clients using channels and events.
 
 ## Quick Reference
+
+**Legacy V1 only.** For V2, request the `realtime-v2` topic.
 
 | Operation | Purpose |
 |-----------|---------|

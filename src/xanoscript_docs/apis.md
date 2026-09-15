@@ -43,6 +43,8 @@ query "endpoint-path" verb=<METHOD> {
 }
 ```
 
+To attach post middleware to this endpoint, add `middleware = { post: [{name: "docs_post"}] }` inside the `query` declaration, alongside `response`. Define the referenced middleware first. See `xano_xanoscript_docs({ topic: "middleware" })` for the fixed input contract and complete examples.
+
 ### Query Name (Required, Non-Empty)
 
 The query name is **required** and **must be a non-empty string**. Empty names (`query "" verb=...`) are invalid. The name defines the endpoint path after the API group canonical.
