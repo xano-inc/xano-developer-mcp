@@ -55,6 +55,13 @@ export interface SingleFileValidationResult {
   errors: ParserDiagnostic[];
   message: string;
   file_path?: string;
+  /**
+   * True for a policy document, which this bundled language server cannot parse.
+   * Batch runs report those as skipped rather than as errors: a workspace pull
+   * puts policies next to tables and endpoints, so "invalid" there is a false
+   * failure on the most ordinary post-pull command there is.
+   */
+  policy?: boolean;
 }
 
 export interface ValidationResult {
@@ -68,9 +75,18 @@ export interface BatchValidationResult {
   total_files: number;
   valid_files: number;
   invalid_files: number;
+  /** Policy documents, which only the instance's own parser can validate. */
+  skipped_files: number;
   results: SingleFileValidationResult[];
   message: string;
 }
+
+/** What a policy document needs instead of this language server. */
+const POLICY_REFUSAL =
+  "Policy validation requires the native platform parser. " +
+  "Use xano_parse_policy on the authenticated Xano MCP, `xano policy parse --file <path>` " +
+  "with the policy-enabled official CLI, or POST /api:meta/workspace/{id}/policy/parse " +
+  "with {source}. This bundled language server does not validate policy documents.";
 
 // =============================================================================
 // Error Message Improvements
@@ -277,24 +293,23 @@ function findXsFiles(
  */
 function validateCode(
   code: string,
-  filePath?: string
+  filePath?: string,
+  displayName?: string
 ): SingleFileValidationResult {
   // Recognize the document header only; policy grammar and check schemas are
   // owned by the instance. Never turn unsupported local syntax into a pass.
   if (/^(?:\s|\/\/[^\r\n]*(?:\r?\n|$)|\/\*[\s\S]*?\*\/)*policy(?:\s|$)/.test(code)) {
-    const message = "Policy validation requires the native platform parser. " +
-      "Use xano_parse_policy on the authenticated Xano MCP, `xano policy parse --file <path>` " +
-      "with the policy-enabled official CLI, or POST /api:meta/workspace/{id}/policy/parse " +
-      "with {source}. This bundled language server does not validate policy documents.";
+    const named = filePath ? `${displayName ?? filePath}: ${POLICY_REFUSAL}` : POLICY_REFUSAL;
     return {
       valid: false,
+      policy: true,
       errors: [{
         severity: SEVERITY.ERROR,
         range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
-        message,
+        message: named,
         source: "Native policy validation required",
       }],
-      message,
+      message: named,
       file_path: filePath,
     };
   }
@@ -349,7 +364,7 @@ function validateCode(
         valid: true,
         errors: [],
         message: filePath
-          ? `✓ ${basename(filePath)}: Valid`
+          ? `✓ ${displayName ?? basename(filePath)}: Valid`
           : "XanoScript is valid. No syntax errors found.",
         file_path: filePath,
       };
@@ -366,7 +381,7 @@ function validateCode(
     };
 
     const messageLines: string[] = [];
-    const prefix = filePath ? `${hasErrors ? "✗" : "⚠"} ${basename(filePath)}: ` : "";
+    const prefix = filePath ? `${hasErrors ? "✗" : "⚠"} ${displayName ?? basename(filePath)}: ` : "";
 
     if (errors.length > 0) {
       messageLines.push(`${prefix}Found ${errors.length} error(s)${warnings.length > 0 ? ` and ${warnings.length} warning(s)` : ""}:`);
@@ -485,6 +500,7 @@ export function validateXanoscript(
         total_files: 0,
         valid_files: 0,
         invalid_files: 0,
+        skipped_files: 0,
         results: [],
         message: `No .xs files found in directory: ${args.directory}${args.pattern ? ` matching pattern: ${args.pattern}` : ""}`,
       };
@@ -495,6 +511,7 @@ export function validateXanoscript(
   const results: SingleFileValidationResult[] = [];
   let validCount = 0;
   let invalidCount = 0;
+  let skippedCount = 0;
 
   for (const filePath of filesToValidate) {
     const { content, error } = readFile(filePath);
@@ -509,32 +526,52 @@ export function validateXanoscript(
       continue;
     }
 
-    const result = validateCode(content, filePath);
+    // In a batch every line has to name the file it belongs to, so the per-file
+    // header carries the path the caller passed rather than just the basename.
+    const result = validateCode(content, filePath, filePath);
     results.push(result);
-    if (result.valid) {
+    if (result.policy) {
+      skippedCount++;
+    } else if (result.valid) {
       validCount++;
     } else {
       invalidCount++;
     }
   }
 
-  // Build summary message
+  // A policy document is not a broken file: it is a file this parser does not own.
+  // Only real errors decide the batch's verdict.
   const allValid = invalidCount === 0;
+  const counts = [`${validCount} valid`];
+  if (skippedCount > 0) counts.push(`${skippedCount} skipped (policy — validate natively)`);
+  counts.push(`${invalidCount} invalid`);
   const summaryLines: string[] = [
-    `Validated ${filesToValidate.length} file(s): ${validCount} valid, ${invalidCount} invalid`,
+    `Validated ${filesToValidate.length} file(s): ${counts.join(", ")}`,
     "",
   ];
 
-  // Show errors first, then valid files
-  const invalidResults = results.filter((r) => !r.valid);
+  // Show errors first, then the policies this parser cannot reach, then valid files
+  const invalidResults = results.filter((r) => !r.valid && !r.policy);
+  const skippedResults = results.filter((r) => r.policy);
   const validResults = results.filter((r) => r.valid);
 
   if (invalidResults.length > 0) {
     summaryLines.push("❌ Files with errors:");
     for (const result of invalidResults) {
-      summaryLines.push(`\n${result.message}`);
+      // Never an unattributed error: the path leads even when the diagnostic has none.
+      summaryLines.push(
+        `\n${result.message.includes(result.file_path ?? " ") ? result.message : `${result.file_path}: ${result.message}`}`,
+      );
     }
     summaryLines.push("");
+  }
+
+  if (skippedResults.length > 0) {
+    summaryLines.push("⏭ Policy documents — not validated locally:");
+    for (const result of skippedResults) {
+      summaryLines.push(`  ${result.file_path}`);
+    }
+    summaryLines.push("", `  ${POLICY_REFUSAL}`, "");
   }
 
   if (validResults.length > 0) {
@@ -549,6 +586,7 @@ export function validateXanoscript(
     total_files: filesToValidate.length,
     valid_files: validCount,
     invalid_files: invalidCount,
+    skipped_files: skippedCount,
     results,
     message: summaryLines.join("\n"),
   };
@@ -597,7 +635,11 @@ export const validateXanoscriptToolSpec = defineTool({
     "- file_paths: Array of file paths for batch validation\n" +
     "- directory: Validate all .xs files in a directory\n\n" +
     "Returns errors with line/column positions and helpful suggestions for common mistakes. " +
-    "The language server auto-detects the object type from the code syntax.",
+    "The language server auto-detects the object type from the code syntax. " +
+    "Policy documents (policies/*.xs from a workspace pull) are not validated here - only the " +
+    "instance's own parser owns the policy grammar. A batch or directory run reports them as " +
+    "skipped, not as errors, and names the file; validate one with xano_parse_policy or " +
+    "`xano policy parse --file <path>`.",
   annotations: {
     readOnlyHint: true,
     destructiveHint: false,

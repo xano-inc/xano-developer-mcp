@@ -11,21 +11,20 @@ const cell = s => String(s).replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim();
 
 w('## Check catalogue');
 w();
-w('A rule names one check and supplies its literal parameters. Unknown check ids and unknown parameter names are refused when the policy is saved, so build only from this list and read the LIVE catalogue (`GET /api:meta/workspace/{id}/policy/check`, or `xano policy catalogue -o json`) for each parameter\'s full description, closed value set, nested shape and worked example.');
+w('A rule selects one built-in check and supplies literal parameters. Unknown check IDs and parameter names are rejected when saving. Read the instance catalogue (`GET /api:meta/workspace/{id}/policy/check` or `xano policy catalogue -o json`) for current types, defaults, allowed values, nested properties and examples.');
 w();
-w('Notation below: `name*` is REQUIRED (a rule without it is refused); `1 of (a, b)` means each is individually optional but a rule supplying neither is refused; everything else is optional and falls back to the default published in the catalogue. Every check additionally accepts the five shared scope parameters documented under "Scoping a rule".');
+w('Every entry carries a human `label` beside its id; that label is what names a rule whose author gave it no `title`. In the table, `name*` is required. `1 of (a, b)` requires at least one non-empty value or enabled boolean; each member is individually optional. Every check also accepts the shared scope parameters below.');
 w();
-w('| Check | Reports | Parameters |');
-w('| --- | --- | --- |');
+w('| Check | Label | Behavior | Parameters |');
+w('| --- | --- | --- | --- |');
 for (const it of items) {
-  const first = it.description.split(/(?<=\.)\s/)[0];
   const own = Object.keys(it.params).filter(n => !SCOPE_KEYS.includes(n));
   const oneOf = new Set(it.requires_one_of ?? []);
   const rendered = own
     .filter(n => !oneOf.has(n))
     .map(n => '`' + n + (it.params[n].required ? '*' : '') + '`');
   if (oneOf.size) rendered.unshift('1 of (' + [...oneOf].map(n => '`' + n + '`').join(', ') + ')');
-  w(`| \`${it.id}\` | ${cell(first)} | ${rendered.join(', ') || '_scope only_'} |`);
+  w(`| \`${it.id}\` | ${cell(it.label)} | ${cell(it.description)} | ${rendered.join(', ') || '_scope only_'} |`);
 }
 w();
 w('Closed value sets worth knowing without a catalogue round-trip:');
@@ -50,7 +49,7 @@ for (const it of items) {
 w();
 w('## Scoping a rule');
 w();
-w('Every check carries the same five scope parameters. They narrow WHICH objects the rule inspects and never change what the check looks for. All conditions AND together; an omitted or empty one adds no restriction.');
+w('Scope selects the objects a check inspects. All conditions must match; omitted or empty fields add no restriction. Individual check descriptions identify any branch-wide counts or related definitions consulted outside scope.');
 w();
 const scope = items[0].params.scope;
 for (const [key, shape] of Object.entries(scope.properties)) {
@@ -58,7 +57,7 @@ for (const [key, shape] of Object.entries(scope.properties)) {
   w(`- \`scope.${key}\` (${shape.type}) — ${shape.description}${vs}`);
 }
 w();
-w('`api_groups`, `tables`, `verbs`, `tags` and `except_tags` may also be written at the top level of `params` as shorthands for the matching `scope` key. `scope.api_groups`, `scope.verbs` and `scope.auth` describe QUERIES: setting any of them on a check that inspects several kinds drops every non-query object from the rule.');
+w('Non-empty top-level `api_groups`, `tables`, `verbs` and `tags` replace the corresponding `scope` values. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.');
 w();
 w("Prefer tags to names. A rule scoped with `tags` or `except_tags` keeps working when an API group or table is renamed, and a new object opts in by carrying the tag; a rule scoped with `api_groups` or `tables` must be edited whenever those names change. A name the branch does not have selects nothing: the run reports it as a warning on the rule's result (`warnings`) without changing the result's status.");
 w();
@@ -66,18 +65,19 @@ w('Example: `params = { statements: ["db.add", "db.edit"], scope: { object_kinds
 w();
 w('## Writing parameter values');
 w();
-w('These rules apply wherever a check takes a statement name, a parameter name, a reference or a literal.');
-w();
-w('- **Statement names** are XanoScript names: `db.add`, `db.edit`, `db.patch`, `db.del`, `db.query`, `db.get`, `db.truncate`, `db.direct_query`, `db.bulk.delete`, `api.request`, `function.run`, `util.send_email`, `util.get_all_input`, `security.encrypt`, `security.create_auth_token`, `debug.log`, `precondition`, `throw`, `try_catch`, `conditional`, `foreach`, `while`, `for`, `switch`, `group`, `var`, `expect.to_throw`. The stored `mvp:*` name is accepted too. A name that matches no statement never matches anything and is NOT reported as an error, so verify the spelling against the statement docs.');
-w('- **Parameter names** are resolved on the statement in this order: its `context`/`params`/`process` block, then its named input assignments, then the statement node itself. A dotted path reaches into an object field (`data.role`). Three aliases are understood: `per_page` (db.query `return.list.paging.per_page`), `where` (`search`) and `error` (`message`).');
-w('- **References** (`must_reference`, `must_not_reference`, `compare_to`, `before.must_reference`) match exactly or by prefix, so `$auth` also matches `$auth.id`. The roots that can appear are `$input`, `$auth`, `$env`, `$var`, `$error`, `$output`. Text inside quotes is a literal, not a reference.');
-w('- **Literal lists** (`values`, `literals_forbidden`) compare with exact type: `[false]` matches the boolean `false` but not the string `"false"`, and `[0]` does not match `"0"`.');
-w('- **Names are matched exactly.** There are no wildcards or regular expressions anywhere — not on `hosts`, `api_groups`, `tables` or `field_names`. `literal.credential_shape.patterns` is a closed set of named shapes, not a pattern you write.');
-w('- **Tags**: `tags` / `scope.tags` and `except_tags` match the tags ON the inspected object; an endpoint also carries the tags of its API group. `query.tagged_table_access.tag` and `table_selector.tag` match TABLE tags instead, and check parameters such as `public_tag` read only the object\'s own tags.');
+w('- **Types:** `string[]` is a list of strings; `bool` requires true or false. `number` accepts finite numeric literals, not numeric strings. Both `min_count` parameters are `integer` with minimum 1. Bounds are inclusive and use the checked parameter\'s native units; `unit` only labels findings.');
+w('- **Object values:** use objects such as `{}` for selectors and maps. The catalogue publishes object defaults as `{}`. `value` in `table.field_attribute_required` accepts any literal, including null.');
+w('- **Statement names:** use an exact XanoScript name such as `db.add` or `api.request`; stored aliases such as `mvp:dbo_add` also work. A misspelled name matches nothing, so verify it against statement documentation.');
+w('- **Parameter paths:** use a name or dotted path such as `data.role`. Aliases include `per_page` for paging size, `where` for search conditions and `error` for the error message.');
+w('- **References:** match a reference or its child paths. `$auth` matches `$auth.id`; `$input.id` does not match `$input.id2`. Supported roots are `$input`, `$auth`, `$env`, `$var`, `$error` and `$output`. Quoted text is literal.');
+w('- **Literal comparison:** false differs from "false", and 0 differs from "0". Equal numbers match, including 1 and 1.0. Empty objects and lists share a stored representation and compare equally. This applies to forbidden literals, field attributes and setting equality.');
+w('- **Names:** table, function, middleware, tag, field and provider names match exactly. Hosts and HTTP verbs ignore case. Regex and wildcards are not supported; credential `patterns` selects built-in shapes.');
+w('- **Combined conditions:** field names and field types must match the same field; table selectors combine all conditions. Allowed write functions and tags are alternatives. `query.input_rules` needs an enabled condition and `statement.containment` needs a structural constraint. `statement.expression_rule` without extra constraints still requires the parameter to exist.');
+w("- **Tags:** `tags`, `scope.tags` and `except_tags` match the inspected object's own tags; an endpoint also carries the tags of its API group. `query.tagged_table_access.tag` and `table_selector.tag` match table tags, and check parameters such as `public_tag` read only the object's own tags.");
 w();
 w('## Findings');
 w();
-w('A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severity`, an `object` reference and a `message` saying what was found and where in the stack. Guidance that applies to the whole policy, such as how to request an exemption, belongs in the policy `statement`. Some catalogue entries carry an optional static `fix_hint` string describing the usual fix for that check; it is the same for every rule that uses the check.');
+w('A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severity`, an `object` reference and a `message` saying what was found and where in the stack. `rule_title` is the rule\'s own title, else its check\'s label, else its id; `severity` is the owning policy\'s, so every finding of one policy shares it. A finding `id` is prefixed with the policy key when the rule id does not already name it, so two policies whose rules share an id still produce distinct findings. Guidance that applies to the whole policy, such as how to request an exemption, belongs in the policy `statement`. Some catalogue entries carry an optional static `fix_hint` string describing the usual fix for that check; it is the same for every rule that uses the check.');
 const hinted = items.filter(it => it.fix_hint);
 if (hinted.length) {
   w();
