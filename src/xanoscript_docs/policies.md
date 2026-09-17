@@ -19,7 +19,7 @@ policy AUTH-EXAMPLE {
 }
 ```
 
-Use `advisory` while customizing a seed. `mandatory` findings participate in gates. A `draft` policy is not evaluated; an `active` policy is eligible. Policies can also include rationale, narrative, domain, owner, scope and tags. Long text such as `narrative` can use a `"""` triple-quoted multiline string. `tags` is a list of strings, for example `tags = ["soc2", "hipaa"]`, the same syntax as tags on any other workspace object; there is no separate framework/mapping concept, a tag is simply how a customer labels a framework. Each rule selects a built-in check and supplies literal parameters. A rule may also carry its own `title`, a `severity` that overrides the policy's for that rule, and a `remediation` sentence that is echoed with the rule's findings. Free-form policy `scope` describes intent; actual check selection is determined by the check's parameters.
+Use `advisory` while customizing a seed. `mandatory` findings participate in gates. A `draft` policy is not evaluated; an `active` policy is eligible. Policies can also include rationale, narrative, domain, owner, scope and tags. Long text such as `narrative` can use a `"""` triple-quoted multiline string. `tags` is a list of strings, for example `tags = ["soc2", "hipaa"]`, the same syntax as tags on any other workspace object; there is no separate framework/mapping concept, a tag is simply how a customer labels a framework. Each rule selects a built-in check and supplies literal parameters. A rule may also carry its own `title` and a `severity` that overrides the policy's for that rule. Free-form policy `scope` describes intent; actual check selection is determined by the check's parameters.
 
 ## Authoring workflow
 
@@ -102,7 +102,9 @@ Scope selects the objects a check inspects. All conditions must match; omitted o
 - `scope.tables` (string[]) — Select tables by exact name, or objects reaching any named table directly or through called functions.
 - `scope.reaching_table_tag` (string) — Select objects reaching a table with this exact tag, directly or through called functions.
 
-Non-empty top-level `api_groups`, `tables` and `verbs` replace the corresponding `scope` values. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.
+Non-empty top-level `api_groups`, `tables`, `verbs` and `tags` replace the corresponding `scope` values. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.
+
+Prefer tags to names. A rule scoped with `tags` or `except_tags` keeps working when an API group or table is renamed, and a new object opts in by carrying the tag; a rule scoped with `api_groups` or `tables` must be edited whenever those names change. A name the branch does not have selects nothing: the run reports it as a warning on the rule's result (`warnings`) without changing the result's status.
 
 Example: `params = { statements: ["db.add", "db.edit"], scope: { object_kinds: ["query"], verbs: ["GET"] }, except_tags: ["generated"] }`.
 
@@ -116,11 +118,11 @@ Example: `params = { statements: ["db.add", "db.edit"], scope: { object_kinds: [
 - **Literal comparison:** false differs from "false", and 0 differs from "0". Equal numbers match, including 1 and 1.0. Empty objects and lists share a stored representation and compare equally. This applies to forbidden literals, field attributes and setting equality.
 - **Names:** table, function, middleware, tag, field and provider names match exactly. Hosts and HTTP verbs ignore case. Regex and wildcards are not supported; credential `patterns` selects built-in shapes.
 - **Combined conditions:** field names and field types must match the same field; table selectors combine all conditions. Allowed write functions and tags are alternatives. `query.input_rules` needs an enabled condition and `statement.containment` needs a structural constraint. `statement.expression_rule` without extra constraints still requires the parameter to exist.
-- **Tags:** `scope.tags` and `except_tags` match the inspected object's own tags. `query.tagged_table_access.tag` and `table_selector.tag` match table tags.
+- **Tags:** `tags`, `scope.tags` and `except_tags` match the inspected object's own tags; an endpoint also carries the tags of its API group. `query.tagged_table_access.tag` and `table_selector.tag` match table tags, and check parameters such as `public_tag` read only the object's own tags.
 
-## Findings and remediation
+## Findings
 
-A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severity`, an `object` reference, a `message` saying what was found and where in the stack, and `remediation` — the rule author's own text when set, otherwise a deterministic per-check instruction derived from the rule's parameters and the object. `remediation` is always present, so a fix agent can act on a finding without re-deriving the intent.
+A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severity`, an `object` reference and a `message` saying what was found and where in the stack. Guidance that applies to the whole policy, such as how to request an exemption, belongs in the policy `statement`. Some catalogue entries carry an optional static `fix_hint` string describing the usual fix for that check; it is the same for every rule that uses the check.
 
 A rule that inspected nothing reports `0 checked` rather than a pass, which is how "the scope matched no objects" is told apart from "everything satisfied the rule".
 
