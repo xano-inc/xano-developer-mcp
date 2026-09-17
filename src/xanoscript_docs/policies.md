@@ -33,39 +33,39 @@ Policies also travel in the platform's workspace multidoc import/export. Use the
 
 ## Check catalogue
 
-A rule names one check and supplies its literal parameters. Unknown check ids and unknown parameter names are refused when the policy is saved, so build only from this list and read the LIVE catalogue (`GET /api:meta/workspace/{id}/policy/check`, or `xano policy catalogue -o json`) for each parameter's full description, closed value set, nested shape and worked example.
+A rule selects one built-in check and supplies literal parameters. Unknown check IDs and parameter names are rejected when saving. Read the instance catalogue (`GET /api:meta/workspace/{id}/policy/check` or `xano policy catalogue -o json`) for current types, defaults, allowed values, nested properties and examples.
 
-Notation below: `name*` is REQUIRED (a rule without it is refused); `1 of (a, b)` means each is individually optional but a rule supplying neither is refused; everything else is optional and falls back to the default published in the catalogue. Every check additionally accepts the five shared scope parameters documented under "Scoping a rule".
+In the table, `name*` is required. `1 of (a, b)` requires at least one non-empty value or enabled boolean; each member is individually optional. Every check also accepts the shared scope parameters below.
 
-| Check | Reports | Parameters |
+| Check | Behavior | Parameters |
 | --- | --- | --- |
-| `db.where_constraint_required` | Reports a read of a selected table that does not constrain the given field in its where clause, optionally against a given reference. | `table_selector`, `field*`, `compare_to` |
-| `literal.credential_shape` | Reports string literals that match a known credential shape, and a literal key or iv on security.encrypt (always, whatever patterns is set to). | `patterns`, `locations` |
-| `object.settings_forbidden` | Reports objects of one inventory kind whose stored settings match EVERY predicate in when. | `object_kind*`, `when*` |
-| `outbound.vendor_allowlist` | Lists every outbound destination written into the definitions and reports the ones that are not on the allowlist: literal api.request hosts, cloud and email providers, and agent model providers. | `kinds`, `hosts`, `providers` |
-| `query.auth_required` | Reports an in-scope query that declares no auth table and does not carry the tag that marks it deliberately public. | `public_tag` |
-| `query.input_rules` | Reports declared-input problems on an in-scope query: an input whose declared type is wrong, a text input missing a required filter or minimum, an input that is never referenced, an input driving per_page without a literal max filter, a required input that is absent, and a forbidden path parameter. | `type_by_name`, `filters_required`, `paging_max_required`, `path_params_forbidden`, `unused_forbidden`, `inputs_required`, `filter_min` |
-| `query.middleware_required` | Reports an in-scope query that does not have every named middleware attached and active. | `middleware*` |
-| `query.statement_required` | Reports an in-scope query whose stack does not contain a matching statement, optionally a call to a named function, optionally carrying given references, and optionally as the very first top-level statement. | 1 of (`statement`, `function`), `position`, `must_reference`, `when` |
-| `query.tagged_table_access` | Reports an in-scope query that reaches a table carrying the given tag but does not declare the given auth table, or does not call the given function. | `follow_addons`, `tag*`, `auth`, `function` |
-| `query.workflow_test_coverage` | Reports an in-scope query that no workflow test on the branch calls. | _scope only_ |
-| `stack.statement_forbidden` | Reports every use of a listed statement anywhere in an object's function stack, including inside conditional, loop, try/catch and switch branches. | `statements*` |
-| `stack.statement_order` | Reports an object whose first matching "after" statement is not preceded by a matching "before" statement. | `before*`, `after*` |
-| `statement.containment` | Reports the inspected statement when it is not inside a required block, when it is inside a forbidden block, or when it does not contain enough of the required nested statements. | `statement*`, `must_be_inside`, `must_not_be_inside`, `must_contain`, `min_count` |
-| `statement.expression_rule` | Inspects one parameter's expression as written and reports a missing required reference or filter, or a forbidden reference, operator, literal or filter. | `statement*`, `param*`, `must_reference`, `must_not_reference`, `operators_forbidden`, `literals_forbidden`, `filters_forbidden`, `filters_required` |
-| `statement.param_bound` | Reports a numeric literal parameter that falls outside the inclusive bounds. | 1 of (`min`, `max`), `statement*`, `param*`, `unit` |
-| `statement.param_forbidden` | Reports a statement whose named parameter is set to one of the forbidden literal values. | `statement*`, `param*`, `values*` |
-| `statement.param_not_from_input` | Reports two shapes on the inspected statement: an object parameter assigned wholesale from request input (the bare $input, $input.new or $input.old), and any of the protected fields assigned from anything under $input. | `statement*`, `param`, `fields` |
-| `statement.param_required` | Reports a statement that leaves a parameter unset, optionally only when the statement touches a table carrying a given tag. | `statement*`, `param*`, `when_table_tag`, `follow_addons`, `must_exclude_sensitive_fields` |
-| `table.auth_table_rules` | Reports a workspace that does not have exactly one auth-enabled table, and every in-scope query whose auth declaration names a different table. | _scope only_ |
-| `table.coverage_required` | Reports each selected table that no matching object references. | `table_selector`, `referenced_by` |
-| `table.field_attribute_required` | Selects schema fields by name and/or type and then reports them: a selected field that is missing the required attribute value, one whose type is wrong, a required field name that is absent, or — with forbidden — every field that matched at all. | 1 of (`field_names`, `field_types`), `attribute`, `value`, `type`, `require_exists`, `forbidden` |
-| `table.tag_required` | Reports an in-scope table that has a schema field matching BOTH field_type and one of field_names but does not carry the given tag. | `field_type`, `field_names*`, `tag*` |
-| `table.view_hide_required` | Reports a saved table view that leaves a sensitive field visible. | `table_tag` |
-| `table.write_location_restricted` | Reports a write to the named table that is not located inside an approved function and not made by an object carrying an approved tag. | `table*`, `fields`, `statements`, `allowed_functions`, `allowed_tags` |
-| `test.assertion_required` | Reports an in-scope query that no workflow test calls anonymously while asserting an authorization rejection. | `scenario` |
-| `trigger.self_write_forbidden` | Reports a database table trigger whose own stack writes to the table it is attached to (db.add, db.edit, db.patch, db.del, db.bulk.delete or db.truncate). | _scope only_ |
-| `workspace.object_required` | Counts the objects of one inventory kind that match the given name and/or tag and reports the workspace when there are fewer than min_count. | `object_kind*`, `tag`, `name`, `min_count` |
+| `db.where_constraint_required` | Requires db.query and db.get reads to include a predicate on the selected field. If compare_to is set, that same predicate must reference it. Checks nested condition groups syntactically; it does not prove the condition holds on every Boolean path. | `table_selector`, `field*`, `compare_to` |
+| `literal.credential_shape` | Reports known credential-shaped string literals in selected locations. Scanning function stacks also reports literal encryption keys and IVs, regardless of the selected patterns. Findings include locations and pattern names, never secret values. | `patterns`, `locations` |
+| `object.settings_forbidden` | Reports objects whose saved settings match all configured predicates. Checks stored values; inherited runtime settings are not resolved. | `object_kind*`, `when*` |
+| `outbound.vendor_allowlist` | Reports unapproved HTTP hosts, cloud and email providers, and agent model providers. Empty allowlists report destinations as not yet reviewed. Dynamic or missing destinations are reported as unresolved; environment secrets are not read. | `kinds`, `hosts`, `providers` |
+| `query.auth_required` | Requires each query to declare an auth table or carry the public exception tag. Checks the saved authentication setting; authorization logic is not evaluated. | `public_tag` |
+| `query.input_rules` | Checks declared query inputs for required types, filters, limits, usage and names. Enable at least one condition. Filter requirements apply to text inputs; types come from declarations. | 1 of (`type_by_name`, `filters_required`, `paging_max_required`, `path_params_forbidden`, `unused_forbidden`, `inputs_required`, `filter_min`) |
+| `query.middleware_required` | Requires every named middleware to be attached and active. Resolves query, API group and branch or workspace defaults for pre- and post-middleware. Checks attachment, not middleware behavior. | `middleware*` |
+| `query.statement_required` | Requires a matching statement or function call in the query's own stack, optionally first or containing specified references. Confirms presence in the definition, not execution on every path. | 1 of (`statement`, `function`), `position`, `must_reference`, `when` |
+| `query.tagged_table_access` | Requires queries reaching tagged tables to declare authentication and, optionally, call a named function. Table access through called functions counts; addons are optional. The required function call must be in the query's own stack. Only queries reaching a tagged table count as checked. | `follow_addons`, `tag*`, `auth`, `function` |
+| `query.workflow_test_coverage` | Requires each query to be called by api.call in a workflow test on the branch. Checks test definitions without running tests or checking assertions. Use scope to select the queries that need coverage. | _scope only_ |
+| `stack.statement_forbidden` | Reports listed statements anywhere in an object's function stack, including nested branches and loops. | `statements*` |
+| `stack.statement_order` | Requires a matching before statement ahead of the first matching after statement in the top-level stack. Nested statements and called functions are not followed. Objects with no after statement pass. | `before*`, `after*` |
+| `statement.containment` | Requires or forbids enclosing blocks, or requires nested statements. Checks every nesting depth and branch; the matching block need not execute on every path. | 1 of (`must_be_inside`, `must_not_be_inside`, `must_contain`), `statement*`, `min_count` |
+| `statement.expression_rule` | Checks a parameter for required or forbidden references, literals, operators and filters. An omitted parameter is reported. References are inspected as written; intermediate variables are not traced. | `statement*`, `param*`, `must_reference`, `must_not_reference`, `operators_forbidden`, `literals_forbidden`, `filters_forbidden`, `filters_required` |
+| `statement.param_bound` | Requires a numeric literal within the inclusive bounds. Reports missing, non-numeric and unresolved values. Bounds use the parameter's native units. | 1 of (`min`, `max`), `statement*`, `param*`, `unit` |
+| `statement.param_forbidden` | Reports a parameter set to a forbidden literal value, or a computed value that cannot be resolved. An omitted parameter passes. | `statement*`, `param*`, `values*` |
+| `statement.param_not_from_input` | Reports whole-record assignments from $input, $input.new or $input.old, and protected fields assigned directly from request input. Intermediate variables are not traced. | `statement*`, `param`, `fields` |
+| `statement.param_required` | Requires an explicit parameter on matching statements. For output, requires a customized field list and can also check for fields marked sensitive in the table schema. | `statement*`, `param*`, `when_table_tag`, `follow_addons`, `must_exclude_sensitive_fields` |
+| `table.auth_table_rules` | Requires exactly one auth-enabled table across the branch. Queries that declare authentication must use that table. Scope narrows the checked objects and queries; the table count always covers the full branch. | _scope only_ |
+| `table.coverage_required` | Requires each selected table to be referenced by a matching object, directly or through called functions. Scope selects tables; referenced_by selects the objects that provide coverage. Only tables count as checked. | `table_selector`, `referenced_by` |
+| `table.field_attribute_required` | Checks selected schema fields for a required attribute, type or presence, or forbids them. When names and types are both set, a field must match both. Reads schema definitions only. | 1 of (`field_names`, `field_types`), `attribute`, `value`, `type`, `require_exists`, `forbidden` |
+| `table.tag_required` | Requires a table tag when a schema field matches both the selected type and one of the selected names. Reads schema definitions only. Only tables with a matching field count as checked. | `field_type`, `field_names*`, `tag*` |
+| `table.view_hide_required` | Requires saved table views to hide every field marked sensitive in the table schema. Checks each view's hidden-column list. Tables without saved views pass. | `table_tag` |
+| `table.write_location_restricted` | Restricts writes to a table to approved functions or tagged objects. Checks where each write is defined; a caller can use an approved function without defining the write itself. | `table*`, `fields`, `statements`, `allowed_functions`, `allowed_tags` |
+| `test.assertion_required` | Requires a workflow test that calls each selected query anonymously and asserts an authorization rejection (401, 403, unauthorized or forbidden). Recognizes a call expectation, an enclosing expect.to_throw, or a later assertion on the call's result. Tests are inspected, not run. | `scenario` |
+| `trigger.self_write_forbidden` | Reports database triggers that write to their own table, including bulk writes and add-or-edit. Inspects the trigger's own stack, including nested branches; writes inside called functions are not followed. | _scope only_ |
+| `workspace.object_required` | Requires a minimum count of objects matching the selected kind, name, tag and scope. Checks object presence, not behavior. | `object_kind*`, `tag`, `name`, `min_count` |
 
 Closed value sets worth knowing without a catalogue round-trip:
 
@@ -91,31 +91,32 @@ Nested object parameters and their keys:
 
 ## Scoping a rule
 
-Every check carries the same five scope parameters. They narrow WHICH objects the rule inspects and never change what the check looks for. All conditions AND together; an omitted or empty one adds no restriction.
+Scope selects the objects a check inspects. All conditions must match; omitted or empty fields add no restriction. Individual check descriptions identify any branch-wide counts or related definitions consulted outside scope.
 
-- `scope.object_kinds` (string[]) — Keep only these inventory kinds, out of the kinds the check already inspects. One of `table`, `query`, `function`, `workflow_test`, `api_group`, `task`, `trigger`, `middleware`, `addon`, `channel`, `tool`, `agent`, `mcp_server`, `workspace`.
-- `scope.api_groups` (string[]) — Queries only. Keep queries in these API groups, matched against the group's display NAME or its canonical name.
-- `scope.verbs` (string[]) — Queries only. Keep queries with these HTTP verbs; compared case-insensitively.
-- `scope.auth` (string) — Queries only. "none" keeps only queries that declare no auth table, "required" keeps only those that declare one. One of `""`, `none`, `required`.
-- `scope.tags` (string[]) — Keep objects carrying at least one of these tags. These are the tags ON the inspected object (a query's tags, a table's tags, ...), never the tags of tables it reads.
-- `scope.except_tags` (string[]) — Drop objects carrying any of these tags. Same tag source as tags.
-- `scope.tables` (string[]) — On a table check, keep tables with these names. On a stack check, keep objects that reach one of these tables directly or through a called function.
-- `scope.reaching_table_tag` (string) — Keep objects whose reachable tables (directly or through called functions) include a table carrying this tag.
+- `scope.object_kinds` (string[]) — Include these kinds from those supported by the check.
+- `scope.api_groups` (string[]) — Queries in these API groups, matched by exact display name or canonical name.
+- `scope.verbs` (string[]) — Queries with these HTTP verbs, matched case-insensitively.
+- `scope.auth` (string) — Queries only: none selects queries without an auth table; required selects queries declaring one. Empty adds no restriction.
+- `scope.tags` (string[]) — Include objects carrying any listed exact tag. Uses the object's own tags, not the tags of tables it reads.
+- `scope.except_tags` (string[]) — Exclude objects carrying any listed exact tag. Combined with top-level except_tags.
+- `scope.tables` (string[]) — Select tables by exact name, or objects reaching any named table directly or through called functions.
+- `scope.reaching_table_tag` (string) — Select objects reaching a table with this exact tag, directly or through called functions.
 
-`api_groups`, `tables`, `verbs` and `except_tags` may also be written at the top level of `params` as shorthands for the matching `scope` key. `scope.api_groups`, `scope.verbs` and `scope.auth` describe QUERIES: setting any of them on a check that inspects several kinds drops every non-query object from the rule.
+Non-empty top-level `api_groups`, `tables` and `verbs` replace the corresponding `scope` values. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.
 
 Example: `params = { statements: ["db.add", "db.edit"], scope: { object_kinds: ["query"], verbs: ["GET"] }, except_tags: ["generated"] }`.
 
 ## Writing parameter values
 
-These rules apply wherever a check takes a statement name, a parameter name, a reference or a literal.
-
-- **Statement names** are XanoScript names: `db.add`, `db.edit`, `db.patch`, `db.del`, `db.query`, `db.get`, `db.truncate`, `db.direct_query`, `db.bulk.delete`, `api.request`, `function.run`, `util.send_email`, `util.get_all_input`, `security.encrypt`, `security.create_auth_token`, `debug.log`, `precondition`, `throw`, `try_catch`, `conditional`, `foreach`, `while`, `for`, `switch`, `group`, `var`, `expect.to_throw`. The stored `mvp:*` name is accepted too. A name that matches no statement never matches anything and is NOT reported as an error, so verify the spelling against the statement docs.
-- **Parameter names** are resolved on the statement in this order: its `context`/`params`/`process` block, then its named input assignments, then the statement node itself. A dotted path reaches into an object field (`data.role`). Three aliases are understood: `per_page` (db.query `return.list.paging.per_page`), `where` (`search`) and `error` (`message`).
-- **References** (`must_reference`, `must_not_reference`, `compare_to`, `before.must_reference`) match exactly or by prefix, so `$auth` also matches `$auth.id`. The roots that can appear are `$input`, `$auth`, `$env`, `$var`, `$error`, `$output`. Text inside quotes is a literal, not a reference.
-- **Literal lists** (`values`, `literals_forbidden`) compare with exact type: `[false]` matches the boolean `false` but not the string `"false"`, and `[0]` does not match `"0"`.
-- **Names are matched exactly.** There are no wildcards or regular expressions anywhere — not on `hosts`, `api_groups`, `tables` or `field_names`. `literal.credential_shape.patterns` is a closed set of named shapes, not a pattern you write.
-- **Tags**: `scope.tags` / `except_tags` match the tags ON the inspected object. `query.tagged_table_access.tag` and `table_selector.tag` match TABLE tags instead.
+- **Types:** `string[]` is a list of strings; `bool` requires true or false. `number` accepts finite numeric literals, not numeric strings. Both `min_count` parameters are `integer` with minimum 1. Bounds are inclusive and use the checked parameter's native units; `unit` only labels findings.
+- **Object values:** use objects such as `{}` for selectors and maps. The catalogue publishes object defaults as `{}`. `value` in `table.field_attribute_required` accepts any literal, including null.
+- **Statement names:** use an exact XanoScript name such as `db.add` or `api.request`; stored aliases such as `mvp:dbo_add` also work. A misspelled name matches nothing, so verify it against statement documentation.
+- **Parameter paths:** use a name or dotted path such as `data.role`. Aliases include `per_page` for paging size, `where` for search conditions and `error` for the error message.
+- **References:** match a reference or its child paths. `$auth` matches `$auth.id`; `$input.id` does not match `$input.id2`. Supported roots are `$input`, `$auth`, `$env`, `$var`, `$error` and `$output`. Quoted text is literal.
+- **Literal comparison:** false differs from "false", and 0 differs from "0". Equal numbers match, including 1 and 1.0. Empty objects and lists share a stored representation and compare equally. This applies to forbidden literals, field attributes and setting equality.
+- **Names:** table, function, middleware, tag, field and provider names match exactly. Hosts and HTTP verbs ignore case. Regex and wildcards are not supported; credential `patterns` selects built-in shapes.
+- **Combined conditions:** field names and field types must match the same field; table selectors combine all conditions. Allowed write functions and tags are alternatives. `query.input_rules` needs an enabled condition and `statement.containment` needs a structural constraint. `statement.expression_rule` without extra constraints still requires the parameter to exist.
+- **Tags:** `scope.tags` and `except_tags` match the inspected object's own tags. `query.tagged_table_access.tag` and `table_selector.tag` match table tags.
 
 ## Findings and remediation
 
