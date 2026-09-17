@@ -4,7 +4,7 @@
 import { readFileSync } from 'fs';
 
 const items = JSON.parse(readFileSync(process.argv[2], 'utf8')).items;
-const SCOPE_KEYS = ['scope', 'api_groups', 'tables', 'verbs', 'except_tags'];
+const SCOPE_KEYS = ['scope', 'api_groups', 'tables', 'verbs', 'tags', 'except_tags'];
 const out = [];
 const w = (l = '') => out.push(l);
 const cell = s => String(s).replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim();
@@ -58,7 +58,9 @@ for (const [key, shape] of Object.entries(scope.properties)) {
   w(`- \`scope.${key}\` (${shape.type}) — ${shape.description}${vs}`);
 }
 w();
-w('`api_groups`, `tables`, `verbs` and `except_tags` may also be written at the top level of `params` as shorthands for the matching `scope` key. `scope.api_groups`, `scope.verbs` and `scope.auth` describe QUERIES: setting any of them on a check that inspects several kinds drops every non-query object from the rule.');
+w('`api_groups`, `tables`, `verbs`, `tags` and `except_tags` may also be written at the top level of `params` as shorthands for the matching `scope` key. `scope.api_groups`, `scope.verbs` and `scope.auth` describe QUERIES: setting any of them on a check that inspects several kinds drops every non-query object from the rule.');
+w();
+w("Prefer tags to names. A rule scoped with `tags` or `except_tags` keeps working when an API group or table is renamed, and a new object opts in by carrying the tag; a rule scoped with `api_groups` or `tables` must be edited whenever those names change. A name the branch does not have selects nothing: the run reports it as a warning on the rule's result (`warnings`) without changing the result's status.");
 w();
 w('Example: `params = { statements: ["db.add", "db.edit"], scope: { object_kinds: ["query"], verbs: ["GET"] }, except_tags: ["generated"] }`.');
 w();
@@ -71,11 +73,16 @@ w('- **Parameter names** are resolved on the statement in this order: its `conte
 w('- **References** (`must_reference`, `must_not_reference`, `compare_to`, `before.must_reference`) match exactly or by prefix, so `$auth` also matches `$auth.id`. The roots that can appear are `$input`, `$auth`, `$env`, `$var`, `$error`, `$output`. Text inside quotes is a literal, not a reference.');
 w('- **Literal lists** (`values`, `literals_forbidden`) compare with exact type: `[false]` matches the boolean `false` but not the string `"false"`, and `[0]` does not match `"0"`.');
 w('- **Names are matched exactly.** There are no wildcards or regular expressions anywhere — not on `hosts`, `api_groups`, `tables` or `field_names`. `literal.credential_shape.patterns` is a closed set of named shapes, not a pattern you write.');
-w('- **Tags**: `scope.tags` / `except_tags` match the tags ON the inspected object. `query.tagged_table_access.tag` and `table_selector.tag` match TABLE tags instead.');
+w('- **Tags**: `tags` / `scope.tags` and `except_tags` match the tags ON the inspected object; an endpoint also carries the tags of its API group. `query.tagged_table_access.tag` and `table_selector.tag` match TABLE tags instead, and check parameters such as `public_tag` read only the object\'s own tags.');
 w();
-w('## Findings and remediation');
+w('## Findings');
 w();
-w('A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severity`, an `object` reference, a `message` saying what was found and where in the stack, and `remediation` — the rule author\'s own text when set, otherwise a deterministic per-check instruction derived from the rule\'s parameters and the object. `remediation` is always present, so a fix agent can act on a finding without re-deriving the intent.');
+w('A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severity`, an `object` reference and a `message` saying what was found and where in the stack. Guidance that applies to the whole policy, such as how to request an exemption, belongs in the policy `statement`. Some catalogue entries carry an optional static `fix_hint` string describing the usual fix for that check; it is the same for every rule that uses the check.');
+const hinted = items.filter(it => it.fix_hint);
+if (hinted.length) {
+  w();
+  for (const it of hinted) w(`- \`${it.id}\`: ${String(it.fix_hint).trim()}`);
+}
 w();
 w('A rule that inspected nothing reports `0 checked` rather than a pass, which is how "the scope matched no objects" is told apart from "everything satisfied the rule".');
 
