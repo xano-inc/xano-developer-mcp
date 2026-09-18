@@ -66,11 +66,8 @@ export function formatDocumentation(
   sections.push("");
   sections.push(doc.description);
 
-  // AI hints at every level. `examples` is the level a caller picks when it is
-  // about to copy a command, which is exactly when the notes about value sets,
-  // required shapes and what the platform refuses are most needed; dropping them
-  // there made the copy-from level the one with the least authoring guidance.
-  if (doc.ai_hints) {
+  // AI hints for overview/detailed
+  if (doc.ai_hints && (detailLevel === "overview" || detailLevel === "detailed")) {
     sections.push("");
     sections.push("## AI Usage Notes");
     sections.push(doc.ai_hints);
