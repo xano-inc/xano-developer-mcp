@@ -4,7 +4,7 @@
 import { readFileSync } from 'fs';
 
 const items = JSON.parse(readFileSync(process.argv[2], 'utf8')).items;
-const SCOPE_KEYS = ['scope', 'api_groups', 'tables', 'verbs', 'tags', 'except_tags'];
+const SCOPE_KEYS = ['scope', 'api_groups', 'tables', 'verbs', 'endpoint_auth', 'tags', 'except_tags'];
 const out = [];
 const w = (l = '') => out.push(l);
 const cell = s => String(s).replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim();
@@ -57,7 +57,9 @@ for (const [key, shape] of Object.entries(scope.properties)) {
   w(`- \`scope.${key}\` (${shape.type}) — ${shape.description}${vs}`);
 }
 w();
-w('Non-empty top-level `api_groups`, `tables`, `verbs` and `tags` replace the corresponding `scope` values. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.');
+w('Non-empty top-level `api_groups`, `tables`, `verbs` and `tags` replace the corresponding `scope` values, and a non-empty top-level `endpoint_auth` (`required` or `none`) replaces `scope.auth`. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.');
+w();
+w('Xano already records whether an endpoint is public (its authentication setting), so never add a tag just to restate that. Use `endpoint_auth: "required"` to keep a rule to endpoints that require authentication (test coverage, required middleware), and `endpoint_auth: "none"` to state what public endpoints may not do, e.g. `stack.statement_forbidden` with `statements: ["db.edit", "db.del"]`. `query.auth_required` has no parameters of its own: a deliberately public endpoint is an ordinary exception, `except_tags: ["public"]`, on the endpoint or on its API group.');
 w();
 w("Prefer tags to names. A rule scoped with `tags` or `except_tags` keeps working when an API group or table is renamed, and a new object opts in by carrying the tag; a rule scoped with `api_groups` or `tables` must be edited whenever those names change. A name the branch does not have selects nothing: the run reports it as a warning on the rule's result (`warnings`) without changing the result's status.");
 w();
@@ -67,13 +69,13 @@ w('## Writing parameter values');
 w();
 w('- **Types:** `string[]` is a list of strings; `bool` requires true or false. `number` accepts finite numeric literals, not numeric strings. Both `min_count` parameters are `integer` with minimum 1. Bounds are inclusive and use the checked parameter\'s native units; `unit` only labels findings.');
 w('- **Object values:** use objects such as `{}` for selectors and maps. The catalogue publishes object defaults as `{}`. `value` in `table.field_attribute_required` accepts any literal, including null.');
-w('- **Statement names:** use an exact XanoScript name such as `db.add` or `api.request`; stored aliases such as `mvp:dbo_add` also work. A misspelled name matches nothing, so verify it against statement documentation.');
+w('- **Statement names:** use an exact XanoScript name such as `db.add` or `api.request`; stored aliases such as `mvp:dbo_add` also work. A misspelled name is accepted on save and matches nothing, so the rule inspects no statements and passes (or, for a required-statement check, fails everywhere). Verify the name against statement documentation, then evaluate and read the rule result\'s `warnings`: a name that is not a XanoScript statement is reported there as `Statement "db.edt" is not a XanoScript statement name, so it matches nothing. Did you mean db.edit?` A stored alias containing `:` is compared as written and is never warned about.');
 w('- **Parameter paths:** use a name or dotted path such as `data.role`. Aliases include `per_page` for paging size, `where` for search conditions and `error` for the error message.');
 w('- **References:** match a reference or its child paths. `$auth` matches `$auth.id`; `$input.id` does not match `$input.id2`. Supported roots are `$input`, `$auth`, `$env`, `$var`, `$error` and `$output`. Quoted text is literal.');
 w('- **Literal comparison:** false differs from "false", and 0 differs from "0". Equal numbers match, including 1 and 1.0. Empty objects and lists share a stored representation and compare equally. This applies to forbidden literals, field attributes and setting equality.');
 w('- **Names:** table, function, middleware, tag, field and provider names match exactly. Hosts and HTTP verbs ignore case. Regex and wildcards are not supported; credential `patterns` selects built-in shapes.');
 w('- **Combined conditions:** field names and field types must match the same field; table selectors combine all conditions. Allowed write functions and tags are alternatives. `query.input_rules` needs an enabled condition and `statement.containment` needs a structural constraint. `statement.expression_rule` without extra constraints still requires the parameter to exist.');
-w("- **Tags:** `tags`, `scope.tags` and `except_tags` match the inspected object's own tags; an endpoint also carries the tags of its API group. `query.tagged_table_access.tag` and `table_selector.tag` match table tags, and check parameters such as `public_tag` read only the object's own tags.");
+w("- **Tags:** `tags`, `scope.tags` and `except_tags` match the inspected object's own tags; an endpoint also carries the tags of its API group. `query.tagged_table_access.tag` and `table_selector.tag` match table tags, and check parameters such as `allowed_tags` read only the object's own tags.");
 w();
 w('## Findings');
 w();
