@@ -5,19 +5,21 @@ Requires a platform build with policy support. A policy is its human description
 ## Quick Reference
 
 ```xs
-policy AUTH-EXAMPLE {
+policy "AUTH-EXAMPLE" {
   title = "Require authentication"
-  statement = "Endpoints require authentication unless explicitly marked public."
+  statement = "Endpoints require authentication unless the endpoint or its API group is tagged public."
   lifecycle = "active"
   enforcement = "advisory"
   severity = "high"
 
   rule {
     check = "query.auth_required"
-    params = { except_tags: ["xano:quick-start"] }
+    params = { except_tags: ["public", "xano:quick-start"] }
   }
 }
 ```
+
+The key is written quoted, `policy "AUTH-EXAMPLE" {`, which is the form the platform emits in canonical source (parse results, `source` on a read, `workspace pull`). An unquoted key of letters, digits, `.`, `_` and `-` parses too, but write the quoted form so your source matches what comes back.
 
 **A policy file carries no comments.** A comment inside a policy block is refused outright, whether it sits on its own line or trails a value. `//` and `/* */` both get the same sentence, naming the line they are on:
 
@@ -33,18 +35,18 @@ Use `advisory` while customizing a seed. `mandatory` findings participate in gat
 
 Each rule selects a built-in check and supplies literal parameters:
 
-- **The rule label is optional; omit it.** `rule { ... }` takes the id `<KEY>.R<n>` from its position, so the first rule of `AUTH-EXAMPLE` is `AUTH-EXAMPLE.R1`. Canonical source writes no label for an id it can derive that way. An invented id (`rule no-public-writes { ... }`) is written back and is the only kind stable across a reorder or a delete, so use one when something outside the policy has to name that rule.
-- On an existing policy, leave the labels and the order of existing rules alone and add new rules at the end: stored runs cite rule ids.
-- A rule `title` is optional too. An unnamed rule is displayed by its check's label — author title, else check label, else rule id, everywhere the platform names a rule. Title a rule only where its scoping makes the check's own label misleading.
+- **A rule cannot be named.** Only `rule { ... }` is legal; `rule foo { ... }` is refused with `A rule cannot be named. Write "rule {" — rules are identified by position (KEY.R1, KEY.R2…).` A rule takes the id `<KEY>.R<n>` from its position, so the first rule of `AUTH-EXAMPLE` is `AUTH-EXAMPLE.R1`. The same goes for the JSON form: a custom `rules[].id` is refused with that sentence, and an echoed `<KEY>.R<n>` is ignored and re-derived. To give a rule a human name, set its `title`.
+- On an existing policy, keep the order of existing rules and add new rules at the end: stored runs cite rule ids, and ids follow position.
+- A rule `title` is optional. An unnamed rule is displayed by its check's label — author title, else check label, else rule id, everywhere the platform names a rule. Title a rule only where its scoping makes the check's own label misleading.
 - **A rule has no `severity`.** Both surfaces refuse it and say the same thing, prefixed by the rule's position: `"severity" is set on the policy, not on a rule.` Every finding carries its policy's severity.
-- `params` lists only what the rule sets. Every omitted parameter takes the catalogue default, and canonical source drops any value equal to that default, so a rule that configures nothing has no `params` line. The stored document stays fully expanded; the stored `source` string is refreshed on the policy's next save, and export, `workspace pull` and the agent's file view reformat on read.
+- `params` lists only what the rule sets. Every omitted parameter takes the catalogue default, and canonical source drops any value equal to that default, so a rule that configures nothing has no `params` line. The stored document stays fully expanded. Every read — the policy GET and list, export, `workspace pull` and the agent's file view — serves `source` generated from the stored definition, never the string stored at the last save, so a policy saved under an older grammar still reads back as source today's parser accepts; the stored string itself is refreshed on the policy's next save.
 
 ## Authoring workflow
 
 1. Read the branch's existing policies and the instance's check catalogue. The catalogue is the only source of truth for what each check reports, which object kinds it inspects and the exact parameters it accepts.
 2. Write one `policy KEY { ... }` document in `policies/KEY.xs`. Customize its key, statement and rules; do not keep a template association.
 3. Validate and format through the native `POST /api:meta/workspace/{id}/policy/parse` endpoint with `{source}`. The result contains `{policy, source}` and writes nothing. With the authenticated Xano MCP, use its policy parse tool.
-4. Save canonical source using `POST /policy` or `PUT /policy/{id}` with `{branch, data: {source}}`. Do not combine source with structured fields. Add an optional `message` (and `description`) to label the Version History entry the save creates. The server owns versioning: see below.
+4. Save canonical source using `POST /policy` (create) or `PUT /policy/{id}` (update) with `{branch, data: {source}}`. Do not combine source with structured fields. **To change an existing policy, update it by its id** — read the id from the policy list (`xano_list_policies`, `xano policy list -o json`), take the `source` a read returns, edit it, and send it to `PUT /policy/{id}` (the authenticated MCP's save tool with `policy_id`). This is also how a `draft` becomes `active`: the same policy id, with `lifecycle = "active"` in the source. A `POST` whose key already exists is refused, naming the policy that holds it — `A policy with key "AUTH-001" already exists on this branch (policy id 12, "Authentication baseline"). To change it, update policy id 12 instead of creating a new one.` — and a `PUT` whose source carries another policy's key says which id is which. The `source` a read returns is always generated from the stored definition in the current grammar, so it is safe to send back unchanged (a no-op) or edited. Add an optional `message` (and `description`) to label the Version History entry the save creates. The server owns versioning: see below.
 5. Evaluate the same branch and inspect its findings. Runs made before edits are historical evidence, not current approval. A run snapshots the policies it checked: each policy's `statement` as written at run time and, per rule, its display `label` and the resolved `params` the check actually ran with (values that resolved to nothing are omitted, and an empty map serializes as `[]`). Runs retained from before the platform recorded those carry none of them. `xano policy status --run-detail` prints them.
 
 Policies also travel in the platform's workspace multidoc import/export. Use the official CLI's `workspace pull` and `workspace push` flow for a local workspace. The authenticated MCP supports workspace exports and one-time upload URLs for large multidocs; upload processes the source on the instance. A mandatory finding reported after a push does not roll back that import. Merge uses fresh evaluation.
@@ -63,6 +65,10 @@ Policies version exactly like every other Xano object: one Version History entry
 - Listing, diffing and restoring versions is a **dashboard** surface. The Metadata API has no version routes — for policies or for any other object type — so an API or MCP client can label a save but cannot read or restore history. A restore performed in the dashboard is an ordinary save: it moves `version` forward rather than rewinding it, and re-validates against today's check catalogue.
 - A run's snapshot records the `version` it evaluated. Compare it with the policy's current `version` to know whether stored findings still describe the live definition.
 
+## Releases and tenants
+
+Policy definitions ship with the branch: a release, a tenant deploy, a release-to-workspace deploy, a backup restore and a workspace archive all carry every policy on the branch (drafts included) with its `guid` and `version`. Runs and Version History do not travel, and a tenant's stored runs are cleared on each deploy. On a tenant a policy is an inert, read-only copy that the next deploy replaces: nothing evaluates it there, and the merge gate cannot fire because a tenant has a single branch. A policy can never block a deploy, restore or archive import. Those copies keep the fields the receiving platform knows and drop the rest, and a policy that still cannot be read (for example a check the tenant's older platform does not have) is skipped with a `policy:import_skipped` warning in the audit log, naming the policy and the reason, while everything else imports. Authored writes (Metadata API, Studio, `workspace push`) stay strict.
+
 ## Check catalogue
 
 A rule selects one built-in check and supplies literal parameters. Unknown check IDs and parameter names are rejected when saving. Read the instance catalogue (`GET /api:meta/workspace/{id}/policy/check` or `xano policy catalogue -o json`) for current types, defaults, allowed values, nested properties and examples.
@@ -75,7 +81,7 @@ Every entry carries a human `label` beside its id; that label is what names a ru
 | `literal.credential_shape` | Definitions avoid recognizable credential literals | Reports known credential-shaped string literals in selected locations. Scanning function stacks also reports literal encryption keys and IVs, regardless of the selected patterns. Findings include locations and pattern names, never secret values. | `patterns`, `locations` |
 | `object.settings_forbidden` | Objects avoid forbidden settings | Reports objects whose saved settings match all configured predicates. Checks stored values; inherited runtime settings are not resolved. | `object_kind*`, `when*` |
 | `outbound.vendor_allowlist` | Outbound calls go only to approved vendors | Reports unapproved HTTP hosts, cloud and email providers, and agent model providers. Empty allowlists report destinations as not yet reviewed. Dynamic or missing destinations are reported as unresolved; environment secrets are not read. | `kinds`, `hosts`, `providers` |
-| `query.auth_required` | Endpoints declare authentication or a public tag | Requires each query to declare an auth table or carry the public exception tag. Checks the saved authentication setting; authorization logic is not evaluated. | `public_tag` |
+| `query.auth_required` | Endpoints require authentication | Requires each endpoint in scope to require authentication. Exclude deliberate public endpoints with except_tags (on the endpoint or its API group) or narrow the rule with api_groups or verbs. Checks the saved authentication setting; authorization logic is not evaluated. | _scope only_ |
 | `query.input_rules` | Inputs declare types, filters and bounds | Checks declared query inputs for required types, filters, limits, usage and names. Enable at least one condition. Filter requirements apply to text inputs; types come from declarations. | 1 of (`type_by_name`, `filters_required`, `paging_max_required`, `path_params_forbidden`, `unused_forbidden`, `inputs_required`, `filter_min`) |
 | `query.middleware_required` | Endpoints attach required middleware | Requires every named middleware to be attached and active. Resolves query, API group and branch or workspace defaults for pre- and post-middleware. Checks attachment, not middleware behavior. | `middleware*` |
 | `query.statement_required` | Endpoints call a required function or statement | Requires a matching statement or function call in the query's own stack, optionally first or containing specified references. Confirms presence in the definition, not execution on every path. | 1 of (`statement`, `function`), `position`, `must_reference`, `when` |
@@ -88,14 +94,14 @@ Every entry carries a human `label` beside its id; that label is what names a ru
 | `statement.param_bound` | A numeric parameter stays within bounds | Requires a numeric literal within the inclusive bounds. Reports missing, non-numeric and unresolved values. Bounds use the parameter's native units. | 1 of (`min`, `max`), `statement*`, `param*`, `unit` |
 | `statement.param_forbidden` | A parameter avoids forbidden values | Reports a parameter set to a forbidden literal value, or a computed value that cannot be resolved. An omitted parameter passes. | `statement*`, `param*`, `values*` |
 | `statement.param_not_from_input` | Protected fields avoid direct request input | Reports whole-record assignments from $input, $input.new or $input.old, and protected fields assigned directly from request input. Intermediate variables are not traced. | `statement*`, `param`, `fields` |
-| `statement.param_required` | Statements explicitly set a required parameter | Requires an explicit parameter on matching statements. For output, requires a customized field list and can also check for fields marked sensitive in the table schema. | `statement*`, `param*`, `when_table_tag`, `follow_addons`, `must_exclude_sensitive_fields` |
+| `statement.param_required` | Statements explicitly set a required parameter | Requires an explicit parameter on matching statements. For output, requires a customized field list — db.query and db.get write one as output = ["id", "name"], a static list of field names, where a dotted entry reaches inside a paged result (items.book_name) — and can also check for fields marked sensitive in the table schema. | `statement*`, `param*`, `when_table_tag`, `follow_addons`, `must_exclude_sensitive_fields` |
 | `table.auth_table_rules` | Endpoints use the single auth table | Requires exactly one auth-enabled table across the branch. Queries that declare authentication must use that table. Scope narrows the checked objects and queries; the table count always covers the full branch. | _scope only_ |
 | `table.coverage_required` | Tables are referenced by a required object | Requires each selected table to be referenced by a matching object, directly or through called functions. Scope selects tables; referenced_by selects the objects that provide coverage. Only tables count as checked. | `table_selector`, `referenced_by` |
 | `table.field_attribute_required` | Schema fields have required attributes | Checks selected schema fields for a required attribute, type or presence, or forbids them. When names and types are both set, a field must match both. Reads schema definitions only. | 1 of (`field_names`, `field_types`), `attribute`, `value`, `type`, `require_exists`, `forbidden` |
 | `table.tag_required` | Tables with matching fields carry a tag | Requires a table tag when a schema field matches both the selected type and one of the selected names. Reads schema definitions only. Only tables with a matching field count as checked. | `field_type`, `field_names*`, `tag*` |
-| `table.view_hide_required` | Saved views hide sensitive fields | Requires saved table views to hide every field marked sensitive in the table schema. Checks each view's hidden-column list. Tables without saved views pass. | `table_tag` |
+| `table.view_hide_required` | Saved views hide sensitive fields | Requires saved table views to hide every field marked sensitive in the table schema. Checks each view's hidden-column list. Tables without saved views pass. Select tables with tags. | _scope only_ |
 | `table.write_location_restricted` | Table writes use approved functions or tags | Restricts writes to a table to approved functions or tagged objects. Checks where each write is defined; a caller can use an approved function without defining the write itself. | `table*`, `fields`, `statements`, `allowed_functions`, `allowed_tags` |
-| `test.assertion_required` | Tests assert anonymous calls are rejected | Requires a workflow test that calls each selected query anonymously and asserts an authorization rejection (401, 403, unauthorized or forbidden). Recognizes a call expectation, an enclosing expect.to_throw, or a later assertion on the call's result. Tests are inspected, not run. | `scenario` |
+| `test.assertion_required` | Tests assert anonymous calls are rejected | Requires a workflow test that calls each selected endpoint anonymously (no token, or a literal null, empty or false token) and asserts an authorization rejection (401, 403, unauthorized or forbidden). Endpoints that do not require authentication are skipped: they cannot reject an anonymous call. Recognizes a call expectation, an enclosing expect.to_throw, or a later assertion on the call's result. Tests are inspected, not run. | _scope only_ |
 | `trigger.self_write_forbidden` | Triggers avoid direct writes to their own table | Reports database triggers that write to their own table, including bulk writes and add-or-edit. Inspects the trigger's own stack, including nested branches; writes inside called functions are not followed. | _scope only_ |
 | `workspace.object_required` | Required objects exist | Requires a minimum count of objects matching the selected kind, name, tag and scope. Checks object presence, not behavior. | `object_kind*`, `tag`, `name`, `min_count` |
 
@@ -110,7 +116,6 @@ Closed value sets worth knowing without a catalogue round-trip:
 - `outbound.vendor_allowlist.kinds`: `api.request`, `cloud`, `email`, `agent.llm`
 - `query.statement_required.position`: `any`, `first`
 - `statement.expression_rule.operators_forbidden`: `===`, `!==`, `==`, `!=`, `>=`, `<=`, `&&`, `||`, `~`, `+`, `-`, `*`, `/`, `%`, `<`, `>`
-- `test.assertion_required.scenario`: `anonymous_call_rejected`
 - `workspace.object_required.object_kind`: `table`, `query`, `function`, `workflow_test`, `api_group`, `task`, `trigger`, `middleware`, `addon`, `channel`, `tool`, `agent`, `mcp_server`, `workspace`
 
 Nested object parameters and their keys:
@@ -137,7 +142,9 @@ Scope selects the objects a check inspects. All conditions must match; omitted o
 - `scope.tables` (string[]) — Select tables by exact name, or objects reaching any named table directly or through called functions.
 - `scope.reaching_table_tag` (string) — Select objects reaching a table with this exact tag, directly or through called functions.
 
-Non-empty top-level `api_groups`, `tables`, `verbs` and `tags` replace the corresponding `scope` values. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.
+Non-empty top-level `api_groups`, `tables`, `verbs` and `tags` replace the corresponding `scope` values, and a non-empty top-level `endpoint_auth` (`required` or `none`) replaces `scope.auth`. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.
+
+Xano already records whether an endpoint is public (its authentication setting), so never add a tag just to restate that. Use `endpoint_auth: "required"` to keep a rule to endpoints that require authentication (test coverage, required middleware), and `endpoint_auth: "none"` to state what public endpoints may not do, e.g. `stack.statement_forbidden` with `statements: ["db.edit", "db.del"]`. `query.auth_required` has no parameters of its own: a deliberately public endpoint is an ordinary exception, `except_tags: ["public"]`, on the endpoint or on its API group.
 
 Prefer tags to names. A rule scoped with `tags` or `except_tags` keeps working when an API group or table is renamed, and a new object opts in by carrying the tag; a rule scoped with `api_groups` or `tables` must be edited whenever those names change. A name the branch does not have selects nothing: the run reports it as a warning on the rule's result (`warnings`) without changing the result's status.
 
@@ -147,13 +154,13 @@ Example: `params = { statements: ["db.add", "db.edit"], scope: { object_kinds: [
 
 - **Types:** `string[]` is a list of strings; `bool` requires true or false. `number` accepts finite numeric literals, not numeric strings. Both `min_count` parameters are `integer` with minimum 1. Bounds are inclusive and use the checked parameter's native units; `unit` only labels findings.
 - **Object values:** use objects such as `{}` for selectors and maps. The catalogue publishes object defaults as `{}`. `value` in `table.field_attribute_required` accepts any literal, including null.
-- **Statement names:** use an exact XanoScript name such as `db.add` or `api.request`; stored aliases such as `mvp:dbo_add` also work. A misspelled name matches nothing, so verify it against statement documentation.
+- **Statement names:** use an exact XanoScript name such as `db.add` or `api.request`; stored aliases such as `mvp:dbo_add` also work. A misspelled name is accepted on save and matches nothing, so the rule inspects no statements and passes (or, for a required-statement check, fails everywhere). Verify the name against statement documentation, then evaluate and read the rule result's `warnings`: a name that is not a XanoScript statement is reported there as `Statement "db.edt" is not a XanoScript statement name, so it matches nothing. Did you mean db.edit?` A stored alias containing `:` is compared as written and is never warned about.
 - **Parameter paths:** use a name or dotted path such as `data.role`. Aliases include `per_page` for paging size, `where` for search conditions and `error` for the error message.
 - **References:** match a reference or its child paths. `$auth` matches `$auth.id`; `$input.id` does not match `$input.id2`. Supported roots are `$input`, `$auth`, `$env`, `$var`, `$error` and `$output`. Quoted text is literal.
 - **Literal comparison:** false differs from "false", and 0 differs from "0". Equal numbers match, including 1 and 1.0. Empty objects and lists share a stored representation and compare equally. This applies to forbidden literals, field attributes and setting equality.
 - **Names:** table, function, middleware, tag, field and provider names match exactly. Hosts and HTTP verbs ignore case. Regex and wildcards are not supported; credential `patterns` selects built-in shapes.
 - **Combined conditions:** field names and field types must match the same field; table selectors combine all conditions. Allowed write functions and tags are alternatives. `query.input_rules` needs an enabled condition and `statement.containment` needs a structural constraint. `statement.expression_rule` without extra constraints still requires the parameter to exist.
-- **Tags:** `tags`, `scope.tags` and `except_tags` match the inspected object's own tags; an endpoint also carries the tags of its API group. `query.tagged_table_access.tag` and `table_selector.tag` match table tags, and check parameters such as `public_tag` read only the object's own tags.
+- **Tags:** `tags`, `scope.tags` and `except_tags` match the inspected object's own tags; an endpoint also carries the tags of its API group. `query.tagged_table_access.tag` and `table_selector.tag` match table tags, and check parameters such as `allowed_tags` read only the object's own tags.
 
 ## Findings
 
@@ -173,3 +180,38 @@ The standalone developer MCP's bundled language server does not validate policy 
 Read, parse and evaluate need `workspace:policy` read access. Writes additionally need the matching operation scope and an admin/explore role. Existing tokens may need reissuing. The authenticated MCP takes instance and workspace from its request authentication; it does not accept arbitrary targets.
 
 A policy is its description plus deterministic check rules. Checks inspect stored definitions and nothing runs at request time.
+
+## Permissions
+
+Three gates decide every policy request. A refusal is an HTTP 403 whose message says which gate answered.
+
+| Gate | Applies to | Passes when | Refusal message |
+| --- | --- | --- | --- |
+| Feature | Every policy route | The instance has the `policies` feature enabled | `Policies are not enabled on this instance.` |
+| Scope | Every policy route | The credential holds the `workspace:policy` level the operation needs, and so does the caller's role on that workspace | `Access Denied.` (OAuth: `insufficient_scope: workspace:read` or `workspace:write`) |
+| Author | Writes only | The caller's instance role is `admin`, or `explore` on a free instance | `Policy changes require the admin role.` |
+
+The scope level each operation needs:
+
+| Operation | `workspace:policy` level | OAuth ceiling |
+| --- | --- | --- |
+| List, get, check catalogue, policies for an object, runs, one run, parse | `read` | `workspace:read` |
+| Evaluate (run checks) | `read` | `workspace:read` |
+| Create a policy | `create` | `workspace:write` |
+| Update a policy, restore a version | `update` | `workspace:write` |
+| Delete a policy | `delete` | `workspace:write` |
+| `workspace pull` / export with policies included | `read` (without it the export still succeeds and omits policies) | `workspace:read` |
+| `workspace push` / import of a policy file that differs from the stored policy | `create` or `update` | `workspace:write` |
+| Archive import carrying policies | `create` and `update` (without them the archive imports and its policies are skipped, each skip written to the audit log); an import that would delete existing policies needs `delete` | - |
+
+`workspace:policy` is a level set on a Metadata API access token and on a role's "Workspace Policies" permission; a per-workspace override on a member wins over the role. Both must allow the operation. A token created before policies existed carries no `workspace:policy` level, so it reads nothing until it is reissued. An OAuth token has no per-permission levels: `workspace:read` or `workspace:write` is its ceiling, and the role's permission decides the rest.
+
+Who can author: creating, updating, deleting and restoring need the author gate on top of the scope. A `developer`, `readonly` or custom role is refused on writes even when its permission and token grant the full level; reissuing a token does not change that. Those roles can read policies and run checks.
+
+Evaluate needs only `read`, so a reviewer or a CI credential can run checks. Storing the run is a write: from a read-only session, or an OAuth token without `workspace:write`, the evaluation returns its findings with `stored: false` and run id `0`, and the retained runs are untouched.
+
+A policy file that is identical to the stored policy needs no write permission in a push: it is reported `unchanged` and skipped. A policy file that differs, pushed by a caller who may not author, refuses the whole push before anything is imported (`Policy files require the admin role; nothing was imported: KEY`). Exclude the policy files (`xano workspace push -e "policies/*"`) or pull again to push the rest.
+
+What a policy reader can see: a finding names the object it is about - its type, name and id - and says where in the stack the problem is, for any object on the branch. `workspace:policy` read therefore shows object names and ids across the branch even to a role with no access to, say, the database or that API group. The credential check never prints the literal it matched. A merge that the gate refuses returns its blocking findings to the person merging, with or without `workspace:policy` read, because they need them to fix the branch.
+
+Where policy text travels outside this permission: Git sync writes every policy file to the connected repository, so anyone with access to that repository can read them; and the workspace audit log records each policy change with the policy document, readable by anyone with the workspace logs permission.
