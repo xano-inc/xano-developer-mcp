@@ -78,12 +78,15 @@ Add to your Claude Desktop configuration file:
 
 ## Xano Skills
 
-This repo ships two agent skills under `skills/`:
+This repo ships three agent skills under `skills/`:
 
 - **`xano-init`** — guided setup that profiles a Xano workspace and builds a sandbox-first development playbook
 - **`xanoscript-docs-expert`** — deep reference for working with XanoScript documentation and this MCP project's architecture
+- **`xano-policies`** — stub for workspace policies: the authoring rules that never change, plus `xano skills pull` to install the live, catalogue-generated skill from your instance
 
-**Using Claude Code inside this repo?** You already have both skills. They're committed to `.claude/skills/` and load automatically when Claude Code starts a session in this directory — no install step needed. Just invoke `xano-init` or `xanoscript-docs-expert` by name, or describe the task in natural language.
+**Using Claude Code inside this repo?** You already have all three skills. They're committed to `.claude/skills/` and load automatically when Claude Code starts a session in this directory — no install step needed. Just invoke `xano-init`, `xanoscript-docs-expert` or `xano-policies` by name, or describe the task in natural language.
+
+> **Keep the two copies identical.** Only the root `skills/` folder is published (skills.sh indexes it, and `npx skills add` installs from it); `.claude/skills/` is the copy this repo's own Claude Code sessions load. There is no sync script, so any edit to a skill must be made in both places.
 
 **Using a different agent, or want the skills available in other projects?** Skills are distributed via the open [Agent Skills standard](https://github.com/vercel-labs/skills) and install with a single `npx` command — no cloning or manual file copying.
 

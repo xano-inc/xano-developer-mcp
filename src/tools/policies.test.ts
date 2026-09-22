@@ -43,6 +43,29 @@ describe("policy developer tools", () => {
     expect(policyExample).not.toContain("//");
   });
 
+  it("registers the skills topic and points it at the file skills pull writes", () => {
+    expect(cliDocsToolSpec.inputParser.parse({ topic: "skills" }).topic).toBe("skills");
+    const skills = handleCliDocs({ topic: "skills" });
+    expect(skills).toContain("xano skills pull");
+    expect(skills).toContain(".claude/skills/xano-policies/SKILL.md");
+    expect(skills).toContain("workspace:policy");
+    // The generated skill is not a workspace knowledge record, and the knowledge topic says so.
+    expect(handleCliDocs({ topic: "knowledge" })).toContain("xano skills pull");
+  });
+
+  it("keeps the canonical policy example in the form the platform parser returns", () => {
+    // Quoted key, platform field order, and a one-key params map inline with no padding.
+    expect(policyExample.startsWith('policy "AUTH-EXAMPLE" {')).toBe(true);
+    expect(policyExample).not.toContain("policy AUTH-EXAMPLE {");
+    expect(policyExample).toContain('params = {except_tags: ["public", "xano:quick-start"]}');
+    expect(policyExample.indexOf('severity')).toBeLessThan(policyExample.indexOf('lifecycle'));
+    const policies = xanoscriptDocs({ topic: "policies" }).documentation;
+    expect(policies).toContain('policy "AUTH-EXAMPLE" {');
+    // A rule that inspected nothing passes with checked 0; it is not a distinct status.
+    expect(policies).toContain("no objects checked");
+    expect(policies).not.toContain("reports `0 checked` rather than a pass");
+  });
+
   for (const prefix of ["", "\ufeff\n// Example policy\n\n/* authoring note */\n"]) {
     it(`does not falsely validate a policy locally (prefix length ${prefix.length})`, () => {
       const result = validateXanoscript({ code: prefix + policyExample });

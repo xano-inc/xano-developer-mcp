@@ -8,18 +8,18 @@ Requires a platform build with policy support. A policy is its human description
 policy "AUTH-EXAMPLE" {
   title = "Require authentication"
   statement = "Endpoints require authentication unless the endpoint or its API group is tagged public."
+  severity = "high"
   lifecycle = "active"
   enforcement = "advisory"
-  severity = "high"
 
   rule {
     check = "query.auth_required"
-    params = { except_tags: ["public", "xano:quick-start"] }
+    params = {except_tags: ["public", "xano:quick-start"]}
   }
 }
 ```
 
-The key is written quoted, `policy "AUTH-EXAMPLE" {`, which is the form the platform emits in canonical source (parse results, `source` on a read, `workspace pull`). An unquoted key of letters, digits, `.`, `_` and `-` parses too, but write the quoted form so your source matches what comes back.
+That block is the parser's own output, byte for byte. The key is written quoted, `policy "AUTH-EXAMPLE" {`, which is the form the platform emits in canonical source (parse results, `source` on a read, `workspace pull`). An unquoted key of letters, digits, `.`, `_` and `-` parses too, but write the quoted form so your source matches what comes back. Canonical source also fixes the field order (`title`, `statement`, `severity`, `lifecycle`, `enforcement`, then a blank line before the first rule) and the spacing of a `params` map: a map with one key stays inline with no padding inside the braces, `params = {except_tags: ["public"]}`, and a map with several keys is written one key per line with the colons aligned. Write what you like and let `policy parse` format it; do not hand-tune spacing to match.
 
 **A policy file carries no comments.** A comment inside a policy block is refused outright, whether it sits on its own line or trails a value. `//` and `/* */` both get the same sentence, naming the line they are on:
 
@@ -49,9 +49,9 @@ Each rule selects a built-in check and supplies literal parameters:
 4. Save canonical source using `POST /policy` (create) or `PUT /policy/{id}` (update) with `{branch, data: {source}}`. Do not combine source with structured fields. **To change an existing policy, update it by its id** — read the id from the policy list (`xano_list_policies`, `xano policy list -o json`), take the `source` a read returns, edit it, and send it to `PUT /policy/{id}` (the authenticated MCP's save tool with `policy_id`). This is also how a `draft` becomes `active`: the same policy id, with `lifecycle = "active"` in the source. A `POST` whose key already exists is refused, naming the policy that holds it — `A policy with key "AUTH-001" already exists on this branch (policy id 12, "Authentication baseline"). To change it, update policy id 12 instead of creating a new one.` — and a `PUT` whose source carries another policy's key says which id is which. The `source` a read returns is always generated from the stored definition in the current grammar, so it is safe to send back unchanged (a no-op) or edited. Add an optional `message` (and `description`) to label the Version History entry the save creates. The server owns versioning: see below.
 5. Evaluate the same branch and inspect its findings. Runs made before edits are historical evidence, not current approval. A run snapshots the policies it checked: each policy's `statement` as written at run time and, per rule, its display `label` and the resolved `params` the check actually ran with (values that resolved to nothing are omitted, and an empty map serializes as `[]`). Runs retained from before the platform recorded those carry none of them. `xano policy status --run-detail` prints them.
 
-Policies also travel in the platform's workspace multidoc import/export. Use the official CLI's `workspace pull` and `workspace push` flow for a local workspace. The authenticated MCP supports workspace exports and one-time upload URLs for large multidocs; upload processes the source on the instance. A mandatory finding reported after a push does not roll back that import. Merge uses fresh evaluation.
+Policies also travel in the platform's workspace multidoc import/export. Use the official CLI's `workspace pull` and `workspace push` flow for a local workspace; `workspace push -m "<message>"` labels the Version History entry of each policy document the push actually changes, and a policy the push leaves unchanged gets no entry. The authenticated MCP supports workspace exports and one-time upload URLs for large multidocs; upload processes the source on the instance. A mandatory finding reported after a push does not roll back that import. Merge uses fresh evaluation.
 
-Inside Xano's own agent, the instance serves a platform skill named `xano-policies` in `auto` mode, generated from the live check catalogue. It carries this file format, every check id and its parameters, and the authoring and honesty rules, so a policy request there needs no pasted prompt; there is nothing to install or enable beyond the `policies` feature. It is the agent-side counterpart of this document, not a substitute for the instance catalogue.
+Inside Xano's own agent, the instance serves a platform skill named `xano-policies` in `auto` mode, generated from the live check catalogue. It carries this file format, every check id and its parameters, and the authoring and honesty rules, so a policy request there needs no pasted prompt; there is nothing to install or enable beyond the `policies` feature. It is the agent-side counterpart of this document, not a substitute for the instance catalogue. One generator serves two surfaces of it, and the same skill is also served on the scoped Metadata API mirror `GET /api:meta/workspace/{id}/agent-skills` (`surface=studio`, the default, or `surface=cli`; `workspace:policy` read, like every other policy route). `xano skills pull` fetches the `cli` variant and writes it to `.claude/skills/xano-policies/SKILL.md` in the project, replacing the stub skill published from `xano-inc/xano-developer-mcp`, which does nothing but name that command.
 
 ## Versioning
 
@@ -146,7 +146,15 @@ Xano already records whether an endpoint is public (its authentication setting),
 
 Prefer tags to names. A rule scoped with `tags` or `except_tags` keeps working when an API group or table is renamed, and a new object opts in by carrying the tag; a rule scoped with `api_groups` or `tables` must be edited whenever those names change. A name the branch does not have selects nothing: the run reports it as a warning on the rule's result (`warnings`) without changing the result's status.
 
-Example: `params = { statements: ["db.add", "db.edit"], scope: { object_kinds: ["query"], verbs: ["GET"] }, except_tags: ["generated"] }`.
+Example, in the canonical spelling the parser returns:
+
+```xs
+    params = {
+      statements : ["db.add", "db.edit"]
+      scope      : {object_kinds: ["query"], verbs: ["GET"]}
+      except_tags: ["generated"]
+    }
+```
 
 ## Writing parameter values
 
@@ -179,7 +187,7 @@ A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severi
 - `trigger.self_write_forbidden`: Do not move the write into a called function: that hides it from this check without fixing it.
 - `workspace.object_required`: A placeholder object satisfies the check, not the policy; ask what it must do.
 
-A rule that inspected nothing reports `0 checked` rather than a pass, which is how "the scope matched no objects" is told apart from "everything satisfied the rule".
+A rule that inspected nothing is reported as a **pass with `checked: 0`** — there is no separate status for it. The CLI and the Studio render that result as `no objects checked`, and it proves nothing about coverage: it says the rule's scope matched no objects, not that anything satisfied the rule. Treat it as a question about the scope: widen it until it reaches the objects the `statement` is about, or confirm that matching nothing on this branch is intended.
 
 ### Fixing a finding
 

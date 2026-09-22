@@ -28,6 +28,7 @@ import { staticHostDoc } from "./topics/static_host.js";
 import { updateDoc } from "./topics/update.js";
 import { integrationDoc } from "./topics/integration.js";
 import { policyDoc } from "./topics/policy.js";
+import { skillsDoc } from "./topics/skills.js";
 
 /**
  * All available documentation topics
@@ -50,6 +51,7 @@ export const topics: Record<string, TopicDoc> = {
   update: updateDoc,
   integration: integrationDoc,
   policy: policyDoc,
+  skills: skillsDoc,
 };
 
 /**

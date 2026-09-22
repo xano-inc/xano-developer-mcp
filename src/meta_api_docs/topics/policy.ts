@@ -11,15 +11,19 @@ const policyId: ParameterDoc = {
 };
 const prefix = "/workspace/{workspace_id}/policy";
 
-export const policyExample = `policy AUTH-EXAMPLE {
+// Canonical source exactly as POST /policy/parse returns it: quoted key, the platform's
+// field order (title, statement, severity, lifecycle, enforcement), a blank line before the
+// first rule, and a one-key params map inline with no padding inside the braces.
+export const policyExample = `policy "AUTH-EXAMPLE" {
   title = "Require authentication"
   statement = "Endpoints require authentication unless the endpoint or its API group is tagged public."
+  severity = "high"
   lifecycle = "active"
   enforcement = "advisory"
-  severity = "high"
+
   rule {
     check = "query.auth_required"
-    params = { except_tags: ["public", "xano:quick-start"] }
+    params = {except_tags: ["public", "xano:quick-start"]}
   }
 }`;
 
@@ -40,7 +44,7 @@ An unknown check id or parameter name is refused naming the nearest real one, so
 
 A new policy is written lifecycle = "active" with enforcement = "advisory" - the pair a template enables with. It blocks nothing while its findings are reviewed and, unlike a draft, it is actually evaluated, so the author can see what it reports. Reach for draft only to park a policy that should not be evaluated at all.
 
-Policies version like every other Xano object: one Version History entry per real change. The version field is the index of the newest entry, so it moves only when the definition really changes. A save whose definition matches the stored one does nothing at all - no new version, no updated_at, no history entry, no audit record - and the response carries unchanged: true; a real save carries unchanged: false. Formatting is not content, so expanded and sparse spellings of the same definition are the same no-op. Optional message and description label the entry a save creates and are ignored when nothing is saved. PUT also accepts an optional last_updated_at, the updated_at you last read: when it no longer matches, the write is refused with HTTP 400 and the message A previous update was performed before your request. Please reload your data and try again. Omitting it, or sending null or an empty string, means no check. Listing, diffing and restoring versions is a dashboard surface: the Metadata API has no version routes, for policies or for any other object type. Mandatory findings block a merge, and push feedback follows the import rather than rolling it back. Evaluation infrastructure errors are reported separately from findings.
+Policies version like every other Xano object: one Version History entry per real change. The version field is the index of the newest entry, so it moves only when the definition really changes. A save whose definition matches the stored one does nothing at all - no new version, no updated_at, no history entry, no audit record - and the response carries unchanged: true; a real save carries unchanged: false. Formatting is not content, so expanded and sparse spellings of the same definition are the same no-op. Optional message and description label the entry a save creates and are ignored when nothing is saved. The workspace multidoc import accepts an optional message too (the CLI sends it as workspace push -m): it labels the Version History entry of every policy document the import actually changes, and a policy the import leaves unchanged gets no entry at all. PUT also accepts an optional last_updated_at, the updated_at you last read: when it no longer matches, the write is refused with HTTP 400 and the message A previous update was performed before your request. Please reload your data and try again. Omitting it, or sending null or an empty string, means no check. Listing, diffing and restoring versions is a dashboard surface: the Metadata API has no version routes, for policies or for any other object type. Mandatory findings block a merge, and push feedback follows the import rather than rolling it back. Evaluation infrastructure errors are reported separately from findings.
 
 Canonical source is sparse: a rule is always written rule { ... } and only parameters that differ from their catalogue default are written. The parsed and stored document is fully expanded, so a GET returns every parameter. A rule cannot be named: its id is always its position (KEY.R1, KEY.R2). Source that writes rule foo { is refused with the rule's position followed by the message A rule cannot be named. Write \"rule {\" — rules are identified by position (KEY.R1, KEY.R2…). A structured document that carries a custom rules[].id is refused with the same message; an id of the derived KEY.R<n> shape echoed from a GET is ignored and re-derived, and omitting id is the simplest. A rule's human name is its title. Severity says how much a violation of this policy matters: it orders findings in reports and never blocks a merge, which enforcement decides. Its four values are critical, high, medium and low; nothing else is accepted. It belongs to the policy only, defaults to medium and is omitted from source at that default. A rule that carries a severity is refused, on source and on a structured document alike, with the rule's position followed by the message "severity" is set on the policy, not on a rule. A run's policies[] snapshot records each policy's statement and, per rule, its display label and the resolved params the check ran with; runs retained from before that change carry none of them, so treat all three as optional. Each item from the check catalogue endpoint carries a human label beside the check id, and that label names a rule whose author gave it no title.
 
@@ -79,5 +83,11 @@ Checks are static: they inspect stored definitions and nothing runs at request t
     },
     { method: "GET", path: prefix + "/run", description: "List retained runs newest first; at most twenty runs are retained per branch.", parameters: [workspace, branch, { name: "limit", type: "integer", in: "query", default: "25", description: "Maximum number of runs to return (1-200)" }] },
     { method: "GET", path: prefix + "/run/{run_id}", description: "Read one retained run on the selected branch.", parameters: [workspace, branch, { name: "run_id", type: "integer", required: true, in: "path", description: "Run ID" }] },
+    {
+      method: "GET", path: "/workspace/{workspace_id}/agent-skills",
+      description: "Serve the generated xano-policies agent skill for the selected branch. One generator, two surfaces: studio (the default, the variant the Studio agent loads) and cli (the variant xano skills pull writes to .claude/skills/xano-policies/SKILL.md in a project). The check catalogue inside it is generated from the live registry at request time, so it can never document a check this instance does not have. Needs the same workspace:policy read scope as the other policy routes.",
+      parameters: [workspace, branch, { name: "surface", type: "string", in: "query", default: "studio", enum: ["studio", "cli"], description: "Which variant of the generated skill to return" }],
+      response: { type: "object", description: "{knowledge: [...]}: the same envelope as workspace knowledge, with one item named xano-policies whose knowledge_type is skill and whose content is the skill markdown. Each item also carries name and description." },
+    },
   ],
 };

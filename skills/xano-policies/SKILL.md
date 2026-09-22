@@ -1,0 +1,54 @@
+---
+name: xano-policies
+description: Use this skill whenever working with Xano workspace policies - authoring or editing policy files (`policies/*.xs`, `policy "KEY" { ... }` documents), running or interpreting policy checks, findings, reports or status, using any `xano policy ...` command, reading `policy_check` feedback from `xano workspace push`, or answering which checks exist, what a check inspects and how to fix or exempt a finding. Trigger on any mention of a Xano policy, policy check, policy finding, policy run or the policy catalogue.
+---
+
+# Xano policies
+
+## Get the live version of this skill
+
+**This file is a stub.** The authoritative skill is generated on the Xano instance from
+its live check catalogue at request time, so only the instance knows which checks exist
+and exactly what parameters they accept.
+
+Install it into this project:
+
+```bash
+xano profile use <name> -w <workspace_id> -b <branch>   # once, if no profile is selected
+xano skills pull                                        # writes .claude/skills/xano-policies/SKILL.md
+```
+
+`xano skills pull` overwrites this same file — `.claude/skills/xano-policies/SKILL.md`
+under the project directory — with the generated skill. **If the file you are reading
+already has a "check catalogue" section, you are reading the live version**: follow it
+and ignore this stub. Until then, never guess a check id or parameter; read them from
+`xano policy catalogue`.
+
+## The rules that never change
+
+- **Policy source carries no comments.** `//` and `/* */` are refused outright, `#` is a
+  syntax error. The explanation belongs in `statement`, `rationale`, `narrative`, or a
+  rule's `title`.
+- **Rules are anonymous.** Write `rule { ... }`; `rule foo { ... }` is refused. A rule's
+  id is its position (`KEY.R1`, `KEY.R2`), and its human name is its `title`.
+- **A rule has no `severity`.** Severity lives on the policy (`critical`, `high`,
+  `medium`, `low`) and only orders findings; `enforcement` is what blocks a merge.
+- **There is no `owner` field.** It was removed, and writing one is refused everywhere.
+- **A new policy is `lifecycle = "active"` with `enforcement = "advisory"`** unless you
+  are told otherwise: it blocks nothing while its findings are reviewed, and a `draft`
+  policy is never evaluated, so it reports nothing at all.
+- **Always parse before publishing:** `xano policy parse --file <path>`, then
+  `xano policy publish --file <path> -m "<message>"`.
+- **Never weaken a policy unprompted** — mandatory to advisory, loosening or removing a
+  rule, widening `except_tags`, or moving it to `draft`. Fix the object instead, and when
+  you are asked to weaken one, say plainly what stops being checked.
+
+## Commands
+
+- `xano policy catalogue [--check <id>]` — the checks this instance actually has, with their parameter schemas.
+- `xano policy parse <file>` — validate and format on the instance; writes nothing.
+- `xano policy publish --file <path> -m "<message>"` — create or update by the policy's stable key.
+- `xano policy evaluate` — evaluate active policies and store a run; exit 2 on mandatory findings.
+- `xano policy status [--run-detail]` — stored policy/run state without evaluating; `--run-detail` prints what the latest run recorded.
+- `xano policy runs [run_id]` — the runs the branch retains (newest twenty), newest first.
+- `xano workspace push` — imports and then returns `policy_check`; exit 2 means imported code with mandatory findings, not a rollback.
