@@ -17,7 +17,6 @@ export const policyExample = `policy AUTH-EXAMPLE {
   lifecycle = "active"
   enforcement = "advisory"
   severity = "high"
-  owner = { name: "Dana Whitaker", role: "Information Security", email: "dana@lab.example" }
   rule {
     check = "query.auth_required"
     params = { except_tags: ["public", "xano:quick-start"] }
@@ -33,7 +32,7 @@ Read, parse and evaluate require the dedicated workspace:policy read scope. Crea
 
 The native platform parses and formats policy source. Send source alone inside data, or structured fields without source. Never send both. Canonical source is server-owned. An evaluation stores a run and its findings; it does not modify the policy.
 
-The policy owner is a map of who answers for it, with exactly the keys name, role and email: owner = { name: "Dana Whitaker", role: "Information Security", email: "dana@lab.example" }. A scalar owner is refused with owner must be a map of who answers for this policy.
+The owner field was removed. Canonical source never writes it, and every authored path - source parse, dashboard save, Metadata API save and CLI or MCP workspace push - refuses an owner line or key with policy: "owner" was removed; delete the line. Ownership will return as a reference to a workspace member. On the source path the payload also carries the line and col of the offending line. A stored policy, a run snapshot and an archive, tenant or release import that still carries owner are read tolerantly and the key is dropped, never refused. Ownership is deferred to phase 2, where it returns as a reference to a workspace member rather than a free-text map.
 
 A policy file carries no comments. A two-slash or slash-star comment inside a policy block is refused outright, on its own line or trailing a value, with the line it is on: line 3: policy files cannot contain "//" comments. Put the explanation in the policy's statement, rationale or narrative. A block comment gets the same sentence with "/* */" in place of "//". A hash is a plain syntax error: Syntax error: unexpected '#'. Put the explanation in statement, rationale, narrative or a rule title.
 
