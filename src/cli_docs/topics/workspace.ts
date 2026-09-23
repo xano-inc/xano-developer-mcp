@@ -227,7 +227,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace pull",
-      description: "Download workspace code to a local directory. Splits the multidoc response into individual .xs files organized by type, and also writes workspace knowledge/skills markdown under knowledge/. The target directory is the -d/--directory flag (default: current directory), not a positional argument. Policies are written to policies/<KEY>.xs when the credential holds the workspace:policy permission at read level, and omitted otherwise. A pull that included policies prints one hint afterwards: Run `xano skills pull` to install the policies skill for your coding agent.",
+      description: "Download workspace code to a local directory. Splits the multidoc response into individual .xs files organized by type, and also writes workspace knowledge/skills markdown under knowledge/. The target directory is the -d/--directory flag (default: current directory), not a positional argument. Policies are written to policies/<KEY>.xs when the credential holds the workspace:policy permission at read level, and omitted otherwise; a policy whose file name differs only in case from another policy or a local file is left out with a warning, and everything else is written. A pull that included policies prints one hint afterwards: Run `xano skills pull` to install the policies skill for your coding agent.",
       usage: "xano workspace pull [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Output directory for pulled documents (defaults to current directory)" },
