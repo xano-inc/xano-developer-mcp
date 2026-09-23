@@ -111,11 +111,11 @@ Closed value sets worth knowing without a catalogue round-trip:
 
 - `literal.credential_shape.patterns`: `stripe`, `aws`, `github`, `pem`, `url_credentials`
 - `literal.credential_shape.locations`: `run`, `env`, `agent_settings`
-- `object.settings_forbidden.object_kind`: `table`, `query`, `function`, `workflow_test`, `api_group`, `task`, `trigger`, `middleware`, `addon`, `channel`, `tool`, `agent`, `mcp_server`, `workspace`
+- `object.settings_forbidden.object_kind`: `table`, `query`, `function`, `workflow_test`, `api_group`, `task`, `trigger`, `middleware`, `addon`, `channel`, `message`, `tool`, `agent`, `mcp_server`, `workspace`
 - `outbound.vendor_allowlist.kinds`: `api.request`, `cloud`, `email`, `agent.llm`
 - `query.statement_required.position`: `any`, `first`
 - `statement.expression_rule.operators_forbidden`: `===`, `!==`, `==`, `!=`, `>=`, `<=`, `&&`, `||`, `~`, `+`, `-`, `*`, `/`, `%`, `<`, `>`
-- `workspace.object_required.object_kind`: `table`, `query`, `function`, `workflow_test`, `api_group`, `task`, `trigger`, `middleware`, `addon`, `channel`, `tool`, `agent`, `mcp_server`, `workspace`
+- `workspace.object_required.object_kind`: `table`, `query`, `function`, `workflow_test`, `api_group`, `task`, `trigger`, `middleware`, `addon`, `channel`, `message`, `tool`, `agent`, `mcp_server`, `workspace`
 
 Nested object parameters and their keys:
 
@@ -134,7 +134,7 @@ Nested object parameters and their keys:
 Scope selects the objects a check inspects. All conditions must match; omitted or empty fields add no restriction. Individual check descriptions identify any branch-wide counts or related definitions consulted outside scope.
 
 <!-- BEGIN GENERATED: scope -->
-- `scope.object_kinds` (string[]) — Include these kinds from those supported by the check. One of `table`, `query`, `function`, `workflow_test`, `api_group`, `task`, `trigger`, `middleware`, `addon`, `channel`, `tool`, `agent`, `mcp_server`, `workspace`.
+- `scope.object_kinds` (string[]) — Include these kinds from those supported by the check. One of `table`, `query`, `function`, `workflow_test`, `api_group`, `task`, `trigger`, `middleware`, `addon`, `channel`, `message`, `tool`, `agent`, `mcp_server`, `workspace`.
 - `scope.api_groups` (string[]) — Queries in these API groups, matched by exact display name or canonical name.
 - `scope.verbs` (string[]) — Queries with these HTTP verbs, matched case-insensitively.
 - `scope.auth` (string) — Queries only: none selects queries without an auth table; required selects queries declaring one. Empty adds no restriction. One of `""`, `none`, `required`.

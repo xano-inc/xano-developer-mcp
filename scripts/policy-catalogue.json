@@ -60,6 +60,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -191,7 +192,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [],
       "fix_hint": "",
@@ -218,6 +220,7 @@
         "patterns": {
           "type": "string[]",
           "required": false,
+          "non_empty": true,
           "description": "Built-in patterns: Stripe live secret keys, AWS access key IDs, GitHub tokens, private-key PEM headers, and HTTP(S) URLs with credentials. Select at least one; custom regex is not supported.",
           "default": [
             "stripe",
@@ -244,10 +247,10 @@
         "locations": {
           "type": "string[]",
           "required": false,
-          "description": "Locations to scan: run for function stacks, env for workspace environment values, and agent_settings for agent and MCP server settings. Select at least one.",
+          "non_empty": true,
+          "description": "Locations to scan: run for function stacks, env for workspace environment values, and agent_settings for agent and MCP server settings. Select at least one. env is not scanned by default, because an environment variable is where a secret belongs.",
           "default": [
             "run",
-            "env",
             "agent_settings"
           ],
           "items": {
@@ -282,6 +285,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -414,6 +418,7 @@
         "middleware",
         "addon",
         "tool",
+        "message",
         "workspace",
         "agent",
         "mcp_server"
@@ -458,6 +463,7 @@
             "middleware",
             "addon",
             "channel",
+            "message",
             "tool",
             "agent",
             "mcp_server",
@@ -500,6 +506,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -635,6 +642,7 @@
         "middleware",
         "addon",
         "channel",
+        "message",
         "tool",
         "agent",
         "mcp_server",
@@ -661,6 +669,7 @@
         "kinds": {
           "type": "string[]",
           "required": false,
+          "non_empty": true,
           "description": "Destinations to inspect: api.request hosts, cloud providers, email providers or agent.llm model providers. Select at least one. cloud.job runs locally and is excluded.",
           "default": [
             "api.request",
@@ -726,6 +735,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -858,6 +868,7 @@
         "middleware",
         "addon",
         "tool",
+        "message",
         "agent"
       ],
       "requires_one_of": [],
@@ -905,6 +916,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -1149,6 +1161,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -1338,6 +1351,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -1533,6 +1547,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -1664,7 +1679,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [
         "fields",
@@ -1778,6 +1794,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -1973,6 +1990,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -2139,6 +2157,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -2315,6 +2334,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -2446,7 +2466,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [],
       "fix_hint": "",
@@ -2523,6 +2544,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -2654,7 +2676,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [],
       "fix_hint": "",
@@ -2743,6 +2766,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -2874,7 +2898,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [
         "must_be_inside",
@@ -3018,6 +3043,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -3149,7 +3175,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [],
       "fix_hint": "",
@@ -3225,6 +3252,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -3356,7 +3384,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [
         "min",
@@ -3420,6 +3449,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -3551,7 +3581,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [],
       "fix_hint": "A runtime value cannot be verified statically: bound its source or ask; do not hardcode a literal.",
@@ -3581,6 +3612,7 @@
         "param": {
           "type": "string",
           "required": false,
+          "non_empty": true,
           "description": "Object parameter containing field assignments, usually data on a database write. Must not be empty.",
           "default": "data",
           "example": "data"
@@ -3617,6 +3649,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -3748,7 +3781,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [],
       "fix_hint": "",
@@ -3815,6 +3849,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -3946,7 +3981,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [],
       "fix_hint": "",
@@ -3985,6 +4021,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -4171,6 +4208,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -4215,6 +4253,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -4340,14 +4379,7 @@
       },
       "category": "coverage",
       "object_kinds": [
-        "table",
-        "query",
-        "function",
-        "task",
-        "trigger",
-        "middleware",
-        "addon",
-        "tool"
+        "table"
       ],
       "requires_one_of": [],
       "fix_hint": "A placeholder object satisfies the check, not the policy; ask what it must do.",
@@ -4446,6 +4478,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -4599,6 +4632,7 @@
         "field_type": {
           "type": "string",
           "required": false,
+          "non_empty": true,
           "default": "text",
           "description": "Declared field type to match, e.g. text, int, decimal or email. Must not be empty. The same field must also match field_names.",
           "example": "text"
@@ -4640,6 +4674,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -4805,6 +4840,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -4971,6 +5007,7 @@
         "statements": {
           "type": "string[]",
           "required": false,
+          "non_empty": true,
           "description": "Write statement names to inspect. Defaults include add, edit, patch, delete, truncate, bulk writes and add-or-edit. Select at least one; no regex or wildcards.",
           "default": [
             "db.add",
@@ -5035,6 +5072,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -5166,7 +5204,8 @@
         "trigger",
         "middleware",
         "addon",
-        "tool"
+        "tool",
+        "message"
       ],
       "requires_one_of": [],
       "fix_hint": "",
@@ -5206,6 +5245,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -5331,8 +5371,7 @@
       },
       "category": "coverage",
       "object_kinds": [
-        "query",
-        "workflow_test"
+        "query"
       ],
       "requires_one_of": [],
       "fix_hint": "Add a workflow test that calls the endpoint with no auth token and expects a 401/403, or expect.to_throw on unauthorized.",
@@ -5373,6 +5412,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -5532,6 +5572,7 @@
             "middleware",
             "addon",
             "channel",
+            "message",
             "tool",
             "agent",
             "mcp_server",
@@ -5580,6 +5621,7 @@
                 "middleware",
                 "addon",
                 "channel",
+                "message",
                 "tool",
                 "agent",
                 "mcp_server",
@@ -5723,44 +5765,11 @@
   ],
   "goals": [
     {
-      "id": "no_pii_in_responses",
-      "goal": "Endpoints don't return personal data",
-      "summary": "Reports an endpoint whose database statements return a field you list, or one marked sensitive in the table schema.",
-      "keywords": [
-        "pii",
-        "personal",
-        "sensitive",
-        "leak",
-        "return",
-        "output",
-        "response",
-        "expose",
-        "privacy",
-        "gdpr",
-        "hipaa",
-        "ssn",
-        "phi",
-        "email",
-        "password"
-      ],
-      "limits": "Reads the output list of each database statement; a response assembled by hand or a value passed back through a function is not inspected.",
-      "rules": [
-        {
-          "title": "",
-          "check": "query.output_fields_forbidden",
-          "params": {
-            "fields": []
-          },
-          "needs": [
-            "fields"
-          ]
-        }
-      ]
-    },
-    {
       "id": "endpoints_need_login",
       "goal": "Endpoints require login",
-      "summary": "Reports every endpoint that does not require authentication, except those you tag as deliberately public.",
+      "summary": "Every endpoint requires authentication, unless it or its API group is tagged public.",
+      "key": "AUTH-010",
+      "severity": "critical",
       "keywords": [
         "auth",
         "login",
@@ -5788,9 +5797,46 @@
       ]
     },
     {
+      "id": "no_pii_in_responses",
+      "goal": "Endpoints don't return personal data",
+      "summary": "Endpoints never return the personal-data fields you list, or any field marked sensitive in its table's schema.",
+      "key": "DATA-010",
+      "severity": "high",
+      "keywords": [
+        "pii",
+        "personal",
+        "sensitive",
+        "leak",
+        "return",
+        "output",
+        "response",
+        "expose",
+        "privacy",
+        "gdpr",
+        "hipaa",
+        "ssn",
+        "phi",
+        "email",
+        "password"
+      ],
+      "limits": "Reads the output list of each database statement; a response assembled by hand or a value passed back through a function is not inspected.",
+      "rules": [
+        {
+          "title": "",
+          "check": "query.output_fields_forbidden",
+          "params": {},
+          "needs": [
+            "fields"
+          ]
+        }
+      ]
+    },
+    {
       "id": "own_records_only",
       "goal": "Users only reach their own records",
-      "summary": "Requires reads of owned tables to filter on the owner field against the logged-in user, and new records to take their owner from the login rather than the request.",
+      "summary": "Reads of owned tables filter on the owner field against the logged-in user, and new records take their owner from the login rather than the request.",
+      "key": "AUTH-020",
+      "severity": "critical",
       "keywords": [
         "owner",
         "own records",
@@ -5833,7 +5879,9 @@
     {
       "id": "no_secrets_in_code",
       "goal": "No secrets are hardcoded",
-      "summary": "Reports API keys, tokens, private keys and credentialed URLs written as literals in function stacks, environment values or agent settings.",
+      "summary": "API keys, tokens, private keys and credentialed URLs are never written as literals in function stacks or agent settings; they belong in environment variables.",
+      "key": "SEC-012",
+      "severity": "critical",
       "keywords": [
         "secret",
         "api key",
@@ -5846,7 +5894,7 @@
         "stripe",
         "github",
         "leak",
-        "env"
+        "encryption key"
       ],
       "limits": "Recognizes the built-in credential shapes only; a secret in a format of your own is not matched.",
       "rules": [
@@ -5861,7 +5909,9 @@
     {
       "id": "approved_vendors_only",
       "goal": "Data only goes to approved vendors",
-      "summary": "Reports every outbound request, cloud, email and AI model provider that is not on your approved list.",
+      "summary": "Outbound requests, cloud and email providers and AI model providers are limited to the vendors you approve.",
+      "key": "VND-001",
+      "severity": "high",
       "keywords": [
         "vendor",
         "third party",
@@ -5893,7 +5943,9 @@
     {
       "id": "no_self_promotion",
       "goal": "Users can't make themselves admin",
-      "summary": "Reports a record create or edit that takes a privilege field such as role or is_admin straight from request input.",
+      "summary": "Record creates and edits never take a privilege field such as role or is_admin straight from request input.",
+      "key": "AUTH-030",
+      "severity": "critical",
       "keywords": [
         "mass assignment",
         "role",
@@ -5935,9 +5987,87 @@
       ]
     },
     {
+      "id": "public_endpoints_harmless",
+      "goal": "Public endpoints can't change data",
+      "summary": "An endpoint that requires no authentication never changes or deletes records.",
+      "key": "AUTH-003",
+      "severity": "high",
+      "keywords": [
+        "public",
+        "anonymous",
+        "unauthenticated",
+        "open endpoint",
+        "write",
+        "delete",
+        "modify",
+        "tamper",
+        "vandalism"
+      ],
+      "limits": "Inspects the endpoint's own stack, including nested branches; a write inside a called function is not followed.",
+      "rules": [
+        {
+          "title": "Public endpoints do not change or delete records",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.edit",
+              "db.patch",
+              "db.add_or_edit",
+              "db.del",
+              "db.truncate",
+              "db.bulk.update",
+              "db.bulk.patch",
+              "db.bulk.delete"
+            ],
+            "endpoint_auth": "none"
+          },
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "admin_endpoints_check_role",
+      "goal": "Admin endpoints check the caller's role",
+      "summary": "Every endpoint tagged admin calls your role-check function as its first statement, passing the logged-in user.",
+      "key": "AUTH-002",
+      "severity": "critical",
+      "keywords": [
+        "admin",
+        "role",
+        "role check",
+        "rbac",
+        "permission",
+        "authorization",
+        "privilege",
+        "guard",
+        "staff"
+      ],
+      "limits": "Confirms the call is written first, not what the function decides; an endpoint missing the admin tag is not examined.",
+      "rules": [
+        {
+          "title": "Admin endpoints call the role check first",
+          "check": "query.statement_required",
+          "params": {
+            "position": "first",
+            "must_reference": [
+              "$auth"
+            ],
+            "tags": [
+              "admin"
+            ]
+          },
+          "needs": [
+            "function"
+          ]
+        }
+      ]
+    },
+    {
       "id": "no_destructive_sql",
       "goal": "No table truncation or raw SQL",
-      "summary": "Reports any function stack that truncates a table or runs a direct SQL query.",
+      "summary": "No function stack truncates a table or runs a direct SQL query.",
+      "key": "SEC-010",
+      "severity": "high",
       "keywords": [
         "truncate",
         "raw sql",
@@ -5953,7 +6083,7 @@
       "limits": "Matches the statements by name wherever they appear; SQL sent to an external database uses different statements, which you can add to the list.",
       "rules": [
         {
-          "title": "",
+          "title": "Truncation and raw SQL stay out",
           "check": "stack.statement_forbidden",
           "params": {
             "statements": [
@@ -5966,9 +6096,77 @@
       ]
     },
     {
+      "id": "tls_verification_on",
+      "goal": "External requests verify TLS certificates",
+      "summary": "Every external request verifies the TLS certificate of the server it talks to.",
+      "key": "SEC-011",
+      "severity": "high",
+      "keywords": [
+        "tls",
+        "ssl",
+        "https",
+        "certificate",
+        "verify peer",
+        "insecure",
+        "man in the middle",
+        "mitm",
+        "encryption"
+      ],
+      "limits": "Reads the literal setting on each request; a value computed at run time is reported as unverifiable.",
+      "rules": [
+        {
+          "title": "Requests verify TLS peers",
+          "check": "statement.param_forbidden",
+          "params": {
+            "statement": "api.request",
+            "param": "verify_peer",
+            "values": [
+              false
+            ]
+          },
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "tokens_expire",
+      "goal": "Login tokens expire within an hour",
+      "summary": "Every authentication token expires within one hour of being created.",
+      "key": "SEC-014",
+      "severity": "high",
+      "keywords": [
+        "token",
+        "expiry",
+        "expiration",
+        "session",
+        "session length",
+        "token lifetime",
+        "ttl",
+        "jwt",
+        "login"
+      ],
+      "limits": "Reads the literal expiration on each token statement; a value computed at run time is reported as unverifiable.",
+      "rules": [
+        {
+          "title": "Tokens expire within one hour",
+          "check": "statement.param_bound",
+          "params": {
+            "statement": "security.create_auth_token",
+            "param": "expiration",
+            "min": 1,
+            "max": 3600,
+            "unit": "seconds"
+          },
+          "needs": []
+        }
+      ]
+    },
+    {
       "id": "endpoints_have_tests",
       "goal": "Endpoints are tested",
-      "summary": "Requires each endpoint to be called by a workflow test, and each protected endpoint to have a test asserting that an anonymous call is rejected.",
+      "summary": "Every endpoint is called by a workflow test, and every protected endpoint has a test asserting that an anonymous call is rejected.",
+      "key": "CHG-001",
+      "severity": "low",
       "keywords": [
         "test",
         "tests",
@@ -6001,7 +6199,9 @@
     {
       "id": "sensitive_tables_need_login",
       "goal": "Sensitive tables are only reached by logged-in endpoints",
-      "summary": "Requires every endpoint that reaches a table carrying your sensitive-data tag, directly or through a function, to require authentication.",
+      "summary": "Every endpoint that reaches a table carrying your sensitive-data tag, directly or through a function, requires authentication.",
+      "key": "CONF-010",
+      "severity": "critical",
       "keywords": [
         "pii",
         "phi",
@@ -6029,9 +6229,100 @@
       ]
     },
     {
+      "id": "sensitive_fields_marked",
+      "goal": "Sensitive fields are marked sensitive",
+      "summary": "The fields you list are marked sensitive wherever a table declares them.",
+      "key": "CONF-011",
+      "severity": "high",
+      "keywords": [
+        "sensitive",
+        "mark sensitive",
+        "pii",
+        "ssn",
+        "personal",
+        "schema",
+        "field",
+        "column",
+        "classification"
+      ],
+      "limits": "Reads the table schemas only; a field holding personal data under a name you did not list is not found.",
+      "rules": [
+        {
+          "title": "Listed fields are marked sensitive",
+          "check": "table.field_attribute_required",
+          "params": {
+            "attribute": "sensitive",
+            "require_exists": false
+          },
+          "needs": [
+            "field_names"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "confidential_tables_tagged",
+      "goal": "Tables holding confidential data are tagged",
+      "summary": "A table with a text field you list, such as notes, carries the confidential tag.",
+      "key": "CONF-012",
+      "severity": "medium",
+      "keywords": [
+        "tag",
+        "classify",
+        "classification",
+        "label",
+        "confidential",
+        "pii",
+        "phi",
+        "data inventory",
+        "untagged"
+      ],
+      "limits": "Matches fields by exact name and type; a table holding the same data under another field name is not found.",
+      "rules": [
+        {
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "tag": "confidential"
+          },
+          "needs": [
+            "field_names"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "views_hide_sensitive",
+      "goal": "Saved views hide sensitive fields",
+      "summary": "Every saved table view hides the fields marked sensitive in its table's schema.",
+      "key": "CONF-013",
+      "severity": "medium",
+      "keywords": [
+        "view",
+        "saved view",
+        "hide",
+        "hidden column",
+        "sensitive",
+        "pii",
+        "dashboard",
+        "mask"
+      ],
+      "limits": "Depends on fields being marked sensitive in the schema; a table without saved views passes.",
+      "rules": [
+        {
+          "title": "",
+          "check": "table.view_hide_required",
+          "params": {},
+          "needs": []
+        }
+      ]
+    },
+    {
       "id": "no_sensitive_data_in_logs",
       "goal": "Logs don't contain request, user or secret data",
-      "summary": "Reports a debug log whose value references request input, the logged-in user or an environment variable.",
+      "summary": "Debug logs never reference request input, the logged-in user or environment variables.",
+      "key": "LOG-001",
+      "severity": "high",
       "keywords": [
         "log",
         "logs",
@@ -6058,6 +6349,370 @@
               "$env"
             ]
           },
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "external_calls_handle_errors",
+      "goal": "External calls handle their own failures",
+      "summary": "Every external request sits inside error handling, so a vendor failure is handled rather than raised.",
+      "key": "LOG-010",
+      "severity": "medium",
+      "keywords": [
+        "error handling",
+        "try catch",
+        "exception",
+        "failure",
+        "outage",
+        "resilience",
+        "vendor down",
+        "external call"
+      ],
+      "limits": "Confirms the request sits inside a try_catch at some depth, not that every path through the catch handles the failure.",
+      "rules": [
+        {
+          "title": "Requests sit inside a try_catch",
+          "check": "statement.containment",
+          "params": {
+            "statement": "api.request",
+            "must_be_inside": [
+              "try_catch"
+            ]
+          },
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "middleware_surfaces_errors",
+      "goal": "Middleware doesn't swallow errors",
+      "summary": "No middleware is set to swallow the exceptions it catches.",
+      "key": "LOG-011",
+      "severity": "medium",
+      "keywords": [
+        "middleware",
+        "exception",
+        "silent",
+        "swallow exception",
+        "error handling",
+        "hidden errors",
+        "observability"
+      ],
+      "limits": "Reads each middleware's saved exception setting; what the middleware does with an error it surfaces is not evaluated.",
+      "rules": [
+        {
+          "title": "Middleware surfaces the exceptions it catches",
+          "check": "object.settings_forbidden",
+          "params": {
+            "object_kind": "middleware",
+            "when": {
+              "exception_policy": {
+                "equals": "silent"
+              }
+            }
+          },
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "requests_have_timeout",
+      "goal": "External requests set a timeout",
+      "summary": "Every external request sets an explicit timeout, so one slow vendor cannot stall a workspace.",
+      "key": "SEC-013",
+      "severity": "medium",
+      "keywords": [
+        "timeout",
+        "slow",
+        "hang",
+        "stall",
+        "availability",
+        "vendor",
+        "external call",
+        "latency"
+      ],
+      "limits": "Confirms a timeout is written on each request, not that its value is short enough.",
+      "rules": [
+        {
+          "title": "Requests declare a timeout",
+          "check": "statement.param_required",
+          "params": {
+            "statement": "api.request",
+            "param": "timeout"
+          },
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "get_endpoints_only_read",
+      "goal": "GET endpoints only read",
+      "summary": "A GET endpoint only reads data; every write sits behind a verb that says so.",
+      "key": "API-010",
+      "severity": "medium",
+      "keywords": [
+        "get",
+        "read only",
+        "verb",
+        "rest",
+        "safe method",
+        "write",
+        "side effect",
+        "http method"
+      ],
+      "limits": "Inspects the endpoint's own stack, including nested branches; a write inside a called function is not followed.",
+      "rules": [
+        {
+          "title": "GET endpoints only read",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.add",
+              "db.edit",
+              "db.patch",
+              "db.add_or_edit",
+              "db.del",
+              "db.truncate",
+              "db.bulk.add",
+              "db.bulk.update",
+              "db.bulk.patch",
+              "db.bulk.delete"
+            ],
+            "verbs": [
+              "GET"
+            ]
+          },
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "writes_check_first",
+      "goal": "Endpoints check the caller before writing",
+      "summary": "Every authenticated endpoint that writes records checks the logged-in user with a precondition first.",
+      "key": "BIZ-001",
+      "severity": "high",
+      "keywords": [
+        "precondition",
+        "check before write",
+        "validate before",
+        "guard",
+        "authorization",
+        "permission",
+        "order",
+        "business rule"
+      ],
+      "limits": "Reads the top-level stack only; a check inside a called function or a nested branch is not seen.",
+      "rules": [
+        {
+          "title": "A permission check precedes each write",
+          "check": "stack.statement_order",
+          "params": {
+            "before": {
+              "statement": "precondition",
+              "must_reference": [
+                "$auth"
+              ]
+            },
+            "after": [
+              "db.add",
+              "db.edit",
+              "db.patch"
+            ],
+            "endpoint_auth": "required"
+          },
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "inputs_validated",
+      "goal": "Endpoint inputs are typed and bounded",
+      "summary": "Endpoint inputs declare suitable types and page-size limits, personal data stays out of URL paths, and every declared input is used.",
+      "key": "VAL-001",
+      "severity": "medium",
+      "keywords": [
+        "input",
+        "validation",
+        "type",
+        "pagination",
+        "page size",
+        "per page",
+        "unused input",
+        "email in url",
+        "path parameter"
+      ],
+      "limits": "Reads the declared inputs and the endpoint's stack; validation done inside a called function is not seen.",
+      "rules": [
+        {
+          "title": "",
+          "check": "query.input_rules",
+          "params": {
+            "type_by_name": {
+              "email": "email"
+            },
+            "paging_max_required": true,
+            "path_params_forbidden": [
+              "email",
+              "ssn"
+            ],
+            "unused_forbidden": true
+          },
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "protected_endpoints_run_middleware",
+      "goal": "Protected endpoints run your auth middleware",
+      "summary": "Every endpoint that requires authentication runs the middleware you name.",
+      "key": "AUTH-040",
+      "severity": "high",
+      "keywords": [
+        "middleware",
+        "auth middleware",
+        "access context",
+        "rate limit",
+        "interceptor",
+        "every request",
+        "protected"
+      ],
+      "limits": "Confirms the middleware is attached and active, not what it does.",
+      "rules": [
+        {
+          "title": "Protected endpoints attach the middleware",
+          "check": "query.middleware_required",
+          "params": {
+            "endpoint_auth": "required"
+          },
+          "needs": [
+            "middleware"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "one_auth_table",
+      "goal": "Users sign in through one auth table",
+      "summary": "The workspace has exactly one auth table, and every authenticated endpoint uses it.",
+      "key": "AUTH-050",
+      "severity": "medium",
+      "keywords": [
+        "auth table",
+        "user table",
+        "one login",
+        "identity",
+        "multiple auth",
+        "authentication table",
+        "sign in"
+      ],
+      "limits": "Counts auth-enabled tables across the whole branch; several intentional auth tables mean this goal does not fit.",
+      "rules": [
+        {
+          "title": "",
+          "check": "table.auth_table_rules",
+          "params": {},
+          "needs": []
+        }
+      ]
+    },
+    {
+      "id": "audit_log_protected",
+      "goal": "Only the audit function writes the audit log",
+      "summary": "The audit log table exists, and only the function you name writes to it.",
+      "key": "RET-001",
+      "severity": "high",
+      "keywords": [
+        "audit log",
+        "audit trail",
+        "tamper",
+        "immutable",
+        "append only",
+        "who can write",
+        "ledger",
+        "compliance",
+        "access log"
+      ],
+      "limits": "Checks where each write is defined; a caller can still use the approved function to write whatever it passes in.",
+      "rules": [
+        {
+          "title": "The audit log table exists",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table"
+          },
+          "needs": [
+            "name"
+          ]
+        },
+        {
+          "title": "Only the audit function writes it",
+          "check": "table.write_location_restricted",
+          "params": {},
+          "needs": [
+            "table",
+            "allowed_functions"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "retained_data_cleaned_up",
+      "goal": "Retained data has a cleanup task",
+      "summary": "Every table carrying your retained-data tag is referenced by a scheduled task that cleans it up.",
+      "key": "RET-002",
+      "severity": "medium",
+      "keywords": [
+        "retention",
+        "purge",
+        "cleanup",
+        "expire",
+        "delete old",
+        "gdpr",
+        "right to erasure",
+        "scheduled task",
+        "data lifecycle"
+      ],
+      "limits": "Confirms a task references the table, not that it deletes the right records or runs on schedule.",
+      "rules": [
+        {
+          "title": "Retained tables have a cleanup task",
+          "check": "table.coverage_required",
+          "params": {
+            "referenced_by": {
+              "object_kinds": [
+                "task"
+              ]
+            }
+          },
+          "needs": [
+            "table_selector.tag"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers_write_elsewhere",
+      "goal": "Table triggers don't write their own table",
+      "summary": "A table trigger never writes to its own table, so a change cannot feed itself.",
+      "key": "RET-010",
+      "severity": "medium",
+      "keywords": [
+        "trigger",
+        "loop",
+        "infinite",
+        "recursion",
+        "recursive",
+        "self write",
+        "runaway"
+      ],
+      "limits": "Inspects the trigger's own stack; a write inside a called function is not followed.",
+      "rules": [
+        {
+          "title": "",
+          "check": "trigger.self_write_forbidden",
+          "params": {},
           "needs": []
         }
       ]
