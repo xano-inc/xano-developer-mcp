@@ -24,6 +24,11 @@ export interface DocConfig {
    * docs_index.json declaration order. Omitted (undefined) sorts last (99).
    */
   priority?: number;
+  /**
+   * The topic alone documents the files its `applyTo` matches: file_path mode
+   * returns it without `syntax` or any other matching topic.
+   */
+  exclusive?: boolean;
 }
 
 export interface XanoscriptDocsArgs {
@@ -48,6 +53,7 @@ function buildDocsConfig(): Record<string, DocConfig> {
       applyTo: topic.applyTo,
       description: topic.description,
       priority: (topic as Record<string, unknown>).priority as number | undefined,
+      exclusive: (topic as Record<string, unknown>).exclusive === true,
     };
   }
   return config;
@@ -160,6 +166,10 @@ export function getTierFacts(docsPath: string): {
  * Get list of topics that apply to a given file path based on applyTo patterns
  */
 export function getDocsForFilePath(filePath: string): string[] {
+  const applies = (config: DocConfig) => config.applyTo.some((pattern) => minimatch(filePath, pattern));
+  const exclusive = Object.entries(XANOSCRIPT_DOCS_V2).find(([, config]) => config.exclusive && applies(config));
+  if (exclusive) return [exclusive[0]];
+
   const matches: string[] = [];
 
   for (const [topic, config] of Object.entries(XANOSCRIPT_DOCS_V2)) {

@@ -23,7 +23,6 @@ describe("xanoscript module", () => {
   describe("XANOSCRIPT_DOCS_V2", () => {
     it("should have all expected topics", () => {
       const expectedTopics = [
-        "policies",
         "survival",
         "working",
         "readme",
@@ -64,6 +63,7 @@ describe("xanoscript module", () => {
         "middleware",
         "branch",
         "workspace",
+        "policies",
       ];
 
       expect(Object.keys(XANOSCRIPT_DOCS_V2)).toEqual(expectedTopics);

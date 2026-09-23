@@ -147,8 +147,10 @@ db.get "product" {
 } as $product
 ```
 
-A dotted path selects a nested field (`"price.amount"`). `output` is valid on `db.query`
-and `db.get`; `db.has` and the bulk statements do not take it. The policy check
+A dotted path selects a nested field (`"price.amount"`). `output` is valid on `db.query`,
+`db.get`, `db.add`, `db.edit`, `db.patch` and `db.add_or_edit`; `db.has`, `db.del` and the
+bulk statements do not take it. The bundled language server behind `xano_validate_xanoscript`
+rejects it on `db.patch` and `db.add_or_edit`, which the platform accepts. The policy check
 `statement.param_required` with `param: "output"` is how a workspace requires it, so a
 finding reading `parameter output must be explicit` is asking for exactly this line.
 

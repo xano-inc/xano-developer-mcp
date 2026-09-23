@@ -209,8 +209,6 @@ When `auth` is set:
 - `$auth.id` contains authenticated user's ID
 - Invalid/missing token returns 401
 
-Omitting `auth` is how an endpoint is public, and the file is the truth on import: a pushed document that has no `auth` line clears the field, so removing the line and pushing makes the endpoint public. The same holds for `tags` — a document with no `tags` line clears them. `workspace pull` omits both at their default, so a pulled file round-trips unchanged; every other field a document does not mention keeps its stored value.
-
 ---
 
 ## Path Parameters

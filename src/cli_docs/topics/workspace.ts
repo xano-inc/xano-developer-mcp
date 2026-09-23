@@ -122,7 +122,6 @@ For lighter-weight iterative development without pulling the whole workspace, se
 - \`--include/-i\` and \`--exclude/-e\`: Glob patterns for selective push (repeatable)
 - \`--no-transaction\` and \`--no-guids\` disable the default transaction wrapping and GUID write-back
 - \`-m/--message\`: labels the Version History entry of every policy document the push changes (unchanged policies get no entry)
-- A pushed query or message document that omits \`auth\` or \`tags\` CLEARS that field — pull omits both at their default, so the file is the truth. Removing the \`auth\` line and pushing makes the endpoint public. Other fields a document does not mention keep their stored value
 
 **Knowledge sync (automatic):**
 - \`pull\` writes knowledge/skills markdown under \`knowledge/\`; \`push\` sends it back — no flag needed
@@ -248,7 +247,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace push",
-      description: "Upload local XanoScript files to a workspace, including knowledge/skills markdown under knowledge/ (synced automatically, shown in the preview). Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview. On a policy-enabled instance the import response carries policy_check feedback, printed after the import: mandatory findings exit 2 and missing or unavailable feedback exits 1 (unless --allow_missing_policy_check), but the import has already completed and is not rolled back. -m/--message labels the import: it is stored as the Version History message of each policy document the push actually changes, and a policy the push leaves unchanged gets no version row at all. The file is the truth for two fields: a pushed query or message document that omits its auth line or its tags line CLEARS that field on import, matching pull, which omits both at their default. Every other field a document does not mention keeps its stored value.",
+      description: "Upload local XanoScript files to a workspace, including knowledge/skills markdown under knowledge/ (synced automatically, shown in the preview). Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview. On a policy-enabled instance the import response carries policy_check feedback, printed after the import. The exit code follows the import and the blocking policies only: 1 when the import fails, 2 when it succeeded and an active mandatory policy has findings, and 0 otherwise; feedback that is forbidden, unavailable, errored, disabled or missing prints one warning line with the platform's status and message and leaves the exit code alone. A policy finding never rolls back the import. -m/--message labels the import: it is stored as the Version History message of each policy document the push actually changes, and a policy the push leaves unchanged gets no version row at all.",
       usage: "xano workspace push [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Directory containing documents to push (defaults to current directory)" },
@@ -267,7 +266,6 @@ For lighter-weight iterative development without pulling the whole workspace, se
         { name: "exclude", short: "e", type: "string", required: false, description: "Glob pattern to exclude files, matched against relative paths (repeatable)" },
         { name: "message", short: "m", type: "string", required: false, description: "Short label stored as the Version History message of each policy document this push changes; a policy the push leaves unchanged gets no version row" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "summary or json; JSON retains the complete import response and policy_check feedback" },
-        { name: "allow_missing_policy_check", type: "boolean", required: false, default: "false", description: "Allow a missing or unavailable policy check after import (exit 0 instead of 1); never overrides mandatory findings" },
         { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" }
       ],
       examples: [
@@ -280,8 +278,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
         'xano workspace push -e "table/**" --records --truncate',
         "xano workspace push --no-transaction --no-guids",
         "xano workspace push --force -o json",
-        'xano workspace push -m "Tightened the auth policies"',
-        "xano workspace push --allow_missing_policy_check"
+        'xano workspace push -m "Tightened the auth policies"'
       ]
     },
     {

@@ -86,7 +86,7 @@ This repo ships three agent skills under `skills/`:
 
 **Using Claude Code inside this repo?** You already have all three skills. They're committed to `.claude/skills/` and load automatically when Claude Code starts a session in this directory — no install step needed. Just invoke `xano-init`, `xanoscript-docs-expert` or `xano-policies` by name, or describe the task in natural language.
 
-> **Keep the two copies identical.** Only the root `skills/` folder is published (skills.sh indexes it, and `npx skills add` installs from it); `.claude/skills/` is the copy this repo's own Claude Code sessions load. There is no sync script, so any edit to a skill must be made in both places.
+> Only the root `skills/` folder is published (skills.sh indexes it, and `npx skills add` installs from it); `.claude/skills/` is the copy this repo's own Claude Code sessions load. Edit `xano-policies` in both places: a test fails when its two copies differ.
 
 **Using a different agent, or want the skills available in other projects?** Skills are distributed via the open [Agent Skills standard](https://github.com/vercel-labs/skills) and install with a single `npx` command — no cloning or manual file copying.
 
@@ -415,6 +415,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `middleware` | Request/response interceptors for functions, queries, tasks, and tools |
 | `branch` | Branch-level settings: middleware, history retention, visual styling |
 | `workspace` | Workspace-level settings: environment variables, preferences, realtime |
+| `policies` | Workspace policy documents: syntax, the check catalogue and authoring rules |
 
 **Examples:**
 ```
@@ -496,6 +497,7 @@ Get documentation for Xano's Meta API. Use this to understand how to programmati
 | `realtime` | Real-time channel operations |
 | `file` | File management |
 | `history` | Version history |
+| `policy` | Workspace policies: check catalogue, parse, save, evaluate, runs, agent skill |
 | `workflows` | Step-by-step workflow guides |
 
 **Examples:**
@@ -543,6 +545,8 @@ Use this tool to understand CLI commands for local development, code synchroniza
 | `tenant` | Tenant management - CRUD, deployments, env vars, backups, clusters |
 | `unit_test` | Unit test management - list and run unit tests |
 | `workflow_test` | Workflow test management - list, run, and manage workflow tests |
+| `policy` | Workspace policies - catalogue, parse, publish, evaluate, status, runs, delete |
+| `skills` | Install the agent skill the instance generates (`skills pull`) |
 | `platform` | Platform management - list and view platform versions |
 | `static_host` | Static hosting - deploy frontend builds |
 | `update` | Update the CLI to the latest version |
@@ -605,6 +609,7 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/middleware` | Request/response interceptors |
 | `xanoscript://docs/branch` | Branch-level settings |
 | `xanoscript://docs/workspace` | Workspace-level settings |
+| `xanoscript://docs/policies` | Workspace policy documents |
 
 ## npm Scripts
 
@@ -616,6 +621,7 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `test` | `vitest run` | Run unit tests |
 | `test:watch` | `vitest` | Run tests in watch mode |
 | `test:coverage` | `vitest run --coverage` | Run tests with coverage report |
+| `gen:policy-docs` | `node scripts/gen-policy-check-docs.mjs` | Regenerate the check catalogue regions of `policies.md` from `scripts/policy-catalogue.json` |
 
 ## Project Structure
 
@@ -732,6 +738,8 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
   - **description**: Human-readable description of the topic
   - **aliases**: Alternative names for topic lookup
   - **priority**: Ordering weight for file_path matching
+  - **exclusive**: The topic alone documents the files its `applyTo` matches, so file_path mode returns only that topic
+- The check catalogue in `policies.md` is generated between its `BEGIN GENERATED` and `END GENERATED` markers. To refresh it, write the instance's catalogue with `xano policy catalogue -o json > scripts/policy-catalogue.json`, then run `npm run gen:policy-docs`; a test fails when the two disagree
 
 **Meta API Documentation** (`src/meta_api_docs/`):
 - TypeScript modules with structured documentation

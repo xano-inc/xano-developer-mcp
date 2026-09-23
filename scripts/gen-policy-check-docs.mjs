@@ -1,91 +1,83 @@
 #!/usr/bin/env node
-// Emit the "Check catalogue" + vocabulary sections of
-// xano-developer-mcp/src/xanoscript_docs/policies.md from the live catalogue.
-import { readFileSync } from 'fs';
+// Regenerate the catalogue-derived regions of src/xanoscript_docs/policies.md from the
+// check catalogue a policy-enabled instance serves:
+//
+//   xano policy catalogue -o json > scripts/policy-catalogue.json
+//   npm run gen:policy-docs
+//
+// Only the text between `<!-- BEGIN GENERATED: <name> -->` and `<!-- END GENERATED: <name> -->`
+// is rewritten; everything around it is edited by hand. src/tools/policy_docs.test.ts renders
+// the regions from the committed catalogue and fails when policies.md differs.
+import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-const items = JSON.parse(readFileSync(process.argv[2], 'utf8')).items;
+export const CATALOGUE = fileURLToPath(new URL('./policy-catalogue.json', import.meta.url));
+export const POLICIES_MD = fileURLToPath(new URL('../src/xanoscript_docs/policies.md', import.meta.url));
+
+/** Parameters every check shares; the Scoping section documents them once. */
 const SCOPE_KEYS = ['scope', 'api_groups', 'tables', 'verbs', 'endpoint_auth', 'tags', 'except_tags'];
-const out = [];
-const w = (l = '') => out.push(l);
+
 const cell = s => String(s).replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim();
+const code = v => '`' + (v === '' ? '""' : v) + '`';
+const ownParams = it => Object.entries(it.params ?? {}).filter(([name]) => !SCOPE_KEYS.includes(name));
 
-w('## Check catalogue');
-w();
-w('A rule selects one built-in check and supplies literal parameters. Unknown check IDs and parameter names are rejected when saving. Read the instance catalogue (`GET /api:meta/workspace/{id}/policy/check` or `xano policy catalogue -o json`) for current types, defaults, allowed values, nested properties and examples.');
-w();
-w('Every entry carries a human `label` beside its id; that label is what names a rule whose author gave it no `title`. In the table, `name*` is required. `1 of (a, b)` requires at least one non-empty value or enabled boolean; each member is individually optional. Every check also accepts the shared scope parameters below.');
-w();
-w('| Check | Label | Behavior | Parameters |');
-w('| --- | --- | --- | --- |');
-for (const it of items) {
-  const own = Object.keys(it.params).filter(n => !SCOPE_KEYS.includes(n));
-  const oneOf = new Set(it.requires_one_of ?? []);
-  const rendered = own
-    .filter(n => !oneOf.has(n))
-    .map(n => '`' + n + (it.params[n].required ? '*' : '') + '`');
-  if (oneOf.size) rendered.unshift('1 of (' + [...oneOf].map(n => '`' + n + '`').join(', ') + ')');
-  w(`| \`${it.id}\` | ${cell(it.label)} | ${cell(it.description)} | ${rendered.join(', ') || '_scope only_'} |`);
-}
-w();
-w('Closed value sets worth knowing without a catalogue round-trip:');
-w();
-for (const it of items) {
-  for (const [name, p] of Object.entries(it.params)) {
-    if (SCOPE_KEYS.includes(name)) continue;
-    const vs = p.values ?? p.items?.values;
-    if (vs) w(`- \`${it.id}.${name}\`: ${vs.map(v => '`' + v + '`').join(', ')}`);
+function checks(items) {
+  const out = ['| Check | Label | Behavior | Parameters |', '| --- | --- | --- | --- |'];
+  for (const it of items) {
+    const oneOf = new Set(it.requires_one_of ?? []);
+    const params = ownParams(it).filter(([name]) => !oneOf.has(name)).map(([name, p]) => code(name + (p.required ? '*' : '')));
+    if (oneOf.size) params.unshift(`1 of (${[...oneOf].map(code).join(', ')})`);
+    out.push(`| \`${it.id}\` | ${cell(it.label)} | ${cell(it.description)} | ${params.join(', ') || '_scope only_'} |`);
   }
-}
-w();
-w('Nested object parameters and their keys:');
-w();
-for (const it of items) {
-  for (const [name, p] of Object.entries(it.params)) {
-    if (SCOPE_KEYS.includes(name) || !p.properties) continue;
-    const keys = Object.keys(p.properties).map(k => '`' + k + '`').join(', ');
-    w(`- \`${it.id}.${name}\` — keys ${keys}. Example: \`${JSON.stringify(p.example)}\``);
+  out.push('', 'Closed value sets worth knowing without a catalogue round-trip:', '');
+  for (const it of items) {
+    for (const [name, p] of ownParams(it)) {
+      const values = p.values ?? p.items?.values;
+      if (values) out.push(`- \`${it.id}.${name}\`: ${values.map(code).join(', ')}`);
+    }
   }
+  out.push('', 'Nested object parameters and their keys:', '');
+  for (const it of items) {
+    for (const [name, p] of ownParams(it)) {
+      if (p.properties) out.push(`- \`${it.id}.${name}\` — keys ${Object.keys(p.properties).map(code).join(', ')}. Example: \`${JSON.stringify(p.example)}\``);
+    }
+  }
+  return out.join('\n');
 }
-w();
-w('## Scoping a rule');
-w();
-w('Scope selects the objects a check inspects. All conditions must match; omitted or empty fields add no restriction. Individual check descriptions identify any branch-wide counts or related definitions consulted outside scope.');
-w();
-const scope = items[0].params.scope;
-for (const [key, shape] of Object.entries(scope.properties)) {
-  const vs = shape.values ? ` One of ${shape.values.map(v => '`' + (v === '' ? '""' : v) + '`').join(', ')}.` : '';
-  w(`- \`scope.${key}\` (${shape.type}) — ${shape.description}${vs}`);
-}
-w();
-w('Non-empty top-level `api_groups`, `tables`, `verbs` and `tags` replace the corresponding `scope` values, and a non-empty top-level `endpoint_auth` (`required` or `none`) replaces `scope.auth`. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.');
-w();
-w('Xano already records whether an endpoint is public (its authentication setting), so never add a tag just to restate that. Use `endpoint_auth: "required"` to keep a rule to endpoints that require authentication (test coverage, required middleware), and `endpoint_auth: "none"` to state what public endpoints may not do, e.g. `stack.statement_forbidden` with `statements: ["db.edit", "db.del"]`. `query.auth_required` has no parameters of its own: a deliberately public endpoint is an ordinary exception, `except_tags: ["public"]`, on the endpoint or on its API group.');
-w();
-w("Prefer tags to names. A rule scoped with `tags` or `except_tags` keeps working when an API group or table is renamed, and a new object opts in by carrying the tag; a rule scoped with `api_groups` or `tables` must be edited whenever those names change. A name the branch does not have selects nothing: the run reports it as a warning on the rule's result (`warnings`) without changing the result's status.");
-w();
-w('Example: `params = { statements: ["db.add", "db.edit"], scope: { object_kinds: ["query"], verbs: ["GET"] }, except_tags: ["generated"] }`.');
-w();
-w('## Writing parameter values');
-w();
-w('- **Types:** `string[]` is a list of strings; `bool` requires true or false. `number` accepts finite numeric literals, not numeric strings. Both `min_count` parameters are `integer` with minimum 1. Bounds are inclusive and use the checked parameter\'s native units; `unit` only labels findings.');
-w('- **Object values:** use objects such as `{}` for selectors and maps. The catalogue publishes object defaults as `{}`. `value` in `table.field_attribute_required` accepts any literal, including null.');
-w('- **Statement names:** use an exact XanoScript name such as `db.add` or `api.request`; stored aliases such as `mvp:dbo_add` also work. A misspelled name is accepted on save and matches nothing, so the rule inspects no statements and passes (or, for a required-statement check, fails everywhere). Verify the name against statement documentation, then evaluate and read the rule result\'s `warnings`: a name that is not a XanoScript statement is reported there as `Statement "db.edt" is not a XanoScript statement name, so it matches nothing. Did you mean db.edit?` A stored alias containing `:` is compared as written and is never warned about.');
-w('- **Parameter paths:** use a name or dotted path such as `data.role`. Aliases include `per_page` for paging size, `where` for search conditions and `error` for the error message.');
-w('- **References:** match a reference or its child paths. `$auth` matches `$auth.id`; `$input.id` does not match `$input.id2`. Supported roots are `$input`, `$auth`, `$env`, `$var`, `$error` and `$output`. Quoted text is literal.');
-w('- **Literal comparison:** false differs from "false", and 0 differs from "0". Equal numbers match, including 1 and 1.0. Empty objects and lists share a stored representation and compare equally. This applies to forbidden literals, field attributes and setting equality.');
-w('- **Names:** table, function, middleware, tag, field and provider names match exactly. Hosts and HTTP verbs ignore case. Regex and wildcards are not supported; credential `patterns` selects built-in shapes.');
-w('- **Combined conditions:** field names and field types must match the same field; table selectors combine all conditions. Allowed write functions and tags are alternatives. `query.input_rules` needs an enabled condition and `statement.containment` needs a structural constraint. `statement.expression_rule` without extra constraints still requires the parameter to exist.');
-w("- **Tags:** `tags`, `scope.tags` and `except_tags` match the inspected object's own tags; an endpoint also carries the tags of its API group. `query.tagged_table_access.tag` and `table_selector.tag` match table tags, and check parameters such as `allowed_tags` read only the object's own tags.");
-w();
-w('## Findings');
-w();
-w('A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severity`, an `object` reference and a `message` saying what was found and where in the stack. `rule_title` is the rule\'s own title, else its check\'s label, else its id; `severity` is the owning policy\'s, so every finding of one policy shares it. A finding `id` is prefixed with the policy key when the rule id does not already name it, so two policies whose rules share an id still produce distinct findings. Guidance that applies to the whole policy, such as how to request an exemption, belongs in the policy `statement`. Some catalogue entries carry an optional static `fix_hint` string describing the usual fix for that check; it is the same for every rule that uses the check.');
-const hinted = items.filter(it => it.fix_hint);
-if (hinted.length) {
-  w();
-  for (const it of hinted) w(`- \`${it.id}\`: ${String(it.fix_hint).trim()}`);
-}
-w();
-w('A rule that inspected nothing reports `0 checked` rather than a pass, which is how "the scope matched no objects" is told apart from "everything satisfied the rule".');
 
-process.stdout.write(out.join('\n') + '\n');
+function scope(items) {
+  const schema = items.find(it => it.params?.scope)?.params.scope;
+  if (!schema?.properties) throw new Error('No check in the catalogue publishes the shared scope schema.');
+  return Object.entries(schema.properties)
+    .map(([key, shape]) => `- \`scope.${key}\` (${shape.type}) — ${shape.description}${shape.values ? ` One of ${shape.values.map(code).join(', ')}.` : ''}`)
+    .join('\n');
+}
+
+function fixHints(items) {
+  return items.filter(it => it.fix_hint).map(it => `- \`${it.id}\`: ${String(it.fix_hint).trim()}`).join('\n');
+}
+
+/** The generated regions of policies.md, by name, rendered from a catalogue response. */
+export function renderSections(catalogue) {
+  const items = [...(Array.isArray(catalogue) ? catalogue : catalogue.items)].sort((a, b) => a.id.localeCompare(b.id));
+  return { checks: checks(items), scope: scope(items), 'fix-hints': fixHints(items) };
+}
+
+/** `markdown` with each named region replaced by its rendering. */
+export function splice(markdown, sections) {
+  let out = markdown;
+  for (const [name, body] of Object.entries(sections)) {
+    const begin = `<!-- BEGIN GENERATED: ${name} -->`;
+    const end = `<!-- END GENERATED: ${name} -->`;
+    const from = out.indexOf(begin);
+    const to = out.indexOf(end);
+    if (from < 0 || to < from) throw new Error(`policies.md has no "${name}" region.`);
+    out = `${out.slice(0, from + begin.length)}\n${body}\n${out.slice(to)}`;
+  }
+  return out;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const catalogue = JSON.parse(readFileSync(CATALOGUE, 'utf8'));
+  writeFileSync(POLICIES_MD, splice(readFileSync(POLICIES_MD, 'utf8'), renderSections(catalogue)));
+}

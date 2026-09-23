@@ -293,13 +293,12 @@ function findXsFiles(
  */
 function validateCode(
   code: string,
-  filePath?: string,
-  displayName?: string
+  filePath?: string
 ): SingleFileValidationResult {
   // Recognize the document header only; policy grammar and check schemas are
   // owned by the instance. Never turn unsupported local syntax into a pass.
   if (/^(?:\s|\/\/[^\r\n]*(?:\r?\n|$)|\/\*[\s\S]*?\*\/)*policy(?:\s|$)/.test(code)) {
-    const named = filePath ? `${displayName ?? filePath}: ${POLICY_REFUSAL}` : POLICY_REFUSAL;
+    const named = filePath ? `${basename(filePath)}: ${POLICY_REFUSAL}` : POLICY_REFUSAL;
     return {
       valid: false,
       policy: true,
@@ -364,7 +363,7 @@ function validateCode(
         valid: true,
         errors: [],
         message: filePath
-          ? `✓ ${displayName ?? basename(filePath)}: Valid`
+          ? `✓ ${basename(filePath)}: Valid`
           : "XanoScript is valid. No syntax errors found.",
         file_path: filePath,
       };
@@ -381,7 +380,7 @@ function validateCode(
     };
 
     const messageLines: string[] = [];
-    const prefix = filePath ? `${hasErrors ? "✗" : "⚠"} ${displayName ?? basename(filePath)}: ` : "";
+    const prefix = filePath ? `${hasErrors ? "✗" : "⚠"} ${basename(filePath)}: ` : "";
 
     if (errors.length > 0) {
       messageLines.push(`${prefix}Found ${errors.length} error(s)${warnings.length > 0 ? ` and ${warnings.length} warning(s)` : ""}:`);
@@ -526,9 +525,7 @@ export function validateXanoscript(
       continue;
     }
 
-    // In a batch every line has to name the file it belongs to, so the per-file
-    // header carries the path the caller passed rather than just the basename.
-    const result = validateCode(content, filePath, filePath);
+    const result = validateCode(content, filePath);
     results.push(result);
     if (result.policy) {
       skippedCount++;
@@ -558,10 +555,7 @@ export function validateXanoscript(
   if (invalidResults.length > 0) {
     summaryLines.push("❌ Files with errors:");
     for (const result of invalidResults) {
-      // Never an unattributed error: the path leads even when the diagnostic has none.
-      summaryLines.push(
-        `\n${result.message.includes(result.file_path ?? " ") ? result.message : `${result.file_path}: ${result.message}`}`,
-      );
+      summaryLines.push(`\n${result.message}`);
     }
     summaryLines.push("");
   }

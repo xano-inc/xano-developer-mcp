@@ -29,10 +29,10 @@ export const policyExample = `policy "AUTH-EXAMPLE" {
 
 export const policyDoc: TopicDoc = {
   topic: "policy",
-  title: "Workspace Policies (MVP)",
+  title: "Workspace Policies",
   description: `Policies are branch-scoped workspace XanoScript objects combining a human description and deterministic check rules. These endpoints require a platform build with policy support. Discover supported checks and their exact parameter schemas from the instance; do not invent checks or parameters.
 
-Read, parse and evaluate require the dedicated workspace:policy read scope. Creating, updating and deleting also require the corresponding scope and an admin/explore role. Existing tokens may need to be reissued. A 403 names the gate that refused: Access Denied. is the scope (the token's workspace:policy level or the role's Workspace Policies permission; an OAuth token answers insufficient_scope), Policy changes require the admin role. is the author gate - reissuing a token does not fix it - and Policies are not enabled on this instance. means the feature is off for the instance. Evaluate needs only read, but a read-only session or an OAuth token without workspace:write gets its findings back with stored false and run id 0. A template is only a seed: save an ordinary policy with no template association.
+Read, parse and evaluate need the workspace:policy permission at read level; creating, updating and deleting need it at create, update or delete level. Existing tokens may need to be reissued. A 403 names the gate that refused: Access Denied. is the workspace:policy permission (the token's level or the role's Workspace Policies permission; an OAuth token answers insufficient_scope), and Policies are not enabled on this instance. means the feature is off for the instance. Evaluate needs only read, but a read-only session or an OAuth token without workspace:write gets its findings back with stored false and run id 0. A template is only a seed: save an ordinary policy with no template association.
 
 The native platform parses and formats policy source. Send source alone inside data, or structured fields without source. Never send both. Canonical source is server-owned. An evaluation stores a run and its findings; it does not modify the policy.
 
@@ -85,7 +85,7 @@ Checks are static: they inspect stored definitions and nothing runs at request t
     { method: "GET", path: prefix + "/run/{run_id}", description: "Read one retained run on the selected branch.", parameters: [workspace, branch, { name: "run_id", type: "integer", required: true, in: "path", description: "Run ID" }] },
     {
       method: "GET", path: "/workspace/{workspace_id}/agent-skills",
-      description: "Serve the generated xano-policies agent skill for the selected branch. One generator, two surfaces: studio (the default, the variant the Studio agent loads) and cli (the variant xano skills pull writes to .claude/skills/xano-policies/SKILL.md in a project). The check catalogue inside it is generated from the live registry at request time, so it can never document a check this instance does not have. Needs the same workspace:policy read scope as the other policy routes.",
+      description: "Serve the generated xano-policies agent skill for the selected branch. One generator, two surfaces: studio (the default, the variant the Studio agent loads) and cli (the variant xano skills pull writes to .claude/skills/xano-policies/SKILL.md in a project). The check catalogue inside it is generated from the live registry at request time, so it can never document a check this instance does not have. Needs the workspace:policy permission at read level, like the other policy routes.",
       parameters: [workspace, branch, { name: "surface", type: "string", in: "query", default: "studio", enum: ["studio", "cli"], description: "Which variant of the generated skill to return" }],
       response: { type: "object", description: "{knowledge: [...]}: the same envelope as workspace knowledge, with one item named xano-policies whose knowledge_type is skill and whose content is the skill markdown. Each item also carries name and description." },
     },

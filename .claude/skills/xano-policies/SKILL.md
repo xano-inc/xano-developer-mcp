@@ -51,4 +51,4 @@ and ignore this stub. Until then, never guess a check id or parameter; read them
 - `xano policy evaluate` — evaluate active policies and store a run; exit 2 on mandatory findings.
 - `xano policy status [--run-detail]` — stored policy/run state without evaluating; `--run-detail` prints what the latest run recorded.
 - `xano policy runs [run_id]` — the runs the branch retains (newest twenty), newest first.
-- `xano workspace push` — imports and then returns `policy_check`; exit 2 means imported code with mandatory findings, not a rollback.
+- `xano workspace push` — imports and then returns `policy_check`; exit 2 means the import succeeded and an active mandatory policy has findings, not a rollback. Feedback that could not be produced is one warning line, not an exit code.

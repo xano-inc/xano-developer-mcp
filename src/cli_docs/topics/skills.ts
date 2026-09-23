@@ -15,7 +15,7 @@ export const skillsDoc: TopicDoc = {
 
 The skill is fetched from \`GET /api:meta/workspace/{workspace_id}/agent-skills?surface=cli&branch=<label>\` and written to \`.claude/skills/xano-policies/SKILL.md\` under the project directory. That is the same path \`npx skills add xano-inc/xano-developer-mcp -s xano-policies -a claude-code\` uses, so pulling replaces the published stub with the live version in place; nothing else in the project is touched.
 
-The route is one of the policy routes: it needs a Metadata API token carrying the \`workspace:policy\` scope, exactly like \`policy list\`, \`policy parse\` and \`policy evaluate\`. A token without it gets the same 403 those commands get, and reissuing the token is the fix.
+The route is one of the policy routes: it needs the \`workspace:policy\` permission at read level, exactly like \`policy list\`, \`policy parse\` and \`policy evaluate\`. A token without it gets the same 403 those commands get, and reissuing the token is the fix.
 
 The same generator serves two surfaces. \`surface=studio\` (the default on the route) is the variant Xano's own Studio agent loads; \`surface=cli\` is the variant this command writes, and it is the only one the CLI asks for.
 
@@ -32,7 +32,7 @@ A profile has to be selected first (\`xano profile use <name> -w <workspace_id> 
   commands: [
     {
       name: "skills pull",
-      description: "Fetch the CLI variant of the generated xano-policies skill for the selected workspace and branch and write it to .claude/skills/xano-policies/SKILL.md under the project directory. Idempotent: it overwrites whatever is there and prints the path written. Needs a Metadata API token with the workspace:policy scope.",
+      description: "Fetch the CLI variant of the generated xano-policies skill for the selected workspace and branch and write it to .claude/skills/xano-policies/SKILL.md under the project directory. Idempotent: it overwrites whatever is there and prints the path written. Needs the workspace:policy permission at read level.",
       usage: "xano skills pull [options]",
       flags,
       examples: [

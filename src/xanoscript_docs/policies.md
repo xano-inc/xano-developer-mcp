@@ -1,6 +1,6 @@
-# Workspace policies (MVP)
+# Workspace policies
 
-Requires a platform build with policy support. A policy is its human description plus deterministic rules, saved as branch-scoped workspace XanoScript. Templates only seed an editable document: there is no template ID, inheritance or later synchronization.
+Requires a platform build with policy support. A policy is its human description plus deterministic rules, saved as branch-scoped workspace XanoScript. Checks inspect stored definitions; nothing runs at request time. Templates only seed an editable document: there is no template ID, inheritance or later synchronization.
 
 ## Quick Reference
 
@@ -29,7 +29,7 @@ line 3: policy files cannot contain "//" comments. Put the explanation in the po
 
 with `"/* */"` in place of `"//"` for a block comment. For a trailing comment — `severity = "high" // critical | high` — the message names that line and the position points at the comment, not at the value. `#` is a plain syntax error: `Syntax error: unexpected '#'`. Never annotate policy source; put the explanation in `statement`, `rationale`, `narrative` or a rule's `title`.
 
-Use `advisory` while customizing a seed. `mandatory` findings participate in gates. A `draft` policy is not evaluated; an `active` policy is eligible. **Write a new policy `lifecycle = "active"` with `enforcement = "advisory"`** — the same pair a template enables with. It blocks nothing while its findings are reviewed, and, unlike a draft, it is actually evaluated, so the author can see what it reports. Reach for `draft` only to park a policy you do not want evaluated at all. Policies can also include rationale, narrative, domain, scope and tags. There is no `owner` field: it was removed, canonical source never emits it, and every authored path — source parse, dashboard save, Metadata API save and CLI or MCP `workspace push` — refuses an `owner` line or key with `policy: "owner" was removed; delete the line. Ownership will return as a reference to a workspace member.` (on the source path the refusal also carries the line and column). A stored policy, a run snapshot and an archive, tenant or release import that still carries `owner` are read tolerantly and the key is dropped, never refused. Ownership is deferred to phase 2, where it returns as a reference to a workspace member rather than a free-text map. Long text such as `narrative` can use a `"""` triple-quoted multiline string. `tags` is a list of strings, for example `tags = ["soc2", "hipaa"]`, the same syntax as tags on any other workspace object; there is no separate framework/mapping concept, a tag is simply how a customer labels a framework. Free-form policy `scope` describes intent; actual check selection is determined by the check's parameters.
+Use `advisory` while customizing a seed. `mandatory` findings participate in gates. A `draft` policy is not evaluated; an `active` policy is eligible. **Write a new policy `lifecycle = "active"` with `enforcement = "advisory"`** — the same pair a template enables with. It blocks nothing while its findings are reviewed, and, unlike a draft, it is actually evaluated, so the author can see what it reports. Reach for `draft` only to park a policy you do not want evaluated at all. Policies can also include rationale, narrative and tags. There is no `owner` field: it was removed, canonical source never emits it, and every authored path — source parse, dashboard save, Metadata API save and CLI or MCP `workspace push` — refuses an `owner` line or key with `policy: "owner" was removed; delete the line. Ownership will return as a reference to a workspace member.` (on the source path the refusal also carries the line and column). A stored policy, a run snapshot and an archive, tenant or release import that still carries `owner` are read tolerantly and the key is dropped, never refused. Ownership is deferred to phase 2, where it returns as a reference to a workspace member rather than a free-text map. Long text such as `narrative` can use a `"""` triple-quoted multiline string. `tags` is a list of strings, for example `tags = ["soc2", "hipaa"]`, the same syntax as tags on any other workspace object; there is no separate framework/mapping concept, a tag is simply how a customer labels a framework.
 
 `severity` says how much a violation of this policy matters. It orders findings in reports, and it never blocks a merge — enforcement does. Its four values are `critical`, `high`, `medium` and `low`; nothing else is accepted. It defaults to `medium`, and canonical source omits the line at that default. `lifecycle` and `enforcement` are always written, because they are what decide whether a policy blocks.
 
@@ -45,7 +45,7 @@ Each rule selects a built-in check and supplies literal parameters:
 
 1. Read the branch's existing policies and the instance's check catalogue. The catalogue is the only source of truth for what each check reports, which object kinds it inspects and the exact parameters it accepts.
 2. Write one `policy KEY { ... }` document in `policies/KEY.xs`. Customize its key, statement and rules; do not keep a template association.
-3. Validate and format through the native `POST /api:meta/workspace/{id}/policy/parse` endpoint with `{source}`. The result contains `{policy, source}` and writes nothing. With the authenticated Xano MCP, use its policy parse tool.
+3. Validate and format through the native `POST /api:meta/workspace/{id}/policy/parse` endpoint with `{source}`. The result contains `{policy, source}` and writes nothing. With the authenticated Xano MCP, use its policy parse tool. The developer MCP's bundled language server does not validate policy syntax and never reports a policy file as valid; do not rewrite a policy into another object type to satisfy it.
 4. Save canonical source using `POST /policy` (create) or `PUT /policy/{id}` (update) with `{branch, data: {source}}`. Do not combine source with structured fields. **To change an existing policy, update it by its id** — read the id from the policy list (`xano_list_policies`, `xano policy list -o json`), take the `source` a read returns, edit it, and send it to `PUT /policy/{id}` (the authenticated MCP's save tool with `policy_id`). This is also how a `draft` becomes `active`: the same policy id, with `lifecycle = "active"` in the source. A `POST` whose key already exists is refused, naming the policy that holds it — `A policy with key "AUTH-001" already exists on this branch (policy id 12, "Authentication baseline"). To change it, update policy id 12 instead of creating a new one.` — and a `PUT` whose source carries another policy's key says which id is which. The `source` a read returns is always generated from the stored definition in the current grammar, so it is safe to send back unchanged (a no-op) or edited. Add an optional `message` (and `description`) to label the Version History entry the save creates. The server owns versioning: see below.
 5. Evaluate the same branch and inspect its findings. Runs made before edits are historical evidence, not current approval. A run snapshots the policies it checked: each policy's `statement` as written at run time and, per rule, its display `label` and the resolved `params` the check actually ran with (values that resolved to nothing are omitted, and an empty map serializes as `[]`). Runs retained from before the platform recorded those carry none of them. `xano policy status --run-detail` prints them.
 
@@ -75,6 +75,7 @@ A rule selects one built-in check and supplies literal parameters. Unknown check
 
 Every entry carries a human `label` beside its id; that label is what names a rule whose author gave it no `title`. In the table, `name*` is required. `1 of (a, b)` requires at least one non-empty value or enabled boolean; each member is individually optional. Every check also accepts the shared scope parameters below.
 
+<!-- BEGIN GENERATED: checks -->
 | Check | Label | Behavior | Parameters |
 | --- | --- | --- | --- |
 | `db.where_constraint_required` | Reads constrain a required field | Requires db.query and db.get reads to include a predicate on the selected field. If compare_to is set, that same predicate must reference it. Checks nested condition groups syntactically; it does not prove the condition holds on every Boolean path. | `table_selector`, `field*`, `compare_to` |
@@ -126,11 +127,13 @@ Nested object parameters and their keys:
 - `stack.statement_order.before` — keys `statement`, `must_reference`. Example: `{"statement":"precondition","must_reference":["$auth"]}`
 - `table.coverage_required.table_selector` — keys `tag`, `has_field`, `has_fk_to`. Example: `{"tag":"phi"}`
 - `table.coverage_required.referenced_by` — keys `object_kinds`, `tags`, `same_table`. Example: `{"object_kinds":["task"],"tags":["retention"]}`
+<!-- END GENERATED: checks -->
 
 ## Scoping a rule
 
 Scope selects the objects a check inspects. All conditions must match; omitted or empty fields add no restriction. Individual check descriptions identify any branch-wide counts or related definitions consulted outside scope.
 
+<!-- BEGIN GENERATED: scope -->
 - `scope.object_kinds` (string[]) — Include these kinds from those supported by the check. One of `table`, `query`, `function`, `workflow_test`, `api_group`, `task`, `trigger`, `middleware`, `addon`, `channel`, `tool`, `agent`, `mcp_server`, `workspace`.
 - `scope.api_groups` (string[]) — Queries in these API groups, matched by exact display name or canonical name.
 - `scope.verbs` (string[]) — Queries with these HTTP verbs, matched case-insensitively.
@@ -139,6 +142,7 @@ Scope selects the objects a check inspects. All conditions must match; omitted o
 - `scope.except_tags` (string[]) — Exclude objects carrying any listed exact tag. Endpoints also carry their API group's tags. Combined with top-level except_tags.
 - `scope.tables` (string[]) — Select tables by exact name, or objects reaching any named table directly or through called functions.
 - `scope.reaching_table_tag` (string) — Select objects reaching a table with this exact tag, directly or through called functions.
+<!-- END GENERATED: scope -->
 
 Non-empty top-level `api_groups`, `tables`, `verbs` and `tags` replace the corresponding `scope` values, and a non-empty top-level `endpoint_auth` (`required` or `none`) replaces `scope.auth`. Top-level and nested `except_tags` combine. API group, HTTP verb and auth filters select queries only and exclude other object kinds.
 
@@ -172,6 +176,7 @@ Example, in the canonical spelling the parser returns:
 
 A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severity`, an `object` reference and a `message` saying what was found and where in the stack. `rule_title` is the rule's own title, else its check's label, else its id; `severity` is the owning policy's, so every finding of one policy shares it. A finding `id` is prefixed with the policy key when the rule id does not already name it, so two policies whose rules share an id still produce distinct findings. Guidance that applies to the whole policy, such as how to request an exemption, belongs in the policy `statement`. Some catalogue entries carry an optional static `fix_hint` string describing the usual fix for that check; it is the same for every rule that uses the check.
 
+<!-- BEGIN GENERATED: fix-hints -->
 - `literal.credential_shape`: Reference a workspace environment variable with $env instead of the literal, and have the user set its value and rotate the exposed one: never write the value into a file yourself. A value already in an environment variable is in the right place: change nothing; narrow locations instead.
 - `outbound.vendor_allowlist`: Approving a vendor is the policy owner's decision: report the host and ask. Never add it to the allowlist yourself, and never replace a dynamic URL with a literal.
 - `query.auth_required`: If the endpoint is deliberately public (login, signup, webhook, health), exempt it in the policy with except_tags; do not enable auth without asking, because that changes who can call it.
@@ -186,6 +191,7 @@ A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severi
 - `test.assertion_required`: Add a workflow test that calls the endpoint with no auth token and expects a 401/403, or expect.to_throw on unauthorized.
 - `trigger.self_write_forbidden`: Do not move the write into a called function: that hides it from this check without fixing it.
 - `workspace.object_required`: A placeholder object satisfies the check, not the policy; ask what it must do.
+<!-- END GENERATED: fix-hints -->
 
 A rule that inspected nothing is reported as a **pass with `checked: 0`** — there is no separate status for it. The CLI and the Studio render that result as `no objects checked`, and it proves nothing about coverage: it says the rule's scope matched no objects, not that anything satisfied the rule. Treat it as a question about the scope: widen it until it reaches the objects the `statement` is about, or confirm that matching nothing on this branch is intended.
 
@@ -193,25 +199,16 @@ A rule that inspected nothing is reported as a **pass with `checked: 0`** — th
 
 Read the policy before editing anything: its `statement`, and the failed rule's check, params and scope. A finding is one line about one object; whether the rule was meant to reach that object is only answerable from the rule. If a small edit that keeps the object's behaviour satisfies the rule, make that edit. Stop and ask instead when satisfying the rule would add or change a table field or a table, change what an endpoint returns or who may call it, remove functionality, or add a tag the rule treats as an exemption; when the rule names a field, table or tag the object does not have; or when the rule tests something the `statement` never asks for. The policy is then probably scoped too wide (an empty selector or scope means everything) or lacks an exemption: offer narrowing the rule, exempting the object, or changing the object, and let the owner choose. Never weaken a rule silently, and never infer an intent the `statement` does not state.
 
-## Validation and access
-
-The standalone developer MCP's bundled language server does not validate policy syntax. It must not report these files as successfully validated. Use native policy parsing; do not rewrite a policy into another object type to satisfy the local validator.
-
-Read, parse and evaluate need `workspace:policy` read access. Writes additionally need the matching operation scope and an admin/explore role. Existing tokens may need reissuing. The authenticated MCP takes instance and workspace from its request authentication; it does not accept arbitrary targets.
-
-A policy is its description plus deterministic check rules. Checks inspect stored definitions and nothing runs at request time.
-
 ## Permissions
 
-Three gates decide every policy request. A refusal is an HTTP 403 whose message says which gate answered.
+Two gates decide every policy request. A refusal is an HTTP 403 whose message says which gate answered.
 
 | Gate | Applies to | Passes when | Refusal message |
 | --- | --- | --- | --- |
 | Feature | Every policy route | The instance has the `policies` feature enabled | `Policies are not enabled on this instance.` |
-| Scope | Every policy route | The credential holds the `workspace:policy` level the operation needs, and so does the caller's role on that workspace | `Access Denied.` (OAuth: `insufficient_scope: workspace:read` or `workspace:write`) |
-| Author | Writes only | The caller's instance role is `admin`, or `explore` on a free instance | `Policy changes require the admin role.` |
+| Permission | Every policy route | The caller holds the `workspace:policy` permission at the level the operation needs | `Access Denied.` (OAuth: `insufficient_scope: workspace:read` or `workspace:write`) |
 
-The scope level each operation needs:
+The `workspace:policy` permission level each operation needs:
 
 | Operation | `workspace:policy` level | OAuth ceiling |
 | --- | --- | --- |
@@ -226,11 +223,11 @@ The scope level each operation needs:
 
 `workspace:policy` is a level set on a Metadata API access token and on a role's "Workspace Policies" permission; a per-workspace override on a member wins over the role. Both must allow the operation. A token created before policies existed carries no `workspace:policy` level, so it reads nothing until it is reissued. An OAuth token has no per-permission levels: `workspace:read` or `workspace:write` is its ceiling, and the role's permission decides the rest.
 
-Who can author: creating, updating, deleting and restoring need the author gate on top of the scope. A `developer`, `readonly` or custom role is refused on writes even when its permission and token grant the full level; reissuing a token does not change that. Those roles can read policies and run checks.
+Who can author: whoever holds the `workspace:policy` permission at create, update or delete level. A role grants it like any other permission, custom roles included; a role that grants only `read` can read policies and run checks but cannot change them, and reissuing a token does not change that.
 
 Evaluate needs only `read`, so a reviewer or a CI credential can run checks. Storing the run is a write: from a read-only session, or an OAuth token without `workspace:write`, the evaluation returns its findings with `stored: false` and run id `0`, and the retained runs are untouched.
 
-A policy file that is identical to the stored policy needs no write permission in a push: it is reported `unchanged` and skipped. A policy file that differs, pushed by a caller who may not author, refuses the whole push before anything is imported (`Policy files require the admin role; nothing was imported: KEY`). Exclude the policy files (`xano workspace push -e "policies/*"`) or pull again to push the rest.
+A policy file that is identical to the stored policy needs no write permission in a push: it is reported `unchanged` and skipped. A policy file that differs, pushed by a caller whose `workspace:policy` permission does not allow that change, refuses the whole push before anything is imported, naming the policy keys. Exclude the policy files (`xano workspace push -e "policies/*"`) or pull again to push the rest.
 
 What a policy reader can see: a finding names the object it is about - its type, name and id - and says where in the stack the problem is, for any object on the branch. `workspace:policy` read therefore shows object names and ids across the branch even to a role with no access to, say, the database or that API group. The credential check never prints the literal it matched. A merge that the gate refuses returns its blocking findings to the person merging, with or without `workspace:policy` read, because they need them to fix the branch.
 
