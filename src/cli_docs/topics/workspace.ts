@@ -77,7 +77,7 @@ After \`workspace pull\`, files are organized using snake_case naming:
 
 \`workspace pull\` and \`workspace push\` automatically sync knowledge and skills (markdown files under \`knowledge/\`) alongside XanoScript — no extra flag. Knowledge participates in push previews, \`--sync\`/\`--delete\`, and \`--include\`/\`--exclude\` globs. See the \`knowledge\` topic for the file layout and frontmatter format.
 
-The platform's generated \`xano-policies\` skill is not workspace knowledge: it is produced from the live check catalogue rather than stored on the workspace, so it is not written under \`knowledge/\`. Install it with \`xano skills pull\`, which writes \`.claude/skills/xano-policies/SKILL.md\` — see the \`skills\` topic.
+The platform's generated \`xano-policies\` skill is not workspace knowledge, so pull does not write it; see the \`skills\` topic.
 
 ## Syntax note
 
@@ -121,7 +121,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
 - \`--dry-run\`: Preview what would change without applying
 - \`--include/-i\` and \`--exclude/-e\`: Glob patterns for selective push (repeatable)
 - \`--no-transaction\` and \`--no-guids\` disable the default transaction wrapping and GUID write-back
-- \`-m/--message\`: labels the Version History entry of every policy document the push changes (unchanged policies get no entry)
+- \`-m/--message\`: labels only the Version History entry of each policy the push changes; other objects get no message, and an unchanged policy gets no entry
 
 **Knowledge sync (automatic):**
 - \`pull\` writes knowledge/skills markdown under \`knowledge/\`; \`push\` sends it back — no flag needed
@@ -227,7 +227,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace pull",
-      description: "Download workspace code to a local directory. Splits the multidoc response into individual .xs files organized by type, and also writes workspace knowledge/skills markdown under knowledge/. The target directory is the -d/--directory flag (default: current directory), not a positional argument. A pull that included policies prints one hint afterwards: Run `xano skills pull` to install the policies skill for your coding agent.",
+      description: "Download workspace code to a local directory. Splits the multidoc response into individual .xs files organized by type, and also writes workspace knowledge/skills markdown under knowledge/. The target directory is the -d/--directory flag (default: current directory), not a positional argument. Policies are written to policies/<KEY>.xs when the credential holds the workspace:policy permission at read level, and omitted otherwise. A pull that included policies prints one hint afterwards: Run `xano skills pull` to install the policies skill for your coding agent.",
       usage: "xano workspace pull [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Output directory for pulled documents (defaults to current directory)" },
@@ -247,7 +247,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace push",
-      description: "Upload local XanoScript files to a workspace, including knowledge/skills markdown under knowledge/ (synced automatically, shown in the preview). Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview. On a policy-enabled instance the import response carries policy_check feedback, printed after the import. The exit code follows the import and the blocking policies only: 1 when the import fails, 2 when it succeeded and an active mandatory policy has findings, and 0 otherwise; feedback that is forbidden, unavailable, errored, disabled or missing prints one warning line with the platform's status and message and leaves the exit code alone. A policy finding never rolls back the import. -m/--message labels the import: it is stored as the Version History message of each policy document the push actually changes, and a policy the push leaves unchanged gets no version row at all.",
+      description: "Upload local XanoScript files to a workspace, including knowledge/skills markdown under knowledge/ (synced automatically, shown in the preview). Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview. On a policy-enabled instance the import response carries policy_check feedback, printed after the import: the push exits 2 when policy_check.blocking is true, and the policy topic covers the verdicts and the exit rule. A policy finding never rolls back the import.",
       usage: "xano workspace push [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Directory containing documents to push (defaults to current directory)" },
@@ -264,7 +264,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
         { name: "guids", type: "boolean", required: false, default: "true", description: "Write server-assigned GUIDs back to local files after push (--no-guids to disable)" },
         { name: "include", short: "i", type: "string", required: false, description: "Glob pattern to include files, matched against relative paths (repeatable)" },
         { name: "exclude", short: "e", type: "string", required: false, description: "Glob pattern to exclude files, matched against relative paths (repeatable)" },
-        { name: "message", short: "m", type: "string", required: false, description: "Short label stored as the Version History message of each policy document this push changes; a policy the push leaves unchanged gets no version row" },
+        { name: "message", short: "m", type: "string", required: false, description: "Labels only policies: stored as the Version History message of each policy this push changes. Other objects the push changes get no message, and a policy the push leaves unchanged gets no Version History entry" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "summary or json; JSON retains the complete import response and policy_check feedback" },
         { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" }
       ],

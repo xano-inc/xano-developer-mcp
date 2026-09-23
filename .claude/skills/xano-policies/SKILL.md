@@ -18,11 +18,18 @@ xano profile use <name> -w <workspace_id> -b <branch>   # once, if no profile is
 xano skills pull                                        # writes .claude/skills/xano-policies/SKILL.md
 ```
 
-`xano skills pull` overwrites this same file — `.claude/skills/xano-policies/SKILL.md`
-under the project directory — with the generated skill. **If the file you are reading
-already has a "check catalogue" section, you are reading the live version**: follow it
-and ignore this stub. Until then, never guess a check id or parameter; read them from
-`xano policy catalogue`.
+`xano skills pull` writes the generated skill to `.claude/skills/xano-policies/SKILL.md`
+under the project directory. That replaces this stub only when the stub was installed into
+the project for Claude Code, without `-g`:
+
+```bash
+npx skills add xano-inc/xano-developer-mcp -s xano-policies -a claude-code
+```
+
+A stub installed globally or for another agent stays where that agent reads it, so remove
+it after pulling. **If the file you are reading already has a "check catalogue" section,
+you are reading the live version**: follow it and ignore this stub. Until then, never
+guess a check id or parameter; read them from `xano policy catalogue`.
 
 ## The rules that never change
 
@@ -33,7 +40,7 @@ and ignore this stub. Until then, never guess a check id or parameter; read them
   id is its position (`KEY.R1`, `KEY.R2`), and its human name is its `title`.
 - **A rule has no `severity`.** Severity lives on the policy (`critical`, `high`,
   `medium`, `low`) and only orders findings; `enforcement` is what blocks a merge.
-- **There is no `owner` field.** It was removed, and writing one is refused everywhere.
+- **There is no `owner` field.** An `owner` line is refused.
 - **A new policy is `lifecycle = "active"` with `enforcement = "advisory"`** unless you
   are told otherwise: it blocks nothing while its findings are reviewed, and a `draft`
   policy is never evaluated, so it reports nothing at all.
@@ -48,7 +55,7 @@ and ignore this stub. Until then, never guess a check id or parameter; read them
 - `xano policy catalogue [--check <id>]` — the checks this instance actually has, with their parameter schemas.
 - `xano policy parse <file>` — validate and format on the instance; writes nothing.
 - `xano policy publish --file <path> -m "<message>"` — create or update by the policy's stable key.
-- `xano policy evaluate` — evaluate active policies and store a run; exit 2 on mandatory findings.
+- `xano policy evaluate` — evaluate active policies and store a run; exit 2 when an active mandatory policy has findings.
 - `xano policy status [--run-detail]` — stored policy/run state without evaluating; `--run-detail` prints what the latest run recorded.
 - `xano policy runs [run_id]` — the runs the branch retains (newest twenty), newest first.
 - `xano workspace push` — imports and then returns `policy_check`; exit 2 means the import succeeded and an active mandatory policy has findings, not a rollback. Feedback that could not be produced is one warning line, not an exit code.

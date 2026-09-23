@@ -103,7 +103,7 @@ npx skills add xano-inc/xano-developer-mcp -s xano-init \
   -a claude-code -a codex -a cursor -a opencode -g
 ```
 
-Drop `-s` to install every skill in the repo, or drop `-g` to scope the install to the current project instead of your user profile. Other supported agents include `gemini-cli`, `windsurf`, `continue`, `cline`, `github-copilot`, and more — see the [skills CLI](https://github.com/vercel-labs/skills) for the full list.
+Drop `-s` to install every skill in the repo, or drop `-g` to scope the install to the current project instead of your user profile. Install `xano-policies` per project for Claude Code (`-s xano-policies -a claude-code`, without `-g`): that is the file `xano skills pull` replaces with your instance's live skill. A global or other-agent install of the stub stays in place after a pull, so remove it then. Other supported agents include `gemini-cli`, `windsurf`, `continue`, `cline`, `github-copilot`, and more — see the [skills CLI](https://github.com/vercel-labs/skills) for the full list.
 
 Start a new agent session after installing so the skill manifest is picked up.
 
@@ -415,7 +415,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `middleware` | Request/response interceptors for functions, queries, tasks, and tools |
 | `branch` | Branch-level settings: middleware, history retention, visual styling |
 | `workspace` | Workspace-level settings: environment variables, preferences, realtime |
-| `policies` | Workspace policy documents: syntax, the check catalogue and authoring rules |
+| `policies` | Workspace policy documents: syntax, the check catalogue, goals and authoring rules |
 
 **Examples:**
 ```
@@ -497,7 +497,7 @@ Get documentation for Xano's Meta API. Use this to understand how to programmati
 | `realtime` | Real-time channel operations |
 | `file` | File management |
 | `history` | Version history |
-| `policy` | Workspace policies: check catalogue, parse, save, evaluate, runs, agent skill |
+| `policy` | Workspace policies: check catalogue and goals, parse, save, object lookup, evaluate, runs, agent skill |
 | `workflows` | Step-by-step workflow guides |
 
 **Examples:**
