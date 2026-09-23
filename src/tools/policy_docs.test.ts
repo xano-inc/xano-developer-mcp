@@ -14,6 +14,8 @@ describe("policy documentation", () => {
   it("is served by all three documentation tools", () => {
     expect(resolveTopic("policy")).toBe("policies");
     expect(policies()).toContain("# Workspace policies");
+    // The readme topic's tables are how an agent learns which topics exist.
+    expect(xanoscriptDocs({ topic: "readme" }).documentation).toMatch(/^\| `policies` /m);
     expect(handleMetaApiDocs({ topic: "policy" })).toContain("/policy/parse");
     expect(handleCliDocs({ topic: "policy" })).toContain("xano policy parse");
     expect(handleCliDocs({ topic: "skills" })).toContain("xano skills pull");

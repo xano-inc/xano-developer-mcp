@@ -166,10 +166,6 @@ export function getTierFacts(docsPath: string): {
  * Get list of topics that apply to a given file path based on applyTo patterns
  */
 export function getDocsForFilePath(filePath: string): string[] {
-  const applies = (config: DocConfig) => config.applyTo.some((pattern) => minimatch(filePath, pattern));
-  const exclusive = Object.entries(XANOSCRIPT_DOCS_V2).find(([, config]) => config.exclusive && applies(config));
-  if (exclusive) return [exclusive[0]];
-
   const matches: string[] = [];
 
   for (const [topic, config] of Object.entries(XANOSCRIPT_DOCS_V2)) {
@@ -177,6 +173,7 @@ export function getDocsForFilePath(filePath: string): string[] {
 
     for (const pattern of config.applyTo) {
       if (minimatch(filePath, pattern)) {
+        if (config.exclusive) return [topic];
         matches.push(topic);
         break;
       }
