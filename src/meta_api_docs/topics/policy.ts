@@ -22,7 +22,7 @@ export const policyExample = `policy "AUTH-EXAMPLE" {
   enforcement = "advisory"
 
   rule {
-    check = "query.auth_required"
+    check = "object.auth_required"
     params = {except_tags: ["public", "xano:quick-start"]}
   }
 }`;

@@ -14,8 +14,11 @@ import { fileURLToPath } from 'node:url';
 export const CATALOGUE = fileURLToPath(new URL('./policy-catalogue.json', import.meta.url));
 export const POLICIES_MD = fileURLToPath(new URL('../src/xanoscript_docs/policies.md', import.meta.url));
 
-/** Parameters every check shares; the Scoping section documents them once. */
-const SCOPE_KEYS = ['scope', 'api_groups', 'tables', 'verbs', 'endpoint_auth', 'tags', 'except_tags'];
+/** Parameters every check shares, all top-level; the Scoping section documents them once. */
+const SCOPE_KEYS = ['tags', 'api_groups', 'tables', 'verbs', 'endpoint_auth', 'except_tags', 'object_kinds', 'reaching_table_tags'];
+
+/** The sentence every scope parameter's description ends with; the Scoping section states it once. */
+const SCOPE_READS = 'Scope limits what is reported, not what is read.';
 
 const cell = s => String(s).replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim();
 const code = v => '`' + (v === '' ? '""' : v) + '`';
@@ -46,11 +49,17 @@ function checks(items) {
 }
 
 function scope(items) {
-  const schema = items.find(it => it.params?.scope)?.params.scope;
-  if (!schema?.properties) throw new Error('No check in the catalogue publishes the shared scope schema.');
-  return Object.entries(schema.properties)
-    .map(([key, shape]) => `- \`scope.${key}\` (${shape.type}) — ${shape.description}${shape.values ? ` One of ${shape.values.map(code).join(', ')}.` : ''}`)
-    .join('\n');
+  const params = items[0]?.params ?? {};
+  const missing = SCOPE_KEYS.filter(key => !params[key]);
+  if (missing.length) throw new Error(`The catalogue does not publish the shared scope parameters: ${missing.join(', ')}.`);
+  const lines = [SCOPE_READS, ''];
+  for (const key of SCOPE_KEYS) {
+    const shape = params[key];
+    const values = shape.values ?? shape.items?.values;
+    const description = String(shape.description).replace(SCOPE_READS, '').trim();
+    lines.push(`- \`${key}\` (${shape.type}) — ${description}${values ? ` One of ${values.map(code).join(', ')}.` : ''}`);
+  }
+  return lines.join('\n');
 }
 
 function fixHints(items) {
