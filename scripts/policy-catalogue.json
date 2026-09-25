@@ -570,7 +570,7 @@
           ]
         }
       },
-      "category": "structure",
+      "category": "data_access",
       "object_kinds": [
         "query",
         "function",
@@ -5081,7 +5081,7 @@
           "items": {
             "type": "string"
           },
-          "description": "More field names every saved view must hide, beyond sensitive and password fields. A bare name applies on any table that has it, at any depth; table.field restricts it to one table. id is always shared and is refused; a name no table has is a rule warning.",
+          "description": "More field names every saved view must hide, beyond sensitive and password fields. A bare name applies on any table that has it, at any depth; table.field restricts it to one table. A view cannot hide id, so a bare id is refused and table.id is a rule warning that requires nothing (a nested field such as profile.id can be hidden); a name no table has is a rule warning.",
           "example": [
             "salary"
           ]
