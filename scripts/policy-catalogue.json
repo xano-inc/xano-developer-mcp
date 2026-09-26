@@ -626,7 +626,7 @@
     {
       "id": "literal.credential_shape",
       "label": "Definitions avoid recognizable credential literals",
-      "description": "Reports credential-shaped literals and literal keys in the selected locations. Findings name locations and pattern ids, never values. The definition location scans everything authored in each object (stack, inputs and defaults, response, settings, tests, descriptions), disabled content included since it is still stored and exported; env and agent settings are separate locations. Documentation examples (AWS keys ending EXAMPLE, the jwt.io sample token) are skipped. aws and twilio match identifiers rather than secrets, and some Google browser keys are public by design, though a backend literal still belongs in env. literal_keys reports literal keys and IVs passed to security.encrypt/decrypt, jws/jwe encode/decode and hmac_* filters, and literal bearer tokens passed to ai.external.mcp statements; public keys (PEM PUBLIC KEY/CERTIFICATE, JWKs without private members) are allowed.",
+      "description": "Reports credential-shaped literals and literal keys in the selected locations. Findings name locations and pattern ids, never values. The definition location scans everything authored in each object (stack, inputs and defaults, response, settings, tests, descriptions), disabled content included since it is still stored and exported; env and agent settings are separate locations. Documentation examples (AWS keys ending EXAMPLE, the jwt.io sample token) are skipped. aws and twilio match identifiers rather than secrets, and some Google browser keys are public by design, though a backend literal still belongs in env. literal_keys reports literal keys and IVs passed to security.encrypt/decrypt, jws/jwe encode/decode and hmac_* filters, and literal bearer tokens passed to ai.external.mcp statements; public keys (PEM PUBLIC KEY/CERTIFICATE, JWKs without private members) are allowed. Each finding names the SHA-256 fingerprint of every value it reports, and a value whose fingerprint allowed_secrets lists is skipped.",
       "params": {
         "patterns": {
           "type": "string[]",
@@ -676,6 +676,19 @@
           "example": [
             "definition",
             "env"
+          ]
+        },
+        "allowed_secrets": {
+          "type": "string[]",
+          "required": false,
+          "description": "Fingerprints (\"sha256:\" + 64 lowercase hex) of reviewed values to skip; never the values. Each is the SHA-256 of a value you allow wherever this rule looks, such as a public browser key or a test fixture; a raw value is refused. A literal is skipped when its whole text, or the text a pattern matched in it, is listed; each finding names the fingerprints of what it reports. Studio hashes a pasted value in the browser. An entry that allows nothing this rule reports is a rule warning.",
+          "default": [],
+          "items": {
+            "type": "string",
+            "format": "sha256"
+          },
+          "example": [
+            "sha256:50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c"
           ]
         },
         "tags": {
@@ -835,7 +848,7 @@
           "name": "reaching_table_tags"
         }
       ],
-      "fix_hint": "Use a workspace environment variable ($env) instead of the literal; the user sets its value and rotates the exposed one, never you in a file. A value already in an environment variable is in place: change nothing; narrow locations instead.",
+      "fix_hint": "Use a workspace environment variable ($env) instead of the literal; the user sets its value and rotates the exposed one, never you in a file. A value already in an environment variable is in place: change nothing; narrow locations instead. Allowing a value by its fingerprint (allowed_secrets) is the owner's call; never add one.",
       "keywords": [
         "secret",
         "api key",
@@ -6153,7 +6166,7 @@
         "leak",
         "encryption key"
       ],
-      "limits": "Recognizes the built-in credential shapes and literal keys only; a secret in a format of your own is not matched.",
+      "limits": "Recognizes the built-in credential shapes and literal keys only; a secret in a format of your own is not matched. A value you reviewed is allowed by its fingerprint, never by the value itself.",
       "rules": [
         {
           "title": "",
