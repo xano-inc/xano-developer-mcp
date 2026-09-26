@@ -1,5 +1,5 @@
 {
-  "version": "2.7.1",
+  "version": "2.7.2",
   "description": "Machine-readable index for XanoScript documentation (version mirrors version.json)",
 
   "topics": {
@@ -112,7 +112,7 @@
     },
     "database": {
       "file": "database.md",
-      "description": "All db.* operations: query, get, add, edit, patch, delete",
+      "description": "All db.* operations: query, get, add, edit, patch, increment, delete",
       "applyTo": ["function/**/*.xs", "api/**/*.xs", "task/*.xs", "ai/tool/*.xs"],
       "priority": 5,
       "aliases": ["db", "crud", "query", "sql"]
@@ -379,6 +379,7 @@
     "db.add": { "file": "database.md" },
     "db.edit": { "file": "database.md" },
     "db.patch": { "file": "database.md" },
+    "db.increment": { "file": "database.md" },
     "db.del": { "file": "database.md" },
     "db.truncate": { "file": "database.md" },
     "api.request": { "file": "integrations/external-apis.md" },
