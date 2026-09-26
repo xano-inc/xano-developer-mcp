@@ -497,7 +497,7 @@ Get documentation for Xano's Meta API. Use this to understand how to programmati
 | `realtime` | Real-time channel operations |
 | `file` | File management |
 | `history` | Version history |
-| `policy` | Workspace policies: check catalogue and goals, parse, save, object lookup, evaluate, runs, agent skill |
+| `policy` | Workspace policies: check catalogue and goals, parse, save, object lookup, evaluate, runs (whole, summary and findings pages), agent skill |
 | `workflows` | Step-by-step workflow guides |
 
 **Examples:**

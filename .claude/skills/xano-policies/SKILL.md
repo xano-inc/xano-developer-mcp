@@ -55,7 +55,7 @@ guess a check id or parameter; read them from `xano policy catalogue`.
 - `xano policy catalogue [--check <id>]` — the checks this instance actually has, with their parameter schemas.
 - `xano policy parse <file>` — validate and format on the instance; writes nothing.
 - `xano policy publish --file <path> -m "<message>"` — create or update by the policy's stable key.
-- `xano policy evaluate` — evaluate active policies and store a run; exit 2 when an active mandatory policy has findings.
+- `xano policy evaluate [--summary]` — evaluate active policies and store a run; exit 2 when an active mandatory policy has findings. `--summary` answers the run's counts and verdicts with its first 50 findings.
 - `xano policy status [--run-detail]` — stored policy/run state without evaluating; `--run-detail` prints what the latest run recorded.
-- `xano policy runs [run_id]` — the runs the branch retains (newest twenty), newest first.
-- `xano workspace push` — imports and then returns `policy_check`; exit 2 means the import succeeded and an active mandatory policy has findings, not a rollback. Feedback that could not be produced is one warning line, not an exit code.
+- `xano policy runs [run_id]` — the runs the branch retains (newest twenty), newest first; with an id, that run and one page of its findings (`--offset`, `--limit`, and filters such as `--blocking`, `--policy`, `--severity`).
+- `xano workspace push` — imports and then returns `policy_check`, listing the first 100 findings (`xano policy runs <run_id>` has them all); exit 2 means the import succeeded and an active mandatory policy has findings, not a rollback. Feedback that could not be produced is one warning line, not an exit code.
