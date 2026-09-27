@@ -191,7 +191,7 @@
           "name": "reaching_table_tags"
         }
       ],
-      "fix_hint": "Remove the field from the statement's output list, or list the output explicitly without it. Reading it to verify it, or returning it, is the policy owner's call: ask before exempting the object.",
+      "fix_hint": "Remove the field from the statement's output list, or list the output explicitly without it, and say what callers stop receiving. When the object must read it (to verify a password, say), the rule does not fit that object: exempting it is the policy owner's decision, not a fix.",
       "keywords": [
         "pii",
         "personal",
@@ -848,7 +848,7 @@
           "name": "reaching_table_tags"
         }
       ],
-      "fix_hint": "Use a workspace environment variable ($env) instead of the literal; the user sets its value and rotates the exposed one, never you in a file. A value already in an environment variable is in place: change nothing; narrow locations instead. Allowing a value by its fingerprint (allowed_secrets) is the owner's call; never add one.",
+      "fix_hint": "Use a workspace environment variable ($env) instead of the literal; the user sets its value and rotates the exposed one, never you in a file. Never quote any part of the value, even a prefix. A value already in an environment variable is in place: change nothing, and leave narrowing the rule's locations to the owner. Allowing a value by its fingerprint (allowed_secrets) is the owner's call; never add one.",
       "keywords": [
         "secret",
         "api key",
@@ -1015,7 +1015,7 @@
           "name": "reaching_table_tags"
         }
       ],
-      "fix_hint": "If the endpoint or handler is deliberately public (login, signup, webhook, health), exempt it in the policy with except_tags; do not enable auth without asking, because that changes who can call it.",
+      "fix_hint": "Enabling auth changes who can call the endpoint or handler: ask first, naming the auth table you would use. If it is deliberately public (login, signup, webhook, health), exempting it (the policy's except_tags) is the policy owner's decision: propose it, never apply it.",
       "keywords": [
         "auth",
         "login",
@@ -4617,7 +4617,7 @@
           "name": "except_tags"
         }
       ],
-      "fix_hint": "A placeholder object satisfies the check, not the policy; ask what it must do.",
+      "fix_hint": "A placeholder object satisfies the check, not the policy; ask what it must do. Never rename an existing object to match a name the rule lists.",
       "keywords": [
         "retention",
         "purge",
@@ -6017,7 +6017,7 @@
           }
         }
       ],
-      "fix_hint": "A placeholder object satisfies the check, not the policy; ask what it must do.",
+      "fix_hint": "A placeholder object satisfies the check, not the policy; ask what it must do. Never rename an existing object to match a name the rule lists.",
       "keywords": [
         "exists",
         "must have",

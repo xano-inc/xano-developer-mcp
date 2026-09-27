@@ -1,6 +1,6 @@
 ---
 name: xano-policies
-description: Use this skill whenever working with Xano workspace policies - authoring or editing policy files (`policies/*.xs`, `policy "KEY" { ... }` documents), running or interpreting policy checks, findings, reports or status, using any `xano policy ...` command, reading `policy_check` feedback from `xano workspace push`, or answering which checks exist, what a check inspects and how to fix or exempt a finding. Trigger on any mention of a Xano policy, policy check, policy finding, policy run or the policy catalogue.
+description: Use this skill whenever working with Xano workspace policies - authoring or editing policy files (`policies/*.xs`, `policy "KEY" { ... }` documents), running or interpreting policy checks, findings, reports or status, using any `xano policy ...` command, reading `policy_check` feedback from `xano workspace push`, or answering which checks exist, what a check inspects and how to fix or exempt a finding. Trigger on any mention of a Xano policy, policy check, policy finding, policy run or the policy catalogue, and before changing code in a project that has a `policies/` folder: its active mandatory policies apply to every code change.
 ---
 
 # Xano policies
@@ -49,6 +49,15 @@ guess a check id or parameter; read them from `xano policy catalogue`.
 - **Never weaken a policy unprompted** — mandatory to advisory, loosening or removing a
   rule, widening `except_tags`, or moving it to `draft`. Fix the object instead, and when
   you are asked to weaken one, say plainly what stops being checked.
+- **A fix changes the object, never the policy, and never exempts it.** Do the change the
+  failed rule asks for when it leaves who may call the object and every table and its data
+  as they are. Ask first before enabling auth, touching a table, field or data, adding or
+  removing a tag, or creating an object. Never add a tag a policy's `except_tags` lists, an
+  allowlist entry or an `allowed_secrets` fingerprint, and never rename a table to match a
+  rule. Never quote any part of a secret.
+- **Policies apply to every code change.** In a project with a `policies/` folder, read the
+  active policies that apply to what you are changing, keep to the mandatory ones, and run
+  `xano policy evaluate` after changing code (exit 2 is a blocking finding).
 
 ## Commands
 

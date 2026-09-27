@@ -432,6 +432,7 @@ export function readXanoscriptDocsV2(
       `- file_path='api/users/create.xs' — auto-select the docs for the file you're editing`,
       `- filter='round' — one expression filter's signature and example (comma-separate for several, e.g. filter='to_upper,split')`,
       `- tier='survival' (~${tiers.survival.tokens}) or tier='working' (~${tiers.working.tokens}) for context-limited models`,
+      `- topic='policies' — when the workspace has a policies/ folder: keep to its active mandatory policies while changing code, and evaluate after`,
       `- mode='quick_reference' — compact output when you only need a reminder`,
       `- max_tokens=4000 with file_path= — stop loading once the budget is reached`,
       `- exclude_topics=['syntax'] with file_path= — skip topics you've already loaded`,
