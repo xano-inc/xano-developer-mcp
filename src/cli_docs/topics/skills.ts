@@ -18,7 +18,7 @@ The skill is fetched from \`GET /api:meta/workspace/{workspace_id}/agent-skills?
 
 The route is one of the policy routes, gated like the others; the \`policy\` topic says what each refusal means. When the workspace has its own enabled knowledge record named \`xano-policies\`, the route serves that record instead of the platform skill, and the command says so.
 
-The same generator serves two surfaces. \`surface=studio\` (the default on the route) is the variant Xano's own Studio agent loads; \`surface=cli\` is the variant this command writes, and it is the only one the CLI asks for.
+The same generator serves three surfaces. \`surface=studio\` (the default on the route) is the variant Xano's own Studio agent loads; \`surface=mcp\` is the one the authenticated MCP's \`xano_get_policy_skill\` serves; \`surface=cli\` is the variant this command writes, and it is the only one the CLI asks for.
 
 This is not workspace knowledge. The generated policy skill is produced by the platform, not stored as a workspace knowledge record, so it does not appear in \`knowledge list\` and it is not written under \`knowledge/\` by \`workspace pull\`.`,
 
