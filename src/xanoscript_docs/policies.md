@@ -203,7 +203,7 @@ A finding carries `policy_key`, `policy_title`, `rule_id`, `rule_title`, `severi
 - `workspace.object_required`: A placeholder object satisfies the check, not the policy; ask what it must do. Never rename an existing object to match a name the rule lists.
 <!-- END GENERATED: fix-hints -->
 
-A rule that inspected nothing is reported as a **pass with `checked: 0`** — there is no separate status for it. The CLI and the Studio render that result as `no objects checked`, and it proves nothing about coverage: it says the rule's scope matched no objects, not that anything satisfied the rule. Treat it as a question about the scope: widen it until it reaches the objects the `statement` is about, or confirm that matching nothing on this branch is intended.
+A rule with `checked: 0` and no findings has status **`no_objects`** and message `no objects checked`. Older stored runs keep `pass` with `checked: 0`; readers accept both as no objects checked. The run and `policy_check` stay `pass` when nothing failed, and `policy_check.message` names the unchecked rules. The CLI and Studio show no objects checked, which proves nothing about coverage: it says the rule's scope matched no objects, not that anything satisfied the rule. Treat it as a question about the scope: widen it until it reaches the objects the `statement` is about, or confirm that matching nothing on this branch is intended. Merge, publish and deploy gates still read findings, so `no_objects` does not block them.
 
 ### Fixing a finding
 

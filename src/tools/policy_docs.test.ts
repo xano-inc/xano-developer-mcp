@@ -11,6 +11,15 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf
 const policies = () => xanoscriptDocs({ topic: "policies" }).documentation;
 
 describe("policy documentation", () => {
+  it("distinguishes no_objects rule results from passing runs and preserves older-run compatibility", () => {
+    for (const text of [policies(), handleMetaApiDocs({ topic: "policy" }), handleCliDocs({ topic: "policy" })]) {
+      expect(text).toContain("no_objects");
+      expect(text).toContain("checked: 0");
+      expect(text).toContain("unchecked rules");
+      expect(text).not.toContain("there is no separate status for it");
+    }
+  });
+
   it("is served by all three documentation tools", () => {
     expect(resolveTopic("policy")).toBe("policies");
     expect(policies()).toContain("# Workspace policies");
