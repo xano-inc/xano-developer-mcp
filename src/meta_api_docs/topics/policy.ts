@@ -13,13 +13,13 @@ const prefix = "/workspace/{workspace_id}/policy";
 const runId: ParameterDoc = { name: "run_id", type: "integer", required: true, in: "path", description: "Run ID" };
 
 // Canonical source exactly as POST /policy/parse returns it: quoted key, the platform's
-// field order (title, statement, severity, lifecycle, enforcement), a blank line before the
+// field order (title, statement, severity, active, enforcement), a blank line before the
 // first rule, and a one-key params map inline with no padding inside the braces.
 export const policyExample = `policy "AUTH-EXAMPLE" {
   title = "Require authentication"
   statement = "Endpoints require authentication unless the endpoint or its API group is tagged public."
   severity = "high"
-  lifecycle = "active"
+  active = true
   enforcement = "advisory"
 
   rule {
@@ -47,6 +47,8 @@ A rule with zero objects checked and no findings has status no_objects and messa
 
 A policy_check block reports an evaluation. status is one of: pass ("No policy findings."), fail ("Active policies reported findings."), error ("A policy check could not run; its result is marked error."), not_applicable ("No active policies on this branch; nothing was evaluated."), disabled ("Policies are not enabled on this instance; nothing was evaluated."), forbidden ("This credential cannot read this workspace's policies (workspace:policy read); nothing was evaluated.") or unavailable ("Policy evaluation is unavailable; the import itself completed."), and message carries that sentence. blocking is true when an active mandatory policy has findings, and status is then fail even if a check errored. not_applicable, disabled and forbidden load, store and audit nothing. Evaluate answers pass, fail, error or not_applicable; the feature gate and the permission refuse it with a 403 instead. A not_applicable evaluate is no run: id 0, stored: false, the run's own status not_applicable too, and empty policies, results and findings. The workspace multidoc import answers all seven. Its findings and blocking_findings list the first 100 each, in the platform's order, beside counts {findings, blocking, errors}, total (every finding) and truncated (whether either list was cut); the stored run (run_id) has them all, and its results are whole; a draft import answers no policy_check, and a tenant or sandbox push, its dry run and a release built from a multidoc carry no policies: they leave the policy files out, and the push and its dry run name them once in policies_skipped {message, keys}. With the policies feature off a workspace push and its dry run do the same (policy_check disabled), exports omit policies, and an archive import leaves its policies out and keeps the workspace's own, except that a replace deletes the policies of the branches it removes.
 
+Policies expose active as a boolean (default true). Source always writes active = true or active = false before enforcement. Authored lifecycle is refused: policy: "lifecycle" was replaced by "active"; write active = true or active = false. Source refusals include line and column. An inactive policy may have no rules. Policies are saved directly, not drafted.
+
 An evaluation stores a run and its findings; it does not modify the policy. Findings arrive in one order: blocking first, then by severity, policy key, rule position (R2 before R10) and object. A run can hold tens of thousands of findings (85,855 findings is a 44 MB run), so read a large one in parts: GET run/{run_id}/summary serves it without its findings, with its counts, each policy's verdict and the facets, and GET run/{run_id}/findings serves its findings a page at a time, filtered on the instance. Evaluate with answer: "summary" answers the same way, with the first 50 findings. Checks are static: they inspect stored definitions and nothing runs at request time. A check passing is not proof of runtime behavior or compliance.`,
   ai_hints: `Use the authenticated Xano MCP policy tools when available. Their workspace and instance come from the authenticated request, not tool arguments. The standalone developer MCP offers documentation and local language-server validation; it does not carry a workspace credential. Validate policy source with the native policy/parse endpoint, not a second local policy grammar. Key refusals on payload.code, never on the message wording. Read latest_run.stale to know whether a run still describes a policy. Evaluate with answer: "summary" and page a run's findings with GET run/{run_id}/findings rather than reading a large run whole. Re-sending an identical definition is safe: the platform answers unchanged: true and writes nothing, so do not add a cosmetic edit to force a new version.`,
   related_topics: ["workspace", "branch", "authentication"],
@@ -57,7 +59,7 @@ An evaluation stores a run and its findings; it does not modify the policy. Find
     {
       method: "GET", path: prefix + "/object", description: "The active policies whose rules reach one object, why each rule applies, and that object's findings in the branch's newest run. An unknown type is a 400 naming the known types; an object the branch does not have is a 404.",
       parameters: [workspace, branch, { name: "type", type: "string", required: true, in: "query", description: "Object kind as findings name it: query, function, table, task, trigger, message and the other kinds the catalogue lists" }, { name: "id", type: "integer", required: true, in: "query", description: "Object ID on the selected branch" }],
-      response: { type: "object", description: "{object, policies: [{id, key, title, statement, severity, lifecycle, enforcement, tag, rules: [{id, title, check, label, reason, warnings}], latest_run}], run: {id, started_at, status} | null, findings}. policies come from the policies as they are now; findings come from the newest stored run." },
+      response: { type: "object", description: "{object, policies: [{id, key, title, statement, severity, active, enforcement, tag, rules: [{id, title, check, label, reason, warnings}], latest_run}], run: {id, started_at, status} | null, findings}. policies come from the policies as they are now; findings come from the newest stored run." },
     },
     {
       method: "POST", path: prefix + "/parse", description: "Parse and format one policy with the native platform parser, without saving it.", parameters: [workspace],

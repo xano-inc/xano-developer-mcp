@@ -41,9 +41,9 @@ guess a check id or parameter; read them from `xano policy catalogue`.
 - **A rule has no `severity`.** Severity lives on the policy (`critical`, `high`,
   `medium`, `low`) and only orders findings; `enforcement` is what blocks a merge.
 - **There is no `owner` field.** An `owner` line is refused.
-- **A new policy is `lifecycle = "active"` with `enforcement = "advisory"`** unless you
-  are told otherwise: it blocks nothing while its findings are reviewed, and a `draft`
-  policy is never evaluated, so it reports nothing at all.
+- **A new policy is `active = true` with `enforcement = "advisory"`** unless you
+  are told otherwise: it blocks nothing while its findings are reviewed, and an inactive
+  policy (`active = false`) is never evaluated, so it reports nothing at all.
 - **Always parse before publishing:** `xano policy parse --file <path>`, then
   `xano policy publish --file <path> -m "<message>"`.
 - **Never weaken a policy unprompted** — mandatory to advisory, loosening or removing a
