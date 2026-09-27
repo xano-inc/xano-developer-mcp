@@ -52,9 +52,10 @@ guess a check id or parameter; read them from `xano policy catalogue`.
 - **A fix changes the object, never the policy, and never exempts it.** Do the change the
   failed rule asks for when it leaves who may call the object and every table and its data
   as they are. Ask first before enabling auth, touching a table, field or data, adding or
-  removing a tag, or creating an object. Never add a tag a policy's `except_tags` lists, an
+  removing a tag, rescheduling a task, or creating an object other than the unit test the
+  rule asks for. Never add a tag a policy's `except_tags` lists, an
   allowlist entry or an `allowed_secrets` fingerprint, and never rename a table to match a
-  rule. Never quote any part of a secret.
+  rule, or work around a plan limit. Never quote any part of a secret.
 - **Policies apply to every code change.** In a project with a `policies/` folder, read the
   active policies that apply to what you are changing, keep to the mandatory ones, and run
   `xano policy evaluate` after changing code (exit 2 is a blocking finding).
