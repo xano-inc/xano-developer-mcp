@@ -96,7 +96,7 @@ A push to a branch that is not live is not gated: it imports, then answers `poli
 
 ## Plan limits
 
-A plan caps the policies on each branch, active or not: Free 3; Starter, Launch and Essential 10; Pro and above unlimited. A create past the cap is refused with HTTP 403 `payload.code` `policy_plan_limit` (`plan`, `plan_name`, `limit`, `count`, `adding`, and `policies` on a push); the message names the plan and says to upgrade. A branch already over its cap keeps, edits, deactivates, demotes and deletes its policies. A push whose new policies do not fit is refused whole before any write; an archive import skips the new ones that do not fit and lists them in `policies_skipped`. Never work around a plan limit (for example by deleting or merging policies the user did not ask you to touch): tell the user.
+Lower plans cap the policies on each branch, active or not; Pro and above are unlimited. A create past the cap is refused with HTTP 403 `payload.code` `policy_plan_limit` (`plan`, `plan_name`, `limit`, `count`, `adding`, and `policies` on a push); the message names the plan and says to upgrade. A branch already over its cap keeps, edits, deactivates, demotes and deletes its policies. A push whose new policies do not fit is refused whole before any write; an archive import skips the new ones that do not fit and lists them in `policies_skipped`. Never work around a plan limit (for example by deleting or merging policies the user did not ask you to touch): tell the user.
 
 ## Releases and tenants
 

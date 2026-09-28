@@ -138,9 +138,11 @@ describe("policy documentation", () => {
     expect(handleMetaApiDocs({ topic: "policy" })).toContain("policy_duplicate");
   });
 
-  it("gives every capped plan and the retired param's replacement", () => {
+  it("says lower plans cap policies without naming the caps, and gives the retired param's replacement", () => {
     for (const text of [policies(), handleMetaApiDocs({ topic: "policy" })]) {
-      expect(text).toContain("Free 3; Starter, Launch and Essential 10; Pro and above unlimited");
+      expect(text).toMatch(/lower plans cap the policies on each branch/i);
+      expect(text).toContain("Pro and above are unlimited");
+      expect(text).not.toMatch(/Free \d|Essential \d/);
     }
     const database = xanoscriptDocs({ topic: "database" }).documentation;
     expect(database).toContain('param_names: ["output"]');
