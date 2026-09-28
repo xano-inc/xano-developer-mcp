@@ -20,6 +20,8 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 | `agent_trigger`     | `ai/agent/trigger/{name}.xs`           | Agent event handlers          |
 | `tool`              | `ai/tool/{name}.xs`                    | Tools for AI agents           |
 | `mcp_server`        | `ai/mcp_server/{name}.xs`             | MCP server definitions        |
+| `prompt`            | `ai/prompt/{name}.xs`                  | MCP prompts                   |
+| `resource`          | `ai/resource/{name}.xs`                | MCP resources                 |
 | `mcp_server_trigger`| `ai/mcp_server/trigger/{name}.xs`     | MCP server event handlers     |
 | `workflow_test`     | `workflow_test/{name}.xs`              | End-to-end workflow tests     |
 | `realtime_channel`  | `realtime/channel/{name}.xs`           | Realtime channel settings     |

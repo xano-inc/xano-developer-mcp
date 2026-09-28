@@ -22,6 +22,8 @@ import { taskDoc } from "./topics/task.js";
 import { agentDoc } from "./topics/agent.js";
 import { toolDoc } from "./topics/tool.js";
 import { mcpServerDoc } from "./topics/mcp_server.js";
+import { promptDoc } from "./topics/prompt.js";
+import { resourceDoc } from "./topics/resource.js";
 import { middlewareDoc } from "./topics/middleware.js";
 import { branchDoc } from "./topics/branch.js";
 import { realtimeDoc } from "./topics/realtime.js";
@@ -44,6 +46,8 @@ export const topics: Record<string, TopicDoc> = {
   agent: agentDoc,
   tool: toolDoc,
   mcp_server: mcpServerDoc,
+  prompt: promptDoc,
+  resource: resourceDoc,
   middleware: middlewareDoc,
   branch: branchDoc,
   realtime: realtimeDoc,
