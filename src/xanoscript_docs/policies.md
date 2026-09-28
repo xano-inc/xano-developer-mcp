@@ -92,7 +92,7 @@ Mandatory policies gate changes, not saves. One rule decides every gate:
 | Push | A non-draft `workspace push` to the live branch; it needs its transaction (`policy_gate_transaction_required` otherwise) | `override_reason` on the multidoc and upload routes; `xano workspace push --policy-override "<reason>"` |
 | Tenant deploy | Deploying a release to a standard or run tenant (see Releases and tenants) | `override_policy` with the reason |
 
-A push to a branch that is not live is not gated: it imports, then answers `policy_check`, and a blocking finding does not roll it back. Tables, API groups, environment variables, workspace and branch settings and realtime servers are saved without the publish gate, although a check may read one (a realtime server's middleware): a mandatory rule never blocks those saves, on the live branch too. The next run reports what they break, and a set-live or tenant deploy that carries it is gated.
+A push to a branch that is not live is not gated: it imports, then answers `policy_check`, and a blocking finding does not roll it back. Tables, API groups, environment variables, workspace and branch settings, realtime servers, and MCP prompts and resources are saved without the publish gate, although a check may read one (a realtime server's middleware): a mandatory rule never blocks those saves, on the live branch too. The next run reports what they break, and a set-live or tenant deploy that carries it is gated. No check reads an MCP prompt or resource; adding one to an MCP server or removing it changes the server, so that save is gated.
 
 ## Plan limits
 

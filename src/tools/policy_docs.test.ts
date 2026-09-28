@@ -110,12 +110,13 @@ describe("policy documentation", () => {
     expect(handleCliDocs({ topic: "function" }).match(/policy-override/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("says agents, MCP servers and realtime channels are gated, and lists every kind the publish gate never sees", () => {
+  it("says agents, MCP servers (their prompt and resource lists included) and realtime channels are gated, and lists every kind the publish gate never sees", () => {
     expect(policies()).toContain("an agent, an MCP server or a realtime channel to the workspace's **live** branch only");
     expect(handleMetaApiDocs({ topic: "policy" })).toContain("agents, MCP servers and realtime channels: tables, API groups");
     for (const text of [policies(), handleMetaApiDocs({ topic: "policy" })]) {
       expect(text).not.toContain("Tables, API groups and environment variables are not draftable");
-      expect(text).toMatch(/[Tt]ables, API groups, environment variables, workspace and branch settings and realtime servers are saved without/);
+      expect(text).toMatch(/[Tt]ables, API groups, environment variables, workspace and branch settings, realtime servers, and MCP prompts and resources are saved without/);
+      expect(text).toMatch(/changes the server, so that save is gated/);
       expect(text).not.toContain("A secret pasted into a live agent's settings");
     }
   });
