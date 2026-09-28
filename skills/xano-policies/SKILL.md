@@ -46,6 +46,13 @@ guess a check id or parameter; read them from `xano policy catalogue`.
   policy (`active = false`) is never evaluated, so it reports nothing at all.
 - **Always parse before publishing:** `xano policy parse --file <path>`, then
   `xano policy publish --file <path> -m "<message>"`.
+- **An exact copy is refused.** A new policy whose rules exactly match one the branch
+  already has (active or not) is refused as `policy_duplicate`, naming that policy. Only
+  each rule's check and params count, in any order; the key, title, statement, tags,
+  active, severity, enforcement and rule titles do not. Tell the user which policy has
+  these rules and ask what the new one should cover differently: the refusal's "change a
+  parameter or scope" is their choice, never a param or scope you pick to get past the
+  refusal. On a push, nothing else in it is imported either.
 - **Never weaken a policy unprompted** — mandatory to advisory, loosening or removing a
   rule, widening `except_tags`, or setting `active = false`. Fix the object instead, and when
   you are asked to weaken one, say plainly what stops being checked. Never override a policy

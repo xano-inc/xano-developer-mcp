@@ -71,6 +71,7 @@ describe("policy documentation", () => {
     expect(stub).not.toContain("## Commands");
     expect(stub).toContain("xano skills pull");
     expect(stub).toContain("xano policy --help");
+    expect(stub).toContain("as `policy_duplicate`, naming that policy");
   });
 
   it("says tenant, sandbox and release pushes carry policy files, and when they leave them out", () => {
