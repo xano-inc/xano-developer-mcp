@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 // Regenerate the catalogue-derived regions of src/xanoscript_docs/policies.md from the
-// check catalogue a policy-enabled instance serves:
+// check catalogue the platform serves. scripts/policy-catalogue.json is a copy of cloud-client's
+// committed copy of it, which its Policy:Catalogue suite holds to the code (from a sibling checkout):
 //
-//   xano policy catalogue -o json > scripts/policy-catalogue.json
+//   cp ../cloud-client/extensions/MVP/includes/xano/test/helper/policy/policy-catalogue.json scripts/policy-catalogue.json
 //   npm run gen:policy-docs
+//
+// `xano policy catalogue -o json` from an instance at the same cloud-client commit prints the same file.
 //
 // Only the text between `<!-- BEGIN GENERATED: <name> -->` and `<!-- END GENERATED: <name> -->`
 // is rewritten; everything around it is edited by hand. src/tools/policy_docs.test.ts renders

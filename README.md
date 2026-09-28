@@ -739,7 +739,7 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
   - **aliases**: Alternative names for topic lookup
   - **priority**: Ordering weight for file_path matching
   - **exclusive**: The topic alone documents the files its `applyTo` matches, so file_path mode returns only that topic
-- The check catalogue in `policies.md` is generated between its `BEGIN GENERATED` and `END GENERATED` markers. To refresh it, write the instance's catalogue with `xano policy catalogue -o json > scripts/policy-catalogue.json`, then run `npm run gen:policy-docs`; a test fails when the two disagree
+- The check catalogue in `policies.md` is generated between its `BEGIN GENERATED` and `END GENERATED` markers. To refresh it, copy cloud-client's committed catalogue (`../cloud-client/extensions/MVP/includes/xano/test/helper/policy/policy-catalogue.json` from a sibling checkout, held to the served catalogue by its Policy:Catalogue suite) to `scripts/policy-catalogue.json`, then run `npm run gen:policy-docs`; a test fails when the two disagree
 
 **Meta API Documentation** (`src/meta_api_docs/`):
 - TypeScript modules with structured documentation
