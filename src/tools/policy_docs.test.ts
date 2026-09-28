@@ -80,6 +80,8 @@ describe("policy documentation", () => {
       expect(text).toContain("remote tenant");
       expect(text).toContain("created before policies");
       expect(text).toContain("policies_skipped");
+      // A release built from files carries them only for a policy author.
+      expect(text).toContain("live-branch policies instead");
     }
   });
 
