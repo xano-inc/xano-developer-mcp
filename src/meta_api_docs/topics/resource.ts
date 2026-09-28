@@ -21,7 +21,6 @@ export const resourceDoc: TopicDoc = {
 
   endpoints: mcpPrimitiveEndpoints({
     kind: "resource",
-    label: "resource",
     plural: "resources",
     debugInputDescription: "The resource's input: a template's URI variables by name",
     createExample: `resource readme {

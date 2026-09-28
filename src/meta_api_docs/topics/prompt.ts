@@ -21,7 +21,6 @@ export const promptDoc: TopicDoc = {
 
   endpoints: mcpPrimitiveEndpoints({
     kind: "prompt",
-    label: "prompt",
     plural: "prompts",
     debugInputDescription: "The prompt's input (its arguments)",
     createExample: `prompt summarize {

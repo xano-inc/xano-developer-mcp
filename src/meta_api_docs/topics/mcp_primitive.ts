@@ -6,18 +6,16 @@ import type { EndpointDoc } from "../types.js";
  */
 export function mcpPrimitiveEndpoints(opts: {
   kind: "prompt" | "resource";
-  label: string;
   plural: string;
   debugInputDescription: string;
   createExample: string;
 }): EndpointDoc[] {
-  const { kind, label, plural, debugInputDescription, createExample } = opts;
+  const { kind, plural, debugInputDescription, createExample } = opts;
   const idParam = `${kind}_id`;
-  const Title = label.charAt(0).toUpperCase() + label.slice(1);
-  const PascalPlural = plural.charAt(0).toUpperCase() + plural.slice(1);
+    const PascalPlural = plural.charAt(0).toUpperCase() + plural.slice(1);
   const PascalKind = kind.charAt(0).toUpperCase() + kind.slice(1);
   const workspace = { name: "workspace_id", type: "integer", required: true, in: "path" as const, description: "Workspace ID" };
-  const id = { name: idParam, type: "integer", required: true, in: "path" as const, description: `${Title} ID` };
+  const id = { name: idParam, type: "integer", required: true, in: "path" as const, description: `${PascalKind} ID` };
 
   return [
     {
@@ -41,7 +39,7 @@ export function mcpPrimitiveEndpoints(opts: {
       method: "GET",
       path: `/workspace/{workspace_id}/${kind}/{${idParam}}`,
       tool_name: `get${PascalKind}`,
-      description: `Get one MCP ${label}.`,
+      description: `Get one MCP ${kind}.`,
       parameters: [
         workspace,
         id,
@@ -53,7 +51,7 @@ export function mcpPrimitiveEndpoints(opts: {
       method: "POST",
       path: `/workspace/{workspace_id}/${kind}`,
       tool_name: `create${PascalKind}`,
-      description: `Create an MCP ${label} from XanoScript. The body is the raw XanoScript (Content-Type: text/x-xanoscript).`,
+      description: `Create an MCP ${kind} from XanoScript. The body is the raw XanoScript (Content-Type: text/x-xanoscript).`,
       parameters: [
         workspace,
         { name: "branch", type: "string", description: "Target branch name" },
@@ -61,7 +59,7 @@ export function mcpPrimitiveEndpoints(opts: {
       ],
       request_body: {
         type: "text/x-xanoscript",
-        description: `The ${label} definition in XanoScript.`
+        description: `The ${kind} definition in XanoScript.`
       },
       example: {
         method: "POST",
@@ -74,7 +72,7 @@ export function mcpPrimitiveEndpoints(opts: {
       method: "PUT",
       path: `/workspace/{workspace_id}/${kind}/{${idParam}}`,
       tool_name: `update${PascalKind}`,
-      description: `Replace an MCP ${label}'s definition with new XanoScript (Content-Type: text/x-xanoscript).`,
+      description: `Replace an MCP ${kind}'s definition with new XanoScript (Content-Type: text/x-xanoscript).`,
       parameters: [
         workspace,
         id,
@@ -83,21 +81,21 @@ export function mcpPrimitiveEndpoints(opts: {
       ],
       request_body: {
         type: "text/x-xanoscript",
-        description: `The full ${label} definition in XanoScript.`
+        description: `The full ${kind} definition in XanoScript.`
       }
     },
     {
       method: "DELETE",
       path: `/workspace/{workspace_id}/${kind}/{${idParam}}`,
       tool_name: `delete${PascalKind}`,
-      description: `Delete an MCP ${label} permanently. MCP servers that list it stop offering it.`,
+      description: `Delete an MCP ${kind} permanently. MCP servers that list it stop offering it.`,
       parameters: [workspace, id]
     },
     {
       method: "POST",
       path: `/workspace/{workspace_id}/${kind}/{${idParam}}/debug`,
       tool_name: `debug${PascalKind}`,
-      description: `Run the ${label}'s stack outside MCP and return its result. \`elicit\` simulates mcp.elicit answers keyed by elicit key, e.g. {"confirm":{"action":"accept","content":{"proceed":true}}}; an elicit with no simulated answer gets {"action":"cancel"}. The response's \`mcp\` object lists every elicit asked (with its answer) and every mcp.progress call. The stack runs for real, so its writes happen.`,
+      description: `Run the ${kind}'s stack outside MCP and return its result. \`elicit\` simulates mcp.elicit answers keyed by elicit key, e.g. {"confirm":{"action":"accept","content":{"proceed":true}}}; an elicit with no simulated answer gets {"action":"cancel"}. The response's \`mcp\` object lists every elicit asked (with its answer) and every mcp.progress call. The stack runs for real, so its writes happen.`,
       parameters: [workspace, id],
       request_body: {
         type: "application/json",
