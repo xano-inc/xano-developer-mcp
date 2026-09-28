@@ -4,7 +4,7 @@ applyTo: "ai/mcp_server/*.xs"
 
 # MCP Servers
 
-Model Context Protocol servers that expose tools to external AI clients.
+Model Context Protocol servers that expose tools, prompts and resources to external AI clients.
 
 ## Quick Reference
 
@@ -15,6 +15,8 @@ mcp_server "<name>" {
   instructions = "How to use this server's tools"
   tags = ["category"]
   tools = [{ name: "<tool-name>" }]
+  prompts = [{ name: "<prompt-name>" }]
+  resources = [{ name: "<resource-name>" }]
 }
 ```
 
@@ -49,6 +51,8 @@ mcp_server "Customer Support" {
 | `tags` | Organization/categorization | No |
 | `docs` | Internal team notes | No |
 | `tools` | List of exposed tools | Yes |
+| `prompts` | List of exposed prompts (see `prompts`) | No |
+| `resources` | List of exposed resources (see `resources`) | No |
 
 ---
 
@@ -77,7 +81,7 @@ change the tool itself or how any other server exposes it.
 | `name` | Tool file name in `ai/tool/` | — (required) |
 | `active` | Whether connections to this entry are allowed | `true` |
 | `auth` | Name of an auth-enabled table required to call it | omitted = no auth |
-| `type` | `"tool"` or `"resource"` | `"tool"` |
+| `type` | `"tool"`, or the legacy `"resource"` | `"tool"` |
 | `resource_uri` | URI identifying the resource (`type: "resource"` only) | `""` |
 | `tool_meta` | MCP `_meta` payload sent with the tool (`type: "tool"` only) | `""` |
 
@@ -108,7 +112,9 @@ Set `auth` to the name of a table that has authentication enabled. Only requests
 with a valid access token for that table may call the tool. Omit `auth` to leave
 the tool public. An unknown table name resolves to no auth rather than an error.
 
-### `type` and `resource_uri`
+### `type` and `resource_uri` (legacy)
+
+> **Legacy:** `type: "resource"` predates first-class resources. It still works for existing servers, but new work should create a `resource` object and list it in the server's `resources` block (see below and the `resources` topic). If a first-class resource and a legacy reference share a uri, the first-class resource wins.
 
 `type` chooses what MCP object the connected tool is advertised as:
 
@@ -139,6 +145,143 @@ metadata to their interactions. `tool_meta` is that payload, written as a string
 `tool_meta` applies only when `type` is `"tool"`. The parser accepts either field
 on either type, but a value on the wrong type is ignored and dropped the next time
 the server is exported.
+
+---
+
+## Prompts and Resources Blocks
+
+First-class prompts (`ai/prompt/`) and resources (`ai/resource/`) are attached the same way as tools. These blocks exist on `mcp_server` only; an `agent` cannot have them.
+
+```xs
+mcp_server "Orders" {
+  canonical = "orders-mcp"
+  tools = [{ name: "search_orders" }]
+  prompts = [
+    { name: "summarize_order", auth: "user" },
+    { name: "old_prompt", active: false }
+  ]
+  resources = [{ name: "regional_order" }]
+}
+```
+
+Each entry takes `name` (required, the file name), `active` (default `true`) and `auth` (an auth-enabled table name; omitted = public). A client only sees, fetches and completes the prompts and resources attached to the server it connected to.
+
+---
+
+## Elicitation
+
+`mcp.elicit` asks the user a question in the middle of a tool, prompt or resource, and gives the stack the answer.
+
+```xs
+tool refund_order {
+  instructions = "Refund an order after the user confirms the amount."
+  input {
+    int order_id
+  }
+
+  stack {
+    mcp.elicit {
+      key = "confirm_refund"
+      message = "Refund order " ~ $input.order_id ~ "?"
+      input {
+        bool proceed
+        text reason? filters=max:200
+      }
+    } as $answer
+
+    conditional {
+      if ($answer.action == "accept" && $answer.content.proceed) {
+        db.edit order {
+          field_name = "id"
+          field_value = $input.order_id
+          data = {status: "refunded", refund_reason: $answer.content.reason}
+        } as $order
+      }
+
+      else {
+        var $order {
+          value = null
+        }
+      }
+    }
+  }
+
+  response = {refunded: $order != null}
+}
+```
+
+- `key` (required) names the answer. Use a different key for each elicit in the stack.
+- `message` (required) is the question shown to the user.
+- `input` (optional) is the form. It supports `text`, `email`, `date`, `int`, `decimal`, `bool`, `enum` and `enum[]` fields, with `min`/`max` filters, descriptions and defaults. Nested objects, other lists, files, json, timestamps, `password` and `sensitive` fields are refused.
+- The result is `{action, content}`. `action` is `accept`, `decline` or `cancel`; `content` holds the form fields on `accept`.
+
+### Rule 1: always handle `cancel`
+
+Input is only collected from clients on MCP `2026-07-28` that support form elicitation. **Every other client gets `{action: "cancel"}` immediately**, and so does a run outside MCP (a debug run, an agent, a function test). A stack that treats anything but `accept` as "stop" is correct everywhere.
+
+### Rule 2: writes go after the last elicit
+
+The server does not pause. It ends the call with an `input_required` result, and the client calls the tool again with the answer attached. **The whole stack runs again from the top on every retry**, so a `db.add` placed before the elicit runs once per round trip. Put writes, emails, non-GET `api.request` calls and `function.run` after the last `mcp.elicit`. The editor warns when one comes first.
+
+Other elicitation rules:
+
+- It cannot run inside an async-shared function.
+- An elicit inside `db.transaction` commits that transaction's earlier writes on each attempt.
+- Debug runs (`debugTool`, `debugPrompt`, `debugResource` in the Meta API) take simulated answers keyed by elicit key, e.g. `{"confirm_refund": {"action": "accept", "content": {"proceed": true}}}`; an elicit with no simulated answer gets `cancel`.
+
+---
+
+## Progress
+
+`mcp.progress` sends a progress update to the client during a long tool, prompt or resource:
+
+```xs
+tool import_rows {
+  input {
+    object[] rows {
+      schema {
+        text name
+      }
+    }
+  }
+
+  stack {
+    var $count {
+      value = $input.rows|count
+    }
+
+    for ($count) {
+      each as $idx {
+        db.add row_import {
+          data = {name: $input.rows[$idx].name}
+        }
+
+        mcp.progress {
+          progress = $idx + 1
+          total = $count
+          message = "Imported row " ~ ($idx + 1)
+        }
+      }
+    }
+  }
+
+  response = {imported: $count}
+}
+```
+
+`progress` must increase on every call; a value that does not is dropped. `total` and `message` are optional. Outside MCP, or when the client did not ask for progress, the statement does nothing.
+
+---
+
+## Change Notifications
+
+When a tool, prompt or resource attached to a server changes, clients on MCP `2026-07-28` that hold a `subscriptions/listen` stream receive `notifications/tools/list_changed` (or `prompts/`, `resources/`). A client only hears about changes to the server it is connected to. **This requires a Swoole instance**; elsewhere the server does not advertise `listChanged` and clients re-list instead.
+
+---
+
+## Protocol Versions
+
+A server answers MCP `2026-07-28` clients and older clients (`2024-11-05` through `2025-11-25`) on the same URL, chosen per request. You do not configure anything. Older clients get every feature their version has; what they miss is listed above (elicitation answers and change notifications).
 
 ---
 
@@ -267,6 +410,8 @@ The MCP protocol handles:
 
 | Topic | Description |
 |-------|-------------|
-| `tools` | AI tool definitions used by MCP servers |
+| `tools` | AI tool definitions and MCP tool metadata |
+| `prompts` | First-class MCP prompts |
+| `resources` | First-class MCP resources |
 | `agents` | AI agent configuration |
 | `triggers` | MCP server triggers for connection events |

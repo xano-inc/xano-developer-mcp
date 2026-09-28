@@ -11,6 +11,7 @@ export const toolDoc: TopicDoc = {
 - Tools contain XanoScript logic
 - Can be shared across multiple agents
 - Support draft/publish workflow
+- MCP metadata in XanoScript: \`title\`, \`annotations\` (read_only_hint, destructive_hint, idempotent_hint, open_world_hint), \`icons\` (https or png/jpeg/webp data URIs only) and an \`output\` schema, which makes MCP servers return validated \`structuredContent\`
 
 ## Tool Design Best Practices
 - Clear, descriptive names (e.g., "lookup_customer", "send_email")
@@ -22,7 +23,8 @@ export const toolDoc: TopicDoc = {
 - Tool names should be descriptive verbs (lookup, create, update, send)
 - Keep tools focused on single responsibilities
 - Use \`include_xanoscript=true\` to see tool implementation
-- Tools can call other functions for code reuse`,
+- Tools can call other functions for code reuse
+- Use debugTool to test a tool, including simulated mcp.elicit answers`,
 
   endpoints: [
     {
@@ -121,6 +123,25 @@ export const toolDoc: TopicDoc = {
       ]
     },
     {
+      method: "POST",
+      path: "/workspace/{workspace_id}/tool/{tool_id}/debug",
+      tool_name: "debugTool",
+      description: "Run the tool's stack outside MCP and return its result. `elicit` simulates mcp.elicit answers keyed by elicit key, e.g. {\"confirm\":{\"action\":\"accept\",\"content\":{\"proceed\":true}}}; an elicit with no simulated answer gets {\"action\":\"cancel\"}. The response's `mcp` object lists every elicit asked (with its answer) and every mcp.progress call. The stack runs for real, so its writes happen.",
+      parameters: [
+        { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
+        { name: "tool_id", type: "integer", required: true, in: "path", description: "Tool ID" }
+      ],
+      request_body: {
+        type: "application/json",
+        properties: {
+          input: { type: "object", description: "The tool's input" },
+          elicit: { type: "object", description: "Simulated mcp.elicit answers, keyed by elicit key: {action: accept|decline|cancel, content?}" },
+          toolset_id: { type: "integer", description: "An MCP server the tool is assigned to; that assignment's auth then applies" },
+          token: { type: "string", description: "Bearer token for an auth-protected assignment" }
+        }
+      }
+    },
+    {
       method: "PUT",
       path: "/workspace/{workspace_id}/tool/{tool_id}/security",
       tool_name: "updateToolSecurity",
@@ -152,5 +173,5 @@ export const toolDoc: TopicDoc = {
     }
   },
 
-  related_topics: ["agent", "mcp_server", "function"]
+  related_topics: ["agent", "mcp_server", "prompt", "resource", "function"]
 };

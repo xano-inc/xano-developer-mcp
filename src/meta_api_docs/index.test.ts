@@ -24,6 +24,8 @@ describe("meta_api_docs/index", () => {
         "agent",
         "tool",
         "mcp_server",
+        "prompt",
+        "resource",
         "middleware",
         "branch",
         "realtime",
