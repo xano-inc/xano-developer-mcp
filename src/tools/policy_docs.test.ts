@@ -85,6 +85,46 @@ describe("policy documentation", () => {
     }
   });
 
+  it("says an uploaded release archive that carries policies needs a policy author", () => {
+    for (const text of [policies(), handleMetaApiDocs({ topic: "policy" }), handleCliDocs({ topic: "policy" })]) {
+      expect(text).toMatch(/release[^.]*(archive|import)[^.]*carries policies/);
+    }
+    expect(handleCliDocs({ topic: "policy" })).toContain("nothing is stored");
+  });
+
+  it("names every route and command that overrides a set-live or publish gate, and the branch a refused set-live keeps", () => {
+    const text = policies();
+    expect(text).toContain("`import-schema` with `setlive`");
+    expect(text).toContain("`payload.branch`");
+    expect(text).toContain("`override_reason` on the Metadata API create and save routes");
+    expect(text).toContain("`xano function create` and `xano function edit` take `--policy-override");
+    const meta = handleMetaApiDocs({ topic: "policy" });
+    expect(meta).toContain("import-schema with setlive");
+    expect(meta).toContain("payload.branch {id, label}");
+    expect(meta).toContain("the create and save routes of the draftable objects");
+    const cli = handleCliDocs({ topic: "policy" });
+    expect(cli).toContain("function create and function edit exit 2");
+    expect(cli).toContain("branch set_live exit 2");
+    // Both function create and function edit list the flag.
+    expect(handleCliDocs({ topic: "function" }).match(/policy-override/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("lists every kind the publish gate never sees", () => {
+    for (const text of [policies(), handleMetaApiDocs({ topic: "policy" })]) {
+      expect(text).not.toContain("Tables, API groups and environment variables are not draftable");
+      expect(text).toMatch(/workspace and branch settings, agents, MCP servers, toolsets, realtime servers and realtime channels are saved without it/);
+    }
+  });
+
+  it("says a read-only session writes no policy and the tenant reads need tenant_center read", () => {
+    const refusal = "This is a read-only session. Enable editing to modify this resource.";
+    expect(policies()).toContain(refusal);
+    const meta = handleMetaApiDocs({ topic: "policy" });
+    expect(meta).toContain(refusal);
+    expect(meta).toContain("tenant_center read");
+    expect(meta).toContain("at most 200 ids");
+  });
+
   it("documents the refusals for exact copies, remediation and reserved blocks", () => {
     const text = policies();
     expect(text).toContain("A policy with exactly these rules already exists: KEY. Change a parameter or scope to add another.");

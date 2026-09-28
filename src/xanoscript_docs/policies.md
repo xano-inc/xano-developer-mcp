@@ -86,13 +86,13 @@ Mandatory policies gate changes, not saves. One rule decides every gate:
 | Gate | When | How to override |
 | --- | --- | --- |
 | Merge | Every branch merge (Studio). Its dry run shows the verdict first | `override_reason` |
-| Set live | Making a branch live, judged against the current live branch's policies | `override_reason` |
+| Set live | Making a branch live, judged against the current live branch's policies. A release deployed into its workspace with `set_live`, and a Metadata API `import-schema` with `setlive`, land a new branch first: a refusal keeps it and names it in `payload.branch` (`{id, label}`) | `override_reason`; `xano branch set_live` and `xano release deploy --set_live` take `--policy-override "<reason>"` |
 | Archive import | `mode=merge` through the Metadata API | `override_reason` |
-| Publish | A save to the workspace's **live** branch only (Studio publish, Metadata API object saves and beta publish). Other branches are not gated | Studio's override dialog |
+| Publish | A save of a draftable object (function, query, task, middleware, addon, tool, workflow test, trigger, realtime message) to the workspace's **live** branch only (Studio publish, Metadata API creates and saves, beta publish). Other branches are not gated | Studio's override dialog; `override_reason` on the Metadata API create and save routes; `xano function create` and `xano function edit` take `--policy-override "<reason>"` |
 | Push | A non-draft `workspace push` to the live branch; it needs its transaction (`policy_gate_transaction_required` otherwise) | `override_reason` on the multidoc and upload routes; `xano workspace push --policy-override "<reason>"` |
 | Tenant deploy | Deploying a release to a standard or run tenant (see Releases and tenants) | `override_policy` with the reason |
 
-A push to a branch that is not live is not gated: it imports, then answers `policy_check`, and a blocking finding does not roll it back. Tables, API groups and environment variables are not draftable, so a mandatory `table.*` rule never blocks a publish; set-live and tenant deploys catch it.
+A push to a branch that is not live is not gated: it imports, then answers `policy_check`, and a blocking finding does not roll it back. Only the draftable kinds pass through the publish gate. Tables, API groups, environment variables, workspace and branch settings, agents, MCP servers, toolsets, realtime servers and realtime channels are saved without it, although some checks read them (an agent's or MCP server's settings, a realtime channel's or server's middleware): a mandatory rule never blocks those saves, on the live branch too. The next run reports what they break, and a set-live or tenant deploy that carries it is gated. A secret pasted into a live agent's settings, for example, is saved even while a mandatory `literal.credential_shape` rule covers agent settings.
 
 ## Plan limits
 
@@ -268,6 +268,7 @@ Every policy request passes the same gates. A refusal is an HTTP 403, and its `p
 | Feature | The instance has the `policies` feature enabled | `policy_feature_disabled` | `Policies are not enabled on this instance.` |
 | Role permission | The caller's role (or its override on this workspace) grants `workspace:policy` at the level the operation needs | `policy_permission_required` | `The workspace:policy <level> permission is required on this workspace.` |
 | Token scope | A Metadata API access token was created with that `workspace:policy` level | `policy_scope_required` | `This API token was not granted the workspace:policy <level> scope.` |
+| Writable session | A write (create, update, restore, delete) comes from a session that may write: not a read-only Studio session or a read-only impersonation | none | `This is a read-only session. Enable editing to modify this resource.` |
 | OAuth ceiling | An OAuth token carries `workspace:read` (reads) or `workspace:write` (writes) | none | `insufficient_scope: workspace:read` or `workspace:write` |
 
 Both coded permission refusals also carry `permission` (`workspace:policy`) and `level`. A refused push lists the policy files it would have written in `payload.policies`, and its message ends `; nothing was imported: KEY, KEY`. The remedy follows the code: `policy_permission_required` needs an instance admin to grant the role's Workspace Policies permission (a new token does not help); `policy_scope_required` needs a token created with the level.
