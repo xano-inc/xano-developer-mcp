@@ -162,4 +162,4 @@ If the project has a `policies/` folder, the branch has governance policies. Kee
 
 ### Available Topics
 
-survival, working, readme, essentials, syntax, syntax/string-filters, syntax/array-filters, syntax/functions, types, database, functions, apis, tables, tasks, triggers, agents, tools, mcp-servers, security, performance, debugging, unit-testing, workflow-tests, middleware, addons, realtime, streaming, schema, integrations, integrations/cloud-storage, integrations/search, integrations/redis, integrations/external-apis, integrations/utilities, workspace, branch, run, frontend
+survival, working, readme, essentials, syntax, syntax/string-filters, syntax/array-filters, syntax/functions, types, database, functions, apis, tables, tasks, triggers, agents, tools, mcp-servers, security, performance, debugging, unit-testing, workflow-tests, middleware, addons, realtime, streaming, schema, integrations, integrations/cloud-storage, integrations/search, integrations/redis, integrations/external-apis, integrations/utilities, workspace, branch, run, frontend, policies

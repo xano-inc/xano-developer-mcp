@@ -671,3 +671,4 @@ If the project has a `policies/` folder, the branch has governance policies. Kee
 | `middleware` | Request/response interceptors | ~6KB |
 | `realtime` | WebSocket channels and events | ~9KB |
 | `streaming` | Large file/data streaming | ~8KB |
+| `policies` | Workspace policy documents: syntax, checks, authoring and fix rules | ~78KB |

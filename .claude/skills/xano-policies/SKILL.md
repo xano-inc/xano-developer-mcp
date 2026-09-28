@@ -48,7 +48,8 @@ guess a check id or parameter; read them from `xano policy catalogue`.
   `xano policy publish --file <path> -m "<message>"`.
 - **Never weaken a policy unprompted** — mandatory to advisory, loosening or removing a
   rule, widening `except_tags`, or setting `active = false`. Fix the object instead, and when
-  you are asked to weaken one, say plainly what stops being checked.
+  you are asked to weaken one, say plainly what stops being checked. Never override a policy
+  gate's refusal unless the user gave you the reason.
 - **A fix changes the object, never the policy, and never exempts it.** Do the change the
   failed rule asks for when it leaves who may call the object and every table and its data
   as they are. Ask first before enabling auth, touching a table, field or data, adding or
@@ -60,13 +61,4 @@ guess a check id or parameter; read them from `xano policy catalogue`.
   active policies that apply to what you are changing, keep to the mandatory ones, and run
   `xano policy evaluate` after changing code (exit 2 is a blocking finding).
 
-## Commands
-
-- `xano policy catalogue [--check <id>]` — the checks this instance actually has, with their parameter schemas.
-- `xano policy create --goal <id> [--param N.path=JSON]` — create an Active, Advisory policy from a platform goal.
-- `xano policy parse <file>` — validate and format on the instance; writes nothing.
-- `xano policy publish --file <path> -m "<message>"` — create or update by the policy's stable key.
-- `xano policy evaluate [--summary]` — evaluate active policies and store a run; exit 2 when an active mandatory policy has findings. `--summary` answers the run's counts and verdicts with its first 50 findings. `--policy KEY` tries one policy alone and stores nothing.
-- `xano policy status [--run-detail]` — stored policy/run state without evaluating; `--run-detail` prints what the latest run recorded.
-- `xano policy runs [run_id]` — the runs the branch retains (newest twenty), newest first; with an id, that run and one page of its findings (`--offset`, `--limit`, and filters such as `--blocking`, `--policy`, `--severity`).
-- `xano workspace push` — imports and then returns `policy_check`, listing the first 100 findings (`xano policy runs <run_id>` has them all); exit 2 means an active mandatory policy has findings. On a branch that is not live the import stands; a push to the **live** branch that introduces a blocking finding is refused (403 `policy_gate`, exit 2, nothing imported). Only the user decides on `--policy-override "<reason>"`. Feedback that could not be produced is one warning line, not an exit code.
+Every command: `xano policy --help`, or the live skill after `xano skills pull`.

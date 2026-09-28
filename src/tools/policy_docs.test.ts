@@ -66,6 +66,45 @@ describe("policy documentation", () => {
     expect(read("../../.claude/skills/xano-policies/SKILL.md")).toBe(read("../../skills/xano-policies/SKILL.md"));
   });
 
+  it("keeps the stub to the rules that never change and a pointer at the live skill", () => {
+    const stub = read("../../skills/xano-policies/SKILL.md");
+    expect(stub).not.toContain("## Commands");
+    expect(stub).toContain("xano skills pull");
+    expect(stub).toContain("xano policy --help");
+  });
+
+  it("says tenant, sandbox and release pushes carry policy files, and when they leave them out", () => {
+    for (const text of [handleMetaApiDocs({ topic: "policy" }), handleCliDocs({ topic: "policy" })]) {
+      expect(text).not.toMatch(/(push|a multidoc) carr(y|ies) no policies/);
+      expect(text).toContain("carry policy files while");
+      expect(text).toContain("remote tenant");
+      expect(text).toContain("created before policies");
+      expect(text).toContain("policies_skipped");
+    }
+  });
+
+  it("documents the refusals for exact copies, remediation and reserved blocks", () => {
+    const text = policies();
+    expect(text).toContain("A policy with exactly these rules already exists: KEY. Change a parameter or scope to add another.");
+    expect(text).toContain('policy: "remediation" was removed; put the guidance in the policy statement.');
+    expect(text).toContain('Policy block "<name>" is reserved. Policies support rule blocks only.');
+    expect(handleMetaApiDocs({ topic: "policy" })).toContain("policy_duplicate");
+  });
+
+  it("gives every capped plan and the retired param's replacement", () => {
+    for (const text of [policies(), handleMetaApiDocs({ topic: "policy" })]) {
+      expect(text).toContain("Free 3; Starter, Launch and Essential 10; Pro and above unlimited");
+    }
+    const database = xanoscriptDocs({ topic: "database" }).documentation;
+    expect(database).toContain('param_names: ["output"]');
+    expect(database).not.toContain('param: "output"');
+  });
+
+  it("lists the policies topic in both tier docs", () => {
+    expect(xanoscriptDocs({ tier: "survival" }).documentation).toMatch(/^survival, working, .*, policies$/m);
+    expect(xanoscriptDocs({ tier: "working" }).documentation).toMatch(/^\| `policies` \|/m);
+  });
+
   it("describes where output is accepted the way the bundled language server does", () => {
     // database.md: the platform takes `output` on all six; the language server rejects the last two.
     const withOutput = (statement: string) => validateXanoscript({
