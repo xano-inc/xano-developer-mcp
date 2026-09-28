@@ -102,7 +102,7 @@ describe("policy documentation", () => {
     const meta = handleMetaApiDocs({ topic: "policy" });
     expect(meta).toContain("import-schema with setlive");
     expect(meta).toContain("payload.branch {id, label}");
-    expect(meta).toContain("the create and save routes of the draftable objects");
+    expect(meta).toContain("the create and save routes of the gated objects");
     const cli = handleCliDocs({ topic: "policy" });
     expect(cli).toContain("function create and function edit exit 2");
     expect(cli).toContain("branch set_live exit 2");
@@ -110,10 +110,13 @@ describe("policy documentation", () => {
     expect(handleCliDocs({ topic: "function" }).match(/policy-override/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("lists every kind the publish gate never sees", () => {
+  it("says agents, MCP servers and realtime channels are gated, and lists every kind the publish gate never sees", () => {
+    expect(policies()).toContain("an agent, an MCP server or a realtime channel to the workspace's **live** branch only");
+    expect(handleMetaApiDocs({ topic: "policy" })).toContain("agents, MCP servers and realtime channels: tables, API groups");
     for (const text of [policies(), handleMetaApiDocs({ topic: "policy" })]) {
       expect(text).not.toContain("Tables, API groups and environment variables are not draftable");
-      expect(text).toMatch(/workspace and branch settings, agents, MCP servers, toolsets, realtime servers and realtime channels are saved without it/);
+      expect(text).toMatch(/[Tt]ables, API groups, environment variables, workspace and branch settings and realtime servers are saved without/);
+      expect(text).not.toContain("A secret pasted into a live agent's settings");
     }
   });
 
