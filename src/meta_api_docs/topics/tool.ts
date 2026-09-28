@@ -1,4 +1,5 @@
 import type { TopicDoc } from "../types.js";
+import { debugDescription } from "./mcp_primitive.js";
 
 export const toolDoc: TopicDoc = {
   topic: "tool",
@@ -126,7 +127,7 @@ export const toolDoc: TopicDoc = {
       method: "POST",
       path: "/workspace/{workspace_id}/tool/{tool_id}/debug",
       tool_name: "debugTool",
-      description: "Run the tool's stack outside MCP and return its result. `elicit` simulates mcp.elicit answers keyed by elicit key, e.g. {\"confirm\":{\"action\":\"accept\",\"content\":{\"proceed\":true}}}; an elicit with no simulated answer gets {\"action\":\"cancel\"}. The response's `mcp` object lists every elicit asked (with its answer) and every mcp.progress call. The stack runs for real, so its writes happen.",
+      description: debugDescription("tool"),
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
         { name: "tool_id", type: "integer", required: true, in: "path", description: "Tool ID" }

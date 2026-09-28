@@ -126,13 +126,14 @@ Any other key is an error.
 
 | Response | Content the client receives |
 |----------|-----------------------------|
-| A string | `text` |
+| A UTF-8 string | `text` |
+| A string that is not valid UTF-8 (binary bytes) | `blob` (base64) |
 | A file resource or file variable | `blob` (base64 of the file bytes) |
 | `{text: ...}` or `{blob: ...}` (optionally with `mime_type`, `uri`), or a list of them | Those items as written. A `blob` must already be base64 |
 | Any other object or list | JSON `text` |
 | A number, bool or null | `text` |
 
-The content's MIME type is the resource's `mime_type` when set. Otherwise it comes from the file, or is `text/plain`, `application/json` or `application/octet-stream` by shape.
+The content's MIME type is, in order: an explicit `{text}`/`{blob}` item's own `mime_type`, then the resource's `mime_type`, then the file's own type, then `text/plain`, `application/json` or `application/octet-stream` by shape.
 
 ---
 

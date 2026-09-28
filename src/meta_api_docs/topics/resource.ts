@@ -12,7 +12,7 @@ export const resourceDoc: TopicDoc = {
 - A resource is attached to an MCP server through the server's \`resources\` block: \`resources = [{ name: "regional_order" }]\`
 - Two resources on one server may not share a uri; a first-class resource wins over a legacy \`type: "resource"\` tool reference on the same uri
 - The stack may use \`mcp.elicit\` and \`mcp.progress\`
-- RBAC uses the same scope as tools (\`workspace:tool\`)`,
+- RBAC uses the same scope as tools (\`workspace:tool\`); the debug route also requires \`workspace:action:rundebug\` enabled`,
 
   ai_hints: `- Create the resource, then add it to an MCP server's \`resources\` block (updateMcpServer)
 - Prefer a resource object over the legacy \`type: "resource"\` tool reference for new work

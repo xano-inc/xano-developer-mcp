@@ -70,7 +70,7 @@ prompt code_review {
 |-------|---------|----------|
 | `input` | The prompt's arguments. Each field becomes a prompt argument; its `description` is sent to the client | Yes (may be empty) |
 | `stack` | Logic that builds the messages | Yes |
-| `response` | The messages to return | No |
+| `response` | The messages to return. The grammar allows omitting it, but a prompt without one fails every `prompts/get` | Yes, in practice |
 | `description` | The prompt description sent to the client | No |
 | `title` | Human readable display name | No |
 | `icons` | Icons a client may show. Same rules as tool icons (see `tools`) | No |
@@ -86,7 +86,7 @@ An input field that is required and has no default becomes a required prompt arg
 
 | Response | Messages the client receives |
 |----------|------------------------------|
-| A string | One `user` message with that text |
+| A string or a number | One `user` message with that text |
 | A list of `{role, content}` objects | Those messages, in order |
 | A single `{role, content}` object | One message |
 
@@ -105,7 +105,7 @@ prompt greeting {
 }
 ```
 
-A response of any other shape is an authoring error, and the client receives it as an internal error that names the bad value.
+Any other response (no response at all, `null`, a bool, an object that is not a message) is an authoring error, and the client receives it as an internal error that names the bad value.
 
 ---
 

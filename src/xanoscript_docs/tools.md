@@ -157,7 +157,7 @@ A list of `{ src, mime_type?, sizes?, theme? }`:
 
 ### `output`
 
-Declares the shape of the tool's result, with the same field syntax as `input`. When it is set, the MCP server returns the response as `structuredContent` (plus the same JSON as text) and validates it first: a response that does not match is returned as a tool error naming the first failing field. Without `output`, the response is returned as text only.
+Declares the shape of the tool's result, with the same field syntax as `input`. When it is set, the MCP server returns the response as `structuredContent` (plus the same JSON as text) and validates it first: a response that does not match is returned as a tool error naming the first failing field. Without `output`, the response is returned as one text block, unless the stack returns a complete MCP `CallToolResult` itself (an object with a `content` list, optionally `structuredContent` and `isError`), which is passed through as-is. When `output` is set, the `structuredContent` of such a hand-built result is validated too.
 
 ---
 

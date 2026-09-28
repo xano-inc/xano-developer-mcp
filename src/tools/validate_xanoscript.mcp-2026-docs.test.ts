@@ -52,6 +52,11 @@ ${body}
     expect(validateXanoscript({ code: tool(`  icons = [{src: "data:image/svg+xml;base64,PHN2Zz4="}]`) }).valid).toBe(false);
   });
 
+  it("accepts a png data icon and refuses an unknown annotation key", () => {
+    expect(validateXanoscript({ code: tool(`  icons = [{src: "data:image/png;base64,iVBORw0KGgo="}]`) }).valid).toBe(true);
+    expect(validateXanoscript({ code: tool(`  annotations = {read_only_hint: true, sneaky: false}`) }).valid).toBe(false);
+  });
+
   it("refuses prompts on an agent", () => {
     const result = validateXanoscript({ code: `agent a {
   canonical = "x"
@@ -75,8 +80,12 @@ ${body}
 
 describe("MCP 2026-07-28 topic wiring", () => {
   it("auto-selects prompts and resources docs for their file paths", () => {
-    expect(getDocsForFilePath("ai/prompt/x.xs")).toContain("prompts");
-    expect(getDocsForFilePath("ai/resource/x.xs")).toContain("resources");
+    for (const [path, topic] of [["ai/prompt/x.xs", "prompts"], ["ai/resource/x.xs", "resources"]]) {
+      const docs = getDocsForFilePath(path);
+      expect(docs).toContain(topic);
+      expect(docs).toContain("types");
+      expect(docs).toContain("database");
+    }
   });
 
   it("serves the new topics directly and through aliases", () => {

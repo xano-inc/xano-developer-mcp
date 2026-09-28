@@ -217,7 +217,7 @@ tool refund_order {
 
 ### Rule 1: always handle `cancel`
 
-Input is only collected from clients on MCP `2026-07-28` that support form elicitation. **Every other client gets `{action: "cancel"}` immediately**, and so does a run outside MCP (a debug run, an agent, a function test). A stack that treats anything but `accept` as "stop" is correct everywhere.
+Input is only collected from clients on MCP `2026-07-28` that support form elicitation. **Every other client gets `{action: "cancel"}` immediately**, and so does a run outside MCP (an agent, a function test, or a debug run with no simulated answer for that key). A stack that treats anything but `accept` as "stop" is correct everywhere.
 
 ### Rule 2: writes go after the last elicit
 
@@ -269,7 +269,7 @@ tool import_rows {
 }
 ```
 
-`progress` must increase on every call; a value that does not is dropped. `total` and `message` are optional. Outside MCP, or when the client did not ask for progress, the statement does nothing.
+`progress` must increase on every call; a value that does not is dropped. `total` and `message` are optional. Outside MCP, or when the client did not ask for progress, no notification is sent; a debug run (`debugTool`, `debugPrompt`, `debugResource`) captures the calls in its response instead.
 
 ---
 

@@ -1,5 +1,10 @@
 import type { EndpointDoc } from "../types.js";
 
+/** The debug-route description shared by the tool, prompt and resource topics. */
+export function debugDescription(kind: "tool" | "prompt" | "resource"): string {
+  return `Run the ${kind}'s stack outside MCP and return its result. Requires \`workspace:tool\` read and \`workspace:action:rundebug\` enabled. \`elicit\` simulates mcp.elicit answers keyed by elicit key, e.g. {"confirm":{"action":"accept","content":{"proceed":true}}}; an elicit with no simulated answer gets {"action":"cancel"}. The response's \`mcp\` object lists every elicit asked (with its answer) and every mcp.progress call. The stack runs for real, so its writes happen.`;
+}
+
 /**
  * Shared route set for the MCP `prompt` and `resource` objects. Both expose the
  * same CRUD + debug surface in cloud-client (`app/meta/{prompt,resource}.yaml`).
@@ -95,7 +100,7 @@ export function mcpPrimitiveEndpoints(opts: {
       method: "POST",
       path: `/workspace/{workspace_id}/${kind}/{${idParam}}/debug`,
       tool_name: `debug${PascalKind}`,
-      description: `Run the ${kind}'s stack outside MCP and return its result. \`elicit\` simulates mcp.elicit answers keyed by elicit key, e.g. {"confirm":{"action":"accept","content":{"proceed":true}}}; an elicit with no simulated answer gets {"action":"cancel"}. The response's \`mcp\` object lists every elicit asked (with its answer) and every mcp.progress call. The stack runs for real, so its writes happen.`,
+      description: debugDescription(kind),
       parameters: [workspace, id],
       request_body: {
         type: "application/json",

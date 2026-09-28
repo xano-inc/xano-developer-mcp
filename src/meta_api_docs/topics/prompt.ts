@@ -12,7 +12,7 @@ export const promptDoc: TopicDoc = {
 - \`response\` may be a string (one user message), a list of \`{role, content}\` messages, or one message object
 - An \`enum\` input field gives clients argument completions
 - The stack may use \`mcp.elicit\` and \`mcp.progress\`
-- RBAC uses the same scope as tools (\`workspace:tool\`)`,
+- RBAC uses the same scope as tools (\`workspace:tool\`); the debug route also requires \`workspace:action:rundebug\` enabled`,
 
   ai_hints: `- Create the prompt, then add it to an MCP server's \`prompts\` block (updateMcpServer)
 - Write and validate the XanoScript first; see the \`prompts\` XanoScript docs topic
