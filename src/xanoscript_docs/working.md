@@ -392,6 +392,7 @@ function.run "send_notification" {
 ```
 Read:   db.get (single by ID) | db.has (exists?) | db.query (filtered list)
 Write:  db.add (insert) | db.edit (update known fields) | db.patch (dynamic fields) | db.add_or_edit (upsert)
+Counter: db.increment (atomic add/subtract on a numeric field, rows matching where)
 Delete: db.del (single) | db.truncate (all)
 ```
 
@@ -456,6 +457,16 @@ conditional {
   }
 }
 db.patch "product" { field_name = "id" field_value = $input.id data = $updates } as $product
+```
+
+### db.increment — Atomic counter (no read-then-edit race)
+```xs
+// Negative value decrements; guard with where (no clamping). return = {type: "count"} returns the row count.
+db.increment "product" {
+  where = $db.product.id == $input.id && $db.product.stock >= 1
+  field_name = "stock"
+  value = -1
+} as $products
 ```
 
 ### db.del — Delete

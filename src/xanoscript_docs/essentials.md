@@ -693,6 +693,18 @@ db.truncate "session" { reset = true }
 
 See `xano_xanoscript_docs({ topic: "database" })` for all delete operations.
 
+### 16. Read-then-edit counters (lost updates)
+
+`db.get` → add → `db.edit` races: two concurrent requests both read `5` and write `6`. Use `db.increment` (atomic; negative `value` decrements; guard with `where`, no clamping; the key is `field_name`).
+
+```xs
+db.increment "product" {
+  where = $db.product.id == $input.id && $db.product.stock >= 1
+  field_name = "stock"
+  value = -1
+} as $products
+```
+
 ---
 
 ## Validation is syntax-only
