@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { validateXanoscript } from "./validate_xanoscript.js";
+import { validateXanoscript, startsWithPolicyHeader } from "./validate_xanoscript.js";
 import { policyExample } from "../meta_api_docs/topics/policy.js";
 
 const TASK = "task smoke {\n  stack {\n    var $note { value = 1 }\n  }\n}";
@@ -54,5 +54,46 @@ describe("validate_xanoscript and policy documents", () => {
       expect(errors).not.toContain("AUTH-001.xs");
       expect(errors).not.toContain("native platform parser");
     });
+  });
+});
+
+describe("startsWithPolicyHeader", () => {
+  it("finds the header after whitespace and comments, and nowhere else", () => {
+    expect(startsWithPolicyHeader(policyExample)).toBe(true);
+    expect(startsWithPolicyHeader("\uFEFF\n// Example policy\n\n/* authoring note */\n" + policyExample)).toBe(true);
+    expect(startsWithPolicyHeader("// note\r\n/*\n  block\n*/policy \"K\" {}")).toBe(true);
+    expect(startsWithPolicyHeader("policy")).toBe(true);
+    expect(startsWithPolicyHeader('task policy_reminder {\n  stack {\n    var $note { value = "policy review" }\n  }\n}')).toBe(false);
+    expect(startsWithPolicyHeader("policy_x foo {\n}")).toBe(false);
+    expect(startsWithPolicyHeader("policy/* note */ \"K\" {}")).toBe(false);
+    expect(startsWithPolicyHeader("// policy \"K\" {}")).toBe(false);
+    expect(startsWithPolicyHeader("")).toBe(false);
+  });
+
+  it("ends a line comment at a line feed only, as the pattern it replaces did", () => {
+    expect(startsWithPolicyHeader("// note\npolicy \"K\" {}")).toBe(true);
+    expect(startsWithPolicyHeader("// note\rpolicy \"K\" {}")).toBe(false);
+    expect(startsWithPolicyHeader("// /* not a block comment\npolicy \"K\" {}")).toBe(true);
+  });
+
+  it("ends a block comment at its first close, and reads an unterminated one as no header", () => {
+    expect(startsWithPolicyHeader("/* // not a line comment */policy \"K\" {}")).toBe(true);
+    // The opener's star does not close it: "/*/" is still open.
+    expect(startsWithPolicyHeader("/*/ */policy \"K\" {}")).toBe(true);
+    expect(startsWithPolicyHeader("/*/policy \"K\" {}")).toBe(false);
+    expect(startsWithPolicyHeader("/* note */ x */ policy \"K\" {}")).toBe(false);
+    expect(startsWithPolicyHeader("/* never closed\npolicy \"K\" {}")).toBe(false);
+    expect(startsWithPolicyHeader("/* note */\n/* never closed policy \"K\" {}")).toBe(false);
+  });
+
+  it("stays linear on long runs of comments", () => {
+    const started = performance.now();
+    expect(startsWithPolicyHeader("/**/".repeat(100_000))).toBe(false);
+    expect(startsWithPolicyHeader("/**/".repeat(100_000) + "policy \"K\" {}")).toBe(true);
+    expect(startsWithPolicyHeader("/*" + "/**/".repeat(100_000))).toBe(false);
+    expect(startsWithPolicyHeader("/*" + "*//*".repeat(100_000))).toBe(false);
+    expect(startsWithPolicyHeader("//" + "*///".repeat(100_000))).toBe(false);
+    // The pattern this replaces ran for more than five minutes on 500 repetitions of "/**/".
+    expect(performance.now() - started).toBeLessThan(1000);
   });
 });

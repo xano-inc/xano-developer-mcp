@@ -23,7 +23,7 @@ const SCOPE_KEYS = ['tags', 'api_groups', 'tables', 'verbs', 'endpoint_auth', 'e
 /** The sentence every scope parameter's description ends with; the Scoping section states it once. */
 const SCOPE_READS = 'Scope limits what is reported, not what is read.';
 
-const cell = s => String(s).replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim();
+const cell = s => String(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim();
 const code = v => '`' + (v === '' ? '""' : v) + '`';
 const ownParams = it => Object.entries(it.params ?? {}).filter(([name]) => !SCOPE_KEYS.includes(name));
 

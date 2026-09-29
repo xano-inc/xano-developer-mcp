@@ -88,6 +88,43 @@ const POLICY_REFUSAL =
   "with the policy-enabled official CLI, or POST /api:meta/workspace/{id}/policy/parse " +
   "with {source}. This bundled language server does not validate policy documents.";
 
+/** One whitespace character, as a regular expression's `\s` matches it. */
+const WHITESPACE = /\s/;
+
+/**
+ * True when `code` opens with a policy header: `policy` followed by whitespace or
+ * the end, after any leading whitespace, `//` line comments and block comments.
+ * A line comment ends at a line feed (a carriage return only right before one) or
+ * at the end of the input, where no header can follow; a block comment ends at its
+ * first `*\/`, and an unterminated one means no header. One forward pass, so the
+ * cost stays linear in the input.
+ */
+export function startsWithPolicyHeader(code: string): boolean {
+  let at = 0;
+  while (at < code.length) {
+    if (WHITESPACE.test(code[at])) {
+      at++;
+    } else if (code.startsWith("//", at)) {
+      let end = at + 2;
+      while (end < code.length && code[end] !== "\n" && code[end] !== "\r") end++;
+      if (end === code.length) return false;
+      if (code[end] === "\r") {
+        if (code[end + 1] !== "\n") return false;
+        end++;
+      }
+      at = end + 1;
+    } else if (code.startsWith("/*", at)) {
+      const end = code.indexOf("*/", at + 2);
+      if (end < 0) return false;
+      at = end + 2;
+    } else {
+      break;
+    }
+  }
+  const after = at + "policy".length;
+  return code.startsWith("policy", at) && (after === code.length || WHITESPACE.test(code[after]));
+}
+
 // =============================================================================
 // Error Message Improvements
 // =============================================================================
@@ -297,7 +334,7 @@ function validateCode(
 ): SingleFileValidationResult {
   // Recognize the document header only; policy grammar and check schemas are
   // owned by the instance. Never turn unsupported local syntax into a pass.
-  if (/^(?:\s|\/\/[^\r\n]*(?:\r?\n|$)|\/\*[\s\S]*?\*\/)*policy(?:\s|$)/.test(code)) {
+  if (startsWithPolicyHeader(code)) {
     const named = filePath ? `${basename(filePath)}: ${POLICY_REFUSAL}` : POLICY_REFUSAL;
     return {
       valid: false,
