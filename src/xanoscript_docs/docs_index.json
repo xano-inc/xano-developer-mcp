@@ -1,5 +1,5 @@
 {
-  "version": "2.7.1",
+  "version": "2.8.0",
   "description": "Machine-readable index for XanoScript documentation (version mirrors version.json)",
 
   "topics": {
@@ -71,7 +71,7 @@
     "types": {
       "file": "types.md",
       "description": "Data types, input blocks, and validation",
-      "applyTo": ["function/**/*.xs", "api/**/*.xs", "ai/tool/*.xs", "ai/agent/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "ai/tool/*.xs", "ai/agent/*.xs", "ai/prompt/*.xs", "ai/resource/*.xs"],
       "priority": 5,
       "aliases": ["validation", "input", "data-types"]
     },
@@ -112,8 +112,8 @@
     },
     "database": {
       "file": "database.md",
-      "description": "All db.* operations: query, get, add, edit, patch, delete",
-      "applyTo": ["function/**/*.xs", "api/**/*.xs", "task/*.xs", "ai/tool/*.xs"],
+      "description": "All db.* operations: query, get, add, edit, patch, increment, delete",
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "task/*.xs", "ai/tool/*.xs", "ai/prompt/*.xs", "ai/resource/*.xs"],
       "priority": 5,
       "aliases": ["db", "crud", "query", "sql"]
     },
@@ -137,6 +137,20 @@
       "applyTo": ["ai/mcp_server/*.xs"],
       "priority": 3,
       "aliases": ["mcp", "model-context-protocol"]
+    },
+    "prompts": {
+      "file": "prompts.md",
+      "description": "MCP prompts: reusable prompt templates an MCP server offers, with arguments and completions",
+      "applyTo": ["ai/prompt/*.xs"],
+      "priority": 3,
+      "aliases": ["prompt", "mcp-prompts"]
+    },
+    "resources": {
+      "file": "resources.md",
+      "description": "MCP resources: static and URI-template resources an MCP server shares as context",
+      "applyTo": ["ai/resource/*.xs"],
+      "priority": 3,
+      "aliases": ["resource", "mcp-resources", "resource-templates"]
     },
     "unit-testing": {
       "file": "unit-testing.md",
@@ -363,6 +377,8 @@
     "agent": { "file": "agents.md", "tools": "tools.md" },
     "tool": { "file": "tools.md", "mcp": "mcp-servers.md" },
     "mcp_server": { "file": "mcp-servers.md", "triggers": "triggers.md" },
+    "prompt": { "file": "prompts.md", "mcp": "mcp-servers.md" },
+    "resource": { "file": "resources.md", "mcp": "mcp-servers.md" },
     "table_trigger": { "file": "triggers.md", "section": "table-trigger" },
     "realtime_trigger": { "file": "triggers.md", "section": "realtime-trigger" },
     "workspace_trigger": { "file": "triggers.md", "section": "workspace-trigger" },
@@ -381,12 +397,15 @@
   "operations": {
     "realtime.publish": { "file": "realtime-v2.md" },
     "realtime.get_session": { "file": "realtime-v2.md" },
+    "mcp.elicit": { "file": "mcp-servers.md" },
+    "mcp.progress": { "file": "mcp-servers.md" },
     "db.query": { "file": "database.md" },
     "db.get": { "file": "database.md" },
     "db.has": { "file": "database.md" },
     "db.add": { "file": "database.md" },
     "db.edit": { "file": "database.md" },
     "db.patch": { "file": "database.md" },
+    "db.increment": { "file": "database.md" },
     "db.del": { "file": "database.md" },
     "db.truncate": { "file": "database.md" },
     "api.request": { "file": "integrations/external-apis.md" },

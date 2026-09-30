@@ -43,6 +43,8 @@ describe("xanoscript module", () => {
         "agents",
         "tools",
         "mcp-servers",
+        "prompts",
+        "resources",
         "unit-testing",
         "workflow-tests",
         "integrations",

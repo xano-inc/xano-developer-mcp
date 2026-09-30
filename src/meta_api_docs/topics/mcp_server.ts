@@ -3,7 +3,7 @@ import type { TopicDoc } from "../types.js";
 export const mcpServerDoc: TopicDoc = {
   topic: "mcp_server",
   title: "MCP Server Management",
-  description: `MCP (Model Context Protocol) Servers expose tools to external AI clients like Claude Desktop, Cursor, or other MCP-compatible applications.
+  description: `MCP (Model Context Protocol) Servers expose tools, prompts and resources to external AI clients like Claude Desktop, Cursor, or other MCP-compatible applications.
 
 ## Key Concepts
 - MCP Servers expose Xano tools via the MCP protocol
@@ -11,6 +11,8 @@ export const mcpServerDoc: TopicDoc = {
 - Supports authentication for secure access
 - Can have triggers for event-driven invocation
 - Standardized interface for AI tool discovery
+- First-class prompts and resources are attached with \`prompts = [...]\` and \`resources = [...]\` blocks (\`name\`, \`active\`, \`auth\`); agents cannot have these blocks
+- Serves MCP 2026-07-28 and older clients (2024-11-05 through 2025-11-25) on one URL; elicitation input is only collected from 2026-07-28 clients, and list-changed notifications need a Swoole instance
 
 ## Use Cases
 - Expose Xano functionality to Claude Desktop
@@ -22,7 +24,9 @@ export const mcpServerDoc: TopicDoc = {
 - Create tools first, then create MCP server to expose them
 - Authentication settings control who can access the server
 - Use triggers to invoke actions when MCP events occur
-- Check documentation endpoint for client setup instructions`,
+- Check documentation endpoint for client setup instructions
+- Create prompts (createPrompt) and resources (createResource) before listing them on a server
+- The \`type: "resource"\` tool reference is legacy; use a resource object for new work`,
 
   endpoints: [
     {

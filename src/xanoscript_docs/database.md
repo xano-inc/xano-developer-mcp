@@ -1,12 +1,12 @@
 ---
-applyTo: "function/**/*.xs, api/**/*.xs, task/*.xs, ai/tool/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs, task/*.xs, ai/tool/*.xs, ai/prompt/*.xs, ai/resource/*.xs"
 ---
 
 # Database Operations
 
 Complete reference for XanoScript database operations.
 
-> **TL;DR:** Use `db.get` for single record by ID, `db.query` for filtered lists, `db.has` to check existence, `db.add` to insert, `db.edit` for inline updates, `db.patch` for dynamic fields, `db.del` to delete.
+> **TL;DR:** Use `db.get` for single record by ID, `db.query` for filtered lists, `db.has` to check existence, `db.add` to insert, `db.edit` for inline updates, `db.patch` for dynamic fields, `db.increment` to adjust a numeric counter atomically, `db.del` to delete.
 
 ## Choosing an Operation
 
@@ -19,7 +19,8 @@ Need to...
 ├── Write data?
 │   ├── New record? → db.add
 │   ├── Update known fields? → db.edit
-│   └── Update dynamic fields? → db.patch
+│   ├── Update dynamic fields? → db.patch
+│   └── Adjust a counter/stock number atomically? → db.increment
 ├── Delete data?
 │   ├── Single record (by field)? → db.del
 │   ├── Multiple records (by condition)? → db.bulk.delete
@@ -41,6 +42,7 @@ Need to...
 | `db.edit`        | Update record (inline data)   | Updated record           |
 | `db.patch`       | Update record (variable data) | Updated record           |
 | `db.add_or_edit` | Upsert record                 | Record                   |
+| `db.increment`   | Atomic add to a numeric field | Records or count         |
 | `db.del`         | Delete one record by field    | None                     |
 | `db.bulk.delete` | Delete many records by `where`| Deleted count            |
 | `db.truncate`    | Delete every record in table  | None                     |
@@ -540,6 +542,83 @@ db.bulk.update "product" {
   }
 } as $count
 ```
+
+### db.increment
+
+Atomically add a signed number to **one numeric field** (int or decimal) on **every record matching `where`**. The new value is computed inside the database in a single statement, so concurrent calls never lose an update. Reading the record, doing the math, and writing it back with `db.edit` races: two concurrent requests can both read `5` and both write `6`.
+
+```xs
+db.increment "post" {
+  where = $db.post.id == $input.post_id
+  field_name = "view_count"
+  value = 1
+} as $updated
+```
+
+| Key | Required | Notes |
+| --- | --- | --- |
+| `where` | yes | Which records to change. Every matching record is updated. |
+| `field_name` | yes | The numeric (int or decimal) field to change. The key is `field_name`, not `field`. |
+| `value` | yes | Number expression added to the field. Use a negative number to decrement. |
+| `return` | no | `{type: "list"}` (default: the updated records) or `{type: "count"}` (number of records updated; cheaper for large updates). |
+| `output` | no | Fields to return. List return only. |
+| `addon` | no | Same shape as `db.query` addons. List return only. |
+| `description`, `disabled`, `mock` | no | Same as other db statements. |
+
+No other keys are accepted.
+
+**Behavior:**
+- A null or missing current value counts as `0`.
+- It is an error, and nothing changes, when the field is not an int or decimal, is a list field, or does not exist; when `value` is not a number; or when `value` has a fractional part and the field is an int.
+- An empty `where` changes nothing. For example, if every condition uses `==?` and those inputs are absent, no records are updated (it does not update the whole table).
+- There is no clamping. To stop a count going below zero, guard it in the `where`.
+
+Decrement stock, only if there is stock left:
+
+```xs
+db.increment "product" {
+  where = $db.product.id == $input.product_id && $db.product.stock >= 1
+  field_name = "stock"
+  value = -1
+  return = {type: "count"}
+} as $decremented
+
+precondition ($decremented > 0) {
+  error_type = "inputerror"
+  error = "Out of stock"
+}
+```
+
+Return only the count when updating many records:
+
+```xs
+db.increment "account" {
+  where = $db.account.plan == "pro"
+  field_name = "credit_balance"
+  value = $input.bonus_credits
+  return = {type: "count"}
+} as $accounts_updated
+```
+
+Return the updated records with `output` and an addon (list form):
+
+```xs
+db.increment "post" {
+  where = $db.post.id == $input.post_id
+  field_name = "like_count"
+  value = 1
+  output = ["id", "like_count"]
+  addon = [
+    {
+      name : "post_author"
+      input: {post_id: $output.id}
+      as   : "author"
+    }
+  ]
+} as $posts
+```
+
+> **Common mistake:** `db.get` → `math.add` → `db.edit` to bump a counter loses updates under concurrency. Use `db.increment`.
 
 ### db.bulk.patch
 
