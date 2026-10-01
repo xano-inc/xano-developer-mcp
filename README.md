@@ -328,7 +328,7 @@ import '@xano/developer-mcp/server';
 
 ### 1. `xano_validate_xanoscript`
 
-Validates XanoScript code for syntax errors. Supports multiple input methods. The language server auto-detects the object type from the code syntax.
+Validates XanoScript code for syntax errors. Supports multiple input methods. The language server auto-detects the object type from the code syntax, including policy documents (`policies/*.xs`), whose rules are checked against the check catalogue bundled with the language server; a catalogue problem is a warning, since your instance decides on save.
 
 **Parameters:**
 | Parameter | Type | Required | Description |
@@ -678,7 +678,7 @@ xano-developer-mcp/
 | Package | Version | Purpose |
 |---------|---------|---------|
 | `@modelcontextprotocol/sdk` | ^1.26.0 | Official MCP SDK |
-| `@xano/xanoscript-language-server` | ^11.6.5 | XanoScript parser and validation |
+| `@xano/xanoscript-language-server` | ^12.18.0 | XanoScript parser and validation |
 | `minimatch` | ^10.1.2 | Glob pattern matching for context-aware docs |
 
 ### Dev Dependencies

@@ -25,3 +25,15 @@ declare module "@xano/xanoscript-language-server/parser/parser.js" {
 declare module "@xano/xanoscript-language-server/utils.js" {
   export function getSchemeFromContent(text: string): string;
 }
+
+declare module "@xano/xanoscript-language-server/parser/policy/catalogue.js" {
+  export function setPolicyCatalogue(
+    catalogue: unknown,
+    options?: { source?: "live" | "snapshot"; generatedAt?: string | null }
+  ): void;
+}
+
+declare module "@xano/xanoscript-language-server/parser/policy/catalogueSnapshot.js" {
+  const catalogue: { generated_at: string; items: unknown[]; document?: unknown };
+  export default catalogue;
+}
