@@ -92,6 +92,7 @@ Xano CLI commands are SPACE-separated (e.g. \`xano function list\`), not colon-s
         { name: "file", short: "f", type: "string", required: false, description: "Path to file containing XanoScript code (mutually exclusive with --stdin)" },
         { name: "stdin", short: "s", type: "boolean", required: false, default: "false", description: "Read XanoScript code from stdin (mutually exclusive with --file)" },
         { name: "edit", short: "e", type: "boolean", required: false, default: "false", description: "Open the file in $EDITOR before creating (requires --file)" },
+        { name: "policy-override", type: "string", required: false, description: "Create the function past a blocking live-branch publish policy gate with an audited reason (requires workspace:policy update). A refusal without it saves nothing and exits 2; pass only the user's own reason" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" },
         { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" }
       ],
@@ -115,6 +116,7 @@ Xano CLI commands are SPACE-separated (e.g. \`xano function list\`), not colon-s
         { name: "stdin", short: "s", type: "boolean", required: false, default: "false", description: "Read updated XanoScript from stdin (mutually exclusive with --file)" },
         { name: "edit", short: "e", type: "boolean", required: false, default: "false", description: "Open the file in $EDITOR before updating (requires --file)" },
         { name: "publish", type: "boolean", required: false, default: "true", description: "Publish after editing (use --no-publish to save as draft only)" },
+        { name: "policy-override", type: "string", required: false, description: "Publish past a blocking live-branch publish policy gate with an audited reason (requires workspace:policy update). A refusal without it saves nothing and exits 2; pass only the user's own reason" },
         { name: "output", short: "o", type: "string", required: false, default: "summary", description: "Output format: summary or json" },
         { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" }
       ],

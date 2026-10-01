@@ -24,6 +24,11 @@ export interface DocConfig {
    * docs_index.json declaration order. Omitted (undefined) sorts last (99).
    */
   priority?: number;
+  /**
+   * The topic alone documents the files its `applyTo` matches: file_path mode
+   * returns it without `syntax` or any other matching topic.
+   */
+  exclusive?: boolean;
 }
 
 export interface XanoscriptDocsArgs {
@@ -48,6 +53,7 @@ function buildDocsConfig(): Record<string, DocConfig> {
       applyTo: topic.applyTo,
       description: topic.description,
       priority: (topic as Record<string, unknown>).priority as number | undefined,
+      exclusive: (topic as Record<string, unknown>).exclusive === true,
     };
   }
   return config;
@@ -167,6 +173,7 @@ export function getDocsForFilePath(filePath: string): string[] {
 
     for (const pattern of config.applyTo) {
       if (minimatch(filePath, pattern)) {
+        if (config.exclusive) return [topic];
         matches.push(topic);
         break;
       }
@@ -425,6 +432,7 @@ export function readXanoscriptDocsV2(
       `- file_path='api/users/create.xs' — auto-select the docs for the file you're editing`,
       `- filter='round' — one expression filter's signature and example (comma-separate for several, e.g. filter='to_upper,split')`,
       `- tier='survival' (~${tiers.survival.tokens}) or tier='working' (~${tiers.working.tokens}) for context-limited models`,
+      `- topic='policies' — when the workspace has a policies/ folder: keep to its active mandatory policies while changing code, and evaluate after`,
       `- mode='quick_reference' — compact output when you only need a reminder`,
       `- max_tokens=4000 with file_path= — stop loading once the budget is reached`,
       `- exclude_topics=['syntax'] with file_path= — skip topics you've already loaded`,

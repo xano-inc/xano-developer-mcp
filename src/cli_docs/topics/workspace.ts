@@ -77,6 +77,8 @@ After \`workspace pull\`, files are organized using snake_case naming:
 
 \`workspace pull\` and \`workspace push\` automatically sync knowledge and skills (markdown files under \`knowledge/\`) alongside XanoScript — no extra flag. Knowledge participates in push previews, \`--sync\`/\`--delete\`, and \`--include\`/\`--exclude\` globs. See the \`knowledge\` topic for the file layout and frontmatter format.
 
+The platform's generated \`xano-policies\` skill is not workspace knowledge, so pull does not write it; see the \`skills\` topic.
+
 ## Syntax note
 
 Xano CLI commands are SPACE-separated (e.g. \`xano workspace pull\`), not colon-separated.
@@ -119,6 +121,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
 - \`--dry-run\`: Preview what would change without applying
 - \`--include/-i\` and \`--exclude/-e\`: Glob patterns for selective push (repeatable)
 - \`--no-transaction\` and \`--no-guids\` disable the default transaction wrapping and GUID write-back
+- \`-m/--message\`: labels only the Version History entry of each policy the push changes; other objects get no message, and an unchanged policy gets no entry
 
 **Knowledge sync (automatic):**
 - \`pull\` writes knowledge/skills markdown under \`knowledge/\`; \`push\` sends it back — no flag needed
@@ -138,7 +141,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
 - \`sandbox\` is a lighter-weight alternative for ephemeral, isolated iteration
 - Use workspace pull/push for canonical sync, version control, and CI/CD`,
 
-  related_topics: ["start", "branch", "function", "release", "sandbox", "knowledge", "integration"],
+  related_topics: ["start", "branch", "function", "release", "sandbox", "knowledge", "skills", "integration"],
 
   commands: [
     {
@@ -224,7 +227,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace pull",
-      description: "Download workspace code to a local directory. Splits the multidoc response into individual .xs files organized by type, and also writes workspace knowledge/skills markdown under knowledge/. The target directory is the -d/--directory flag (default: current directory), not a positional argument.",
+      description: "Download workspace code to a local directory. Splits the multidoc response into individual .xs files organized by type, and also writes workspace knowledge/skills markdown under knowledge/. The target directory is the -d/--directory flag (default: current directory), not a positional argument. Policies are written to policies/<KEY>.xs when the credential holds the workspace:policy permission at read level, and omitted otherwise; a policy whose file name differs only in case from another policy or a local file is left out with a warning, and everything else is written. A pull that included policies prints one hint afterwards: Run `xano skills pull` to install the policies skill for your coding agent. Local policy files absent from the export are kept, and pull warns that they are stale only when the credential can list the branch's policies (otherwise it says they were kept because the credential cannot list policies, or because the instance's Policies feature is off, when the export carries none).",
       usage: "xano workspace pull [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Output directory for pulled documents (defaults to current directory)" },
@@ -244,7 +247,7 @@ For lighter-weight iterative development without pulling the whole workspace, se
     },
     {
       name: "workspace push",
-      description: "Upload local XanoScript files to a workspace, including knowledge/skills markdown under knowledge/ (synced automatically, shown in the preview). Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview.",
+      description: "Upload local XanoScript files to a workspace, including knowledge/skills markdown under knowledge/ (synced automatically, shown in the preview). Default mode is partial (only changed files). Use --sync for a full push. The source directory is the -d/--directory flag (default: current directory), not a positional argument. A partial push is additive, not declarative: it adds and updates but makes no destructive changes (it won't drop a removed column or relax a constraint), so local files and the live workspace can diverge. Use --sync for destructive changes; --dry-run to preview. On a policy-enabled instance the import response carries policy_check feedback, printed after the import: the push exits 2 when policy_check.blocking is true, and the policy topic covers the verdicts and the exit rule. That feedback lists the first 100 findings; when there are more, the push prints their counts and the xano policy runs command that pages through them all. With the Policies feature off the instance leaves the policy files out and the push prints its one line naming them. A policy finding never rolls back the import. If the knowledge sync fails after the import has landed, the import stands: its policy_check is still printed, the push exits 2 when that feedback is blocking and 1 otherwise, and -o json prints the import document with the failure as error ({exit, message}).",
       usage: "xano workspace push [options]",
       flags: [
         { name: "directory", short: "d", type: "string", required: false, default: ".", description: "Directory containing documents to push (defaults to current directory)" },
@@ -261,6 +264,8 @@ For lighter-weight iterative development without pulling the whole workspace, se
         { name: "guids", type: "boolean", required: false, default: "true", description: "Write server-assigned GUIDs back to local files after push (--no-guids to disable)" },
         { name: "include", short: "i", type: "string", required: false, description: "Glob pattern to include files, matched against relative paths (repeatable)" },
         { name: "exclude", short: "e", type: "string", required: false, description: "Glob pattern to exclude files, matched against relative paths (repeatable)" },
+        { name: "message", short: "m", type: "string", required: false, description: "Labels only policies: stored as the Version History message of each policy this push changes. Other objects the push changes get no message, and a policy the push leaves unchanged gets no Version History entry" },
+        { name: "output", short: "o", type: "string", required: false, default: "summary", description: "summary or json; JSON retains the complete import response and policy_check feedback" },
         { name: "profile", short: "p", type: "string", required: false, description: "Profile name to use" }
       ],
       examples: [
@@ -271,7 +276,9 @@ For lighter-weight iterative development without pulling the whole workspace, se
         "xano workspace push --sync --delete --force",
         'xano workspace push -i "api/**" -i "function/**"',
         'xano workspace push -e "table/**" --records --truncate',
-        "xano workspace push --no-transaction --no-guids"
+        "xano workspace push --no-transaction --no-guids",
+        "xano workspace push --force -o json",
+        'xano workspace push -m "Tightened the auth policies"'
       ]
     },
     {

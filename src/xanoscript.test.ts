@@ -65,6 +65,7 @@ describe("xanoscript module", () => {
         "middleware",
         "branch",
         "workspace",
+        "policies",
       ];
 
       expect(Object.keys(XANOSCRIPT_DOCS_V2)).toEqual(expectedTopics);

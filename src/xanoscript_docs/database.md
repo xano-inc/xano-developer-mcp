@@ -127,6 +127,36 @@ db.query "product" {
 } as $exists
 ```
 
+### Output (Explicit Field List)
+
+`output` names exactly which fields a read returns. Without it a read returns the whole
+row, so an endpoint widens silently whenever someone adds a column — including a column
+holding something the caller should never see.
+
+```xs
+// Only these four fields come back
+db.query "product" {
+  where = $db.product.retired == false
+  output = ["id", "name", "price", "sku"]
+  return = { type: "list" }
+} as $products
+
+// The same parameter on a single-record read
+db.get "product" {
+  field_name = "id"
+  field_value = $input.product_id
+  output = ["id", "name", "price"]
+} as $product
+```
+
+A dotted path selects a nested field (`"price.amount"`). `output` is valid on `db.query`,
+`db.get`, `db.add`, `db.edit`, `db.patch` and `db.add_or_edit`; `db.has`, `db.del` and the
+bulk statements do not take it. The bundled language server behind `xano_validate_xanoscript`
+rejects it on `db.patch` and `db.add_or_edit`, which the platform accepts. The policy check
+`statement.param_required` with `param_names: ["output"]` (and `statements: ["db.query",
+"db.get"]`) is how a workspace requires it, so a finding reading `output must be explicit` is
+asking for exactly this line.
+
 ### Sorting
 
 ```xs

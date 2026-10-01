@@ -302,6 +302,14 @@
       "applyTo": ["workspace/**/*.xs"],
       "priority": 3,
       "aliases": ["env", "environment", "preferences"]
+    },
+    "policies": {
+      "file": "policies.md",
+      "description": "Workspace policies: human descriptions and deterministic check rules, validated by the platform",
+      "applyTo": ["policies/*.xs"],
+      "exclusive": true,
+      "priority": 3,
+      "aliases": ["policy", "governance"]
     }
   },
 
