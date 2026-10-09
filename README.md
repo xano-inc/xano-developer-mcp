@@ -415,7 +415,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `middleware` | Request/response interceptors for functions, queries, tasks, and tools |
 | `branch` | Branch-level settings: middleware, history retention, visual styling |
 | `workspace` | Workspace-level settings: environment variables, preferences, realtime |
-| `policies` | Workspace policy documents: syntax, the check catalogue, goals and authoring rules |
+| `policies` | Workspace policy documents: syntax, the check catalogue, templates and authoring rules |
 
 **Examples:**
 ```
@@ -497,7 +497,7 @@ Get documentation for Xano's Meta API. Use this to understand how to programmati
 | `realtime` | Real-time channel operations |
 | `file` | File management |
 | `history` | Version history |
-| `policy` | Workspace policies: check catalogue and goals, parse, save, object lookup, evaluate, runs (whole, summary and findings pages), agent skill |
+| `policy` | Workspace policies: check catalogue and templates, parse, save, object lookup, evaluate, runs (whole, summary and findings pages), agent skill |
 | `workflows` | Step-by-step workflow guides |
 
 **Examples:**
