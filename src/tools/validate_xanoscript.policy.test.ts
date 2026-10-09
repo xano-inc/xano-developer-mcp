@@ -63,7 +63,7 @@ so they are audited in one place.
   tags = ["soc2", "hipaa"]
   severity = "critical"
   active = true
-  enforcement = "mandatory"
+  enforcement = "blocking"
 
   rule {
     title = "No writes"

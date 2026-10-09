@@ -269,7 +269,7 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 | `workspace`  | Workspace-level settings: environment variables, preferences, realtime | Env Variables, Preferences |
 | `branch`     | Branch-level settings: middleware, history retention, visual styling   | Middleware Config, History |
 | `middleware` | Request/response interceptors for functions, queries, tasks, and tools | Pre/Post Hooks |
-| `policies`   | Workspace policy documents: syntax, check catalogue, goals, authoring rules | Quick Reference, Permissions |
+| `policies`   | Workspace policy documents: syntax, check catalogue, templates, authoring rules | Quick Reference, Permissions |
 
 ### Development
 

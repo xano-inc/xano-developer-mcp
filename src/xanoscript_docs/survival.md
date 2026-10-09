@@ -158,7 +158,7 @@ input {
 
 ### Workspace policies
 
-If the project has a `policies/` folder, the branch has governance policies. Keep to the active mandatory ones while you write code (their findings block merges), then evaluate after changing code: `xano policy evaluate`, the `policy_check` a `xano workspace push` returns, or `xano_evaluate_policies`. `topic: "policies"` has the details.
+If the project has a `policies/` folder, the branch has governance policies. Keep to the active blocking ones while you write code (their findings block merges), then evaluate after changing code: `xano policy evaluate`, the `policy_check` a `xano workspace push` returns, or `xano_evaluate_policies`. `topic: "policies"` has the details.
 
 ### Available Topics
 

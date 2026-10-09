@@ -72,6 +72,10 @@ describe("policy documentation", () => {
     expect(stub).toContain("xano skills pull");
     expect(stub).toContain("xano policy --help");
     expect(stub).toContain("as `policy_duplicate`, naming that policy");
+    // The file name is the key: a key changes only when asked, by a rename, never by a move.
+    const prose = stub.replace(/\s+/g, " ");
+    expect(prose).toContain("**The file name is the key.** A policy lives at `policies/<KEY>.xs`, and Studio refuses to publish a policy file named otherwise.");
+    expect(prose).toContain("Never move or copy a policy to a file named anything other than its key; if asked to, explain that the file name is the key and offer a key change instead.");
   });
 
   it("says tenant, sandbox and release pushes carry policy files, and when they leave them out", () => {
@@ -152,6 +156,103 @@ describe("policy documentation", () => {
   it("lists the policies topic in both tier docs", () => {
     expect(xanoscriptDocs({ tier: "survival" }).documentation).toMatch(/^survival, working, .*, policies$/m);
     expect(xanoscriptDocs({ tier: "working" }).documentation).toMatch(/^\| `policies` \|/m);
+  });
+
+  it("gives a member without policy read an object's coverage and their own push findings, and keeps draft checks in Studio", () => {
+    const text = policies();
+    const meta = handleMetaApiDocs({ topic: "policy" });
+    const cli = handleCliDocs({ topic: "policy" });
+    // The coverage route needs the object's read permission, never workspace:policy.
+    for (const doc of [text, meta]) {
+      expect(doc).toContain("policy/object/coverage");
+      expect(doc).toContain("policy_object_permission_required");
+      expect(doc).toContain("Reading this function needs the workspace:function read permission.");
+      expect(doc).toContain('access: "coverage"');
+      expect(doc).toContain('scope: "pushed_objects"');
+    }
+    expect(meta).toContain("GET /workspace/{workspace_id}/policy/object/coverage");
+    expect(cli).toContain("xano policy coverage <type>:<id>");
+    expect(cli).toContain('access: "coverage" and scope: "pushed_objects"');
+    // forbidden is only an older platform's answer now.
+    expect(meta).toContain("The workspace multidoc import answers all six.");
+    expect(meta).not.toContain("not_applicable, disabled and forbidden load");
+    expect(cli).not.toContain("disabled, forbidden, unavailable");
+    expect(meta).toContain("An older platform answers such a caller forbidden");
+    // Refusals name the blocking policies to everyone; the findings stay a reader's.
+    expect(text).not.toContain("to any other caller, no policy");
+    expect(text).toContain("to every caller, policy read or not");
+    expect(text).toContain("in its message, the keys of the policies they come from");
+    expect(meta).toContain("The message names the policies the blocking findings come from to every caller");
+    // The draft check is Studio's alone.
+    expect(text).toContain("**Check draft**");
+    expect(text).toContain("It is Studio-only: the Metadata API, the CLI and the MCP have no draft check");
+    expect(meta).toContain("the Metadata API has no draft check");
+    expect(meta).not.toContain("evaluate-draft");
+    expect(cli).toContain("Drafts are checked in Studio");
+  });
+
+  it("names the workspace object's id, the trigger fallback and the coverage command's exit codes", () => {
+    const text = policies();
+    const meta = handleMetaApiDocs({ topic: "policy" });
+    const cli = handleCliDocs({ topic: "policy" });
+    // The workspace object resolves only by the workspace's own id.
+    expect(text).toContain("the workspace object's id is the workspace's own id: `workspace:17`");
+    expect(meta).toContain("for workspace, the workspace's own id");
+    expect(cli).toContain("for workspace, the workspace's own id (workspace:17)");
+    // A trigger that cannot be told apart is checked against instance:workspace.
+    // ...and one whose obj_type cannot be resolved needs every trigger scope.
+    expect(text).toContain("and all four for one whose `obj_type` cannot be resolved");
+    expect(meta).toContain("and all four for one whose obj_type cannot be resolved");
+    for (const doc of [text, meta]) expect(doc).not.toMatch(/obj_type`? is unknown/);
+    // policy coverage exits 1 on a refusal, and its chip reads as the CLI prints it.
+    expect(cli).toContain("Exits 0 when it answers, and 1 on a refusal or a malformed type:id.");
+    expect(cli).not.toContain("Always exits 0");
+    expect(cli).toContain("Policies · 3 apply · not checked yet");
+  });
+
+  it("says a draft check needs update and is rate limited and size capped, and how a non-reader's push blocks", () => {
+    const text = policies();
+    const meta = handleMetaApiDocs({ topic: "policy" });
+    const cli = handleCliDocs({ topic: "policy" });
+    // Someone who may not edit an object has no draft of it.
+    expect(text).toContain("**update** for the draft check");
+    expect(text).toContain("| Studio's draft check | none: the object kind's own update permission | `workspace:read` |");
+    expect(text).toContain("Checking a draft of this function needs the workspace:function update permission.");
+    expect(text).toContain("`policy_draft_check_rate_limited`");
+    expect(text).toContain("`policy_draft_too_large`");
+    // A forbidden trigger reads as a missing one.
+    for (const doc of [text, meta]) expect(doc).toContain("answered exactly as one the branch does not hold");
+    // A non-reader's push: elsewhere counted, the workspace object, blocking as a reader's.
+    for (const doc of [text, meta]) {
+      expect(doc).toContain("elsewhere {total, blocking");
+      expect(doc).toMatch(/workspace:settings`? read/);
+      expect(doc).not.toContain("status, blocking and the counts are about those findings");
+    }
+    expect(text).toContain("`blocking` is what a reader's push of the same change says");
+    expect(meta).toContain("blocking is what a reader's import of the same change says");
+    expect(cli).toContain("On objects this push did not list: N new findings (B blocking), counted, not named.");
+    expect(cli).not.toContain("which is about those findings");
+    // Every gate answer names the blocking policies; coverage answers are cached briefly.
+    expect(text).toContain("introduced, changed, existing, run_id, can_override, sources, findings, truncated");
+    expect(meta).toContain("can_override, sources, findings (first 100, policy readers only)");
+    expect(meta).toContain("message, sources, findings, truncated");
+    for (const doc of [text, meta]) expect(doc).toMatch(/cached for 60 (s|seconds) by object/);
+  });
+
+  it("says what elsewhere's basis means, limits a non-reader's merge review and renews slot leases", () => {
+    const text = policies();
+    const meta = handleMetaApiDocs({ topic: "policy" });
+    const cli = handleCliDocs({ topic: "policy" });
+    expect(text).toContain("elsewhere {total, blocking, basis}");
+    expect(text).toContain('with `basis: "introduced"`, those the push introduced');
+    expect(text).toContain('with `basis: "all"`, when no such baseline was known, every finding there');
+    expect(meta).toContain("elsewhere {total, blocking, basis}");
+    expect(meta).toContain('with basis "all", when no such baseline was known');
+    expect(cli).toContain("N findings instead of N new findings when elsewhere.basis is all");
+    for (const doc of [text, meta]) expect(doc).toContain("policy_merge_review_rate_limited");
+    expect(text).toContain("Too many merge reviews in the last minute, so the policy check wasn’t previewed.");
+    expect(text).toContain("a slot's lease is renewed between rules while its check runs");
+    expect(meta).toContain("a slot's lease is renewed between rules while its evaluation runs");
   });
 
   it("describes where output is accepted the way the bundled language server does", () => {

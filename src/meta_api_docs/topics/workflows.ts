@@ -126,7 +126,7 @@ POST /workspace/1/agent
       steps: [
         "1. `POST /workspace/{id}/request_history/search` - Search for failed requests",
         "2. Filter by status: [400, 401, 403, 404, 500]",
-        "3. Use include_payload=true to see request/response details",
+        "3. Use include_output=true to see each request's output (the input is always returned)",
         "4. `GET /workspace/{id}/apigroup/{id}/api/{id}?include_xanoscript=true` - Review endpoint code"
       ]
     }
