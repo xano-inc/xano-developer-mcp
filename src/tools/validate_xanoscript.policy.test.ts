@@ -148,6 +148,21 @@ describe("validate_xanoscript and the bundled check catalogue", () => {
   }
 });
 
+describe("validate_xanoscript hints on policy documents", () => {
+  it("does not offer the json type for a naming rule's name_kind \"object\", a value and not a type", () => {
+    const naming = `policy "CONV-010" {\n  title = "t"\n  statement = "s"\n  active = true\n  enforcement = "advisory"\n\n  rule {\n    check = "object.naming"\n    params = {name_kind: "object", case_style: "snake_case", version_required: true}\n  }\n}`;
+    const warnings = validate(naming).errors.filter((d) => d.severity === SEVERITY.WARNING);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].message).toContain("version_required applies only when name_kind is endpoint_path.");
+    expect(warnings[0].message).not.toContain('instead of "object"');
+  });
+
+  it("keeps the type hint outside a policy", () => {
+    const typed = validate(`function foo {\n  input {\n    object payload\n  }\n  stack {\n  }\n  response = null\n}`);
+    expect(typed.errors[0].message).toContain('Use "json" instead of "object"');
+  });
+});
+
 describe("validate_xanoscript and policy files in a batch", () => {
   it("counts a valid policy file as valid", () => {
     tree({ "AUTH-001.xs": policyExample, "task.xs": TASK }, (dir) => {

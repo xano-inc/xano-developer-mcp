@@ -49,6 +49,12 @@ guess a check id or parameter; read them from `xano policy catalogue`.
 - **A new policy is `active = true` with `enforcement = "advisory"`** unless you
   are told otherwise: it blocks nothing while its findings are reviewed, and an inactive
   policy (`active = false`) is never evaluated, so it reports nothing at all.
+- **Start a new policy from a template when one fits.** `xano policy catalogue` lists the
+  platform's templates (`topic: "policy-templates"` in the XanoScript docs lists them too), and
+  `xano policy create --template <id> --param 'path=JSON'` creates one. Each template names the
+  settings it leaves to fill, with an example value that fits (`examples`, else the check's own
+  `example`); fill them with the workspace's own names. Keep the template's key and rules, and
+  invent a key only when no template covers the request.
 - **Always parse before publishing:** `xano policy parse --file <path>`, then
   `xano policy publish --file <path> -m "<message>"`.
 - **An exact copy is refused.** A new policy whose rules exactly match one the branch
@@ -58,9 +64,9 @@ guess a check id or parameter; read them from `xano policy catalogue`.
   these rules and ask what the new one should cover differently: the refusal's "change a
   parameter or scope" is their choice, never a param or scope you pick to get past the
   refusal. On a push, nothing else in it is imported either.
-- **Never weaken a policy unprompted** — blocking to advisory, loosening or removing a
+- **Never relax a policy unprompted** — blocking to advisory, loosening or removing a
   rule, widening `except_tags`, or setting `active = false`. Fix the object instead, and when
-  you are asked to weaken one, say plainly what stops being checked. Never override a policy
+  you are asked to relax one, say plainly what stops being checked. Never override a policy
   gate's refusal unless the user gave you the reason.
 - **A fix changes the object, never the policy, and never exempts it.** Do the change the
   failed rule asks for when it leaves who may call the object and every table and its data
