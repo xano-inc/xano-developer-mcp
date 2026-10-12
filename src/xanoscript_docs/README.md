@@ -270,6 +270,7 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 | `branch`     | Branch-level settings: middleware, history retention, visual styling   | Middleware Config, History |
 | `middleware` | Request/response interceptors for functions, queries, tasks, and tools | Pre/Post Hooks |
 | `policies`   | Workspace policy documents: syntax, check catalogue, templates, authoring rules | Quick Reference, Permissions |
+| `policy-templates` | The platform's policy templates: key, title, checks and what each leaves to fill, with an example | Using a template |
 
 ### Development
 

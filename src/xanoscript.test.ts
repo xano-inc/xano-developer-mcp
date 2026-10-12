@@ -66,6 +66,7 @@ describe("xanoscript module", () => {
         "branch",
         "workspace",
         "policies",
+        "policy-templates",
       ];
 
       expect(Object.keys(XANOSCRIPT_DOCS_V2)).toEqual(expectedTopics);

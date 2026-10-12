@@ -180,14 +180,16 @@ const SYNTAX_SUGGESTIONS: Array<{
 function enhanceErrorMessage(
   message: string,
   code: string,
-  lineNumber: number
+  lineNumber: number,
+  scheme?: string
 ): string {
   let enhanced = message;
   const lines = code.split("\n");
   const errorLine = lines[lineNumber] || "";
 
-  // Check for type aliases
-  for (const [alias, correct] of Object.entries(TYPE_ALIASES)) {
+  // Check for type aliases, never in a policy: it declares no types, and a value such as
+  // object.naming's name_kind: "object" is not one.
+  for (const [alias, correct] of scheme === "policy" ? [] : Object.entries(TYPE_ALIASES)) {
     const regex = new RegExp(`\\b${alias}\\b`, "i");
     if (regex.test(errorLine)) {
       enhanced += `\n\n💡 Suggestion: Use "${correct}" instead of "${alias}"`;
@@ -313,7 +315,7 @@ function validateCode(
       const endLine = endLines.length - 1;
       const endCharacter = endLines[endLines.length - 1].length;
 
-      const enhancedMessage = enhanceErrorMessage(item.message, text, line);
+      const enhancedMessage = enhanceErrorMessage(item.message, text, line, scheme);
 
       return {
         severity,

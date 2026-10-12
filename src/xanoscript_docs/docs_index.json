@@ -310,6 +310,12 @@
       "exclusive": true,
       "priority": 3,
       "aliases": ["policy", "governance"]
+    },
+    "policy-templates": {
+      "file": "policy-templates.md",
+      "description": "The platform's policy templates by category: key, title, checks, and the settings each leaves to fill, with an example",
+      "applyTo": [],
+      "aliases": ["policy-template"]
     }
   },
 

@@ -4,7 +4,7 @@ import { validateXanoscript } from "./validate_xanoscript.js";
 import { xanoscriptDocs } from "./xanoscript_docs.js";
 import { handleMetaApiDocs } from "../meta_api_docs/index.js";
 import { handleCliDocs } from "../cli_docs/index.js";
-import { policyExample } from "../meta_api_docs/topics/policy.js";
+import { policyDoc, policyExample } from "../meta_api_docs/topics/policy.js";
 import { getDocsForFilePath, resolveTopic } from "../xanoscript.js";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -60,6 +60,29 @@ describe("policy documentation", () => {
     const markdown = readFileSync(generator.POLICIES_MD, "utf8");
     const catalogue = JSON.parse(readFileSync(generator.CATALOGUE, "utf8"));
     expect(generator.splice(markdown, generator.renderSections(catalogue))).toBe(markdown);
+    expect(generator.renderTemplates(catalogue)).toBe(readFileSync(generator.TEMPLATES_MD, "utf8"));
+  });
+
+  it("lists the templates in their own topic, with their checks and what each leaves to fill, and points at it", () => {
+    const templates = xanoscriptDocs({ topic: "policy-templates" }).documentation;
+    expect(resolveTopic("policy-template")).toBe("policy-templates");
+    expect(resolveTopic("policy")).toBe("policies");
+    expect(xanoscriptDocs({ topic: "readme" }).documentation).toMatch(/^\| `policy-templates` /m);
+    expect(templates).toContain("**Prefer a template.**");
+    // A template's own example wins; a need it gives none for shows its check's catalogue example.
+    expect(templates).toMatch(/^\| `tables_classified` \| `CONV-023` \| low \| Every table is classified \| `object.tag_required` \| `tag_set` \(e.g. `\["public","internal","confidential","restricted"\]`\) \|$/m);
+    expect(templates).toMatch(/^\| `owner_team_tagged` \| `CONV-022` \| .* \| `tag_set` \(e.g. `\["team-billing"/m);
+    expect(templates).toMatch(/^\| `agreed_tag_vocabulary` \| `CONV-020` \| .* \| `allowed_tags` \(e.g. `\[/m);
+    expect(templates).toContain("## Conventions");
+    expect(policies()).toContain("Topic `policy-templates` lists the templates");
+    expect(read("../../skills/xano-policies/SKILL.md")).toContain('`topic: "policy-templates"`');
+  });
+
+  it("says an indexed reference is read as the part before its first [, with a rule warning on a rule entry", () => {
+    const prose = policies().replace(/\s+/g, " ");
+    expect(prose).toContain("a read is matched by the part before its first `[`, so `$input.rows[0].sku` in code is a read of `$input.rows`.");
+    expect(prose).toContain('`must_not_reference "$input.rows[0]" is read as $input.rows: a reference is matched by the part before the first [.`');
+    expect(prose).toContain("(`must_reference`, `must_not_reference`, `before.must_reference` and `compare_to`)");
   });
 
   it("publishes one xano-policies stub: the copy this repo's sessions load is identical", () => {
@@ -208,6 +231,19 @@ describe("policy documentation", () => {
     expect(cli).toContain("Exits 0 when it answers, and 1 on a refusal or a malformed type:id.");
     expect(cli).not.toContain("Always exits 0");
     expect(cli).toContain("Policies · 3 apply · not checked yet");
+  });
+
+  it("names coverage's could_not_check status and count, and says check_failed only for a policy that applies here", () => {
+    const meta = policyDoc.endpoints?.find(ep => ep.path.endsWith("/object/coverage"))?.response?.description ?? "";
+    const cli = handleCliDocs({ topic: "policy" });
+    expect(meta).toContain("summary {state, applies, blocking, advisory, passing, not_checked, could_not_check}");
+    expect(meta).toContain("could_not_check (the newest run could not check it: a rule of it could not run, or the run stopped on an error before it)");
+    expect(meta).toContain("check_failed (Last check failed: only when a policy that applies here could not be checked)");
+    expect(meta).toContain("even when the run errored on another policy");
+    // passing no longer claims the whole run had no error.
+    expect(meta).not.toContain("without an error and found nothing here");
+    expect(cli).toContain("failing, passing, couldn't check or not checked yet");
+    expect(cli).toContain("6 passing · 1 couldn't check · 1 not checked yet");
   });
 
   it("says a draft check needs update and is rate limited and size capped, and how a non-reader's push blocks", () => {
