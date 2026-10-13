@@ -10436,7 +10436,7 @@
     {
       "id": "code_review_basics",
       "title": "Keep code easy to review",
-      "summary": "Endpoints are tested, endpoints and functions stay short and page their reads, no leftover code remains, functions say what they do, and names follow one convention.",
+      "summary": "External calls handle their failures, endpoints are tested, endpoints and functions stay short and page their reads, no leftover code remains, and functions say what they do. Naming conventions are a separate choice: see the Conventions templates.",
       "keywords": [
         "code review",
         "review",
@@ -10445,22 +10445,22 @@
         "maintainable",
         "lint",
         "best practice",
-        "conventions",
         "tests",
-        "readable"
+        "readable",
+        "error handling",
+        "breaking prod",
+        "juniors"
       ],
       "frameworks": [],
       "prerequisites": [
-        "Agree the naming convention before CONV-010 and CONV-013: renaming a function or its inputs changes every caller, so exempt existing names with allowed_names or a tag in except_tags.",
         "Tag large legacy endpoints and functions (such as legacy) and list the tag in CONV-040's except_tags until they are split."
       ],
       "templates": [
+        "external_calls_handle_errors",
         "endpoints_have_tests",
         "endpoints_stay_short",
         "no_leftover_code",
-        "reads_are_paged",
-        "functions_snake_case",
-        "function_arguments_snake_case"
+        "reads_are_paged"
       ],
       "rules": [
         {

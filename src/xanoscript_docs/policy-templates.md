@@ -180,23 +180,21 @@ No rule here can see: Retention age; Runtime data and copies between environment
 
 ### Keep code easy to review
 
-`code_review_basics`. Endpoints are tested, endpoints and functions stay short and page their reads, no leftover code remains, functions say what they do, and names follow one convention.
+`code_review_basics`. External calls handle their failures, endpoints are tested, endpoints and functions stay short and page their reads, no leftover code remains, and functions say what they do. Naming conventions are a separate choice: see the Conventions templates.
 
-Keywords: code review, review, quality, clean code, maintainable, lint, best practice, conventions, tests, readable.
+Keywords: code review, review, quality, clean code, maintainable, lint, best practice, tests, readable, error handling, breaking prod, juniors.
 
 First:
 
-- Agree the naming convention before CONV-010 and CONV-013: renaming a function or its inputs changes every caller, so exempt existing names with allowed_names or a tag in except_tags.
 - Tag large legacy endpoints and functions (such as legacy) and list the tag in CONV-040's except_tags until they are split.
 
 Templates, in order, one policy each:
 
-1. `endpoints_have_tests` (`CHG-001`): Endpoints are tested
-2. `endpoints_stay_short` (`CONV-040`): Endpoints and functions stay short
-3. `no_leftover_code` (`CONV-050`): No leftover code
-4. `reads_are_paged` (`PERF-001`): Endpoints never return every row
-5. `functions_snake_case` (`CONV-010`): Functions are snake_case
-6. `function_arguments_snake_case` (`CONV-013`): Function arguments are snake_case
+1. `external_calls_handle_errors` (`LOG-010`): External calls handle their own failures
+2. `endpoints_have_tests` (`CHG-001`): Endpoints are tested
+3. `endpoints_stay_short` (`CONV-040`): Endpoints and functions stay short
+4. `no_leftover_code` (`CONV-050`): No leftover code
+5. `reads_are_paged` (`PERF-001`): Endpoints never return every row
 
 Rules no template covers, together in one policy of your own:
 
