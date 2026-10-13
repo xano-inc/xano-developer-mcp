@@ -416,6 +416,7 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `branch` | Branch-level settings: middleware, history retention, visual styling |
 | `workspace` | Workspace-level settings: environment variables, preferences, realtime |
 | `policies` | Workspace policy documents: syntax, the check catalogue, templates and authoring rules |
+| `policy-templates` | The platform's policy templates, recipes for goals that take several, and what no check can see |
 
 **Examples:**
 ```
@@ -610,6 +611,7 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/branch` | Branch-level settings |
 | `xanoscript://docs/workspace` | Workspace-level settings |
 | `xanoscript://docs/policies` | Workspace policy documents |
+| `xanoscript://docs/policy-templates` | Policy templates and recipes |
 
 ## npm Scripts
 
@@ -621,7 +623,7 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `test` | `vitest run` | Run unit tests |
 | `test:watch` | `vitest` | Run tests in watch mode |
 | `test:coverage` | `vitest run --coverage` | Run tests with coverage report |
-| `gen:policy-docs` | `node scripts/gen-policy-check-docs.mjs` | Regenerate the check catalogue regions of `policies.md` from `scripts/policy-catalogue.json` |
+| `gen:policy-docs` | `node scripts/gen-policy-check-docs.mjs` | Regenerate the check catalogue regions of `policies.md`, and `policy-templates.md`, from `scripts/policy-catalogue.json` |
 
 ## Project Structure
 
@@ -739,7 +741,7 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
   - **aliases**: Alternative names for topic lookup
   - **priority**: Ordering weight for file_path matching
   - **exclusive**: The topic alone documents the files its `applyTo` matches, so file_path mode returns only that topic
-- The check catalogue in `policies.md` is generated between its `BEGIN GENERATED` and `END GENERATED` markers. To refresh it, save the catalogue the platform serves (`xano policy catalogue -o json`, from an instance running the matching platform version) to `scripts/policy-catalogue.json`, then run `npm run gen:policy-docs`; a test fails when the two disagree
+- The check catalogue in `policies.md` (the checks and their uses, the scope fields, the statement names and the fix hints) is generated between its `BEGIN GENERATED` and `END GENERATED` markers, and `policy-templates.md` (the templates, the recipes and what no check can see) is generated whole. To refresh them, save the catalogue the platform serves (`xano policy catalogue -o json`, from an instance running the matching platform version) to `scripts/policy-catalogue.json`, then run `npm run gen:policy-docs`; a test fails when the two disagree
 
 **Meta API Documentation** (`src/meta_api_docs/`):
 - TypeScript modules with structured documentation
