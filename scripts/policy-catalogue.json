@@ -213,6 +213,31 @@
         "field",
         "query",
         "select"
+      ],
+      "uses": [
+        {
+          "goal": "Endpoints never return password hashes or social security numbers.",
+          "params": {
+            "fields": [
+              "user.password_hash",
+              "ssn"
+            ],
+            "object_kinds": [
+              "query"
+            ]
+          }
+        },
+        {
+          "goal": "Endpoints never return fields marked sensitive from tables tagged pii.",
+          "params": {
+            "table_tags": [
+              "pii"
+            ],
+            "object_kinds": [
+              "query"
+            ]
+          }
+        }
       ]
     },
     {
@@ -435,6 +460,31 @@
         "table",
         "query",
         "filter"
+      ],
+      "uses": [
+        {
+          "goal": "Users only read and change their own orders.",
+          "params": {
+            "field": "user_id",
+            "compare_to": "$auth.id",
+            "table_selector": {
+              "names": [
+                "orders"
+              ]
+            }
+          },
+          "note": "table_selector picks which reads and writes are judged; the tables scope picks which objects are inspected."
+        },
+        {
+          "goal": "Every read of a table with tenant_id filters on the caller's tenant.",
+          "params": {
+            "field": "tenant_id",
+            "compare_to": "$auth.tenant_id",
+            "table_selector": {
+              "has_field": "tenant_id"
+            }
+          }
+        }
       ]
     },
     {
@@ -638,6 +688,21 @@
         "write",
         "input",
         "field"
+      ],
+      "uses": [
+        {
+          "goal": "Users can't set their own role or plan.",
+          "params": {
+            "fields": [
+              "role",
+              "plan"
+            ]
+          }
+        },
+        {
+          "goal": "No write copies a whole request body into a record.",
+          "params": {}
+        }
       ]
     },
     {
@@ -886,6 +951,22 @@
         "access key",
         "jwt",
         "secrets"
+      ],
+      "uses": [
+        {
+          "goal": "No API key, token or private key is written into code.",
+          "params": {}
+        },
+        {
+          "goal": "Environment values are scanned too, before an export is shared.",
+          "params": {
+            "locations": [
+              "definition",
+              "env",
+              "agent_settings"
+            ]
+          }
+        }
       ]
     },
     {
@@ -1038,6 +1119,33 @@
         "protected",
         "authentication",
         "endpoint"
+      ],
+      "uses": [
+        {
+          "goal": "Endpoints that touch invoices require login.",
+          "params": {
+            "tables": [
+              "invoices"
+            ]
+          },
+          "note": "tables judges the endpoints reaching the tables the user names; no tag is needed."
+        },
+        {
+          "goal": "Every endpoint requires login except the ones tagged public.",
+          "params": {
+            "except_tags": [
+              "public"
+            ]
+          }
+        },
+        {
+          "goal": "Realtime message handlers require login.",
+          "params": {
+            "object_kinds": [
+              "message"
+            ]
+          }
+        }
       ]
     },
     {
@@ -1264,6 +1372,28 @@
         "placeholder",
         "data dictionary",
         "docstring"
+      ],
+      "uses": [
+        {
+          "goal": "Every function says what it does in a sentence.",
+          "params": {
+            "object_kinds": [
+              "function"
+            ],
+            "min_length": 20
+          }
+        },
+        {
+          "goal": "Every table field has a description.",
+          "params": {
+            "object_kinds": [
+              "table"
+            ],
+            "require_on": [
+              "table_field"
+            ]
+          }
+        }
       ]
     },
     {
@@ -1527,6 +1657,33 @@
         "min length",
         "password length",
         "max page"
+      ],
+      "uses": [
+        {
+          "goal": "Passwords are at least 12 characters.",
+          "params": {
+            "input_names": [
+              "password"
+            ],
+            "filter_min": {
+              "min": 12
+            }
+          }
+        },
+        {
+          "goal": "List endpoints cap their page size.",
+          "params": {
+            "paging_max_required": true
+          }
+        },
+        {
+          "goal": "Email inputs are typed as email.",
+          "params": {
+            "type_by_name": {
+              "email": "email"
+            }
+          }
+        }
       ]
     },
     {
@@ -1717,6 +1874,21 @@
         "access context",
         "auth",
         "auth middleware"
+      ],
+      "uses": [
+        {
+          "goal": "Every logged-in endpoint runs the rate limiter before its stack.",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "endpoint_auth": "required",
+            "object_kinds": [
+              "query"
+            ]
+          }
+        }
       ]
     },
     {
@@ -2148,6 +2320,45 @@
         "field name",
         "input name",
         "style guide"
+      ],
+      "uses": [
+        {
+          "goal": "Table names are plural.",
+          "params": {
+            "name_kind": "object",
+            "object_kinds": [
+              "table"
+            ],
+            "suffixes": [
+              "s"
+            ]
+          },
+          "note": "A suffix is literal text: a plural such as people needs an allowed_names entry."
+        },
+        {
+          "goal": "Endpoint paths are snake_case.",
+          "params": {
+            "name_kind": "endpoint_path",
+            "case_style": "snake_case"
+          },
+          "note": "With CONV-012 in place, change its case_style rather than adding a second naming policy."
+        },
+        {
+          "goal": "Function names start with a verb.",
+          "params": {
+            "name_kind": "object",
+            "object_kinds": [
+              "function"
+            ],
+            "first_word_must_be": [
+              "get",
+              "list",
+              "create",
+              "update",
+              "delete"
+            ]
+          }
+        }
       ]
     },
     {
@@ -2508,6 +2719,50 @@
         "disabled",
         "option",
         "middleware exception"
+      ],
+      "uses": [
+        {
+          "goal": "No endpoint caches its response for more than an hour.",
+          "params": {
+            "object_kind": "query",
+            "when": {
+              "cache.active": {
+                "equals": true
+              },
+              "cache.ttl": {
+                "gt": 3600
+              }
+            }
+          }
+        },
+        {
+          "goal": "API documentation requires a token.",
+          "params": {
+            "object_kind": "api_group",
+            "when": {
+              "swagger": {
+                "equals": true
+              },
+              "swagger.require_token": {
+                "equals": false
+              }
+            }
+          }
+        },
+        {
+          "goal": "AI agents use only approved model providers.",
+          "params": {
+            "object_kind": "agent",
+            "when": {
+              "model_provider": {
+                "not_in": [
+                  "openai",
+                  "anthropic"
+                ]
+              }
+            }
+          }
+        }
       ]
     },
     {
@@ -2760,6 +3015,34 @@
         "audit call",
         "auth",
         "function call"
+      ],
+      "uses": [
+        {
+          "goal": "Every scheduled task records an audit event.",
+          "params": {
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "object_kinds": [
+              "task"
+            ]
+          }
+        },
+        {
+          "goal": "Endpoints that edit employees call the HR role check.",
+          "params": {
+            "functions": [
+              "require_hr_role"
+            ],
+            "when": {
+              "statement": "db.edit",
+              "tables": [
+                "employee"
+              ]
+            }
+          }
+        }
       ]
     },
     {
@@ -2954,6 +3237,20 @@
         "label",
         "convention",
         "style guide"
+      ],
+      "uses": [
+        {
+          "goal": "Every function names its owning team.",
+          "params": {
+            "tag_set": [
+              "team-billing",
+              "team-growth"
+            ],
+            "object_kinds": [
+              "function"
+            ]
+          }
+        }
       ]
     },
     {
@@ -3183,6 +3480,31 @@
         "naming",
         "style guide",
         "consistent tags"
+      ],
+      "uses": [
+        {
+          "goal": "Tags come from the agreed list.",
+          "params": {
+            "allowed_tags": [
+              "pii",
+              "phi",
+              "public",
+              "internal"
+            ]
+          }
+        },
+        {
+          "goal": "Team tags start with team-.",
+          "params": {
+            "prefixes": [
+              "team-"
+            ],
+            "allowed_tags": [
+              "pii",
+              "public"
+            ]
+          }
+        }
       ]
     },
     {
@@ -3385,6 +3707,29 @@
         "query",
         "login",
         "authentication"
+      ],
+      "uses": [
+        {
+          "goal": "Anything reaching tables tagged phi requires login and calls the access log.",
+          "params": {
+            "table_tags": [
+              "phi"
+            ],
+            "function": "log_phi_access"
+          },
+          "note": "It judges only tables carrying the tag: tag them first. For tables the user names, use object.auth_required with tables."
+        },
+        {
+          "goal": "Only clinician logins reach patient tables.",
+          "params": {
+            "table_tags": [
+              "phi"
+            ],
+            "auth_tables": [
+              "clinician"
+            ]
+          }
+        }
       ]
     },
     {
@@ -3552,6 +3897,27 @@
         "qa",
         "regression",
         "change management"
+      ],
+      "uses": [
+        {
+          "goal": "Every function has a test.",
+          "params": {
+            "object_kinds": [
+              "function"
+            ]
+          }
+        },
+        {
+          "goal": "Endpoints that touch payments are tested.",
+          "params": {
+            "tables": [
+              "payments"
+            ],
+            "object_kinds": [
+              "query"
+            ]
+          }
+        }
       ]
     },
     {
@@ -3741,6 +4107,24 @@
         "hygiene",
         "convention",
         "style guide"
+      ],
+      "uses": [
+        {
+          "goal": "Endpoints declare only the inputs they use.",
+          "params": {
+            "object_kinds": [
+              "query"
+            ]
+          }
+        },
+        {
+          "goal": "Unused inputs are reported, except api_version.",
+          "params": {
+            "allowed_inputs": [
+              "api_version"
+            ]
+          }
+        }
       ]
     },
     {
@@ -4002,6 +4386,44 @@
         "env var",
         "connection string",
         "convention"
+      ],
+      "uses": [
+        {
+          "goal": "Requests only go to Stripe and our own domain.",
+          "params": {
+            "kinds": [
+              "http"
+            ],
+            "hosts": [
+              "api.stripe.com",
+              ".example.com"
+            ]
+          }
+        },
+        {
+          "goal": "AI agents only use OpenAI or Anthropic models.",
+          "params": {
+            "kinds": [
+              "agent.llm"
+            ],
+            "providers": [
+              "openai",
+              "anthropic"
+            ]
+          }
+        },
+        {
+          "goal": "Vendor URLs come from environment variables, never literals.",
+          "params": {
+            "kinds": [
+              "http"
+            ],
+            "env_hosts": [
+              "PAYMENTS_BASE"
+            ],
+            "literal_urls_forbidden": true
+          }
+        }
       ]
     },
     {
@@ -4188,6 +4610,20 @@
         "hygiene",
         "convention",
         "style guide"
+      ],
+      "uses": [
+        {
+          "goal": "No switched-off code is left in a stack.",
+          "params": {}
+        },
+        {
+          "goal": "Only disabled debug logs may stay.",
+          "params": {
+            "allowed_statements": [
+              "debug.log"
+            ]
+          }
+        }
       ]
     },
     {
@@ -4385,6 +4821,33 @@
         "split",
         "convention",
         "style guide"
+      ],
+      "uses": [
+        {
+          "goal": "Endpoints hold at most 30 statements.",
+          "params": {
+            "max_statements": 30,
+            "object_kinds": [
+              "query"
+            ]
+          }
+        },
+        {
+          "goal": "Functions hold at most 80 statements.",
+          "params": {
+            "max_statements": 80,
+            "object_kinds": [
+              "function"
+            ]
+          },
+          "note": "One rule per kind gives each kind its own limit."
+        },
+        {
+          "goal": "Nothing nests more than 3 levels deep.",
+          "params": {
+            "max_nesting": 3
+          }
+        }
       ]
     },
     {
@@ -4572,6 +5035,41 @@
         "database",
         "sql",
         "statement"
+      ],
+      "uses": [
+        {
+          "goal": "AI tools can't delete records.",
+          "params": {
+            "statements": [
+              "db.del",
+              "db.bulk.delete",
+              "db.truncate"
+            ],
+            "object_kinds": [
+              "tool"
+            ]
+          }
+        },
+        {
+          "goal": "Nothing calls an external MCP server.",
+          "params": {
+            "statements": [
+              "ai.external.mcp.*"
+            ]
+          }
+        },
+        {
+          "goal": "Public endpoints don't send email.",
+          "params": {
+            "statements": [
+              "util.send_email"
+            ],
+            "endpoint_auth": "none",
+            "object_kinds": [
+              "query"
+            ]
+          }
+        }
       ]
     },
     {
@@ -4785,6 +5283,40 @@
         "validate before",
         "sequence",
         "guard"
+      ],
+      "uses": [
+        {
+          "goal": "Records are deleted and emails sent only after an approval check.",
+          "params": {
+            "before": {
+              "functions": [
+                "require_approval"
+              ]
+            },
+            "after": [
+              "db.del",
+              "db.bulk.delete",
+              "util.send_email"
+            ]
+          },
+          "note": "It confirms the call comes first, not what the function decides."
+        },
+        {
+          "goal": "Charges run only after the order is validated.",
+          "params": {
+            "before": {
+              "functions": [
+                "validate_order"
+              ]
+            },
+            "after": [
+              "api.request"
+            ],
+            "tables": [
+              "orders"
+            ]
+          }
+        }
       ]
     },
     {
@@ -4983,6 +5515,21 @@
         "hygiene",
         "convention",
         "style guide"
+      ],
+      "uses": [
+        {
+          "goal": "Every variable is read after it is set.",
+          "params": {}
+        },
+        {
+          "goal": "Query results are used.",
+          "params": {
+            "include_results_of": [
+              "db.query",
+              "db.get"
+            ]
+          }
+        }
       ]
     },
     {
@@ -5214,6 +5761,52 @@
         "request in loop",
         "transaction",
         "foreach"
+      ],
+      "uses": [
+        {
+          "goal": "AI calls are never made inside a loop.",
+          "params": {
+            "statements": [
+              "ai.agent.run",
+              "ai.external.mcp.tool.run"
+            ],
+            "must_not_be_inside": [
+              "foreach",
+              "for",
+              "while"
+            ]
+          }
+        },
+        {
+          "goal": "Database reads are never made inside a loop.",
+          "params": {
+            "statements": [
+              "db.query",
+              "db.get"
+            ],
+            "must_not_be_inside": [
+              "foreach",
+              "for",
+              "while"
+            ]
+          }
+        },
+        {
+          "goal": "Payment writes happen inside a transaction.",
+          "params": {
+            "statements": [
+              "db.add",
+              "db.edit",
+              "db.patch"
+            ],
+            "must_be_inside": [
+              "db.transaction"
+            ],
+            "tables": [
+              "payments"
+            ]
+          }
+        }
       ]
     },
     {
@@ -5498,6 +6091,51 @@
         "expression",
         "reference",
         "debug"
+      ],
+      "uses": [
+        {
+          "goal": "Error messages never include request input.",
+          "params": {
+            "statements": [
+              "throw"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_not_reference": [
+              "$input"
+            ]
+          }
+        },
+        {
+          "goal": "Raw SQL never joins text into the query.",
+          "params": {
+            "statements": [
+              "db.direct_query"
+            ],
+            "param_names": [
+              "sql"
+            ],
+            "operators_forbidden": [
+              "~"
+            ]
+          }
+        },
+        {
+          "goal": "Datadog logs never include the logged-in user.",
+          "params": {
+            "statements": [
+              "datadog.log"
+            ],
+            "param_names": [
+              "message",
+              "attributes"
+            ],
+            "must_not_reference": [
+              "$auth"
+            ]
+          }
+        }
       ]
     },
     {
@@ -5719,6 +6357,53 @@
         "jwt",
         "session",
         "login"
+      ],
+      "uses": [
+        {
+          "goal": "Endpoints never return a whole table.",
+          "params": {
+            "statements": [
+              "db.query"
+            ],
+            "param_names": [
+              "per_page"
+            ],
+            "max": 1000,
+            "unit": "rows",
+            "object_kinds": [
+              "query",
+              "tool"
+            ]
+          },
+          "note": "A list read with paging off is reported as unbounded; count and single reads are not judged."
+        },
+        {
+          "goal": "Pages hold at most 100 rows.",
+          "params": {
+            "statements": [
+              "db.query"
+            ],
+            "param_names": [
+              "per_page"
+            ],
+            "min": 1,
+            "max": 100,
+            "unit": "rows"
+          }
+        },
+        {
+          "goal": "Login sessions last at most a day.",
+          "params": {
+            "statements": [
+              "security.create_auth_token"
+            ],
+            "param_names": [
+              "expiration"
+            ],
+            "max": 86400,
+            "unit": "seconds"
+          }
+        }
       ]
     },
     {
@@ -5924,6 +6609,38 @@
         "https",
         "external request",
         "api request"
+      ],
+      "uses": [
+        {
+          "goal": "External requests never switch off certificate checks.",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "verify_peer",
+              "verify_host"
+            ],
+            "values": [
+              false
+            ]
+          }
+        },
+        {
+          "goal": "External requests don't follow redirects.",
+          "params": {
+            "statements": [
+              "api.request"
+            ],
+            "param_names": [
+              "follow_location"
+            ],
+            "values": [
+              true
+            ]
+          }
+        }
       ]
     },
     {
@@ -6128,6 +6845,35 @@
         "select all",
         "over fetch",
         "required setting"
+      ],
+      "uses": [
+        {
+          "goal": "Reads name the fields they return.",
+          "params": {
+            "statements": [
+              "db.query",
+              "db.get"
+            ],
+            "param_names": [
+              "output"
+            ]
+          }
+        },
+        {
+          "goal": "Reads of tables tagged phi name the fields they return.",
+          "params": {
+            "statements": [
+              "db.query",
+              "db.get"
+            ],
+            "param_names": [
+              "output"
+            ],
+            "table_tags": [
+              "phi"
+            ]
+          }
+        }
       ]
     },
     {
@@ -6311,6 +7057,21 @@
         "auth",
         "login",
         "sign in"
+      ],
+      "uses": [
+        {
+          "goal": "Users sign in through one table.",
+          "params": {}
+        },
+        {
+          "goal": "Only the customer and staff tables hold logins.",
+          "params": {
+            "auth_tables": [
+              "customer",
+              "staff"
+            ]
+          }
+        }
       ]
     },
     {
@@ -6443,6 +7204,46 @@
         "database",
         "table",
         "task"
+      ],
+      "uses": [
+        {
+          "goal": "Tables tagged retained have a cleanup task.",
+          "params": {
+            "tags": [
+              "retained"
+            ],
+            "referenced_by": {
+              "object_kinds": [
+                "task"
+              ],
+              "statements": [
+                "db.del",
+                "db.bulk.delete"
+              ]
+            }
+          }
+        },
+        {
+          "goal": "The erasure function deletes from every table tagged personal.",
+          "params": {
+            "tags": [
+              "personal"
+            ],
+            "referenced_by": {
+              "object_kinds": [
+                "function"
+              ],
+              "tags": [
+                "erasure"
+              ],
+              "statements": [
+                "db.del",
+                "db.bulk.delete"
+              ]
+            }
+          },
+          "note": "Tag the erasure function erasure; add db.edit or db.patch where a table is anonymised instead."
+        }
       ]
     },
     {
@@ -6627,6 +7428,28 @@
         "database",
         "table",
         "field"
+      ],
+      "uses": [
+        {
+          "goal": "Card numbers and security codes are never stored.",
+          "params": {
+            "field_names": [
+              "card_number",
+              "cvv"
+            ],
+            "forbidden": true
+          },
+          "note": "forbidden reports every table that declares a listed field."
+        },
+        {
+          "goal": "Email fields are typed as email.",
+          "params": {
+            "field_names": [
+              "email"
+            ],
+            "type": "email"
+          }
+        }
       ]
     },
     {
@@ -6742,6 +7565,25 @@
         "table",
         "schema",
         "field"
+      ],
+      "uses": [
+        {
+          "goal": "Tables holding a diagnosis or clinical notes are tagged phi.",
+          "params": {
+            "field_names": [
+              "diagnosis",
+              "clinical_notes"
+            ],
+            "tag": "phi"
+          }
+        },
+        {
+          "goal": "Tables with a sensitive field are tagged confidential.",
+          "params": {
+            "include_sensitive": true,
+            "tag": "confidential"
+          }
+        }
       ]
     },
     {
@@ -6827,6 +7669,16 @@
         "database",
         "table",
         "field"
+      ],
+      "uses": [
+        {
+          "goal": "Saved views hide salary as well as sensitive fields.",
+          "params": {
+            "fields": [
+              "salary"
+            ]
+          }
+        }
       ]
     },
     {
@@ -7060,6 +7912,41 @@
         "database",
         "table",
         "write"
+      ],
+      "uses": [
+        {
+          "goal": "Only the ledger function changes account balances.",
+          "params": {
+            "restricted_tables": [
+              "accounts"
+            ],
+            "fields": [
+              "balance"
+            ],
+            "allowed_functions": [
+              "post_ledger_entry"
+            ]
+          }
+        },
+        {
+          "goal": "Audit entries are never edited or deleted.",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "statements": [
+              "db.edit",
+              "db.patch",
+              "db.add_or_edit",
+              "db.del",
+              "db.truncate",
+              "db.bulk.update",
+              "db.bulk.patch",
+              "db.bulk.delete"
+            ]
+          },
+          "note": "With no allowed function or tag, every listed write is reported."
+        }
       ]
     },
     {
@@ -7194,6 +8081,12 @@
         "forbidden",
         "login",
         "auth"
+      ],
+      "uses": [
+        {
+          "goal": "Every protected endpoint has a test that an anonymous call is rejected.",
+          "params": {}
+        }
       ]
     },
     {
@@ -7284,6 +8177,12 @@
         "database",
         "table",
         "table trigger"
+      ],
+      "uses": [
+        {
+          "goal": "Trigger writes don't skip other triggers or re-fire themselves.",
+          "params": {}
+        }
       ]
     },
     {
@@ -7500,6 +8399,26 @@
         "audit table",
         "retention task",
         "baseline"
+      ],
+      "uses": [
+        {
+          "goal": "The audit_log table exists.",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ]
+          }
+        },
+        {
+          "goal": "A scheduled cleanup task exists and runs.",
+          "params": {
+            "object_kind": "task",
+            "names": [
+              "purge_expired"
+            ]
+          }
+        }
       ]
     }
   ],
@@ -7549,7 +8468,8 @@
       "frameworks": [
         "soc2",
         "hipaa",
-        "gdpr"
+        "gdpr",
+        "pci_dss"
       ],
       "title": "Endpoints don't return personal data",
       "summary": "Endpoints never return the personal-data fields you list, or any field marked sensitive in its table's schema.",
@@ -7663,7 +8583,8 @@
       "id": "no_secrets_in_code",
       "category": "secrets",
       "frameworks": [
-        "soc2"
+        "soc2",
+        "pci_dss"
       ],
       "title": "No secrets are hardcoded",
       "summary": "API keys, tokens, private keys, encryption keys and credentialed URLs are never written as literals in an object's definition or agent settings; they belong in environment variables.",
@@ -7701,7 +8622,8 @@
       "frameworks": [
         "soc2",
         "hipaa",
-        "gdpr"
+        "gdpr",
+        "pci_dss"
       ],
       "title": "Data only goes to approved vendors",
       "summary": "Outbound requests, cloud and email providers and AI model providers are limited to the vendors you approve.",
@@ -7917,7 +8839,8 @@
       "category": "integrations",
       "frameworks": [
         "soc2",
-        "hipaa"
+        "hipaa",
+        "pci_dss"
       ],
       "title": "External requests verify TLS certificates",
       "summary": "Every external request verifies the TLS certificate and host name of the server it talks to.",
@@ -8116,7 +9039,8 @@
       "frameworks": [
         "soc2",
         "hipaa",
-        "gdpr"
+        "gdpr",
+        "pci_dss"
       ],
       "title": "Sensitive fields are marked sensitive",
       "summary": "The fields you list are marked sensitive wherever a table declares them.",
@@ -8223,7 +9147,8 @@
       "frameworks": [
         "soc2",
         "hipaa",
-        "gdpr"
+        "gdpr",
+        "pci_dss"
       ],
       "title": "Logs don't contain request, user or secret data",
       "summary": "Debug logs never reference request input, the logged-in user or environment variables.",
@@ -8373,6 +9298,54 @@
             ],
             "max": 30,
             "unit": "seconds"
+          },
+          "needs": [],
+          "needs_any": false
+        }
+      ]
+    },
+    {
+      "id": "reads_are_paged",
+      "category": "reliability",
+      "frameworks": [],
+      "title": "Endpoints never return every row",
+      "summary": "Every list read an endpoint or AI tool runs, in its own stack or a function it calls, pages its results, at most 1000 rows a page.",
+      "key": "PERF-001",
+      "severity": "medium",
+      "keywords": [
+        "paging",
+        "pagination",
+        "per page",
+        "page size",
+        "limit",
+        "unbounded",
+        "every row",
+        "all records",
+        "large response",
+        "cost",
+        "performance",
+        "timeout",
+        "memory"
+      ],
+      "limits": "Reads each list, stream and aggregate query's paging setting; a page size taken from request input is reported as unverifiable, even when the input declares a max. Direct SQL and external database queries are not checked. A query its where narrows to a few rows is still reported when it does not page; exempt it with except_tags.",
+      "examples": {},
+      "rules": [
+        {
+          "title": "Reads page at most 1000 rows",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "db.query"
+            ],
+            "param_names": [
+              "per_page"
+            ],
+            "max": 1000,
+            "unit": "rows",
+            "object_kinds": [
+              "query",
+              "tool"
+            ]
           },
           "needs": [],
           "needs_any": false
@@ -9074,8 +10047,8 @@
       "id": "endpoints_stay_short",
       "category": "conventions",
       "frameworks": [],
-      "title": "Endpoints stay short",
-      "summary": "Endpoints hold at most 30 statements and 3 levels of nesting; the logic lives in functions.",
+      "title": "Endpoints and functions stay short",
+      "summary": "Every endpoint and function holds at most 30 statements and 3 levels of nesting.",
       "key": "CONV-040",
       "severity": "low",
       "keywords": [
@@ -9097,13 +10070,14 @@
       "examples": {},
       "rules": [
         {
-          "title": "Endpoints stay short; logic lives in functions",
+          "title": "Endpoints and functions stay short",
           "check": "stack.size_limit",
           "params": {
             "max_statements": 30,
             "max_nesting": 3,
             "object_kinds": [
-              "query"
+              "query",
+              "function"
             ]
           },
           "needs": [],
@@ -9282,9 +10256,920 @@
     {
       "id": "gdpr",
       "label": "GDPR"
+    },
+    {
+      "id": "pci_dss",
+      "label": "PCI DSS"
     }
   ],
   "template_frameworks_note": "Framework tags point to templates on related topics. They don't make a workspace compliant, and Xano doesn't track changes to these frameworks.",
+  "recipes": [
+    {
+      "id": "protect_health_data",
+      "title": "Protect health data",
+      "summary": "Tables holding health data are tagged and marked, reached only by logged-in callers who record each access, kept out of responses, logs and saved views, and sent only to approved vendors over verified TLS.",
+      "keywords": [
+        "health",
+        "phi",
+        "ephi",
+        "patient",
+        "medical",
+        "clinical",
+        "diagnosis",
+        "hipaa",
+        "healthcare"
+      ],
+      "frameworks": [
+        "hipaa"
+      ],
+      "prerequisites": [
+        "Choose one tag for tables holding health data (such as phi) and add it to them: CONF-010 and the access-record rule judge nothing until a table carries it. Use the same tag as CONF-012's tag, so a new table with those fields is caught.",
+        "List the fields that hold health data by exact name (diagnosis, dob, ssn) for CONF-011, CONF-012 and DATA-010.",
+        "Write one function that records each access, passing the logged-in user (such as log_phi_access), and name it in the access-record rule.",
+        "Approve the vendors that may receive health data (hosts, providers) for VND-001."
+      ],
+      "templates": [
+        "confidential_tables_tagged",
+        "sensitive_fields_marked",
+        "sensitive_tables_need_login",
+        "no_pii_in_responses",
+        "no_sensitive_data_in_logs",
+        "views_hide_sensitive",
+        "approved_vendors_only",
+        "tls_verification_on",
+        "audit_log_protected"
+      ],
+      "rules": [
+        {
+          "title": "Objects reaching health tables always record the access",
+          "check": "object.statement_required",
+          "params": {
+            "placement": "unconditional"
+          },
+          "needs": [
+            "functions",
+            "reaching_table_tags"
+          ]
+        }
+      ],
+      "limits": [
+        "people_and_training",
+        "access_reviews_and_approvals",
+        "runtime_data",
+        "infrastructure"
+      ]
+    },
+    {
+      "id": "protect_card_data",
+      "title": "Protect payment card data",
+      "summary": "No table stores a card number or security code, card details go only to your payment processor over verified TLS, and its keys, your logs and your responses keep card data out of sight.",
+      "keywords": [
+        "card",
+        "credit card",
+        "payment",
+        "pan",
+        "cvv",
+        "cardholder",
+        "pci",
+        "checkout",
+        "stripe",
+        "tokenization"
+      ],
+      "frameworks": [
+        "pci_dss"
+      ],
+      "prerequisites": [
+        "Send card details straight to your payment processor and keep only its token, so no table needs a card field: the card-field rule reports any table that declares one.",
+        "Approve your processor's hosts (such as api.stripe.com) for VND-001.",
+        "Keep the processor's keys in environment variables: SEC-012 reports one written in code.",
+        "List the card-adjacent fields you do store (card_last4, billing_address) for CONF-011 and DATA-010."
+      ],
+      "templates": [
+        "no_secrets_in_code",
+        "approved_vendors_only",
+        "tls_verification_on",
+        "sensitive_fields_marked",
+        "no_pii_in_responses",
+        "no_sensitive_data_in_logs"
+      ],
+      "rules": [
+        {
+          "title": "Card numbers and security codes are never stored",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "cvv",
+              "cvc",
+              "pan"
+            ],
+            "forbidden": true
+          },
+          "needs": []
+        }
+      ],
+      "limits": [
+        "people_and_training",
+        "access_reviews_and_approvals",
+        "runtime_data",
+        "infrastructure"
+      ]
+    },
+    {
+      "id": "personal_data_erasure",
+      "title": "Erase and expire personal data",
+      "summary": "Tables holding personal data are cleaned up on a schedule and reached by one function that erases a person's records, and personal fields stay marked and out of responses and logs.",
+      "keywords": [
+        "erasure",
+        "right to be forgotten",
+        "delete my data",
+        "retention",
+        "personal data",
+        "purge",
+        "dsar",
+        "privacy",
+        "gdpr",
+        "anonymise"
+      ],
+      "frameworks": [
+        "gdpr"
+      ],
+      "prerequisites": [
+        "Tag the tables to clean up on a schedule (such as retained) for RET-002, and the tables holding personal data (such as personal) for the erasure rule: both judge only tagged tables.",
+        "Write one function that erases a person's records and tag it (such as erasure); name that tag in the erasure rule. Add db.edit or db.patch to its statements where a table is anonymised rather than deleted.",
+        "Choose each table's retention period inside its cleanup task: no rule reads the age it deletes at.",
+        "List the personal fields by exact name for CONF-011 and DATA-010."
+      ],
+      "templates": [
+        "retained_data_cleaned_up",
+        "sensitive_fields_marked",
+        "no_pii_in_responses",
+        "no_sensitive_data_in_logs"
+      ],
+      "rules": [
+        {
+          "title": "The erasure function reaches every personal-data table",
+          "check": "table.coverage_required",
+          "params": {
+            "referenced_by": {
+              "object_kinds": [
+                "function"
+              ],
+              "statements": [
+                "db.del",
+                "db.bulk.delete"
+              ]
+            }
+          },
+          "needs": [
+            "tags",
+            "referenced_by.tags"
+          ]
+        }
+      ],
+      "limits": [
+        "retention_age",
+        "runtime_data",
+        "people_and_training"
+      ]
+    },
+    {
+      "id": "code_review_basics",
+      "title": "Keep code easy to review",
+      "summary": "External calls handle their failures, endpoints are tested, endpoints and functions stay short and page their reads, no leftover code remains, and functions say what they do. Naming conventions are a separate choice: see the Conventions templates.",
+      "keywords": [
+        "code review",
+        "review",
+        "quality",
+        "clean code",
+        "maintainable",
+        "lint",
+        "best practice",
+        "tests",
+        "readable",
+        "error handling",
+        "breaking prod",
+        "juniors"
+      ],
+      "frameworks": [],
+      "prerequisites": [
+        "Tag large legacy endpoints and functions (such as legacy) and list the tag in CONV-040's except_tags until they are split."
+      ],
+      "templates": [
+        "external_calls_handle_errors",
+        "endpoints_have_tests",
+        "endpoints_stay_short",
+        "no_leftover_code",
+        "reads_are_paged"
+      ],
+      "rules": [
+        {
+          "title": "Functions say what they do",
+          "check": "object.description_required",
+          "params": {
+            "object_kinds": [
+              "function"
+            ],
+            "min_length": 20
+          },
+          "needs": []
+        }
+      ],
+      "limits": [
+        "access_reviews_and_approvals",
+        "people_and_training"
+      ]
+    },
+    {
+      "id": "audit_changes",
+      "title": "Record who changed what",
+      "summary": "Every edit and delete of the tables you name calls one audit function, only that function writes the audit log, and nothing edits or deletes an audit entry.",
+      "keywords": [
+        "audit",
+        "audit trail",
+        "who changed",
+        "change history",
+        "history",
+        "tamper",
+        "accountability",
+        "activity log",
+        "log changes"
+      ],
+      "frameworks": [
+        "soc2",
+        "hipaa"
+      ],
+      "prerequisites": [
+        "Create the audit log table (such as audit_log) and one function that writes an entry, passing the logged-in user (such as record_audit_event), for RET-001 and the audit rules.",
+        "Name the tables whose changes are audited, by exact name, in each audit rule."
+      ],
+      "templates": [
+        "audit_log_protected"
+      ],
+      "rules": [
+        {
+          "title": "Edits of audited tables call the audit function",
+          "check": "object.statement_required",
+          "params": {
+            "placement": "unconditional",
+            "when": {
+              "statement": "db.edit"
+            }
+          },
+          "needs": [
+            "functions",
+            "when.tables"
+          ]
+        },
+        {
+          "title": "Patches of audited tables call the audit function",
+          "check": "object.statement_required",
+          "params": {
+            "placement": "unconditional",
+            "when": {
+              "statement": "db.patch"
+            }
+          },
+          "needs": [
+            "functions",
+            "when.tables"
+          ]
+        },
+        {
+          "title": "Deletes from audited tables call the audit function",
+          "check": "object.statement_required",
+          "params": {
+            "placement": "unconditional",
+            "when": {
+              "statement": "db.del"
+            }
+          },
+          "needs": [
+            "functions",
+            "when.tables"
+          ]
+        },
+        {
+          "title": "Audit entries are never edited or deleted",
+          "check": "table.write_location_restricted",
+          "params": {
+            "statements": [
+              "db.edit",
+              "db.patch",
+              "db.add_or_edit",
+              "db.del",
+              "db.truncate",
+              "db.bulk.update",
+              "db.bulk.patch",
+              "db.bulk.delete"
+            ]
+          },
+          "needs": [
+            "restricted_tables"
+          ]
+        }
+      ],
+      "limits": [
+        "access_reviews_and_approvals",
+        "runtime_data",
+        "retention_age"
+      ]
+    },
+    {
+      "id": "ai_cost_and_agent_safety",
+      "title": "Keep AI calls affordable and agents safe",
+      "summary": "AI calls stay out of loops, reads are paged, agents use approved model providers, AI tools are described and cannot delete records, and deletes and emails wait for an approval check.",
+      "keywords": [
+        "ai",
+        "llm",
+        "agent",
+        "cost",
+        "spend",
+        "tokens",
+        "mcp",
+        "tool",
+        "openai",
+        "anthropic",
+        "runaway",
+        "approval",
+        "human in the loop"
+      ],
+      "frameworks": [],
+      "prerequisites": [
+        "Approve the model providers your agents may use (openai, anthropic) and the hosts AI calls may reach, for VND-001.",
+        "Write one function that checks a person approved the action (such as require_approval), call it before each delete and email, and name it in the approval rule."
+      ],
+      "templates": [
+        "approved_vendors_only",
+        "reads_are_paged",
+        "requests_have_timeout",
+        "ai_tools_described"
+      ],
+      "rules": [
+        {
+          "title": "AI calls are not made inside loops",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.agent.run",
+              "ai.external.mcp.tool.run"
+            ],
+            "must_not_be_inside": [
+              "foreach",
+              "for",
+              "while"
+            ]
+          },
+          "needs": []
+        },
+        {
+          "title": "AI tools cannot delete records",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.del",
+              "db.bulk.delete",
+              "db.truncate"
+            ],
+            "object_kinds": [
+              "tool"
+            ]
+          },
+          "needs": []
+        },
+        {
+          "title": "Deletes and emails wait for an approval check",
+          "check": "stack.statement_order",
+          "params": {
+            "after": [
+              "db.del",
+              "db.bulk.delete",
+              "util.send_email"
+            ]
+          },
+          "needs": [
+            "before.functions"
+          ]
+        }
+      ],
+      "limits": [
+        "spend_caps",
+        "agent_tool_allowlists",
+        "task_retries",
+        "runtime_data"
+      ]
+    }
+  ],
+  "not_checkable": [
+    {
+      "id": "people_and_training",
+      "topic": "People and training",
+      "why": "Who works on the workspace, their background checks and their security training are about people; policies read object definitions only.",
+      "keywords": [
+        "training",
+        "employee",
+        "staff",
+        "background check",
+        "onboarding",
+        "offboarding",
+        "awareness",
+        "people"
+      ]
+    },
+    {
+      "id": "access_reviews_and_approvals",
+      "topic": "Access reviews and change approvals",
+      "why": "Reviewing who can reach the workspace, and who approved a change, happens outside the definitions; a blocking policy can hold a merge but cannot see who signed it off.",
+      "keywords": [
+        "access review",
+        "approval",
+        "approver",
+        "sign off",
+        "change approval",
+        "peer review",
+        "four eyes",
+        "reviewer",
+        "separation of duties"
+      ]
+    },
+    {
+      "id": "runtime_data",
+      "topic": "Runtime data and copies between environments",
+      "why": "Policies read stored definitions, never the records in tables, what a request sent or stored, or data copied between branches, environments or tenants.",
+      "keywords": [
+        "runtime",
+        "actual data",
+        "records",
+        "payload",
+        "production data",
+        "test data",
+        "copy data",
+        "environment",
+        "staging",
+        "backup",
+        "export"
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "topic": "Infrastructure and network",
+      "why": "Hosting, network segmentation, encryption at rest, backups, vulnerability scans and penetration tests are controls of Xano or your hosting provider, not workspace definitions.",
+      "keywords": [
+        "network",
+        "firewall",
+        "segmentation",
+        "encryption at rest",
+        "backup",
+        "penetration test",
+        "vulnerability scan",
+        "hosting",
+        "infrastructure"
+      ]
+    },
+    {
+      "id": "spend_caps",
+      "topic": "Spend caps",
+      "why": "No check reads what AI calls or vendors cost, or caps spend, yet; a rule can keep AI calls out of loops and reads paged.",
+      "keywords": [
+        "spend",
+        "cost cap",
+        "budget",
+        "billing",
+        "token usage",
+        "usage cap",
+        "quota",
+        "rate of spend"
+      ]
+    },
+    {
+      "id": "task_retries",
+      "topic": "Task retries",
+      "why": "Tasks have no retry setting a check could read, so how often a failed task runs again is not checked yet.",
+      "keywords": [
+        "retry",
+        "retries",
+        "backoff",
+        "failed task",
+        "rerun",
+        "dead letter"
+      ]
+    },
+    {
+      "id": "retention_age",
+      "topic": "Retention age",
+      "why": "A check confirms a cleanup task deletes from each retained table, but not yet how old a record is when it goes: the age lives in the task's own query.",
+      "keywords": [
+        "retention period",
+        "how long",
+        "days",
+        "age",
+        "expire after",
+        "keep for",
+        "retention schedule"
+      ]
+    },
+    {
+      "id": "agent_tool_allowlists",
+      "topic": "Agent tool allowlists",
+      "why": "No check limits which tools an AI agent or MCP server may expose yet; a rule can forbid statements inside tools.",
+      "keywords": [
+        "tool allowlist",
+        "agent tools",
+        "mcp tools",
+        "which tools",
+        "toolset",
+        "tool permissions"
+      ]
+    },
+    {
+      "id": "path_prefix_scope",
+      "topic": "Scope by endpoint path prefix",
+      "why": "A rule selects endpoints by tag, API group, verb or auth, not yet by a path prefix such as /admin: tag those endpoints or their API group instead.",
+      "keywords": [
+        "path prefix",
+        "/admin",
+        "url prefix",
+        "route prefix",
+        "path starts with",
+        "endpoint path"
+      ]
+    }
+  ],
+  "statement_groups": [
+    {
+      "id": "external_calls",
+      "label": "External calls",
+      "note": "A model called over HTTP is an api.request: judge it by host. outbound.vendor_allowlist reads every destination by kind.",
+      "statements": [
+        {
+          "name": "api.request",
+          "params": [
+            "url",
+            "params",
+            "headers",
+            "timeout",
+            "verify_peer",
+            "verify_host",
+            "follow_location"
+          ]
+        },
+        {
+          "name": "stream.from_request",
+          "params": [
+            "url",
+            "timeout",
+            "verify_peer",
+            "verify_host"
+          ]
+        },
+        {
+          "name": "webflow.request",
+          "params": [
+            "timeout"
+          ]
+        },
+        {
+          "name": "api.microservice",
+          "params": [
+            "host",
+            "timeout"
+          ]
+        },
+        {
+          "name": "api.lambda",
+          "params": [
+            "code",
+            "timeout"
+          ]
+        },
+        {
+          "name": "cloud.algolia.request",
+          "params": [
+            "url"
+          ]
+        },
+        {
+          "name": "cloud.elasticsearch.request",
+          "params": [
+            "url"
+          ]
+        },
+        {
+          "name": "cloud.aws.opensearch.request",
+          "params": [
+            "url"
+          ]
+        },
+        {
+          "name": "db.external.postgres.direct_query",
+          "params": [
+            "connection_string",
+            "sql"
+          ]
+        },
+        {
+          "name": "db.external.mysql.direct_query",
+          "params": [
+            "connection_string",
+            "sql"
+          ]
+        },
+        {
+          "name": "db.external.mssql.direct_query",
+          "params": [
+            "connection_string",
+            "sql"
+          ]
+        },
+        {
+          "name": "db.external.oracle.direct_query",
+          "params": [
+            "connection_string",
+            "sql"
+          ]
+        },
+        {
+          "name": "db.external.snowflake.direct_query",
+          "params": [
+            "connection_string",
+            "sql"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ai_calls",
+      "label": "AI and LLM calls",
+      "note": "There is no prompt statement: code calls a model through an agent or over HTTP. An agent's model provider is its model_provider setting.",
+      "statements": [
+        {
+          "name": "ai.agent.run",
+          "params": [
+            "args",
+            "allow_tool_execution"
+          ]
+        },
+        {
+          "name": "ai.external.mcp.tool.run",
+          "params": [
+            "url",
+            "tool",
+            "args"
+          ]
+        },
+        {
+          "name": "ai.external.mcp.tool.list",
+          "params": [
+            "url"
+          ]
+        },
+        {
+          "name": "ai.external.mcp.server_details",
+          "params": [
+            "url"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "email_and_messaging",
+      "label": "Email and messaging",
+      "note": "util.send_email's service_provider defaults to xano; realtime statements reach your own clients.",
+      "statements": [
+        {
+          "name": "util.send_email",
+          "params": [
+            "service_provider",
+            "to",
+            "subject",
+            "message"
+          ]
+        },
+        {
+          "name": "realtime.publish",
+          "params": [
+            "channel",
+            "message",
+            "data"
+          ]
+        },
+        {
+          "name": "api.realtime_event",
+          "params": [
+            "channel",
+            "data"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database_writes",
+      "label": "Database writes",
+      "note": "The deletes are db.del, db.bulk.delete and db.truncate.",
+      "statements": [
+        {
+          "name": "db.add",
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "db.add_or_edit",
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "db.edit",
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "db.patch",
+          "params": []
+        },
+        {
+          "name": "db.del",
+          "params": []
+        },
+        {
+          "name": "db.truncate",
+          "params": []
+        },
+        {
+          "name": "db.bulk.add",
+          "params": []
+        },
+        {
+          "name": "db.bulk.update",
+          "params": []
+        },
+        {
+          "name": "db.bulk.patch",
+          "params": []
+        },
+        {
+          "name": "db.bulk.delete",
+          "params": []
+        },
+        {
+          "name": "db.increment",
+          "params": []
+        },
+        {
+          "name": "db.direct_query",
+          "params": [
+            "sql"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database_reads",
+      "label": "Database reads",
+      "note": "per_page is the page size a paged db.query applies; output is a read's field list.",
+      "statements": [
+        {
+          "name": "db.query",
+          "params": [
+            "output",
+            "per_page",
+            "where"
+          ]
+        },
+        {
+          "name": "db.get",
+          "params": [
+            "output"
+          ]
+        },
+        {
+          "name": "db.has",
+          "params": []
+        },
+        {
+          "name": "db.direct_query",
+          "params": [
+            "sql"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "logging",
+      "label": "Logging",
+      "note": "",
+      "statements": [
+        {
+          "name": "debug.log",
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "datadog.log",
+          "params": [
+            "message",
+            "attributes"
+          ]
+        },
+        {
+          "name": "datadog.log_bulk",
+          "params": [
+            "entries"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "auth_and_security",
+      "label": "Auth and security",
+      "note": "expiration and ttl are in seconds.",
+      "statements": [
+        {
+          "name": "security.create_auth_token",
+          "params": [
+            "expiration"
+          ]
+        },
+        {
+          "name": "security.jws_encode",
+          "params": [
+            "ttl"
+          ]
+        },
+        {
+          "name": "security.jwe_encode",
+          "params": [
+            "ttl"
+          ]
+        },
+        {
+          "name": "security.check_password",
+          "params": []
+        },
+        {
+          "name": "security.create_password",
+          "params": []
+        },
+        {
+          "name": "security.encrypt",
+          "params": []
+        },
+        {
+          "name": "security.decrypt",
+          "params": []
+        },
+        {
+          "name": "precondition",
+          "params": [
+            "error",
+            "payload"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blocks",
+      "label": "Loops and blocks",
+      "note": "The blocks statement.containment names; loops are foreach, for and while.",
+      "statements": [
+        {
+          "name": "foreach",
+          "params": []
+        },
+        {
+          "name": "for",
+          "params": []
+        },
+        {
+          "name": "while",
+          "params": []
+        },
+        {
+          "name": "conditional",
+          "params": []
+        },
+        {
+          "name": "switch",
+          "params": []
+        },
+        {
+          "name": "group",
+          "params": []
+        },
+        {
+          "name": "try_catch",
+          "params": []
+        },
+        {
+          "name": "db.transaction",
+          "params": []
+        }
+      ]
+    }
+  ],
   "document": {
     "key": {
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
