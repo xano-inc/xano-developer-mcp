@@ -1,4 +1,4 @@
-// The customer-facing app API: invoices, customers, payments, shipping, clinic and support.
+// The customer-facing app API: invoices, customers, payments, shipping, clinic, shop and support.
 api_group app {
   canonical = "app"
   swagger = {active: false}

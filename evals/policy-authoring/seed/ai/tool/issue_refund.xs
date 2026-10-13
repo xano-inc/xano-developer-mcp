@@ -1,24 +1,13 @@
-// Refunds a payment once a person has approved it.
+// Refunds a payment through Stripe.
 tool issue_refund {
-  instructions = "Refund a payment. A person must approve it first: call without approval_id to request approval."
+  instructions = "Refund a payment when the customer was charged in error."
 
   input {
     // The payment to refund
     int payment_id
-  
-    // The approved request id, once a person has approved
-    int approval_id?
   }
 
   stack {
-    function.run request_human_approval {
-      input = {
-        action     : "refund"
-        payload    : {payment_id: $input.payment_id}
-        approval_id: $input.approval_id
-      }
-    } as $approval
-  
     db.get payments {
       field_name = "id"
       field_value = $input.payment_id

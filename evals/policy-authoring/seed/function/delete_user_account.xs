@@ -17,15 +17,6 @@ function delete_user_account {
       field_name = "id"
       field_value = $input.user_id
     }
-  
-    function.run record_audit_event {
-      input = {
-        actor_id  : $input.user_id
-        action    : "delete_account"
-        table_name: "users"
-        record_id : $input.user_id
-      }
-    } as $audit
   }
 
   response = {deleted: true}

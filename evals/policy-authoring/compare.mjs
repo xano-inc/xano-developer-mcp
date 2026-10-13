@@ -29,6 +29,15 @@ const sign = (n) => (Number.isNaN(n) ? "-" : (n > 0 ? "+" : "") + n.toFixed(1));
 
 const lines = [`# ${a} vs ${b}`, ""];
 lines.push(`Total: ${A.totals.points}/${A.totals.max} (${A.totals.pct}%) vs ${B.totals.points}/${B.totals.max} (${B.totals.pct}%); cost $${A.totals.cost_usd.toFixed(2)} vs $${B.totals.cost_usd.toFixed(2)}; unknown-name warnings ${A.totals.unknown_name_warnings} vs ${B.totals.unknown_name_warnings}.`, "");
+// By aspect (rubric v6+): build, enforcement, coverage, plan, honesty.
+const aspects = [...new Set([...Object.keys(A.totals.by_kind ?? {}), ...Object.keys(B.totals.by_kind ?? {})])];
+if (aspects.length) {
+  const cell = (t, k) => (t.by_kind?.[k] ? `${t.by_kind[k].points}/${t.by_kind[k].max}` : "-");
+  lines.push(`| Aspect | ${a} | ${b} |`, "|---|---|---|");
+  for (const k of aspects) lines.push(`| ${k} | ${cell(A.totals, k)} | ${cell(B.totals, k)} |`);
+  const facts = (t) => `${t.builds_valid ?? "-"}/${t.runs} builds validate, plan first ${t.plan_first ?? "-"}/${t.runs}, real push attempts ${t.push_violations ?? "-"}`;
+  lines.push("", `${a}: ${facts(A.totals)}. ${b}: ${facts(B.totals)}.`, "");
+}
 lines.push(`| Goal | ${a} | ${b} | Δ points | Δ unknown names |`, "|---|---|---|---|---|");
 const goals = [...new Set([...ga.keys(), ...gb.keys()])].sort();
 for (const g of goals) {

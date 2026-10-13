@@ -1,4 +1,4 @@
-// People who sign in. role is admin, support_lead, member or viewer; org_id is the tenant they belong to.
+// People who sign in. role is admin, support_lead, manager, staff, member or viewer; org_id is the tenant they belong to.
 table users {
   auth = true
 
@@ -9,7 +9,7 @@ table users {
     email email filters=trim|lower
     password password?
     enum role?=member {
-      values = ["admin", "support_lead", "member", "viewer"]
+      values = ["admin", "support_lead", "manager", "staff", "member", "viewer"]
     }
   
     int org_id? {

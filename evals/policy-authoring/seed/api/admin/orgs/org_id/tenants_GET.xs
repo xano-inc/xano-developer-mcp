@@ -8,10 +8,6 @@ query "orgs/{org_id}/tenants" verb=GET {
   }
 
   stack {
-    function.run check_admin_role {
-      input = {user_id: $auth.id}
-    } as $staff
-  
     db.query tenants {
       where = $db.tenants.org_id == $input.org_id
       return = {type: "list"}

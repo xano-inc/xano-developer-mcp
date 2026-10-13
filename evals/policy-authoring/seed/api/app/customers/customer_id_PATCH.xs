@@ -1,4 +1,4 @@
-// Updates a customer's contact details and records the change.
+// Updates a customer's contact details.
 query "customers/{customer_id}" verb=PATCH {
   api_group = "app"
   auth = "users"
@@ -15,16 +15,6 @@ query "customers/{customer_id}" verb=PATCH {
       field_value = $input.customer_id
       data = {email: $input.email, phone: $input.phone}
     } as $customer
-  
-    function.run record_audit_event {
-      input = {
-        actor_id  : $auth.id
-        action    : "update"
-        table_name: "customers"
-        record_id : $input.customer_id
-        changes   : {email: $input.email, phone: $input.phone}
-      }
-    } as $audit
   }
 
   response = $customer

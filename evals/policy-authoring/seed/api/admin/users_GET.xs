@@ -8,10 +8,6 @@ query users verb=GET {
   }
 
   stack {
-    function.run check_admin_role {
-      input = {user_id: $auth.id}
-    } as $staff
-  
     db.query users {
       sort = {users.created_at: "desc"}
       return = {type: "list", paging: {page: $input.page, per_page: 50}}

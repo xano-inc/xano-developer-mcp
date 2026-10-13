@@ -16,10 +16,6 @@ query "tenants/{tenant_id}" verb=PATCH {
       field_value = $input.tenant_id
     } as $before
   
-    function.run check_admin_role {
-      input = {user_id: $auth.id}
-    } as $staff
-  
     db.edit tenants {
       field_name = "id"
       field_value = $input.tenant_id

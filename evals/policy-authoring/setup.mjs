@@ -3,9 +3,9 @@
 // and pushes the seed. Never touches any other workspace.
 //
 //   node setup.mjs [--workspace <id>] [--name policy-authoring-eval] [--source-profile local]
-//                  [--create-id 9040] [--container cloud-client-web-1] [--allow-push] [--yes]
+//                  [--create-id 9040] [--container cloud-client-web-1] [--allow-push] [--reset] [--yes]
 //
-// Without --yes the seed push stops after the dry run.
+// Without --yes the seed push stops after the dry run. --reset also deletes what the seed lacks.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -136,7 +136,10 @@ if (policies.code === 0 && !/No policies found/.test(policies.stdout)) {
   } catch {}
 }
 
-const dry = await xano(["workspace", "push", "-d", SEED_DIR, "--dry-run"], { env: evalEnv() });
+// --reset makes the workspace match the seed exactly: a full push that also deletes objects the
+// seed no longer has (and any policy a run left behind). Without it the push only adds and updates.
+const pushMode = args.reset ? ["--sync", "--delete"] : [];
+const dry = await xano(["workspace", "push", "-d", SEED_DIR, ...pushMode, "--dry-run"], { env: evalEnv() });
 console.log(dry.stdout.trim() || dry.stderr.trim());
 if (/Direct push is disabled/.test(dry.stdout + dry.stderr)) {
   console.log("\nDirect push is off for this workspace. Re-run with --allow-push to enable it on the eval workspace only.");
@@ -145,7 +148,7 @@ if (/Direct push is disabled/.test(dry.stdout + dry.stderr)) {
 if (/No changes to push/.test(dry.stdout)) {
   console.log("Seed already in place.");
 } else if (args.yes) {
-  const r = await xano(["workspace", "push", "-d", SEED_DIR, "--force"], { env: evalEnv() });
+  const r = await xano(["workspace", "push", "-d", SEED_DIR, ...pushMode, "--force"], { env: evalEnv() });
   console.log(r.stdout.trim() || r.stderr.trim());
   if (r.code !== 0) process.exit(r.code);
 } else {

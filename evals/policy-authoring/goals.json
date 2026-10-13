@@ -96,5 +96,19 @@
     "ask": "help me set up a policy to keep costs under control. last month an AI call inside a loop cost me $900 and a background task kept retrying forever. also I want every table that stores customer emails to be tracked somehow so I can answer who changed what",
     "intent": "Prevent runaway AI-call and retry costs and keep an audit trail of changes to tables holding customer emails.",
     "specificity": "multi-part"
+  },
+  {
+    "id": "G15",
+    "persona": "Founder of a consumer app with a public signup",
+    "ask": "our login and signup endpoints are getting hammered by bots, I want a limit on how often anyone can hit them, and I want to be sure every new public endpoint gets it too",
+    "intent": "Rate-limit login and signup now, and keep every future public endpoint rate-limited.",
+    "specificity": "multi-part"
+  },
+  {
+    "id": "G16",
+    "persona": "Operations lead at a retail business using the shop back office",
+    "ask": "only managers should be able to approve refunds or change prices; regular staff can view but not change; make sure nobody can just give themselves manager",
+    "intent": "Gate refund approval and price changes on the manager role, leave reads open to staff, and stop anyone from setting their own role.",
+    "specificity": "multi-part"
   }
 ]
