@@ -1,0 +1,110 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "LOG-010.xs",
+    "SEC-013.xs"
+  ],
+  "policies": [
+    {
+      "file": "LOG-010.xs",
+      "ok": true,
+      "key": "LOG-010",
+      "title": "External calls handle their own failures",
+      "statement": "Every external request sits inside a try block, so a vendor outage or timeout reaches error handling instead of failing the whole stack. This confirms the call is wrapped in try_catch; it does not confirm the catch branch handles the failure.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "must_be_inside": [
+              "try_catch"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-013.xs",
+      "ok": true,
+      "key": "SEC-013",
+      "title": "External requests time out quickly",
+      "statement": "Every external request sets an explicit timeout, no longer than 30 seconds, so one slow vendor cannot stall the app. An omitted timeout is judged at its 10-second default, but the second rule requires it to be written out. A request that must wait longer needs the policy owner's exemption.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "SEC-013.R1",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "min": null,
+            "max": 30,
+            "unit": "seconds",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "SEC-013.R2",
+          "title": "",
+          "check": "statement.param_required",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

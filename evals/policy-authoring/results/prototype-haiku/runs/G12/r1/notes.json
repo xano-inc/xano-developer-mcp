@@ -1,0 +1,26 @@
+{
+  "goal_id": "G12",
+  "templates_considered": [
+    "outbound VND-001 approved_vendors_only: considered for env-var destinations, rejected as not about prod/staging data",
+    "literal.credential_shape (SEC-012): considered for environment separation, rejected, it checks secrets not environment data",
+    "No template covers production data copies or prod access approval"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "Production data never ends up in staging", "why": "no check exists"},
+    {"part": "Devs only access prod through the on-call process", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [],
+  "confusions": [
+    "The skill's ask-part guidance says write no policy only when no part is checkable; the catalogue has nothing for data copies between environments, so I judged no part checkable, but the skill does not say how to report that"
+  ],
+  "wished_for": [
+    "A list of what policies can and cannot see (branch definitions only, not data or people), so that such asks can be routed to a process answer faster",
+    "Guidance on whether a partial, approximate policy is acceptable when no part is checkable"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No policy was written. Neither data copies nor access approval is inspected by any check, so no policy would achieve the goal."
+}

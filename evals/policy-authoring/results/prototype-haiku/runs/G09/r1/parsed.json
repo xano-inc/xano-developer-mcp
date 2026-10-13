@@ -1,0 +1,160 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "GDPR-010.xs",
+    "RET-002.xs"
+  ],
+  "policies": [
+    {
+      "file": "GDPR-010.xs",
+      "ok": true,
+      "key": "GDPR-010",
+      "title": "Account deletion removes all personal data",
+      "statement": "When a user deletes their account, every table that holds personal data must be cleaned by the account-deletion function, and the account-deletion endpoint must call that function. Data that cannot be deleted for a legal reason must be listed as an exemption with the platform owner's sign-off.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "GDPR-010.R1",
+          "title": "",
+          "check": "table.coverage_required",
+          "params": {
+            "table_selector": [],
+            "referenced_by": {
+              "object_kinds": [
+                "function"
+              ],
+              "tags": [
+                "account-deletion"
+              ],
+              "statements": [
+                "db.del",
+                "db.bulk.delete"
+              ]
+            },
+            "tags": [
+              "personal-data"
+            ],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "GDPR-010.R2",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "delete_account_data"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": [],
+            "tags": [
+              "account-deletion"
+            ],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "GDPR-010.R1",
+          "text": "tags \"personal-data\" is on no table on this branch, so it selects nothing."
+        },
+        {
+          "rule_id": "GDPR-010.R1",
+          "text": "referenced_by.tags \"account-deletion\" is on no function on this branch, so no object covers a table through it."
+        },
+        {
+          "rule_id": "GDPR-010.R2",
+          "text": "tags \"account-deletion\" is on no object this rule inspects on this branch, so it selects nothing."
+        },
+        {
+          "rule_id": "GDPR-010.R2",
+          "text": "Function \"delete_account_data\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "RET-002.xs",
+      "ok": true,
+      "key": "RET-002",
+      "title": "Retained data has a cleanup task",
+      "statement": "Every table tagged retained must be cleaned by a scheduled task. Customer data older than the two-year retention limit is deleted by the purge_expired_customer_data task. Tables that need a longer period must be listed as an exemption with the platform owner's sign-off.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "RET-002.R1",
+          "title": "",
+          "check": "table.coverage_required",
+          "params": {
+            "table_selector": [],
+            "referenced_by": {
+              "object_kinds": [
+                "task"
+              ],
+              "statements": [
+                "db.del",
+                "db.bulk.delete",
+                "db.truncate",
+                "db.direct_query"
+              ]
+            },
+            "tags": [
+              "retained"
+            ],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-002.R2",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "task",
+            "names": [
+              "purge_expired_customer_data"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RET-002.R1",
+          "text": "tags \"retained\" is on no table on this branch, so it selects nothing."
+        }
+      ]
+    }
+  ]
+}

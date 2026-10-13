@@ -1,0 +1,227 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "CONF-011.xs",
+    "CONF-012.xs",
+    "LOG-001.xs",
+    "VND-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "CONF-011.xs",
+      "ok": true,
+      "key": "CONF-011",
+      "title": "Cardholder and bank fields are marked sensitive",
+      "statement": "The cardholder and bank account fields listed here are marked sensitive wherever a table declares them, so they are masked and hidden by default. Related to PCI DSS 3.4 (render stored account data unreadable). Marking a field sensitive does not encrypt it or prevent a raw value being stored; that is not checked.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CONF-011.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "cvv",
+              "account_number",
+              "routing_number"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CONF-011.R1",
+          "text": "field_names \"cvv\" is on no table this rule inspects, so it selects nothing."
+        },
+        {
+          "rule_id": "CONF-011.R1",
+          "text": "field_names \"account_number\" is on no table this rule inspects, so it selects nothing."
+        },
+        {
+          "rule_id": "CONF-011.R1",
+          "text": "field_names \"routing_number\" is on no table this rule inspects, so it selects nothing."
+        }
+      ]
+    },
+    {
+      "file": "CONF-012.xs",
+      "ok": true,
+      "key": "CONF-012",
+      "title": "Tables holding cardholder and bank data are tagged confidential",
+      "statement": "Any table with a cardholder or bank field listed here carries the confidential tag, so it is classified and picked up by the access policies. Related to PCI DSS 3.x data inventory. A pass only means the tag is present when the rule ran.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-012.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "cvv",
+              "account_number",
+              "routing_number"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "confidential",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CONF-012.R1",
+          "text": "field_names \"cvv\" is on no table this rule inspects, so it selects nothing."
+        },
+        {
+          "rule_id": "CONF-012.R1",
+          "text": "field_names \"account_number\" is on no table this rule inspects, so it selects nothing."
+        },
+        {
+          "rule_id": "CONF-012.R1",
+          "text": "field_names \"routing_number\" is on no table this rule inspects, so it selects nothing."
+        }
+      ]
+    },
+    {
+      "file": "LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Logs don't contain cardholder, request, user or secret data",
+      "statement": "Debug and Datadog logs never reference request input, the logged-in user or environment variables, so cardholder and bank data (PCI DSS requirement 3.4 scope) cannot reach logs. Related to PCI DSS 3.x and 10.x; a pass means only that the logging statements matched this rule when it ran.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "LOG-001.R2",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "datadog.log"
+            ],
+            "param_names": [
+              "message"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "VND-001.xs",
+      "ok": true,
+      "key": "VND-001",
+      "title": "Data only goes to approved vendors",
+      "statement": "Outbound requests and cloud, email and AI model providers go only to the approved vendors, Stripe and Plaid. Any other destination is reported until the policy owner approves it. Related to PCI DSS 12.8 (third-party service providers). A pass means only that the stored definitions matched the allowlist when the rule ran.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "VND-001.R1",
+          "title": "",
+          "check": "outbound.vendor_allowlist",
+          "params": {
+            "kinds": [],
+            "hosts": [
+              "api.stripe.com",
+              "sandbox.plaid.com",
+              "development.plaid.com",
+              "production.plaid.com"
+            ],
+            "providers": [],
+            "env_hosts": [],
+            "literal_urls_forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

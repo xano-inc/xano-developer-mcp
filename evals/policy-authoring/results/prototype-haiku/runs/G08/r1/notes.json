@@ -1,0 +1,25 @@
+{
+  "goal_id": "G08",
+  "templates_considered": [
+    "SEC-012 no_secrets_in_code: fits exactly; chosen",
+    "SEC-011 tls_verification_on, SEC-013 requests_have_timeout: unrelated to secrets; not used"
+  ],
+  "templates_used": ["SEC-012"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "API keys, tokens and private keys written as literals in functions and endpoints, including Twilio"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "passwords hardcoded in a function", "why": "couldn't tell how: built-in patterns are key shapes and credentialed URLs; a plain password string with no recognizable shape may not match, and literal_keys is not described well enough for me to know it covers this"}
+  ],
+  "assumptions": ["the Twilio key was pasted as a literal in a function definition, not in agent settings"],
+  "confusions": [
+    "The skill does not say what literal_keys matches; I could not tell if it covers generic password literals.",
+    "Template fill says nothing for SEC-012, so I left params empty, meaning all patterns and all locations. The skill says empty means 'including ones added later', which is fine but I could not confirm the default covers agent_settings and env.",
+    "No check for passwords specifically."
+  ],
+  "wished_for": ["a catalogue description of what literal_keys matches", "an example policy for passwords in code"],
+  "parse_attempts": 1,
+  "parse_errors_seen": ["none"],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Strong for recognizable API keys and tokens such as the Twilio case. Weaker for plain passwords, which the customer also named."
+}

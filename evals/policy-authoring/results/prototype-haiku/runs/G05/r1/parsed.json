@@ -1,0 +1,94 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUTH-002.xs",
+    "TENANT-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUTH-002.xs",
+      "ok": true,
+      "key": "AUTH-002",
+      "title": "Admin endpoints check the caller's role",
+      "statement": "Every endpoint tagged admin calls the role-check function as its first statement, passing the logged-in user. The function must allow only the admin and support_lead roles: this rule confirms the call is first, not what the function decides. An endpoint without the admin tag is not examined, so every endpoint under /admin needs that tag. Advisory: a finding flags the endpoint and blocks nothing.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-002.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_admin"
+            ],
+            "placement": "first",
+            "must_reference": [
+              "$auth"
+            ],
+            "when": [],
+            "tags": [
+              "admin"
+            ],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AUTH-002.R1",
+          "text": "tags \"admin\" is on no query on this branch, so it selects nothing."
+        },
+        {
+          "rule_id": "AUTH-002.R1",
+          "text": "Function \"require_admin\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "TENANT-010.xs",
+      "ok": true,
+      "key": "TENANT-010",
+      "title": "Tenant queries filter by org_id",
+      "statement": "Every read and write of the tenants table filters on org_id, so no query returns or changes tenants outside the filter. The rule reads each endpoint's and function's own statements; a helper function that reads tenants by a passed-in id is reported on that function. Advisory: a finding flags the object and blocks nothing.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "TENANT-010.R1",
+          "title": "",
+          "check": "db.where_constraint_required",
+          "params": {
+            "table_selector": {
+              "names": [
+                "tenants"
+              ]
+            },
+            "field": "org_id",
+            "compare_to": "",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

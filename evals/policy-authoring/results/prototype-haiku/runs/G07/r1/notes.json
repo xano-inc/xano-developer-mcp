@@ -1,0 +1,46 @@
+{
+  "goal_id": "G07",
+  "templates_considered": [
+    "endpoints_have_tests CHG-001: fits the testing part of change control, used",
+    "audit_log_protected RET-001: fits audit trail of who changed what, used",
+    "endpoints_need_login AUTH-010: fits access-control baseline only, not access reviews; used with that caveat",
+    "no_self_promotion AUTH-030 / no_pii_in_responses DATA-010 / sensitive_tables_need_login CONF-010: access-related but not change control or review; not used",
+    "tables_classified CONV-022 / owner_team_tagged CONV-022: owner tagging could support change ownership; not asked explicitly, not used"
+  ],
+  "templates_used": ["CHG-001", "RET-001", "AUTH-010"],
+  "rules": [
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "change control: endpoints are tested"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "change control: protected endpoints have a rejection test"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "change record: audit log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "change record: only the audit function writes it"},
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "access: endpoints require login"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "access reviews (periodic review of who has access)", "why": "needs runtime/org process"},
+    {"part": "change controls as approval before a change ships", "why": "no check exists"},
+    {"part": "ongoing auditable evidence for the auditor", "why": "no check exists; policy findings are per evaluate run, and the kit does not say how run history is retained or exported"},
+    {"part": "that access is appropriate per role", "why": "no check exists; AUTH-010 only checks login is required"}
+  ],
+  "assumptions": [
+    "table audit_log exists and is the audit table",
+    "function record_audit_event is the only approved writer",
+    "SOC 2 criteria tags cc6.1, cc7.2, cc8.1 are my mapping from general knowledge; the kit has only the framework ids soc2, hipaa, gdpr",
+    "customer's endpoints are not tagged public except where intended"
+  ],
+  "confusions": [
+    "The kit has no list of SOC 2 criteria, so I had to pick criterion tags from outside the kit. The skill says to record criteria as tags but gives no vocabulary.",
+    "RET-001 parse warnings: audit_log and record_audit_event are not on this branch. Expected for an invented workspace, but the template's example names gave no hint whether to create them.",
+    "Templates say framework: soc2 but do not say which SOC 2 criteria they serve, so relating a policy to a criterion is guesswork.",
+    "The skill's honesty rules forbid calling the policy compliant; the customer asked for proof, which the product cannot give. Guidance on how to phrase a partial fit would help."
+  ],
+  "wished_for": [
+    "a template or check for change approval or merge review",
+    "a template or check for periodic access review, or a recipe showing how to record one as evidence",
+    "a SOC 2 criteria-to-policy mapping table in the kit",
+    "a note on how findings history is kept and exported for auditors"
+  ],
+  "parse_attempts": 9,
+  "parse_errors_seen": ["RET-001.R2: Table audit_log is not in this workspace", "RET-001.R2: Function record_audit_event is not on this branch"],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The ask is for proof that change controls and access reviews exist. The policies show tests exist, audit writes go through one function, and endpoints require login. They cannot show reviews happened or approvals were given, and the ask cannot be met by any check the kit has."
+}

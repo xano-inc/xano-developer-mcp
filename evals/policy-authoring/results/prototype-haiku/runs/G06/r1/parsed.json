@@ -1,0 +1,126 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "CHG-001.xs",
+    "CONV-040.xs",
+    "LOG-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "CHG-001.xs",
+      "ok": true,
+      "key": "CHG-001",
+      "title": "Endpoints and functions are tested",
+      "statement": "Every endpoint and function is exercised by a workflow test or unit test that asserts something, and every protected endpoint has a test asserting that an anonymous call is rejected. A test that exists but fails still counts as coverage. An object that cannot be tested is exempted by its owner, never by the author of the change.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CHG-001.R1",
+          "title": "",
+          "check": "object.test_coverage",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CHG-001.R2",
+          "title": "",
+          "check": "test.assertion_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONV-040.xs",
+      "ok": true,
+      "key": "CONV-040",
+      "title": "Endpoints and functions stay short",
+      "statement": "Endpoints and functions hold at most 30 statements, so the logic lives in smaller functions that can be read and tested on their own. Statements inside called functions count on those functions. An object that is too long is refactored, or exempted by its owner, never by the author of the change.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CONV-040.R1",
+          "title": "",
+          "check": "stack.size_limit",
+          "params": {
+            "max_statements": 30,
+            "max_nesting": null,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "LOG-010.xs",
+      "ok": true,
+      "key": "LOG-010",
+      "title": "External calls handle their own failures",
+      "statement": "Every external request (api.request) sits inside a try block, so a vendor outage reaches error handling instead of hanging or crashing the endpoint. Only api.request is checked. An object that cannot comply is exempted by its owner, never by the author of the change.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request"
+            ],
+            "must_be_inside": [
+              "try_catch"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

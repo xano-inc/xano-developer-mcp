@@ -1,0 +1,29 @@
+{
+  "goal_id": "G13",
+  "templates_considered": [
+    "CONF-010 sensitive_tables_need_login: partial fit for 'customer data', checks login not training; not written, because it would look like coverage of the training gate",
+    "CONF-011, CONF-012, CONF-013, RET-001: not relevant to the ask",
+    "AUTH-050, AUTH-002: not relevant"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "every team member has completed security awareness training", "why": "no check exists: checks read workspace objects, not staff training records"},
+    {"part": "before they are allowed to touch anything with customer data", "why": "no check exists for who may edit objects by person or training status; only login on endpoints (CONF-010) is checkable, which is a different control"}
+  ],
+  "assumptions": [
+    "customer-data tables would carry a sensitive or confidential tag if the user wanted CONF-010"
+  ],
+  "confusions": [
+    "The skill says write no policy only when no part is checkable. Here part of the intent is near-checkable via CONF-010, but writing it would check login, not training, so I stopped; the skill does not give guidance for a partial proxy that the user would read as the real control",
+    "Nothing in the catalogue or templates describes a person-level requirement (training, approvals, access reviews) beyond login and role checks"
+  ],
+  "wished_for": [
+    "A line in the skill saying which asks cannot be policies (people and training records) and the recommended reply for them",
+    "A template that explains the boundary between 'endpoint requires login' and 'people are authorised'"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No policy file was written, so no policy achieves the goal. Declining is the honest outcome here, not a gap in the policy. The customer may still want CONF-010 as a related control."
+}

@@ -1,0 +1,89 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AGENT-010.xs",
+    "AGENT-020.xs"
+  ],
+  "policies": [
+    {
+      "file": "AGENT-010.xs",
+      "ok": true,
+      "key": "AGENT-010",
+      "title": "AI tools can't delete data",
+      "statement": "No AI tool deletes or truncates records or runs raw SQL, directly or through a function it calls. Deleting data is destructive and must be done by people outside the agent. Tools are judged on their own stacks and on the functions they call.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AGENT-010.R1",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.del",
+              "db.bulk.delete",
+              "db.truncate",
+              "db.direct_query"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "AGENT-020.xs",
+      "ok": true,
+      "key": "AGENT-020",
+      "title": "Customer-facing AI tools need human approval",
+      "statement": "An AI tool tagged sends-email must call request_human_approval on every path before it acts, so a person approves each email. Tools without the sends-email tag are not covered by this rule. The approval function and tag names are assumptions to confirm.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AGENT-020.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "request_human_approval"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": [],
+            "tags": [
+              "sends-email"
+            ],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AGENT-020.R1",
+          "text": "tags \"sends-email\" is on no tool on this branch, so it selects nothing."
+        }
+      ]
+    }
+  ]
+}

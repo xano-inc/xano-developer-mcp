@@ -1,0 +1,40 @@
+{
+  "goal_id": "G05",
+  "templates_considered": [
+    "AUTH-002 (admin_endpoints_check_role): fits the role-check part; used with its own rule and scope (tags admin, query kind, first placement)",
+    "AUTH-020 (own_records_only): about users reaching their own records, not tenant or org scoping; not used",
+    "No template covers filtering a table by org_id; a new custom policy TENANT-010 with db.where_constraint_required"
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_admin"], "placement": "first", "must_reference": ["$auth"], "tags": ["admin"], "object_kinds": ["query"]}, "covers": "admin endpoints call the role check first"},
+    {"policy_key": "TENANT-010", "check": "db.where_constraint_required", "params": {"table_selector": {"names": ["tenants"]}, "field": "org_id"}, "covers": "reads and writes of tenants filter on org_id"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "role is 'admin' or 'support_lead'", "why": "no check exists"},
+    {"part": "every endpoint under /admin", "why": "other: no path scope; approximated with the admin tag, which misses untagged endpoints"},
+    {"part": "never touches tenants without filtering by org_id (through helper functions)", "why": "other: the constraint trace does not cross function calls, so those are reported on the helper rather than checked at the caller"}
+  ],
+  "assumptions": [
+    "role-check function is require_admin (template example)",
+    "admin endpoints carry the admin tag",
+    "the tenants table has an org_id field",
+    "compare_to left unset: any comparison on org_id counts, so the rule does not require the value to equal the caller's org",
+    "advisory and active, as for any new policy; the ask did not say blocking"
+  ],
+  "confusions": [
+    "Parse returned rule warnings for names not on the branch: AUTH-002 R1 'tags admin is on no query' and 'function require_admin is not on this branch'; TENANT-010 R1 'table tenants is not in this workspace'. These are expected placeholders, but the skill does not say whether to ship a policy that warns on names the workspace lacks.",
+    "The ask says every endpoint under /admin, which is a path. The skill says scope by tag, not name, but gives no guidance for a path-based request. I chose the tag and flagged it.",
+    "The template's must_reference $auth does not check the role values; the skill does not say whether a template's loose check should be tightened for this ask.",
+    "Unclear whether compare_to should be $auth.org_id for tenant scoping. A support lead may need cross-org access, so I left it unset and flagged it."
+  ],
+  "wished_for": [
+    "A way to scope a rule by path prefix (/admin), or a documented recipe for tagging by path",
+    "A check that verifies a function's role values, or a recipe for requiring a specific literal in a role check",
+    "An example of a tenant-scoping policy with compare_to set to the caller's org, and guidance for cross-org roles"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both files parse, and the first-statement role check and the direct tenants filter are checkable as asked. Role values are not verified by any check, path scope is approximated by a tag, and tenant filters inside helper functions are not traced, so the policy covers part of the ask and needs the placeholders replaced."
+}

@@ -1,0 +1,41 @@
+{
+  "goal_id": "G10",
+  "templates_considered": [
+    "no_destructive_sql SEC-010: forbids truncate and raw SQL on every stack; partly fits, but not limited to AI tools and does not cover db.del, so not used as-is",
+    "public_endpoints_harmless AUTH-003: about public endpoints, not agents; not used",
+    "ai_tools_described CONV-030: about tool descriptions, not asked; not used",
+    "object.tagged_table_access (check, not template): needs sensitive table tags and an audit function; not the ask; not used"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "AGENT-010", "check": "stack.statement_forbidden", "params": {"statements": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"], "object_kinds": ["tool"]}, "covers": "AI tools cannot delete anything (direct and via called functions)"},
+    {"policy_key": "AGENT-020", "check": "object.statement_required", "params": {"functions": ["request_human_approval"], "placement": "unconditional", "object_kinds": ["tool"], "tags": ["sends-email"]}, "covers": "customer-facing AI tools call an approval function on every path"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "AI tools cannot email customers without a human approving it first", "why": "no check exists for a human approving an action; AGENT-020 only checks that a named approval function is called, not that it runs before the email or that a person approved"},
+    {"part": "AI tools cannot call tools the owner has not given", "why": "no check compares an agent's enabled tools against an allowlist"},
+    {"part": "AI tools cannot delete anything (only the delete statements listed)", "why": "partly covered: the check lists delete, truncate and raw SQL names; a delete via a named statement outside this list would pass"}
+  ],
+  "assumptions": [
+    "AI tools that email customers are tagged sends-email (tag does not exist yet)",
+    "approval function is named request_human_approval (does not exist yet)",
+    "the owner's delete statements are db.del, db.bulk.delete, db.truncate, db.direct_query (names confirmed from catalogue text, not from a workspace)",
+    "no email statement name is needed because outbound.vendor_allowlist was not used"
+  ],
+  "confusions": [
+    "No check or template for human-in-the-loop approval, so the approval rule is a proxy that cannot prove approval happened.",
+    "stack.statement_order would enforce approval before an email but needs an exact email statement name, which the catalogue does not list (only provider kinds). I did not guess one.",
+    "The AI-tool-allowlist half of the ask has no check at all, and the skill does not say to say so before writing rules; I had to infer that from the catalogue's agent and tool object kinds.",
+    "Tag-scoped rules are inert until the tag exists; the skill says propose such tags separately, but the reply has to say the rule matches nothing yet."
+  ],
+  "wished_for": [
+    "a check or template for human approval before a tool performs an action",
+    "a check that compares an agent's enabled tools to an allowlist",
+    "the list of email statement names, and a recipe for ordering approval before them",
+    "a recipe for a tool-scoped rule that does not need a new tag"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": ["AGENT-020.R1: tags sends-email is on no tool on this branch", "AGENT-020.R1: Function request_human_approval is not on this branch"],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The delete half is well covered by a check. The approval half is only a proxy, email ordering is not checked, and the tool allowlist half has no check at all, so the policy does not achieve the goal as asked."
+}

@@ -1,0 +1,38 @@
+{
+  "goal_id": "G11",
+  "templates_considered": [
+    "SEC-013 requests_have_timeout: fit for 'timeout set'; used, with an added param_required rule because the template only bounds the value",
+    "LOG-010 external_calls_handle_errors: fit for 'some kind of error handling'; used",
+    "SEC-011 external requests verify TLS: not part of the ask; not used",
+    "VND-001 approved_vendors_only: not part of the ask; not used"
+  ],
+  "templates_used": ["SEC-013", "LOG-010"],
+  "rules": [
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "timeout no longer than 30 seconds (template rule)"},
+    {"policy_key": "SEC-013", "check": "statement.param_required", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"]}, "covers": "timeout set explicitly, so a default is not relied on"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request"], "must_be_inside": ["try_catch"]}, "covers": "external calls sit inside try (error handling)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling actually handles the failure (not just a try wrapper)", "why": "no check exists"},
+    {"part": "outbound calls via db.external, ai.external.mcp.* and other statements", "why": "couldn't tell how: the names are not in my catalogue and wildcards are not accepted by statement.containment"},
+    {"part": "the app does not hang when a vendor goes down", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The shipping vendor call is an api.request or stream.from_request statement in this workspace",
+    "Timeout limit of 30 seconds, from the SEC-013 template"
+  ],
+  "confusions": [
+    "The template limits say to add db.external.*.direct_query and ai.external.mcp.* statements, but the skill says wildcards are only accepted for stack.statement_forbidden and allowed_variables. It was unclear whether statement.containment accepts them, so I did not add them.",
+    "The SEC-013 template only bounds the timeout; 'timeout set' needs a second rule. The skill does not say whether template keys may gain extra rules, though the guidance on starting from a template suggests it can.",
+    "LOG-010 limits mention 'every path through the catch', but the check only confirms try_catch. The skill does not say how to phrase that gap in the statement."
+  ],
+  "wished_for": [
+    "A list of which statement names count as external calls, so the rules can cover them all",
+    "A template with both 'timeout set' and 'timeout bounded' in one rule",
+    "Confirmation of whether wildcards work in statement.containment statements"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Timeouts and try wrappers on the listed statements are directly checked. The ask asks for error handling, which the check only partly tests, and external call types outside the listed statements are not covered."
+}

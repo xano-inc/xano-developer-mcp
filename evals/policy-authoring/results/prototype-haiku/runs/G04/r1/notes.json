@@ -1,0 +1,64 @@
+{
+  "goal_id": "G04",
+  "templates_considered": [
+    "endpoints_need_login AUTH-010: used, covers broad auth; HIPAA-tagged",
+    "sensitive_tables_need_login CONF-010: used with phi tag",
+    "sensitive_fields_marked CONF-011: used, field_names filled with assumed PHI fields",
+    "confidential_tables_tagged CONF-012: used, field_names filled with notes/diagnosis",
+    "views_hide_sensitive CONF-013: used",
+    "no_pii_in_responses DATA-010: used, fields filled with assumed names",
+    "no_sensitive_data_in_logs LOG-001: used",
+    "tls_verification_on SEC-011: used",
+    "no_secrets_in_code SEC-012: used",
+    "tokens_expire SEC-014: used first rule only (auth token); second rule needs signed-token max which I could not justify",
+    "audit_log_protected RET-001: used, names assumed",
+    "own_records_only AUTH-020: skipped, no owner field named in ask",
+    "approved_vendors_only VND-001: skipped, needs hosts/providers the customer has not given",
+    "retained_data_cleaned_up RET-002: skipped, no retained tag or periods in ask",
+    "endpoints_have_tests CHG-001: skipped, not part of HIPAA-specific ask"
+  ],
+  "templates_used": ["AUTH-010", "CONF-010", "CONF-011", "CONF-012", "CONF-013", "DATA-010", "LOG-001", "SEC-011", "SEC-012", "SEC-014", "RET-001"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "patient data endpoints require login"},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["phi"]}, "covers": "PHI tables only reached by logged-in endpoints"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["ssn", "date_of_birth"], "attribute": "sensitive"}, "covers": "identifiers marked sensitive"},
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["notes", "diagnosis"], "tag": "confidential"}, "covers": "clinical notes tables tagged"},
+    {"policy_key": "CONF-013", "check": "table.view_hide_required", "params": {}, "covers": "saved views hide sensitive fields"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"object_kinds": ["query"], "fields": ["ssn", "date_of_birth"]}, "covers": "endpoints don't fetch identifiers"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "no PHI or secrets in debug logs"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "transmission to external hosts verified"},
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "no hardcoded secrets"},
+    {"policy_key": "SEC-014", "check": "statement.param_bound", "params": {"statements": ["security.create_auth_token"], "param_names": ["expiration"], "min": 1, "max": 3600, "unit": "seconds"}, "covers": "automatic logoff via short token lifetime"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit log exists (audit controls)"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "only one function writes the audit log"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "BAA and approved vendors for PHI", "why": "other"},
+    {"part": "Who may access patient records (owner-based filtering)", "why": "couldn't tell how: no owner field named"},
+    {"part": "Retention and deletion periods for clinical data", "why": "needs runtime/org process"},
+    {"part": "Staff HIPAA training and access reviews", "why": "needs runtime/org process"},
+    {"part": "Encryption at rest and backups", "why": "no check exists"},
+    {"part": "Breach notification and incident response", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "tables patients, appointments, clinical_notes exist and carry the phi tag",
+    "tag confidential exists or will be created on clinical notes tables",
+    "fields ssn, date_of_birth, notes, diagnosis exist as named",
+    "audit_log table and record_audit_event function exist"
+  ],
+  "confusions": [
+    "The skill says templates fill from examples, but a vague ask gives no hint which field names are PHI; I had to invent them and parse warnings then show they do not exist",
+    "Parse warnings for unknown tags, fields and functions are printed but the exit status I captured came from tail, so I could not confirm exit codes from parse itself",
+    "tokens_expire has two rules, and the second needs a max that the template leaves empty; unclear whether to fill it or leave it out",
+    "No template covers PHI as a whole; I had to assemble a set from HIPAA-tagged templates, and no guidance on combining them was given"
+  ],
+  "wished_for": [
+    "A HIPAA bundle or recipe that lists templates per HIPAA section with fill guidance",
+    "Guidance on which field names to list for PHI when the ask names only tables",
+    "Clarity on whether a parse warning about an unknown name is acceptable before the workspace is pulled"
+  ],
+  "parse_attempts": 11,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies parse and cover several HIPAA-related checks (auth, PHI tagging, sensitive fields, logs, TLS, secrets, token lifetime, audit log), but the goal was vague and HIPAA covers many non-technical controls. The field, tag and table names are assumptions, so most rules currently check nothing until the workspace names match. Vendor approval, owner-based access and retention are not covered."
+}

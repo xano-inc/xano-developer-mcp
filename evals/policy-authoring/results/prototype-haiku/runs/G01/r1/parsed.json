@@ -1,0 +1,46 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "CONF-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "CONF-010.xs",
+      "ok": true,
+      "key": "CONF-010",
+      "title": "Sensitive tables are only reached by logged-in endpoints",
+      "statement": "Every endpoint that reaches a table carrying the invoices tag, directly or through a function, must require authentication. An endpoint that returns invoice data to an anonymous caller is a finding. Tables that must stay open are not exempt by this policy; the policy owner decides any change.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "CONF-010.R1",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "invoices"
+            ],
+            "auth_tables": [],
+            "function": "",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CONF-010.R1",
+          "text": "table_tags \"invoices\" is on no table in this workspace, so no access to it is judged."
+        }
+      ]
+    }
+  ]
+}

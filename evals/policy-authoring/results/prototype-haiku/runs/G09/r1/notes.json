@@ -1,0 +1,39 @@
+{
+  "goal_id": "G09",
+  "templates_considered": [
+    "RET-002 retained_data_cleaned_up (gdpr, soc2): fits the 2-year retention ask. Used with the purge task named and the tag set to retained.",
+    "no account-deletion template: none in the catalogue. Built GDPR-010 from table.coverage_required and object.statement_required.",
+    "CONF-010 sensitive_tables_need_login, DATA-010 no_pii_in_responses: relevant to GDPR but not the deletion or retention ask, so not used."
+  ],
+  "templates_used": ["RET-002"],
+  "rules": [
+    {"policy_key": "GDPR-010", "check": "table.coverage_required", "params": {"tags": ["personal-data"], "referenced_by": {"object_kinds": ["function"], "tags": ["account-deletion"], "statements": ["db.del", "db.bulk.delete"]}}, "covers": "every personal-data table has a deletion path"},
+    {"policy_key": "GDPR-010", "check": "object.statement_required", "params": {"functions": ["delete_account_data"], "placement": "unconditional", "tags": ["account-deletion"]}, "covers": "the account deletion endpoint always calls the deletion function"},
+    {"policy_key": "RET-002", "check": "table.coverage_required", "params": {"tags": ["retained"], "referenced_by": {"object_kinds": ["task"], "statements": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"]}}, "covers": "retained tables have a cleanup task (template)"},
+    {"policy_key": "RET-002", "check": "workspace.object_required", "params": {"object_kind": "task", "names": ["purge_expired_customer_data"]}, "covers": "the 2-year purge task exists and can run"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "delete their stuff everywhere (including third parties such as Stripe, email, analytics, backups)", "why": "no check exists"},
+    {"part": "do not keep customer data longer than 2 years (the date filter inside the purge)", "why": "couldn't tell how: no check reads a filter value against a date"},
+    {"part": "the cascade is correct (right records, right foreign keys)", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "Tag names personal-data, account-deletion, retained (no workspace tags known).",
+    "Function name delete_account_data and task name purge_expired_customer_data.",
+    "Account deletion endpoint is tagged account-deletion (tags, not endpoint path, used to scope)."
+  ],
+  "confusions": [
+    "The catalogue does not say how to express 'everything a user owns' as a check. I used table.coverage_required with a tag, which only proves a deletion statement exists per table, not a cascade. The check description says it confirms coverage, not correctness, so the reply says so.",
+    "referenced_by.tags is documented as covering objects by their own tags, but it is not clear whether a function with the tag counts when it is only called by the endpoint. I scoped the coverage to function kind.",
+    "No guidance on whether a retention rule can check a date value. statement.param_bound does numbers but a date filter is not a number, so the rule was dropped."
+  ],
+  "wished_for": [
+    "A worked example of a GDPR erasure pattern (tagged personal-data tables + an erase function + an endpoint that calls it) in the skill.",
+    "A check or recipe for 'every table with a field named user_id or email is covered by a deletion', as a single rule.",
+    "A retention check that reads a date filter, or at least a recipe saying it cannot be done."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Both files parse (only expected 'tag/function not on this branch' warnings). The policies verify that deletion and purge code exists and is wired up, not that deletion is complete or the retention window is right. The cascade-everywhere and 2-year limit parts are largely outside what checks cover."
+}

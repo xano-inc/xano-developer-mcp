@@ -1,0 +1,28 @@
+{
+  "goal_id": "G01",
+  "templates_considered": [
+    "CONF-010 sensitive_tables_need_login: fits, it is the 'table carries sensitive tag, endpoints must require login' pattern; chosen",
+    "AUTH-010 endpoints_need_login: covers all endpoints, too broad for the ask about invoices; not used",
+    "DATA-010 no_pii_in_responses: about output fields, not auth; not used",
+    "AUTH-003 public_endpoints_harmless: about writes by public endpoints; not used"
+  ],
+  "templates_used": ["CONF-010"],
+  "rules": [
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["invoices"]}, "covers": "any endpoint reaching the invoices table without login"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "returns the full invoices table", "why": "no check exists"},
+    {"part": "nobody ships it at 2am (blocking vs advisory)", "why": "other: template says advisory on new policies; blocking is an owner decision I did not make"}
+  ],
+  "assumptions": ["table tagged 'invoices' exists and is tagged that way", "endpoints are the only object kind of concern"],
+  "confusions": [
+    "Skill says a new policy is advisory by default, but the customer wants prevention; unclear whether to suggest blocking in the reply or only mention it.",
+    "The catalogue has no check for an unbounded read; object.input_rules paging_max_required only applies to inputs reaching per_page, so 'full table' is not expressible.",
+    "Scope tags vs names: object.tagged_table_access takes table_tags, which only works if the customer tags the table, which the ask does not mention."
+  ],
+  "wished_for": ["a check for endpoints returning unbounded result sets", "a template example showing how to tag a table for sensitive data"],
+  "parse_attempts": 1,
+  "parse_errors_seen": ["no errors; warning: table_tags 'invoices' is on no table in this workspace (expected, workspace not visible)"],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Covers unauthenticated access to invoice data when the table is tagged. Does not cover whole-table reads by logged-in users, and blocking enforcement was left advisory."
+}

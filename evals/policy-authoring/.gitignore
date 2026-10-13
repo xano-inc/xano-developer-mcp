@@ -1,0 +1,4 @@
+# Eval workspace credentials and config written by setup.mjs
+.local/
+# Full agent transcripts are large; scores, summaries and outputs are committed
+results/*/transcripts/

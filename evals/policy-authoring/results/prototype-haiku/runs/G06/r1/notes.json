@@ -1,0 +1,44 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "LOG-010 external_calls_handle_errors: fits 'missing error handling' for api.request; used as-is",
+    "CHG-001 endpoints_have_tests: fits 'no tests'; extended object.test_coverage object_kinds to query+function, kept template's test.assertion_required rule as-is",
+    "CONV-040 endpoints_stay_short: fits 'giant functions' only for queries; extended object_kinds to function, kept max_statements 30",
+    "CONV-041 shallow_nesting: not used, nesting was not in the ask",
+    "SEC-013 requests_have_timeout, VAL-001, LOG-011: not in the ask"
+  ],
+  "templates_used": ["LOG-010", "CHG-001", "CONV-040"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling around external HTTP calls"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query", "function"]}, "covers": "no tests for endpoints and functions"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "tests of protected endpoints must assert anonymous rejection (template rule, kept as-is)"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "object_kinds": ["query", "function"]}, "covers": "giant functions"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "missing error handling in general (DB calls, streams, bad return paths, catch blocks that swallow errors)", "why": "other: only api.request containment is checkable; catch-branch quality is not"},
+    {"part": "function size measured in lines (200 line)", "why": "other: the check counts statements, not lines; 30 is an assumption"},
+    {"part": "general code review nits (naming, clarity, reviewer judgment)", "why": "no check exists for subjective review"},
+    {"part": "blocking merges so juniors cannot break prod", "why": "other: enforcement is a choice the user must make; written advisory"}
+  ],
+  "assumptions": [
+    "outbound calls use api.request",
+    "30 statements is an acceptable function limit",
+    "advisory enforcement is wanted for now"
+  ],
+  "confusions": [
+    "CHG-001 template's test.assertion_required rule is query-only and fails on workflow tests for protected endpoints (its own limits note says so); unclear whether to keep it in a new policy the user will see fail on day one",
+    "The template's title and key are for endpoints only; extending a template's scope to functions while keeping its key and title made the title slightly misleading, so I renamed the title. The skill does not say whether a title change is expected here",
+    "Skill says a rule's scope change is fine but not when it changes the template's meaning; I was not sure how far 'change only what was asked' goes when the user's words ('functions') widen a template",
+    "xano policy parse summary output drops the severity line when severity is medium (LOG-010), though the JSON output keeps it. Looks like a display quirk, not a parse problem",
+    "The catalogue shows 'max_nesting' and 'max_statements' as one-of ('+'), which I read correctly, but the skill text does not spell out that one is enough"
+  ],
+  "wished_for": [
+    "A recipe for 'review-style' asks that lists the usual checks and which template covers each",
+    "A statement-count to line-count note for stack.size_limit, since users speak in lines",
+    "A template or note for api.request versus db.* error handling"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three checks are real and parse, but they only partly cover 'stop breaking prod': error handling is limited to HTTP calls, tests are coverage-only, and size is a statement count. Enforcement is advisory, so nothing is actually stopped."
+}

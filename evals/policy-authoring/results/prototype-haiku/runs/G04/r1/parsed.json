@@ -1,0 +1,440 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUTH-010.xs",
+    "CONF-010.xs",
+    "CONF-011.xs",
+    "CONF-012.xs",
+    "CONF-013.xs",
+    "DATA-010.xs",
+    "LOG-001.xs",
+    "RET-001.xs",
+    "SEC-011.xs",
+    "SEC-012.xs",
+    "SEC-014.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUTH-010.xs",
+      "ok": true,
+      "key": "AUTH-010",
+      "title": "Endpoints require login",
+      "statement": "Every endpoint requires authentication, so no patient or appointment data is reachable anonymously. A deliberately public endpoint carries the `public` tag, signed off by the platform owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [
+              "public"
+            ],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONF-010.xs",
+      "ok": true,
+      "key": "CONF-010",
+      "title": "Sensitive tables are only reached by logged-in endpoints",
+      "statement": "Every endpoint that reaches a table tagged `phi` (patients, appointments, clinical notes), directly or through a function, requires authentication.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "CONF-010.R1",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "phi"
+            ],
+            "auth_tables": [],
+            "function": "",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CONF-010.R1",
+          "text": "table_tags \"phi\" is on no table in this workspace, so no access to it is judged."
+        }
+      ]
+    },
+    {
+      "file": "CONF-011.xs",
+      "ok": true,
+      "key": "CONF-011",
+      "title": "Sensitive fields are marked sensitive",
+      "statement": "The listed patient identifier fields are marked sensitive wherever a table declares them, so they are masked and kept out of saved views.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CONF-011.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "ssn",
+              "date_of_birth"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONF-012.xs",
+      "ok": true,
+      "key": "CONF-012",
+      "title": "Tables holding confidential data are tagged",
+      "statement": "Every table with a clinical free-text field (notes or diagnosis) carries the `confidential` tag.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-012.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "notes",
+              "diagnosis"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "confidential",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CONF-012.R1",
+          "text": "field_names \"notes\" is on no table this rule inspects, so it selects nothing."
+        }
+      ]
+    },
+    {
+      "file": "CONF-013.xs",
+      "ok": true,
+      "key": "CONF-013",
+      "title": "Saved views hide sensitive fields",
+      "statement": "Every saved table view hides the fields marked sensitive in its table's schema, and password fields, so shared views do not expose patient identifiers.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-013.R1",
+          "title": "",
+          "check": "table.view_hide_required",
+          "params": {
+            "fields": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "DATA-010.xs",
+      "ok": true,
+      "key": "DATA-010",
+      "title": "Endpoints don't return personal data",
+      "statement": "Endpoint queries never fetch the listed patient identifier fields or any field marked sensitive. An endpoint that needs one of them must be exempted by the policy owner, not changed by a fix.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "DATA-010.R1",
+          "title": "",
+          "check": "db.output_fields_forbidden",
+          "params": {
+            "fields": [
+              "ssn",
+              "date_of_birth"
+            ],
+            "include_sensitive": true,
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Logs don't contain request, user or secret data",
+      "statement": "Debug logs never reference request input, the logged-in user or environment variables, so patient data and secrets stay out of logs.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "The audit_log table exists, and only the record_audit_event function writes to it, so access to patient records leaves a tamper-resistant trail.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-011.xs",
+      "ok": true,
+      "key": "SEC-011",
+      "title": "External requests verify TLS certificates",
+      "statement": "Every external request verifies the TLS certificate and host name of the server it talks to, so patient data in transit is not sent to an unverified host.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SEC-011.R1",
+          "title": "",
+          "check": "statement.param_forbidden",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "verify_peer",
+              "verify_host"
+            ],
+            "values": [
+              false
+            ],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-012.xs",
+      "ok": true,
+      "key": "SEC-012",
+      "title": "No secrets are hardcoded",
+      "statement": "API keys, tokens, private keys and credentialed URLs are never written as literals in an object's definition or agent settings; they belong in environment variables that the user sets.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "SEC-012.R1",
+          "title": "",
+          "check": "literal.credential_shape",
+          "params": {
+            "patterns": [],
+            "locations": [
+              "definition",
+              "agent_settings"
+            ],
+            "allowed_secrets": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-014.xs",
+      "ok": true,
+      "key": "SEC-014",
+      "title": "Login tokens expire within an hour",
+      "statement": "Every authentication token expires within one hour of being created, supporting automatic logoff of idle clinical sessions.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SEC-014.R1",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "security.create_auth_token"
+            ],
+            "param_names": [
+              "expiration"
+            ],
+            "min": 1,
+            "max": 3600,
+            "unit": "seconds",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

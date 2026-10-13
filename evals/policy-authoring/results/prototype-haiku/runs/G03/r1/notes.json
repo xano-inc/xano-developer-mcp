@@ -1,0 +1,52 @@
+{
+  "goal_id": "G03",
+  "templates_considered": [
+    "LOG-001 no_sensitive_data_in_logs: fit, logs-side rule; used with statement.expression_rule on debug.log and datadog.log",
+    "CONF-011 sensitive_fields_marked: fit for 'not stored raw' at declaration level only; used",
+    "CONF-012 confidential_tables_tagged: fit for classification; used",
+    "VND-001 approved_vendors_only: fit for vendor allowlist; used with hosts only",
+    "CONF-010 sensitive_tables_need_login: plausible, but the ask does not say who may reach card tables; not used, flagged as a follow-up question",
+    "DATA-010 no_pii_in_responses: relates to returns, not storage or logs; not used",
+    "RET-001 audit_log_protected: relevant to audit trail but not requested; not used"
+  ],
+  "templates_used": ["LOG-001", "CONF-011", "CONF-012", "VND-001"],
+  "rules": [
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data not logged (debug.log)"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["datadog.log"], "param_names": ["message"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data not logged (datadog.log); the template limits note says to add this"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "cvv", "account_number", "routing_number"], "attribute": "sensitive"}, "covers": "card and bank fields marked sensitive (partial: 'not stored raw')"},
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["card_number", "cvv", "account_number", "routing_number"], "tag": "confidential"}, "covers": "tables holding card and bank fields are classified"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "sandbox.plaid.com", "development.plaid.com", "production.plaid.com"]}, "covers": "no vendor other than Stripe and Plaid"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cardholder data cannot be stored raw", "why": "no check exists"},
+    {"part": "PCI audit pass", "why": "needs runtime/org process; a policy can only report matches against stored definitions"},
+    {"part": "cardholder data in datadog.log attributes and values read back from the database", "why": "other: LOG-001 does not trace these"},
+    {"part": "vendor list is approved (Stripe and Plaid only) as a business decision", "why": "needs runtime/org process"},
+    {"part": "cardholder data in a field with an unlisted name", "why": "couldn't tell how: names are unknown without the workspace"}
+  ],
+  "assumptions": [
+    "Field names card_number, cvv, account_number, routing_number",
+    "Confidential tag name is 'confidential' (taken from CONF-012 template)",
+    "Stripe is api.stripe.com; Plaid hosts sandbox/development/production.plaid.com",
+    "Vendor calls are plain http destinations, not provider integrations",
+    "Policy keys reuse template ids LOG-001, CONF-011, CONF-012, VND-001",
+    "Tags pci and pci-dss are invented and would need to exist in the vocabulary"
+  ],
+  "confusions": [
+    "Parse prints rule warnings for CONF-011 and CONF-012 that every field name is on no table in this branch. Without a workspace I cannot tell whether that is expected or a sign the names are wrong. The skill does not say whether to accept these warnings.",
+    "Skill says a policy in a new file should be active=true advisory, but does not say how the tags vocabulary interacts with a new tag like pci-dss.",
+    "For 'can't be stored raw' the catalogue has no check that rejects a raw value; the closest, CONF-011, only marks fields sensitive. The skill does not say how to report this gap in the policy statement beyond saying it is not checked.",
+    "LOG-001 template limits say to add datadog.log 'with its message and attributes', but the param for attributes is not shown in the catalogue, so only message is covered.",
+    "The skill's template list does not say whether to use the template key when the policy covers a broader ask than the template (PCI rather than generic logging)."
+  ],
+  "wished_for": [
+    "A PCI DSS or payment-data template covering logs, storage, and vendors together",
+    "A way to list the datadog.log params fully in the catalogue",
+    "Guidance on whether to keep a template key when the request is broader than the template",
+    "An example of a rule that uses sensitive or tag scoping for card data"
+  ],
+  "parse_attempts": 8,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Logging and vendor allowlist rules are direct matches. Storage is only covered by a sensitive marking, not by any check that prevents raw storage. Field names and vendor hosts are guesses, and the PCI audit outcome needs controls no policy can verify."
+}

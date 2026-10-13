@@ -1,0 +1,100 @@
+[
+  {
+    "id": "G01",
+    "persona": "Solo founder running a small invoicing SaaS",
+    "ask": "help me set up a policy that makes sure nobody (including me at 2am) ever ships an endpoint that returns the full invoices table without auth. I've already almost done it twice",
+    "intent": "Prevent any endpoint exposing invoice data from being publicly accessible without authentication.",
+    "specificity": "precise"
+  },
+  {
+    "id": "G02",
+    "persona": "Agency lead managing many client workspaces",
+    "ask": "we build backends for like 12 clients and every dev names stuff differently. help me set up a policy so endpoints are always lowercase snake_case, tables are plural, and functions start with the client prefix. flag it, don't block it",
+    "intent": "Enforce consistent naming conventions across tables, endpoints and functions in a warn-only mode.",
+    "specificity": "multi-part"
+  },
+  {
+    "id": "G03",
+    "persona": "CTO at a fintech handling card and bank data",
+    "ask": "help me set up a policy so we pass our PCI audit. cardholder stuff can't be logged, can't be stored raw, and can't get sent to any vendor that isn't on our approved list. Stripe and Plaid only",
+    "intent": "Stop card and bank data from being stored unprotected, logged, or sent to any third party other than Stripe and Plaid.",
+    "specificity": "multi-part"
+  },
+  {
+    "id": "G04",
+    "persona": "Engineer at a healthcare startup",
+    "ask": "help me set up a policy that makes sure we're HIPAA-safe. we have patients, appointments, and clinical notes tables and I honestly don't know what else we need",
+    "intent": "Get broad, automatically checked safeguards around patient health information without knowing the specific rules.",
+    "specificity": "vague"
+  },
+  {
+    "id": "G05",
+    "persona": "Enterprise platform team lead",
+    "ask": "help me set up a policy that every endpoint under /admin must check the user's role is 'admin' or 'support_lead' before doing anything else, and that it never touches the tenants table without filtering by org_id",
+    "intent": "Require role checks on all admin endpoints and tenant scoping on queries against the tenants table.",
+    "specificity": "precise"
+  },
+  {
+    "id": "G06",
+    "persona": "Dev lead tired of messy code reviews",
+    "ask": "help me set up a policy to stop the juniors from breaking prod. I'm sick of reviewing the same stuff, like missing error handling, no tests, giant 200 line functions, you know the drill",
+    "intent": "Automate the recurring code-review checks (error handling, tests, function size) so they stop reaching the lead.",
+    "specificity": "vague"
+  },
+  {
+    "id": "G07",
+    "persona": "Security and compliance person who isn't technical",
+    "ask": "our SOC 2 auditor keeps asking for evidence that we have change controls and access reviews. can you set up a policy that proves we do that? I don't really know what that means in the product tbh",
+    "intent": "Produce ongoing, auditable evidence of change control and access review for SOC 2, with no technical knowledge of how.",
+    "specificity": "vague"
+  },
+  {
+    "id": "G08",
+    "persona": "Agency lead",
+    "ask": "help me set up a policy that no API keys or passwords are ever hardcoded in a function or endpoint, they have to come from environment variables. had a contractor paste a Twilio key straight into a function last month",
+    "intent": "Block secrets embedded in code and require them to be read from environment variables.",
+    "specificity": "precise"
+  },
+  {
+    "id": "G09",
+    "persona": "CTO at an EU-based B2C startup",
+    "ask": "for GDPR we need to make sure that when a user deletes their account we actually delete their stuff everywhere, and that we don't keep customer data longer than 2 years. can you make a policy for that",
+    "intent": "Make account deletion cascade across all personal data and enforce a two-year retention limit.",
+    "specificity": "multi-part"
+  },
+  {
+    "id": "G10",
+    "persona": "Solo founder building an AI support product",
+    "ask": "help me set up a policy for my AI agents so they can't delete anything or email customers without a human approving it first, and they shouldn't be able to call tools I haven't explicitly given them",
+    "intent": "Constrain AI agent tool access and require human approval for destructive or customer-facing actions.",
+    "specificity": "multi-part"
+  },
+  {
+    "id": "G11",
+    "persona": "Dev lead at a logistics company",
+    "ask": "help me set up a policy that any external API call has a timeout set and some kind of error handling, our whole app hung last week because a shipping vendor went down and nothing had a timeout",
+    "intent": "Ensure every outbound API call has an explicit timeout and handles failures.",
+    "specificity": "precise"
+  },
+  {
+    "id": "G12",
+    "persona": "Enterprise platform team lead",
+    "ask": "help me set up a policy so that production data never ends up in staging, and that our devs can only get into prod through the on-call process, not just because they feel like it",
+    "intent": "Keep production data out of non-prod environments and restrict prod access to the approved on-call process.",
+    "specificity": "not-statically-checkable"
+  },
+  {
+    "id": "G13",
+    "persona": "Security/compliance person who isn't technical",
+    "ask": "can you set up a policy that makes sure everyone on the team has done their security awareness training before they're allowed to touch anything with customer data in it",
+    "intent": "Gate access to customer-data features on staff having completed security training.",
+    "specificity": "not-statically-checkable"
+  },
+  {
+    "id": "G14",
+    "persona": "Solo founder watching a cloud bill",
+    "ask": "help me set up a policy to keep costs under control. last month an AI call inside a loop cost me $900 and a background task kept retrying forever. also I want every table that stores customer emails to be tracked somehow so I can answer who changed what",
+    "intent": "Prevent runaway AI-call and retry costs and keep an audit trail of changes to tables holding customer emails.",
+    "specificity": "multi-part"
+  }
+]

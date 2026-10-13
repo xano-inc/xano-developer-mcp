@@ -1,0 +1,37 @@
+{
+  "goal_id": "G02",
+  "templates_considered": [
+    "CONV-010 (functions_snake_case): fits the function part; used and extended with a prefixes param",
+    "CONV-012 (endpoint_paths_versioned): title covers endpoint paths but its rule is kebab-case and requires a version segment; contradicts the ask's snake_case, so not used",
+    "CONV-011 (fields_snake_case): about table fields, not asked",
+    "CONV-020/021/022/023 (tags, owner, classification): not asked",
+    "AUTH-*, CONF-*, etc.: not relevant"
+  ],
+  "templates_used": ["CONV-010"],
+  "rules": [
+    {"policy_key": "CONV-010", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "case_style": "snake_case", "prefixes": ["acme_"]}, "covers": "functions: lowercase snake_case and client prefix"},
+    {"policy_key": "NAME-010", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints: lowercase snake_case path segments"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "tables are plural", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "client prefix is acme_ (placeholder); one prefix per workspace",
+    "endpoints means endpoint paths (name_kind endpoint_path), not the endpoint display name",
+    "warn-only mapped to enforcement = advisory, active = true"
+  ],
+  "confusions": [
+    "CONV-012 is titled endpoint paths, and a model reading the catalogue would reach for it first, but its case style (kebab-case) and version rule contradict the ask. No guidance on what to do when a template's rule conflicts with the ask: I used a new key NAME-010 and kept CONV-010 for functions.",
+    "Key choice for a custom policy: the rule that a template prefix with an unused number is refused is clear, but NAME- is not a template prefix so it should be fine; still unclear whether a new key that partly overlaps a template title is allowed.",
+    "Whether a policy file can mix a template with an extra rule for the same concern is implied (add only what the request asks) but I could not tell if the title must change when the rule set grows."
+  ],
+  "wished_for": [
+    "A recipe for per-client parameters: a way to write one policy that varies the prefix per workspace, or a guide for applying the same file to 12 workspaces",
+    "A check or pattern guidance for plural table names, or an explicit statement that none exists in the naming check",
+    "Clarity on endpoint_path vs endpoint display name in the naming section: which one is the endpoint's name"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The function prefix, function snake_case, and endpoint path snake_case are checkable and set advisory, so they work as asked. Plural tables are not checkable, so one of the four asked parts is missing. The prefix is a placeholder that varies by client, and the endpoint-path reading of endpoints is an assumption. Both files parsed with no warnings."
+}

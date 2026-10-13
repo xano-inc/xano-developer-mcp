@@ -1,0 +1,170 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "COST-010.xs",
+    "CUST-EMAIL-010.xs",
+    "RET-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "COST-010.xs",
+      "ok": true,
+      "key": "COST-010",
+      "title": "AI calls stay out of loops",
+      "statement": "AI model calls must not run inside a loop, so one run cannot multiply spend. A call that must repeat is moved out of the loop or bounded by an explicit cap, and an owner signs off on any exemption.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "COST-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.prompt"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "foreach",
+              "while",
+              "for"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "COST-010.R1",
+          "text": "Statement \"ai.prompt\" is not a XanoScript statement name, so it matches nothing."
+        }
+      ]
+    },
+    {
+      "file": "CUST-EMAIL-010.xs",
+      "ok": true,
+      "key": "CUST-EMAIL-010",
+      "title": "Customer email changes are audited",
+      "statement": "Every table that stores customer emails is tagged pii. Every endpoint, task, tool or message that reaches such a table must require login and must call the record_audit_event function unconditionally, so every change can be traced to who made it.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CUST-EMAIL-010.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "email"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "pii",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CUST-EMAIL-010.R2",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "pii"
+            ],
+            "auth_tables": [],
+            "function": "record_audit_event",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CUST-EMAIL-010.R2",
+          "text": "table_tags \"pii\" is on no table in this workspace, so no access to it is judged."
+        }
+      ]
+    },
+    {
+      "file": "RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "An audit log table named audit_log must exist, and only the record_audit_event function may write to it. Who changed a record is then recorded by one approved path.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

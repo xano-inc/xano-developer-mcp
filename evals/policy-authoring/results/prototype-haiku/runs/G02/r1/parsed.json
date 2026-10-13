@@ -1,0 +1,95 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "CONV-010.xs",
+    "NAME-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "CONV-010.xs",
+      "ok": true,
+      "key": "CONV-010",
+      "title": "Functions are snake_case",
+      "statement": "Every function name is lowercase words joined by underscores and starts with the client prefix (acme_ is a placeholder; set each client workspace's own prefix), such as acme_get_invoice. Advisory: a finding flags the function and blocks nothing. Renaming a function changes every function.run call, so an existing name is exempted only by the policy owner, through allowed_names or a tag in except_tags.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CONV-010.R1",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "snake_case",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [
+              "acme_"
+            ],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "NAME-010.xs",
+      "ok": true,
+      "key": "NAME-010",
+      "title": "Endpoint paths are lowercase snake_case",
+      "statement": "Each segment of an endpoint path is lowercase words joined by underscores, such as /v1/get_invoice; a {param} segment is skipped. Advisory: a finding flags the endpoint and blocks nothing. Renaming a path changes the URL every caller uses, so an existing path is exempted only by the policy owner, through allowed_names or a tag in except_tags.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "NAME-010.R1",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "endpoint_path",
+            "case_style": "snake_case",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

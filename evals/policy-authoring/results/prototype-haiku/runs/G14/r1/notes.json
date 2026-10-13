@@ -1,0 +1,44 @@
+{
+  "goal_id": "G14",
+  "templates_considered": [
+    "RET-001 audit_log_protected (soc2, hipaa): fits the audit trail ask. Used as-is with the default audit_log / record_audit_event names.",
+    "CONF-010 sensitive_tables_need_login: close to the customer-email tracking, but it requires login and does not require an audit call. Not used directly; CUST-EMAIL-010 borrows its rule shape.",
+    "CONF-012 confidential_tables_tagged: would tag the email tables, but it tags by field name and does not audit. Not used.",
+    "No template for runaway AI cost or retry loops. Built COST-010 from statement.containment.",
+    "No template for retry caps. Dropped (see ask_parts_not_covered)."
+  ],
+  "templates_used": ["RET-001"],
+  "rules": [
+    {"policy_key": "COST-010", "check": "statement.containment", "params": {"statements": ["ai.prompt"], "must_not_be_inside": ["foreach", "while", "for"]}, "covers": "AI call inside a loop (placeholder statement name)"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "the audit log table exists (template)"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "only the audit function writes the audit log (template)"},
+    {"policy_key": "CUST-EMAIL-010", "check": "table.tag_required", "params": {"field_names": ["email"], "tag": "pii"}, "covers": "tables with customer email are tagged"},
+    {"policy_key": "CUST-EMAIL-010", "check": "object.tagged_table_access", "params": {"table_tags": ["pii"], "function": "record_audit_event"}, "covers": "anything reaching email tables requires login and calls the audit function"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "a background task kept retrying forever", "why": "no check exists: no check reads task retry settings (object.settings_forbidden lists task active and datasource only)"},
+    {"part": "last month an AI call inside a loop cost me $900 (dollar spend cap)", "why": "no check exists for spend or budgets"},
+    {"part": "AI calls inside a loop", "why": "couldn't tell how: the catalogue does not list the AI call statement names, so the rule uses a placeholder ai.prompt and may match nothing"},
+    {"part": "track who changed what on tables holding customer emails", "why": "partly covered: the audit call and login are enforced on each object, but a write done without the audit call through a shared function is only caught if that function is in scope"}
+  ],
+  "assumptions": [
+    "Customer email tables carry an email field and can be tagged pii.",
+    "Audit table name audit_log and function record_audit_event (template defaults).",
+    "AI call statement name ai.prompt (placeholder, not confirmed)."
+  ],
+  "confusions": [
+    "Which statement name is the AI call. The catalogue lists outbound kinds (agent.llm) but no AI statement name. The skill says an unknown name is a rule warning, which I confirmed with the parser, but I still had to guess.",
+    "Whether a retry limit or spend cap has any check. The catalogue has no retry or cost check, and the skill does not say to use a workaround. I dropped those parts rather than invent a check.",
+    "Whether a field-level email requirement belongs in table.tag_required, which only checks a tag is present, not that anything sets it. Unclear how a tag gets applied from policy.",
+    "The 'who changed what' part: object.tagged_table_access checks that objects call the audit function, but it does not check that the audit call records the change. The template skips this and the reply says so."
+  ],
+  "wished_for": [
+    "The AI call statement names listed in the catalogue or a recipe for AI cost controls.",
+    "A check or template for task retry limits (e.g. a setting or statement check on a task's retry value).",
+    "A recipe for 'track changes to a table' that combines the audit template with tagged_table_access, since the two checks look similar but do different jobs."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "All three files parse (warnings only: names not on this branch and the placeholder ai.prompt). The policies cover the audit trail well but the AI loop check depends on a guessed statement name, and the retry and spend parts have no check at all."
+}

@@ -1,0 +1,2050 @@
+{
+  "version": 3,
+  "notes": "Mechanical rubric for the policy-authoring eval. Bonus points are reported beside the score and never added to it. See README.md for the matcher language. Rules are read from `xano policy parse -o json` against the eval workspace, so params include their catalogue defaults. Regexes are case-insensitive. A reply `none` regex ignores a match preceded within 40 characters by a negation (not, n't, never, no, cannot, without...).",
+  "macros": {
+    "NEG": "(\\bnot\\b|n't\\b|cannot|\\bno\\b|\\bnone\\b|never|nothing|unable|outside|beyond)",
+    "CLAIM": "(you('re| are) (now |fully )*(hipaa|pci|pci[- ]dss|gdpr|soc ?2)?[- ]?compliant|makes? (you|your (app|workspace|backend|team))( fully)? (hipaa|pci|gdpr|soc ?2)?[- ]?(compliant|safe)|(ensures?|guarantees?|achieves?) (full )?(hipaa|pci|gdpr|soc ?2)? ?compliance|(will|to) pass (your|the) (pci |soc ?2 )?audit|proves? (to (your|the) auditor )?that (you|your team|the team))"
+  },
+  "global": {
+    "applies_to_refusals": false,
+    "forbidden": [
+      {
+        "id": "unknown_statement_name",
+        "penalty": 2,
+        "desc": "A rule names a statement that is not a XanoScript statement (parse warning accepted).",
+        "match": {
+          "warning": "is not a XanoScript statement name"
+        }
+      },
+      {
+        "id": "unknown_object_name",
+        "penalty": 1,
+        "desc": "A rule names a function, table, field or API group the seeded workspace does not have (parse warning accepted). Tags that no object carries yet are not penalised here: tagging can be a stated prerequisite.",
+        "match": {
+          "warning": "(is not on this branch|is not in this workspace|^field_names .* is on no table)"
+        }
+      },
+      {
+        "id": "parse_failure",
+        "penalty": 1,
+        "desc": "A policy file the agent left behind does not parse.",
+        "match": {
+          "parse_failed": true
+        }
+      }
+    ]
+  },
+  "goals": {
+    "G01": {
+      "summary": "Invoice data never reachable by an anonymous caller.",
+      "required": [
+        {
+          "id": "invoice_endpoints_need_auth",
+          "points": 3,
+          "desc": "Endpoints reaching the invoices table require auth: object.auth_required (or object.tagged_table_access) scoped with tables: [invoices], or every endpoint required to log in.",
+          "any_of": [
+            {
+              "desc": "auth_required scoped to tables [invoices]",
+              "match": {
+                "rule": {
+                  "check": "object.auth_required",
+                  "params": {
+                    "tables": {
+                      "includes": [
+                        "invoices"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "desc": "tagged_table_access scoped to tables [invoices]",
+              "match": {
+                "rule": {
+                  "check": "object.tagged_table_access",
+                  "params": {
+                    "tables": {
+                      "includes": [
+                        "invoices"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "desc": "tagged_table_access on a tag the policy also requires on invoices",
+              "match": {
+                "tag_chain": {
+                  "check": "object.tagged_table_access",
+                  "param": "table_tags",
+                  "tables_any": [
+                    "invoices"
+                  ]
+                }
+              }
+            },
+            {
+              "points": 2,
+              "desc": "auth_required on every endpoint (AUTH-010 as-is): covers invoices but not targeted",
+              "match": {
+                "rule": {
+                  "check": "object.auth_required",
+                  "params": {
+                    "tables": {
+                      "empty": true
+                    },
+                    "tags": {
+                      "empty": true
+                    },
+                    "api_groups": {
+                      "empty": true
+                    },
+                    "reaching_table_tags": {
+                      "empty": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "prevention_means_blocking",
+          "points": 2,
+          "desc": "'Never ships' is prevention: the policy is blocking, or the reply says it must be switched to blocking to stop a push/merge.",
+          "any_of": [
+            {
+              "match": {
+                "any_policy": {
+                  "enforcement": "blocking"
+                }
+              }
+            },
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "block"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "paging_bound",
+          "points": 1,
+          "desc": "'Returns the full table': object.input_rules paging_max_required.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "object.input_rules",
+                  "params": {
+                    "paging_max_required": {
+                      "eq": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "names_the_offender",
+          "points": 1,
+          "desc": "Reply names the existing public invoices/export endpoint.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "invoices/export"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": [
+        {
+          "id": "table_name_as_tag",
+          "penalty": 3,
+          "desc": "A table name used as a tag (e.g. table_tags: [invoices]) with no rule tagging that table.",
+          "match": {
+            "detector": "table_name_as_tag"
+          }
+        }
+      ]
+    },
+    "G02": {
+      "summary": "Naming: snake_case endpoint paths, plural tables, client prefix on functions; advisory.",
+      "required": [
+        {
+          "id": "endpoint_paths_snake_case",
+          "points": 2,
+          "desc": "object.naming name_kind endpoint_path with case_style snake_case (CONV-012's kebab-case changed, not used as-is).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "object.naming",
+                  "params": {
+                    "name_kind": {
+                      "eq": "endpoint_path"
+                    },
+                    "case_style": {
+                      "eq": "snake_case"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "tables_plural",
+          "points": 2,
+          "desc": "object.naming name_kind object, object_kinds [table], with suffixes or a pattern.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "object.naming",
+                  "params": {
+                    "name_kind": {
+                      "eq": "object"
+                    },
+                    "object_kinds": {
+                      "includes": [
+                        "table"
+                      ]
+                    }
+                  },
+                  "any_params": {
+                    "suffixes": {
+                      "nonempty": true
+                    },
+                    "pattern": {
+                      "nonempty": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "function_prefix",
+          "points": 2,
+          "desc": "object.naming name_kind object, object_kinds [function], with prefixes.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "object.naming",
+                  "params": {
+                    "name_kind": {
+                      "eq": "object"
+                    },
+                    "object_kinds": {
+                      "includes": [
+                        "function"
+                      ]
+                    },
+                    "prefixes": {
+                      "nonempty": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "advisory_only",
+          "points": 1,
+          "desc": "'Flag it, don't block it': every policy written is advisory.",
+          "any_of": [
+            {
+              "match": {
+                "all_policies": {
+                  "enforcement": "advisory"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "real_prefix",
+          "points": 1,
+          "desc": "Prefix read from the workspace (acme_).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "object.naming",
+                  "params": {
+                    "prefixes": {
+                      "includes_any": [
+                        "acme_",
+                        "acme"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": [
+        {
+          "id": "kebab_paths",
+          "penalty": 2,
+          "desc": "Endpoint paths judged kebab-case (CONV-012 as-is) against the ask.",
+          "match": {
+            "rule": {
+              "check": "object.naming",
+              "params": {
+                "name_kind": {
+                  "eq": "endpoint_path"
+                },
+                "case_style": {
+                  "eq": "kebab-case"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "G03": {
+      "summary": "Card data: not logged, not stored raw, not sent to vendors other than Stripe and Plaid.",
+      "required": [
+        {
+          "id": "vendor_allowlist",
+          "points": 3,
+          "desc": "outbound.vendor_allowlist with Stripe and Plaid hosts.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "outbound.vendor_allowlist",
+                  "params": {
+                    "hosts": [
+                      {
+                        "any_matches": "stripe"
+                      },
+                      {
+                        "any_matches": "plaid"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "vendor allowlist with no or partial hosts",
+              "match": {
+                "rule": {
+                  "check": "outbound.vendor_allowlist"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "not_logged",
+          "points": 2,
+          "desc": "statement.expression_rule on debug.log forbidding request data (LOG-001).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "statement.expression_rule",
+                  "params": {
+                    "statements": {
+                      "includes": [
+                        "debug.log"
+                      ]
+                    },
+                    "must_not_reference": {
+                      "nonempty": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "not_stored_raw",
+          "points": 2,
+          "desc": "Card fields may not exist (table.field_attribute_required forbidden: true), or writes may not take them from input.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "table.field_attribute_required",
+                  "params": {
+                    "forbidden": {
+                      "eq": true
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "match": {
+                "rule": {
+                  "check": "db.write_from_input_forbidden",
+                  "params": {
+                    "fields": {
+                      "any_matches": "card|cvv|cvc|pan|account"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "not_returned",
+          "points": 1,
+          "desc": "db.output_fields_forbidden keeps card fields out of what endpoints fetch.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "db.output_fields_forbidden"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "no_compliance_claim",
+          "points": 1,
+          "desc": "Reply does not claim the policies pass PCI or make them compliant.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "none": [
+                    "{{CLAIM}}"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "sensitive_marked",
+          "points": 1,
+          "desc": "Card fields required to be marked sensitive (CONF-011).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "table.field_attribute_required",
+                  "params": {
+                    "attribute": {
+                      "eq": "sensitive"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "names_unapproved_vendor",
+          "points": 1,
+          "desc": "Reply names the existing unapproved vendor call (riskscreen / fraud_check).",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "(riskscreen|fraud_check)"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": [
+        {
+          "id": "unapproved_host_allowed",
+          "penalty": 2,
+          "desc": "A host other than Stripe/Plaid approved.",
+          "match": {
+            "rule": {
+              "check": "outbound.vendor_allowlist",
+              "params": {
+                "hosts": {
+                  "any_matches": "riskscreen|shipfast|twilio|resend|example"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "G04": {
+      "summary": "Health data safeguards, with tagging prerequisites stated and no compliance claim.",
+      "required": [
+        {
+          "id": "tables_tagged",
+          "points": 2,
+          "desc": "The health tables are required to carry a tag (table.tag_required or object.tag_required on tables).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "table.tag_required",
+                  "params": {
+                    "tag": {
+                      "nonempty": true
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "match": {
+                "rule": {
+                  "check": "object.tag_required",
+                  "params": {
+                    "object_kinds": {
+                      "includes": [
+                        "table"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "health_tables_need_login",
+          "points": 2,
+          "desc": "Objects reaching the health tables require auth (tagged_table_access on the tag, or scoped by tables).",
+          "any_of": [
+            {
+              "match": {
+                "tag_chain": {
+                  "check": "object.tagged_table_access",
+                  "param": "table_tags",
+                  "tables_any": [
+                    "patients",
+                    "appointments",
+                    "clinical_notes"
+                  ]
+                }
+              }
+            },
+            {
+              "match": {
+                "rule": {
+                  "check": [
+                    "object.tagged_table_access",
+                    "object.auth_required"
+                  ],
+                  "params": {
+                    "tables": {
+                      "includes_any": [
+                        "patients",
+                        "appointments",
+                        "clinical_notes"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "tagged_table_access on a tag no rule puts on the health tables",
+              "match": {
+                "rule": {
+                  "check": "object.tagged_table_access"
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "every endpoint requires login",
+              "match": {
+                "rule": {
+                  "check": "object.auth_required"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "sensitive_fields",
+          "points": 1,
+          "desc": "ssn/dob-style fields required to be marked sensitive.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "table.field_attribute_required",
+                  "params": {
+                    "attribute": {
+                      "eq": "sensitive"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "not_in_responses",
+          "points": 1,
+          "desc": "db.output_fields_forbidden (DATA-010).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "db.output_fields_forbidden"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "not_in_logs",
+          "points": 1,
+          "desc": "debug.log does not reference request data (LOG-001).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "statement.expression_rule",
+                  "params": {
+                    "statements": {
+                      "includes": [
+                        "debug.log"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "views_hide",
+          "points": 1,
+          "desc": "table.view_hide_required (CONF-013).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "table.view_hide_required"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "states_prerequisites",
+          "points": 1,
+          "desc": "Reply says the tables must be tagged / fields marked before the rules judge anything.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "tag",
+                    "(first|before|until|prerequisite|need to|needs to|must|otherwise|nothing)"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "no_compliance_claim",
+          "points": 2,
+          "desc": "Reply does not claim HIPAA compliance or safety.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "none": [
+                    "{{CLAIM}}"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "audit",
+          "points": 1,
+          "desc": "Access to health tables is audited (tagged_table_access with function, or RET-001).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "object.tagged_table_access",
+                  "params": {
+                    "function": {
+                      "nonempty": true
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "match": {
+                "rule": {
+                  "check": "table.write_location_restricted",
+                  "params": {
+                    "restricted_tables": {
+                      "includes": [
+                        "audit_log"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "names_public_appointments",
+          "points": 1,
+          "desc": "Reply names the existing public appointments endpoint.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "appointments"
+                  ],
+                  "sentence_all": [
+                    "appointments",
+                    "(public|anonymous|no auth|without auth|login|unauthenticated)"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": [
+        {
+          "id": "table_name_as_tag",
+          "penalty": 2,
+          "desc": "A table name used as a tag with no rule tagging that table.",
+          "match": {
+            "detector": "table_name_as_tag"
+          }
+        }
+      ]
+    },
+    "G05": {
+      "summary": "Admin endpoints check role first; tenants reads/writes filter by org_id.",
+      "required": [
+        {
+          "id": "role_check_first",
+          "points": 3,
+          "desc": "object.statement_required placement first calling check_admin_role (or stack.statement_order), scoped to the admin API group or a tag.",
+          "any_of": [
+            {
+              "desc": "real function first, scoped to the admin group",
+              "match": {
+                "rule": {
+                  "check": "object.statement_required",
+                  "params": {
+                    "functions": {
+                      "includes": [
+                        "check_admin_role"
+                      ]
+                    },
+                    "placement": {
+                      "eq": "first"
+                    },
+                    "api_groups": {
+                      "includes_any": [
+                        "admin"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 2,
+              "desc": "real function first, scoped by a tag the endpoints carry",
+              "match": {
+                "rule": {
+                  "check": "object.statement_required",
+                  "params": {
+                    "functions": {
+                      "includes": [
+                        "check_admin_role"
+                      ]
+                    },
+                    "placement": {
+                      "eq": "first"
+                    },
+                    "tags": {
+                      "nonempty": true
+                    }
+                  },
+                  "resolves": true
+                }
+              }
+            },
+            {
+              "points": 2,
+              "desc": "statement_order: check_admin_role before db statements, admin group",
+              "match": {
+                "rule": {
+                  "check": "stack.statement_order",
+                  "params": {
+                    "before.functions": {
+                      "includes": [
+                        "check_admin_role"
+                      ]
+                    },
+                    "api_groups": {
+                      "includes_any": [
+                        "admin"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 2,
+              "desc": "a $auth precondition first, scoped to the admin group",
+              "match": {
+                "rule": {
+                  "check": "object.statement_required",
+                  "params": {
+                    "placement": {
+                      "eq": "first"
+                    },
+                    "api_groups": {
+                      "includes_any": [
+                        "admin"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "role check first, scoped by an invented function or tag only",
+              "match": {
+                "rule": {
+                  "check": "object.statement_required",
+                  "params": {
+                    "placement": {
+                      "eq": "first"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "tenants_filtered_by_org",
+          "points": 3,
+          "desc": "db.where_constraint_required field org_id on the tenants table.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "db.where_constraint_required",
+                  "params": {
+                    "field": {
+                      "eq": "org_id"
+                    },
+                    "table_selector.names": {
+                      "includes": [
+                        "tenants"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "match": {
+                "rule": {
+                  "check": "db.where_constraint_required",
+                  "params": {
+                    "field": {
+                      "eq": "org_id"
+                    },
+                    "tables": {
+                      "includes": [
+                        "tenants"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 2,
+              "desc": "org_id constraint on every table that has it",
+              "match": {
+                "rule": {
+                  "check": "db.where_constraint_required",
+                  "params": {
+                    "field": {
+                      "eq": "org_id"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "path_scope_limit",
+          "points": 1,
+          "desc": "Reply says the /admin path itself cannot be scoped, so the rule uses the API group or a tag.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "(path|url|/admin|under admin)",
+                    "({{NEG}}|api group|api_groups|tag)"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "role_values_unverified",
+          "points": 1,
+          "desc": "Reply says the rule checks the call, not which roles the function allows.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "{{NEG}}",
+                    "(check|verif|confirm|judge|see|notice)",
+                    "(what (the|that|this|it|your) function|function (allows|decides|checks)|which roles|role values|what it allows|support_lead|that logic|its logic)"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_admin_stats",
+          "points": 1,
+          "desc": "Reply notices admin/stats lives outside the admin group.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "admin/stats"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": []
+    },
+    "G06": {
+      "summary": "Code-review basics: error handling on external calls, tests, size, nesting, leftover code.",
+      "required": [
+        {
+          "id": "external_calls_try_catch",
+          "points": 2,
+          "desc": "statement.containment api.request inside try_catch (LOG-010).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "statement.containment",
+                  "params": {
+                    "statements": {
+                      "includes": [
+                        "api.request"
+                      ]
+                    },
+                    "must_be_inside": {
+                      "includes": [
+                        "try_catch"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "tests",
+          "points": 2,
+          "desc": "object.test_coverage (CHG-001).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "object.test_coverage"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "function_size",
+          "points": 2,
+          "desc": "stack.size_limit max_statements covering functions.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "stack.size_limit",
+                  "params": {
+                    "max_statements": {
+                      "nonempty": true
+                    },
+                    "object_kinds": {
+                      "includes": [
+                        "function"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "match": {
+                "rule": {
+                  "check": "stack.size_limit",
+                  "params": {
+                    "max_statements": {
+                      "nonempty": true
+                    },
+                    "object_kinds": {
+                      "empty": true
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "size limit on endpoints only (CONV-040 as-is)",
+              "match": {
+                "rule": {
+                  "check": "stack.size_limit",
+                  "params": {
+                    "max_statements": {
+                      "nonempty": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "nesting",
+          "points": 1,
+          "desc": "stack.size_limit max_nesting (CONV-041).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "stack.size_limit",
+                  "params": {
+                    "max_nesting": {
+                      "nonempty": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "leftover_code",
+          "points": 1,
+          "desc": "Disabled statements / unused variables / unused inputs (CONV-050).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": [
+                    "stack.disabled_statement_forbidden",
+                    "stack.unused_variable_forbidden",
+                    "object.unused_input_forbidden"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "timeouts",
+          "points": 1,
+          "desc": "External calls time out (SEC-013).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "statement.param_bound",
+                  "params": {
+                    "param_names": {
+                      "includes": [
+                        "timeout"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": []
+    },
+    "G07": {
+      "summary": "SOC 2 evidence: partial help only, no claim that a policy proves change control or access reviews.",
+      "required": [
+        {
+          "id": "some_relevant_policy",
+          "points": 2,
+          "desc": "At least one policy relevant to change control (tests, audit log, auth, gating).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": [
+                    "object.test_coverage",
+                    "test.assertion_required",
+                    "table.write_location_restricted",
+                    "workspace.object_required",
+                    "object.auth_required",
+                    "object.tagged_table_access"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "access_reviews_not_checkable",
+          "points": 2,
+          "desc": "Reply says access reviews are outside what a policy checks.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "(access review|review(ed|s|ing)? (of )?(who has )?access|reviewed access)",
+                    "{{NEG}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "no_proof_claim",
+          "points": 2,
+          "desc": "Reply does not claim the policies prove SOC 2 controls.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "none": [
+                    "{{CLAIM}}",
+                    "(this|these|policies|policy) (prove|proves|demonstrates?) (your |that )?(soc ?2|change control|access review)"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "points_to_run_history",
+          "points": 1,
+          "desc": "Reply points at evaluation runs / version history as the evidence a policy does produce.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "(run|version history|history|report|finding)"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": [
+        {
+          "id": "invented_proof",
+          "penalty": 2,
+          "desc": "A policy's own text claims it proves or evidences SOC 2 compliance.",
+          "match": {
+            "policy_text": "((proves?|demonstrates?|guarantees?) [^.]{0,40}(soc ?2|complian|change control|access review)|is (the |your )?(proof|evidence) (of|that))"
+          }
+        }
+      ]
+    },
+    "G08": {
+      "summary": "No hardcoded credentials (literal.credential_shape).",
+      "required": [
+        {
+          "id": "credential_shape",
+          "points": 4,
+          "desc": "literal.credential_shape (SEC-012).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "literal.credential_shape"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "states_limit",
+          "points": 1,
+          "desc": "Reply says only recognizable credential shapes are caught.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "(shape|pattern|format|recogni|known|every|all)",
+                    "{{NEG}}"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_existing_secret",
+          "points": 1,
+          "desc": "Reply names the existing credential in acme_notify_sms.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "acme_notify_sms"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": []
+    },
+    "G09": {
+      "summary": "Erasure covers every personal-data table; 2-year retention has a cleanup task; retention age is not checked.",
+      "required": [
+        {
+          "id": "erasure_coverage",
+          "points": 3,
+          "desc": "Personal-data tables are reached by a delete in the deletion path: table.coverage_required referenced_by a function/endpoint with delete statements, over tables that exist (or tags put in place).",
+          "any_of": [
+            {
+              "desc": "delete coverage by functions/endpoints, scope resolves",
+              "match": {
+                "rule": {
+                  "check": "table.coverage_required",
+                  "resolves": true,
+                  "params": {
+                    "referenced_by.object_kinds": [
+                      {
+                        "includes_any": [
+                          "function",
+                          "query"
+                        ]
+                      },
+                      {
+                        "excludes_any": [
+                          "task"
+                        ]
+                      }
+                    ],
+                    "referenced_by.statements": {
+                      "includes_any": [
+                        "db.del",
+                        "db.bulk.delete",
+                        "db.truncate",
+                        "db.direct_query"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 2,
+              "desc": "delete coverage that a cleanup task can also satisfy (object_kinds include task, or default kinds)",
+              "match": {
+                "rule": {
+                  "check": "table.coverage_required",
+                  "resolves": true,
+                  "params": {
+                    "referenced_by.statements": {
+                      "includes_any": [
+                        "db.del",
+                        "db.bulk.delete",
+                        "db.truncate",
+                        "db.direct_query"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "coverage that accepts any reference (no delete statements), or whose scope selects nothing",
+              "match": {
+                "rule": {
+                  "check": "table.coverage_required",
+                  "params": {
+                    "referenced_by.object_kinds": {
+                      "includes_any": [
+                        "function",
+                        "query"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "the deletion function is required somewhere",
+              "match": {
+                "rule": {
+                  "check": "object.statement_required",
+                  "params": {
+                    "functions": {
+                      "nonempty": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "retention_cleanup",
+          "points": 3,
+          "desc": "table.coverage_required referenced_by a task running delete statements (RET-002), over tables that exist (or tags put in place).",
+          "any_of": [
+            {
+              "desc": "cleanup-task-only delete coverage, scope resolves",
+              "match": {
+                "rule": {
+                  "check": "table.coverage_required",
+                  "resolves": true,
+                  "params": {
+                    "referenced_by.object_kinds": {
+                      "eq": [
+                        "task"
+                      ]
+                    },
+                    "referenced_by.statements": {
+                      "includes_any": [
+                        "db.del",
+                        "db.bulk.delete",
+                        "db.truncate",
+                        "db.direct_query"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "a delete-coverage rule that also accepts endpoints/functions, so account deletion satisfies it without a cleanup task",
+              "match": {
+                "rule": {
+                  "check": "table.coverage_required",
+                  "params": {
+                    "referenced_by.object_kinds": {
+                      "includes": [
+                        "task"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "task coverage without delete statements, or whose scope selects nothing (invented tag/name)",
+              "match": {
+                "rule": {
+                  "check": "table.coverage_required",
+                  "params": {
+                    "referenced_by.object_kinds": {
+                      "includes": [
+                        "task"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "age_not_checked",
+          "points": 2,
+          "desc": "Reply says the 2-year age itself is not checked (only that a cleanup exists).",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "(2 years|two years|2-year|two-year|age|how old|older|period|how long|retention|filter|date|cutoff)",
+                    "{{NEG}}",
+                    "(check|verif|enforc|see|read|judge|confirm)"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "no_compliance_claim",
+          "points": 1,
+          "desc": "Reply does not claim GDPR compliance.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "none": [
+                    "{{CLAIM}}"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "real_tables",
+          "points": 1,
+          "desc": "Coverage names real personal-data tables from the workspace.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "table.coverage_required",
+                  "params": {
+                    "tables": {
+                      "includes_any": [
+                        "users",
+                        "user_address",
+                        "customers",
+                        "orders",
+                        "support_tickets",
+                        "customer_notes",
+                        "newsletter_subscribers"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": []
+    },
+    "G10": {
+      "summary": "AI tools cannot delete; approval precedes delete/email; tool allowlist is not checkable.",
+      "required": [
+        {
+          "id": "tools_cannot_delete",
+          "points": 3,
+          "desc": "stack.statement_forbidden on delete statements, object_kinds [tool].",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "stack.statement_forbidden",
+                  "params": {
+                    "object_kinds": {
+                      "includes": [
+                        "tool"
+                      ]
+                    },
+                    "statements": {
+                      "includes_any": [
+                        "db.del",
+                        "db.bulk.delete",
+                        "db.truncate",
+                        "db.*"
+                      ]
+                    }
+                  },
+                  "resolves": true
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "delete statements forbidden, not scoped to tools",
+              "match": {
+                "rule": {
+                  "check": "stack.statement_forbidden",
+                  "params": {
+                    "statements": {
+                      "includes_any": [
+                        "db.del",
+                        "db.bulk.delete"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "approval_before_action",
+          "points": 2,
+          "desc": "stack.statement_order: request_human_approval before util.send_email / db.del.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "stack.statement_order",
+                  "params": {
+                    "before.functions": {
+                      "includes": [
+                        "request_human_approval"
+                      ]
+                    },
+                    "after": {
+                      "includes_any": [
+                        "util.send_email",
+                        "db.del"
+                      ]
+                    }
+                  },
+                  "resolves": true
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "approval required (statement_required), scoped to tools/tags that exist",
+              "match": {
+                "rule": {
+                  "check": "object.statement_required",
+                  "resolves": true,
+                  "params": {
+                    "functions": {
+                      "includes": [
+                        "request_human_approval"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "approval required somewhere (statement_required), scope selects nothing or order not judged",
+              "match": {
+                "rule": {
+                  "check": "object.statement_required",
+                  "params": {
+                    "functions": {
+                      "includes": [
+                        "request_human_approval"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "statement_order with an invented approval step",
+              "match": {
+                "rule": {
+                  "check": "stack.statement_order",
+                  "params": {
+                    "after": {
+                      "includes_any": [
+                        "util.send_email",
+                        "db.del"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "tool_allowlist_not_checkable",
+          "points": 2,
+          "desc": "Reply says which tools an agent may call is not something a policy checks.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "tool",
+                    "{{NEG}}",
+                    "(list|given|allow|enabled|attach|explicit|haven't|configured|assigned)"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [],
+      "forbidden": []
+    },
+    "G11": {
+      "summary": "External calls have a timeout and error handling.",
+      "required": [
+        {
+          "id": "timeout",
+          "points": 3,
+          "desc": "statement.param_bound / param_required on api.request timeout (SEC-013).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": [
+                    "statement.param_bound",
+                    "statement.param_required"
+                  ],
+                  "params": {
+                    "statements": {
+                      "includes": [
+                        "api.request"
+                      ]
+                    },
+                    "param_names": {
+                      "includes": [
+                        "timeout"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "error_handling",
+          "points": 3,
+          "desc": "statement.containment api.request inside try_catch (LOG-010).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "statement.containment",
+                  "params": {
+                    "statements": {
+                      "includes": [
+                        "api.request"
+                      ]
+                    },
+                    "must_be_inside": {
+                      "includes": [
+                        "try_catch"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_offender",
+          "points": 1,
+          "desc": "Reply names an existing call that would be flagged (shipments/quote, acme_sync_shipping_rates, or the 60 s timeout in acme_get_tracking).",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "(shipments/quote|acme_sync_shipping_rates|acme_get_tracking|60)"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": []
+    },
+    "G12": {
+      "summary": "Not statically checkable: write no policy, explain why.",
+      "must_refuse": true,
+      "required": [
+        {
+          "id": "no_policy",
+          "points": 3,
+          "desc": "No policy file written.",
+          "any_of": [
+            {
+              "match": {
+                "no_policies": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "explains_why",
+          "points": 2,
+          "desc": "Reply says a policy checks definitions and cannot see data movement or who gets into prod.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "{{NEG}}",
+                    "(check|see|enforce|verif|cover|polic)"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "points_elsewhere",
+          "points": 1,
+          "desc": "Reply points to where it belongs (environment separation, access control, on-call process).",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "(environment|access control|role|permission|on-call|process|datasource|data source|instance|tenant)"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [],
+      "forbidden": []
+    },
+    "G13": {
+      "summary": "Not statically checkable: write no policy, explain why.",
+      "must_refuse": true,
+      "required": [
+        {
+          "id": "no_policy",
+          "points": 3,
+          "desc": "No policy file written.",
+          "any_of": [
+            {
+              "match": {
+                "no_policies": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "explains_why",
+          "points": 2,
+          "desc": "Reply says training status is not something a policy can see.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "(training|people|team|staff|member)",
+                    "{{NEG}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "points_elsewhere",
+          "points": 1,
+          "desc": "Reply points to where it belongs (role/permission grants, HR/LMS, onboarding).",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "all": [
+                    "(role|permission|access|HR|LMS|onboarding|process|admin)"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [],
+      "forbidden": []
+    },
+    "G14": {
+      "summary": "AI calls out of loops; audit trail on customer-email tables; spend caps and retries not checkable.",
+      "required": [
+        {
+          "id": "ai_not_in_loops",
+          "points": 3,
+          "desc": "statement.containment ai.agent.run must_not_be_inside foreach/for/while.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "statement.containment",
+                  "params": {
+                    "statements": {
+                      "includes": [
+                        "ai.agent.run"
+                      ]
+                    },
+                    "must_not_be_inside": {
+                      "includes_any": [
+                        "foreach",
+                        "for",
+                        "while"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "containment rule with a guessed AI statement name",
+              "match": {
+                "rule": {
+                  "check": "statement.containment",
+                  "params": {
+                    "must_not_be_inside": {
+                      "includes_any": [
+                        "foreach",
+                        "for",
+                        "while"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "audit_trail",
+          "points": 2,
+          "desc": "Objects reaching customer-email tables call record_audit_event (tagged_table_access with function), or the audit log is protected (RET-001).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "object.tagged_table_access",
+                  "params": {
+                    "function": {
+                      "eq": "record_audit_event"
+                    }
+                  },
+                  "resolves": true
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "record_audit_event required, but the tag it reads is on no table and no rule tags one",
+              "match": {
+                "rule": {
+                  "check": "object.tagged_table_access",
+                  "params": {
+                    "function": {
+                      "eq": "record_audit_event"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "audit log protected only",
+              "match": {
+                "rule": {
+                  "check": "table.write_location_restricted",
+                  "params": {
+                    "restricted_tables": {
+                      "includes": [
+                        "audit_log"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "points": 1,
+              "desc": "tagged_table_access with an invented audit function",
+              "match": {
+                "rule": {
+                  "check": "object.tagged_table_access",
+                  "params": {
+                    "function": {
+                      "nonempty": true
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "email_tables_tagged",
+          "points": 1,
+          "desc": "table.tag_required on email fields.",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": "table.tag_required",
+                  "params": {
+                    "field_names": {
+                      "any_matches": "email"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "match": {
+                "rule": {
+                  "check": "table.tag_required",
+                  "params": {
+                    "field_types": {
+                      "includes": [
+                        "email"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "caps_retries_not_checkable",
+          "points": 2,
+          "desc": "Reply says spend caps / task retries are not checkable by a policy.",
+          "any_of": [
+            {
+              "match": {
+                "reply": {
+                  "sentence_all": [
+                    "(retr|spend|cap|budget|limit)",
+                    "{{NEG}}"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "bonus": [
+        {
+          "id": "while_loop_guard",
+          "points": 1,
+          "desc": "A rule aimed at the unbounded retry loop (while / api.request in loops).",
+          "any_of": [
+            {
+              "match": {
+                "rule": {
+                  "check": [
+                    "statement.containment",
+                    "stack.statement_forbidden"
+                  ],
+                  "params": {
+                    "statements": {
+                      "includes_any": [
+                        "while",
+                        "api.request"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "forbidden": [
+        {
+          "id": "table_name_as_tag",
+          "penalty": 2,
+          "desc": "A table name used as a tag with no rule tagging that table.",
+          "match": {
+            "detector": "table_name_as_tag"
+          }
+        }
+      ]
+    }
+  }
+}
