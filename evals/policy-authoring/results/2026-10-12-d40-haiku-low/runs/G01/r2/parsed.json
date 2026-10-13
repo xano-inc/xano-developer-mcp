@@ -1,0 +1,38 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUTH-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUTH-010.xs",
+      "ok": true,
+      "key": "AUTH-010",
+      "title": "Endpoints that reach invoices require login",
+      "statement": "Every endpoint that reads or writes the invoices table must require a login, so no invoice data is returned to an anonymous caller. The rule has no exemption: an endpoint reaching invoices cannot be public. Endpoints that reach invoices only through a function or addon are judged too.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "invoices"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

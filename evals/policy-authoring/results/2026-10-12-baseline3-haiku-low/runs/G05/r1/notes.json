@@ -1,0 +1,64 @@
+{
+  "goal_id": "G05",
+  "templates_considered": [
+    "AUTH-002 admin_endpoints_check_role: fits part 1 (admin endpoints call role check first). Used as base; its example tag scope ['admin'] replaced by api_groups because the workspace has no admin tag, only the 'admin' API group, and I cannot add tags.",
+    "AUTH-020 own_records_only: did not fit. Its where-constraint is on a user owner field against $auth.id; the ask is an org_id filter with no logged-in-user comparison.",
+    "AUTH-030 no_self_promotion, AUTH-003, BIZ-001, AUTH-040, AUTH-050: did not fit the ask.",
+    "DATA-010 no_pii_in_responses, CONF-010 sensitive_tables_need_login: did not fit; the ask is about a query filter, not fields or login.",
+    "AUTH-010 endpoints_need_login: did not fit; ask does not require enabling auth, and the admin endpoints already use auth='users'."
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {
+      "policy_key": "AUTH-002",
+      "check": "object.statement_required",
+      "params": {"functions": ["check_admin_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]},
+      "covers": "every endpoint under /admin must check the role before doing anything else (as the first statement)"
+    },
+    {
+      "policy_key": "TEN-010",
+      "check": "db.where_constraint_required",
+      "params": {"table_selector": {"names": ["tenants"]}, "field": "org_id"},
+      "covers": "never touches the tenants table without filtering by org_id"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoints under /admin: the role values 'admin' or 'support_lead' are tested in check_admin_role, not by the policy", "why": "other"},
+    {"part": "endpoints under /admin: path prefix, since no scope field matches URL path; api/app/admin/stats_GET is served at /admin/stats in the app group and is not covered", "why": "no check exists"},
+    {"part": "'before doing anything else' as a strict rule: the check only verifies the call is the first statement, not that nothing else precedes it via middleware", "why": "couldn't tell how"},
+    {"part": "org_id filter must match the caller's org: no check ties a filter value to the logged-in user's org; compare_to would need a reference the workspace may not have (no org on $auth known)", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "'endpoints under /admin' means the API group named admin (canonical admin), whose comment says it is served at /api:admin",
+    "check_admin_role is the role-check function the ask refers to",
+    "tenants.org_id is the field the ask means by org_id",
+    "no compare_to for org_id, because the admin staff user is not in an org; a filter on any value satisfies the ask as written"
+  ],
+  "workspace_names_used": [
+    "api_group admin (canonical admin)",
+    "function check_admin_role",
+    "table tenants",
+    "field tenants.org_id",
+    "endpoints api/admin/users_GET, api/admin/tenants_GET, api/admin/tenants/tenant_id_PATCH, api/admin/orgs/org_id/tenants_GET, api/app/admin/stats_GET",
+    "table users (role field used by check_admin_role)"
+  ],
+  "confusions": [
+    "AUTH-002 template example uses tags ['admin'] in its rule, but the workspace's admin endpoints carry the API group, not an admin tag; the template does not say whether to swap to api_groups or add a tag, and I could not add one.",
+    "object.statement_required rule warning: api_groups only selects endpoints, so object_kinds must be set to ['query'] to say so. The catalogue lists the scope fields as endpoint-only but does not say this is required for the warning to clear.",
+    "No scope param matches URL path. The ask says 'under /admin'; the skill says to scope by tag, not name, but the workspace has no tag for admin endpoints.",
+    "Whether a db.query count (stats) counts as a read for db.where_constraint_required is not stated; I expect it does, unverified.",
+    "The skill says 'write only names the workspace has' and 'check the tables', but the template's example keys (require_admin) do not match the workspace's check_admin_role; I used the workspace name."
+  ],
+  "wished_for": [
+    "A path-prefix scope (for example path_prefix: '/admin') or an endpoint scope by URL, so 'under /admin' can be stated directly.",
+    "A recipe for 'check role first' that names how to pass a user's role, not only the user id.",
+    "An example of db.where_constraint_required on a table with no owner-user relation (org scoping), since AUTH-020 only shows the user case.",
+    "Guidance on whether a count query or a read inside a called function is judged by db.where_constraint_required."
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [
+    "AUTH-002.R1: api_groups only matches endpoints, so this rule inspects endpoints only; set object_kinds: [\"query\"] to say so. (warning, fixed)"
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both policies parse with no warnings after the fix, and both use real workspace names. Confidence is not higher because the path-prefix scope cannot be expressed (api/app/admin/stats_GET escapes AUTH-002), and the org_id filter checks presence of a filter, not that it equals the caller's org. I did not evaluate, so the findings are predictions from reading the workspace."
+}

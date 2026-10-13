@@ -1,0 +1,34 @@
+{
+  "goal_id": "G12",
+  "templates_considered": [
+    "CONF-012 confidential_tables_tagged: fits only partially. Could tag tables holding personal fields, but tags for copy control are not defined and the workspace has no tags, so it would not stop prod-to-staging copies.",
+    "CONF-011 sensitive_fields_marked: partial fit for classifying data before any copy; does not stop copies.",
+    "DATA-010 no_pii_in_responses: adjacent (output, not copies); not the ask.",
+    "RET-001 audit_log_protected: adjacent to the access-trail idea; does not check access or approvals.",
+    "AUTH-010/AUTH-050/AUTH-002: about endpoint login and roles, not developer access to production; not a fit.",
+    "CHG-001 endpoints_have_tests: not related to access or environment controls."
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "no check exists"},
+    {"part": "devs can only get into prod through the on-call process", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Policies read object definitions only, per the skill's 'What no check can see' section.",
+    "Developer access to prod is handled by identity/access tooling outside the workspace."
+  ],
+  "workspace_names_used": ["audit_log"],
+  "confusions": [
+    "The skill has a 'What no check can see' list covering runtime data and copies between environments, but no recipe or guidance on what to do when a customer asks to block data copies between environments. I had to answer from the list alone.",
+    "The brief said to check workspace names, but the workspace has no tags on tables (grep found none), so classification-based rules would match nothing until tags are added. Not clear whether the table files show tags in another form."
+  ],
+  "wished_for": [
+    "A short section on how to answer goals that are governance-only (access and data movement) and what to offer instead, so the answer is consistent.",
+    "A check or recipe pointer for 'the change came through an approved process' that is explicitly marked as out of scope, so the reply can cite it."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Neither part of the ask maps to a built-in check: copies between environments and developer access to production are runtime and organisational controls that policies cannot read. Partial classification policies exist but would not stop the behaviour the customer asked about."
+}

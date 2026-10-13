@@ -1,0 +1,51 @@
+{
+  "goal_id": "G01",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): fits the 'without auth' part of the ask directly; its only rule is object.auth_required, so it is the start point",
+    "no_pii_in_responses (DATA-010): covers personal data fields in responses, not 'the full table'; needs field names and the ask is about auth, not field content, so not used",
+    "own_records_only (AUTH-020): covers per-user record scoping, which would address the 'full table even when authed' gap; the ask is only about no-auth, so not used, but flagged in reply",
+    "views_hide_sensitive, table templates: not about endpoints, did not fit",
+    "tables_have_listed_fields, others in Conventions/Testing: did not fit the ask"
+  ],
+  "templates_used": ["endpoints_need_login"],
+  "rules": [
+    {
+      "policy_key": "AUTH-010",
+      "check": "object.auth_required",
+      "params": {"tables": ["invoices"], "except_tags": ["public"]},
+      "covers": "any endpoint that reads or writes the invoices table must require login; the table scope is added because the workspace has no invoices tag and the customer named the invoices table; except_tags public kept from template as the exemption route"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "'returns the full invoices table' as a distinct condition, i.e. an unfiltered read even when logged in", "why": "no check reads whether a query is filtered by owner or org; db.where_constraint_required could be scoped to invoices with field org_id but that is a different requirement than the ask and not added"},
+    {"part": "'nobody ships it, including me at 2am' (enforcement at ship time)", "why": "needs a decision on enforcement: advisory is the template default; blocking would refuse a merge/set-live/push introducing the finding. Left advisory and asked the user rather than deciding"},
+    {"part": "an unauthenticated endpoint that reaches invoices through a function only", "why": "object.auth_required judges endpoints in scope; reach through function is covered by the tables scope, but I did not verify how the engine handles it, so this is a guess"}
+  ],
+  "assumptions": [
+    "The customer's 'endpoint that returns the full invoices table' means an endpoint whose saved auth is none and which reads the invoices table",
+    "invoices is the exact table name (table/invoices.xs)",
+    "The public tag is the platform exemption used by the template; the customer has no public tag vocabulary of their own in the workspace (not verified in tags)",
+    "Expected objects matched on this branch (prediction, not run): invoices/export GET (no auth, reads all invoices) would be flagged; invoices GET (auth users), invoices/{invoice_id} GET (auth users) and payments/charge POST (auth users) should pass"
+  ],
+  "workspace_names_used": [
+    "invoices", "invoice_item", "customers", "payments", "orgs", "users",
+    "api group app", "api/app/invoices/export_GET.xs (query invoices/export)",
+    "api/app/invoices_GET.xs (query invoices)", "api/app/invoices/invoice_id_GET.xs (query invoices/{invoice_id})",
+    "api/app/payments/charge_POST.xs"
+  ],
+  "confusions": [
+    "The template's rule carries except_tags public and the statement must explain it; the skill says the statement is the only intent but did not say whether a template's exemption param should be kept when the request is about one table. I kept it.",
+    "Scope guidance says to scope by tag not name; the workspace has no invoices tag and no tag was asked for, so the table scope is the only available option. The skill says to say so, which I did in the reply, but did not say whether to propose creating a tag. The skill does say to propose such a tag separately.",
+    "The skill's example has a rule scoped by except_tags; no example shows tables plus except_tags together. I assumed it combines as all-must-match, per the scope text.",
+    "Confusion about enforcement for a 'nobody ships it' ask: the skill defaults new policies to advisory, but the customer's words imply blocking. The skill does not say how to pick between them when the user wording implies it; I did not choose blocking."
+  ],
+  "wished_for": [
+    "A worked example of a rule scoped by tables (name-based) with an exemption, and a note on when name scope is acceptable before a tag exists",
+    "A check or recipe for 'query returns the whole table regardless of caller' (no where-filter on an owner or org field) that is distinct from the auth check",
+    "Guidance on mapping 'nobody ships it' to advisory vs blocking, with the blast radius of each for a solo developer"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policy parses clean with no rule warnings and matches the 'without auth' part of the ask; the invoices/export endpoint, which has no auth and reads the whole table, is the exact case the customer described. Confidence is medium, not high, because the policy is advisory (does not block shipping), it cannot check the full-table-when-authed case, and I did not run xano policy evaluate (forbidden in this run), so the predicted match is not confirmed."
+}

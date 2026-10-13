@@ -1,0 +1,51 @@
+{
+  "goal_id": "G12",
+  "templates_considered": [
+    "own_records_only (AUTH-020): about users reaching own records, not environments; didn't fit",
+    "endpoints_need_login (AUTH-010): about login, not dev access to prod; didn't fit",
+    "sensitive_tables_need_login (CONF-010): closest checkable partial for prod-grade tables, but controls endpoint callers, not dev access; didn't fit as the ask",
+    "audit_log_protected (RET-001): restricts writes to approved functions; same pattern as the partial I suggested, but for audit_log only; didn't fit",
+    "one_auth_table (AUTH-050): about login tables; didn't fit",
+    "approved_vendors_only (VND-001): about outbound destinations; didn't fit"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {
+      "part": "production data never ends up in staging",
+      "why": "runtime_data: policies read stored definitions only, never records or data copied between branches/environments/tenants (catalogue 'What no check can see')"
+    },
+    {
+      "part": "devs can only get into prod through the on-call process, not on a whim",
+      "why": "access reviews and change approvals happen outside definitions (catalogue 'What no check can see'); no check reads who can reach the workspace or who approved a change"
+    }
+  ],
+  "assumptions": [
+    "'prod' and 'staging' are branches or environments in Xano; the workspace shows no environment tag or marker",
+    "request_human_approval is an agent-action approval step, not a dev-access gate",
+    "patients, clinical_notes and customers are the tables a team would consider production-grade data (guessed from names and schema)"
+  ],
+  "workspace_names_used": [
+    "approval_requests",
+    "request_human_approval",
+    "tenants",
+    "patients",
+    "clinical_notes",
+    "customers",
+    "audit_log"
+  ],
+  "confusions": [
+    "The skill says to write no policy only when no part is checkable, but the partial-approximation options (table.write_location_restricted, CONF-010) are not clearly 'checkable part' versus 'approximation'. I treated them as approximations and didn't write them without asking.",
+    "The skill covers policies for a workspace with existing policy files; this workspace has no policies/ directory and no policy list, so the 'read the policies that apply' step had nothing to read.",
+    "The 'what no check can see' section is only in the CLI catalogue output, not in kit/catalogue.json. I found it by running the read-only xano policy catalogue command."
+  ],
+  "wished_for": [
+    "A clear 'no policy fits' recipe for requests about access control and environments, with a sentence the assistant can give the customer",
+    "A way to express that a table is production data (an environment tag or branch marker) that a policy could read, if the platform adds one",
+    "Guidance on whether a partial approximation is allowed to be written when the user has not asked for it"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No policy is written, so no policy achieves the goal. I am highly confident that no check can enforce either part: the catalogue explicitly lists data copies between environments and access/approval processes as unseen by any check. I did not run xano policy parse because no policy file was written."
+}

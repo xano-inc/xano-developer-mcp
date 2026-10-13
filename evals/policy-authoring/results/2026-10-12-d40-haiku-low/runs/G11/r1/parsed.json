@@ -1,0 +1,129 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "LOG-010.xs",
+    "SEC-013.xs"
+  ],
+  "policies": [
+    {
+      "file": "LOG-010.xs",
+      "ok": true,
+      "key": "LOG-010",
+      "title": "External calls handle their own failures",
+      "statement": "Every external call sits inside the try block of a try_catch, so a vendor outage, timeout or error reaches error handling instead of hanging or failing the caller. Covers HTTP requests, streams, microservices, lambdas, cloud search, external databases, MCP tools and AI agent runs. The try block only proves the call is guarded: the catch block must still handle the failure, which no check reads.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request",
+              "api.microservice",
+              "api.lambda",
+              "cloud.algolia.request",
+              "cloud.elasticsearch.request",
+              "cloud.aws.opensearch.request",
+              "db.external.postgres.direct_query",
+              "db.external.mysql.direct_query",
+              "db.external.mssql.direct_query",
+              "db.external.oracle.direct_query",
+              "db.external.snowflake.direct_query",
+              "ai.external.mcp.tool.run",
+              "ai.external.mcp.tool.list",
+              "ai.external.mcp.server_details",
+              "ai.agent.run"
+            ],
+            "must_be_inside": [
+              "try_catch.try"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-013.xs",
+      "ok": true,
+      "key": "SEC-013",
+      "title": "External requests time out quickly",
+      "statement": "Every external request times out within 30 seconds, so one slow vendor cannot stall a workspace. Each external request sets its timeout explicitly: a request that omits it is judged at a 10-second default and is reported. A request that needs longer than 30 seconds is split, or its timeout is raised, by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "SEC-013.R1",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request",
+              "api.microservice",
+              "api.lambda"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "min": null,
+            "max": 30,
+            "unit": "seconds",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "SEC-013.R2",
+          "title": "",
+          "check": "statement.param_required",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request",
+              "api.microservice",
+              "api.lambda"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

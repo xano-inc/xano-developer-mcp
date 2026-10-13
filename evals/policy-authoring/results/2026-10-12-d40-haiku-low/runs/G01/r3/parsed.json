@@ -1,0 +1,38 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUTH-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUTH-010.xs",
+      "ok": true,
+      "key": "AUTH-010",
+      "title": "Endpoints that read invoices require authentication",
+      "statement": "Every endpoint that reads the invoices table must require a login. Nothing returns invoices to an anonymous caller, including a temporary or debugging endpoint. An endpoint that is deliberately public cannot read invoices, so none is exempted here; any exemption is the policy owner's decision.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "invoices"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

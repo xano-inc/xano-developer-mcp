@@ -1,0 +1,53 @@
+{
+  "goal_id": "G08",
+  "templates_considered": [
+    "no_secrets_in_code (SEC-012): fits; the ask is 'no hardcoded keys' and it is the template for exactly that",
+    "approved_vendors_only (VND-001): did not fit; the ask is about literal credentials, not destinations",
+    "protect_card_data recipe: not used; it also contains no_secrets_in_code but covers card data the customer did not ask about"
+  ],
+  "templates_used": ["no_secrets_in_code"],
+  "rules": [
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {},
+      "covers": "API keys/tokens written as literals in functions and endpoints (e.g. the pasted Twilio key). Default patterns (all) and default locations (definition, agent_settings). env deliberately not scanned, since env is where the secret belongs."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "Passwords hardcoded in a function or endpoint (generic string literals, not key-shaped)",
+      "why": "no check exists"
+    },
+    {
+      "part": "Confirming that the Twilio key the contractor pasted is gone from the workspace and rotated",
+      "why": "needs runtime/org process (rotation is outside definitions); presence is only visible after evaluation, which I was not allowed to run"
+    },
+    {
+      "part": "Requirement that secrets 'come from environment variables' as a positive rule (every secret must be an $env reference)",
+      "why": "couldn't tell how: literal.credential_shape only forbids recognisable literals; no check requires a value to come from $env"
+    }
+  ],
+  "assumptions": [
+    "The customer wants a blocking-free, advisory policy by default; the template's critical severity kept",
+    "'Twilio key' is matched by the twilio pattern, which the catalogue describes as matching identifiers rather than secrets; I assumed it is useful for the customer's case anyway",
+    "Tags soc2 and pci_dss taken from the template's frameworks list; no workspace tag check was run, so these are metadata only",
+    "Policy key SEC-012 reused from the template; no other policy key exists in the workspace (xano policy list returned none)"
+  ],
+  "workspace_names_used": [],
+  "confusions": [
+    "The skill says to pull the workspace and read endpoints/functions before writing, but this rule names no tables, tags or API groups, so the pull gave nothing I needed; the brief also restricts evaluate, so I could not confirm whether the rule matches anything today.",
+    "The skill's 'params' note says to omit params when the check needs nothing; the template's Fill column says 'nothing', so I wrote params = {} and the parser dropped it on output. Fine, but worth documenting that both forms are equivalent.",
+    "Catalogue description says aws and twilio 'match identifiers rather than secrets', which sits awkwardly with the customer's Twilio key case: it is unclear whether a pasted Twilio API key would be reported or only a Twilio account identifier.",
+    "The check's description says it reports 'secrets written as literal values'; it is unclear how it treats a password string literal assigned to a variable named password. No example in the catalogue covers that case."
+  ],
+  "wished_for": [
+    "A way to express 'secrets come from $env' as a positive requirement, or a catalogue entry naming which literal patterns (passwords, bearer tokens in headers) are covered",
+    "A worked example of literal.credential_shape flagging a Twilio key, with the exact pattern id that fires",
+    "A note in the template table on whether the template's rule set includes generic password literals"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The check reliably catches recognisable key formats (including Twilio, per the catalogue) in definitions. It does not catch generic passwords, and the rule was not evaluated against the workspace, so I cannot say it would fire on the contractor's actual code."
+}

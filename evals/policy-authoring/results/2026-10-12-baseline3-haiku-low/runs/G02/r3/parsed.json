@@ -1,0 +1,139 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "NAMING-001.xs",
+    "NAMING-002.xs",
+    "NAMING-003.xs"
+  ],
+  "policies": [
+    {
+      "file": "NAMING-001.xs",
+      "ok": true,
+      "key": "NAMING-001",
+      "title": "Endpoints are lowercase snake_case",
+      "statement": "Endpoint paths are lowercase snake_case, such as customers/{customer_id} or bank_accounts/link. Flagged, not blocked: if an existing endpoint must keep its path, rename it deliberately, because callers use the URL.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "NAMING-001.R1",
+          "title": "Endpoint path segments are snake_case",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "endpoint_path",
+            "case_style": "snake_case",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "NAMING-002.xs",
+      "ok": true,
+      "key": "NAMING-002",
+      "title": "Tables are plural",
+      "statement": "Table names are plural lowercase words, such as orders, invoice_items or user_addresses. Flagged, not blocked: a table name that does not end in s is reported so the team can decide whether to rename it, since renaming changes every query that uses it.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "NAMING-002.R1",
+          "title": "Table names end in s",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "[a-z][a-z0-9_]*s",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "table"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "NAMING-003.xs",
+      "ok": true,
+      "key": "NAMING-003",
+      "title": "Functions start with the client prefix",
+      "statement": "Every function name starts with this client's prefix, acme_, such as acme_send_invoice_email. Flagged, not blocked: a function without the prefix is reported so the team can rename it, since renaming changes every function.run call that uses it.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "NAMING-003.R1",
+          "title": "Function names start with acme_",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [
+              "acme_"
+            ],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

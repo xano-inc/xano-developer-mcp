@@ -1,0 +1,55 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "RET-002.xs"
+  ],
+  "policies": [
+    {
+      "file": "RET-002.xs",
+      "ok": true,
+      "key": "RET-002",
+      "title": "Retained data has a cleanup task",
+      "statement": "Every table that holds retained personal data carries the `retained` tag and is deleted from by a scheduled task, so personal data is removed once its retention period ends. Covers GDPR storage limitation (no personal data kept longer than 2 years). The task must delete records older than the retention period; this check confirms a scheduled delete exists, not the cutoff it uses.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "RET-002.R1",
+          "title": "",
+          "check": "table.coverage_required",
+          "params": {
+            "table_selector": [],
+            "referenced_by": {
+              "object_kinds": [
+                "task"
+              ],
+              "statements": [
+                "db.del",
+                "db.bulk.delete",
+                "db.truncate",
+                "db.direct_query"
+              ]
+            },
+            "tags": [
+              "retained"
+            ],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RET-002.R1",
+          "text": "tags \"retained\" is on no table on this branch, so it selects nothing."
+        }
+      ]
+    }
+  ]
+}

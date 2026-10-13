@@ -1,0 +1,42 @@
+{
+  "goal_id": "G03",
+  "repeat": 3,
+  "label": "2026-10-12-d40-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "live",
+  "started": "2026-10-13T03:37:04.107Z",
+  "wall_ms": 81129,
+  "duration_ms": 80081,
+  "cost_usd": 0.02349809,
+  "num_turns": 13,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "LOG-001.xs",
+    "PCI-001.xs",
+    "VND-001.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 1,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit && cat kit/policy-templates.md && echo ---- && cat kit/catalogue.json | head -c 60000",
+    "xano workspace pull -d ./workspace 2>&1 | tail -5; ls -R workspace 2>/dev/null | head -100; echo ---; xano policy list 2>&1 | head -40",
+    "ls workspace/table workspace/function workspace/task workspace/workspace; echo ---TABLES; cat workspace/table/*.xs | head -300",
+    "grep -rniE 'card|cvv|pan|pci|stripe|plaid|debug\\.log|datadog|api\\.request|url *=|https?://|tag|ai\\.agent|provider|cvc' workspace --include=*.xs | grep -v '^workspace/table' | head -150",
+    "grep -rniE 'card|cvv|pan\\b|pci|stripe|plaid|debug\\.log|datadog|api\\.request|https?://|tag|ai\\.agent|provider|cvc|bank|ssn|sensitive|mask|util\\.send|env' workspace | grep -v '^workspace/table/payments' | head -200; echo ---TAILTABLES; cat workspace/table/shipments.xs workspace/table/support_tickets.x…",
+    "python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nprint(type(d), list(d.keys()) if isinstance(d,dict) else len(d))\nfor t in d.get('templates',[]):\n    if t.get('id') in ('LOG-001','VND-001','SEC-012','CONF-011') or t.get('key') in ('LOG-001','VND-001','SEC-012','CONF-011'):\n       …",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-d40-haiku-low/G03-r3/out && cat > VND-001.xs <<'EOF'\npolicy \"VND-001\" {\n  title = \"Data only goes to approved vendors\"\n  statement = \"Outbound requests, cloud and email providers and AI model providers …"
+  ],
+  "final_message": "Wrote `out/VND-001.xs`, `out/LOG-001.xs`, `out/PCI-001.xs`, `out/reply.md` and `out/notes.json`; all three policies parse, and confidence that they achieve the stated goal (passing a PCI audit) is low, since they only cover the three restrictions by field name, destination host and logging statement."
+}

@@ -1,0 +1,40 @@
+{
+  "goal_id": "G01",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: fits. Same intent; the ask is scoped to invoices, so I kept the key and template rule and added tables scope.",
+    "DATA-010 no_pii_in_responses: partial. Concerns fields, not auth; the ask is about the whole table without auth, so not used.",
+    "PERF-001 (in Reliability, no template key in kit): not used. Paging/unbounded read is only a partial reading of 'full table'; the ask is about auth.",
+    "AUTH-020 own_records_only: did not fit. Ask is not about per-user filtering, and the export has no caller context to filter on.",
+    "CONF-010 sensitive_tables_need_login: did not fit. Requires tagged tables; invoices table is not tagged and I may not add tags."
+  ],
+  "templates_used": ["AUTH-010"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"tables": ["invoices"]}, "covers": "Any endpoint that returns or writes invoices must require login; catches invoices/export GET which has no auth"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Endpoint returns the full invoices table (unbounded read) - the 'full table' part, separate from auth", "why": "other"},
+    {"part": "Nobody ships such an endpoint, including the owner at 2am (enforcement is a process, not a definition check)", "why": "needs runtime/org process"},
+    {"part": "Endpoints that are only auth-protected by middleware or by a non-users auth table", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "The 'invoices' table name in the workspace is exactly 'invoices' (confirmed in workspace/table/invoices.xs).",
+    "Endpoints with auth = \"users\" count as requiring login.",
+    "Advisory enforcement is right for a first write, since the ask is 'makes sure' and the skill says to write advisory and leave blocking to the owner.",
+    "No framework was named, so no soc2/cc6.1 tags were added."
+  ],
+  "workspace_names_used": ["invoices", "invoices_GET", "invoices/{invoice_id}", "invoices/export", "users (auth table)", "app (api group)", "orgs", "org_id"],
+  "confusions": [
+    "The skill says a policy file carries no comments, but the template text is not in the kit as a concrete file, so the template's exact statement wording was unavailable; I wrote my own statement.",
+    "Whether a template's rule that is scoped (AUTH-010 with tables) should keep the template title. I changed the title to name invoices, since the template title would be misleading under the scope.",
+    "The skill's 'Use' example for object.auth_required with tables says the tables scope picks endpoints reaching the tables; it is unclear whether an endpoint reaching invoices only through a function is in scope. The check description says 'reaching', so I assumed yes but did not verify."
+  ],
+  "wished_for": [
+    "A worked example of scoping a template to a single table, including whether to keep key/title when the title becomes misleading.",
+    "A way to see, without evaluate, which endpoints object.auth_required would match on the branch (a dry-run listing).",
+    "Clarity on whether paged-vs-unpaged 'return the full table' is in scope of an auth-only ask, in one place."
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The rule is parsed with no warnings and is scoped to the real invoices table, and it should flag invoices/export. But it is advisory and not evaluated, so I have not confirmed which endpoints match. It also does not stop unbounded reads of the table, and enforcement depends on the owner making it blocking."
+}

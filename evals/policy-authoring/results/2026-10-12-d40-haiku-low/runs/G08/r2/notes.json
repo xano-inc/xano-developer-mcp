@@ -1,0 +1,61 @@
+{
+  "goal_id": "G08",
+  "templates_considered": [
+    "SEC-012 no_secrets_in_code: fits directly, the ask is 'no hardcoded keys/passwords'. Used.",
+    "CONV-020/021 tag vocabulary: no tag rule asked for, did not fit",
+    "DATA-010 no_pii_in_responses: about returned fields, not hardcoded secrets, did not fit",
+    "LOG-001 no_sensitive_data_in_logs: about logs, not definitions, did not fit",
+    "SEC-011 tls_verification_on: about TLS settings, did not fit",
+    "VND-001 approved_vendors_only: about destinations, did not fit"
+  ],
+  "templates_used": ["SEC-012"],
+  "rules": [
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {},
+      "covers": "API keys, tokens and credential literals written into functions and endpoints (default: all patterns, definition and agent_settings locations). Covers the Twilio credential in acme_notify_sms; does not cover generic password strings."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Passwords hardcoded in a function as a plain string (e.g. password = \"...\") with no known credential shape", "why": "no check exists"},
+    {"part": "Confirming a value is read from an environment variable rather than being a literal", "why": "no check exists; the check only detects literal credential shapes"},
+    {"part": "Secrets in a format the built-in patterns do not recognise", "why": "no check exists (template limits say so)"},
+    {"part": "Rotating the exposed Twilio token and setting the env var value", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'Passwords' in the ask means passwords used as credentials, not user login passwords held in table fields (table/users.xs declares a password field; I did not check whether any literal password is written in code)",
+    "Default locations (definition, agent_settings) are what the customer needs; env scanning not added because the ask is about code, not environment values",
+    "No framework named by the customer, so no framework tags added to the policy",
+    "Policy should be advisory and active, per the skill's default for new policies, and the customer did not ask for blocking"
+  ],
+  "workspace_names_used": [
+    "acme_notify_sms",
+    "acme_send_invoice_email",
+    "acme_get_tracking",
+    "acme_sync_shipping_rates",
+    "charge_POST",
+    "issue_refund",
+    "$env.RESEND_API_KEY",
+    "$env.SHIPFAST_API_KEY",
+    "$env.STRIPE_SECRET_KEY",
+    "$env.PLAID_CLIENT_ID",
+    "$env.PLAID_SECRET"
+  ],
+  "confusions": [
+    "The skill says a rule can be written as rule { check = ... } with no params, but the template's rule has no params and the skill's file-format section does not show an example with no params. Inferred from the template and the 'omit params' sentence.",
+    "The catalogue's literal.credential_shape description says env is not scanned by default and the default locations are definition and agent_settings, while the skill catalogue entry lists no defaults. Only the catalogue JSON made this clear; used the default.",
+    "The skill's 'Use:' lines for literal.credential_shape show {} as the whole rule, which fit, but it is not clear whether the template's 'Words' list implies anything about password strings. Passwords appear in the template keywords but the check's patterns do not include a password pattern, so the keyword and the check disagree.",
+    "The skill says to re-read tables/endpoints and to predict which objects a rule should match; for a rule with no params it was unclear how much to predict beyond 'all objects with a literal credential shape'.",
+    "The skill's honesty rules require running xano policy evaluate before reporting findings, but the brief forbids evaluate. Reported the Twilio finding as a prediction only, which the skill allows, but the two instructions conflict on whether a prediction can be stated as a finding."
+  ],
+  "wished_for": [
+    "A recipe or example for a 'no literal secrets' policy that states its exact template rule and what it leaves uncovered (generic passwords)",
+    "A pattern or check that flags plain password string literals assigned to a variable or param, or a clear statement that none exists",
+    "Template keyword list consistency: SEC-012 lists 'password' as a keyword, but the check has no password pattern"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The template's check (literal.credential_shape) is built for exactly this kind of hardcoded credential and does match the Twilio literal in acme_notify_sms by its catalogue description. But it only detects recognisable credential shapes, so a hardcoded password string or an unknown key format would be missed, and the 'must come from env' half of the ask is not checkable. The policy parses cleanly; I have not evaluated it, so the finding is a prediction."
+}

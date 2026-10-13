@@ -1,0 +1,90 @@
+{
+  "goal_id": "G04",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: login rule fits, but needs tags for PHI tables; used the table-scoped form instead",
+    "AUTH-020 own_records_only: no request for per-user record ownership; not used",
+    "AUTH-030 no_self_promotion: no request about role escalation; not used",
+    "AUTH-003 public_endpoints_harmless: no request about public write endpoints; not used",
+    "AUTH-002 admin_endpoints_check_role: no admin-role request; not used",
+    "SEC-014 tokens_expire: session length not in ask; not used",
+    "BIZ-001 writes_check_first: no request about ordering; not used",
+    "AUTH-040 protected_endpoints_run_middleware: no middleware named in workspace; not used",
+    "AUTH-050 one_auth_table: no request; not used",
+    "DATA-010 no_pii_in_responses: fits; used with the health fields",
+    "CONF-010 sensitive_tables_need_login: template needs table_tags and no tag exists; replaced with PHI-010 using object.auth_required tables",
+    "CONF-011 sensitive_fields_marked: fits; used with the health fields",
+    "CONF-012 confidential_tables_tagged: fits; used with phi tag (tag absent from workspace)",
+    "CONF-013 views_hide_sensitive: fits the recipe; not written (no saved views found in pull and not asked)",
+    "LOG-001 no_sensitive_data_in_logs: fits; used as template",
+    "RET-001 audit_log_protected: fits; used as template",
+    "RET-002 retained_data_cleaned_up: retention not in ask; not used",
+    "SEC-012 no_secrets_in_code: not in ask; not used",
+    "VND-001 approved_vendors_only: fits the vendor part of the ask but needs hosts or providers the customer has not given; not written",
+    "SEC-011 tls_verification_on: fits; used as template",
+    "LOG-010 external_calls_handle_errors: not asked; not used",
+    "SEC-013 requests_have_timeout: not asked; not used",
+    "SEC-010 no_destructive_sql: not asked; not used",
+    "LOG-011 middleware_surfaces_errors: not asked; not used",
+    "PERF-001: not in template list; recipe mentions it, not used",
+    "API-010 get_endpoints_only_read: not asked; not used",
+    "VAL-001 inputs_validated: not asked; not used",
+    "RET-010 triggers_write_elsewhere: not asked; not used",
+    "CHG-001 endpoints_have_tests: not asked; not used",
+    "CONV-* conventions: not asked; not used",
+    "Recipe protect_health_data: followed for the parts that need no tag or unknown function; access-record rule not written because log_phi_access does not exist"
+  ],
+  "templates_used": ["DATA-010", "CONF-011", "CONF-012", "LOG-001", "SEC-011", "RET-001"],
+  "rules": [
+    {"policy_key": "PHI-010", "check": "object.auth_required", "params": {"tables": ["patients", "clinical_notes", "appointments"]}, "covers": "Endpoints touching PHI tables require login (custom key, replaces tag-based CONF-010)"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["ssn", "dob", "diagnosis", "insurance_member_id"], "attribute": "sensitive"}, "covers": "Health fields marked sensitive in schema"},
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["ssn", "dob", "diagnosis", "insurance_member_id"], "tag": "phi"}, "covers": "Tables holding health data are tagged (tag does not exist yet; will report patients and clinical_notes)"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["ssn", "dob", "diagnosis", "insurance_member_id"], "object_kinds": ["query"]}, "covers": "Endpoints never return health fields"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "Logs never contain request, user or env data"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "Verified TLS on external requests"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "Audit log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "Only the audit function writes the audit log"},
+    {"policy_key": "PHI-020", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.add", "tables": ["patients", "clinical_notes", "appointments"]}}, "covers": "Creates of PHI rows are audited (custom key)"},
+    {"policy_key": "PHI-020", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["patients", "clinical_notes", "appointments"]}}, "covers": "Edits of PHI rows are audited (custom key)"},
+    {"policy_key": "PHI-020", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["patients", "clinical_notes", "appointments"]}}, "covers": "Patches of PHI rows are audited (custom key)"},
+    {"policy_key": "PHI-020", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["patients", "clinical_notes", "appointments"]}}, "covers": "Deletes of PHI rows are audited (custom key)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Access to PHI is recorded (every read logged)", "why": "no check exists"},
+    {"part": "Approved vendors may receive health data (VND-001)", "why": "needs customer input: hosts or providers the customer approves; not invented"},
+    {"part": "Health data tagged (phi) on tables", "why": "needs workspace change (tag), not done; CONF-012 reports until then"},
+    {"part": "Only clinicians reach patient tables (role check)", "why": "other: no role-check function named in the ask; AUTH-002 needs a function the customer has not identified"},
+    {"part": "People and training, access reviews, backups, encryption at rest, runtime data", "why": "needs runtime/org process"},
+    {"part": "Retention periods for clinical data", "why": "no check reads record age"}
+  ],
+  "assumptions": [
+    "'Patients, appointments, clinical notes' are the tables patients, appointments, clinical_notes",
+    "Health-data fields are ssn, dob, diagnosis, insurance_member_id (taken from the table schemas; customers.date_of_birth treated as not health data here)",
+    "Audit function is record_audit_event (name taken from audit_log table comment and call sites)",
+    "Policies stay advisory and active, per skill rule for new policies",
+    "Workspace tables carry no tags, so table-name scopes are used instead of tags",
+    "PHI-010 and PHI-020 use custom keys because their rules differ from the templates they resemble"
+  ],
+  "workspace_names_used": [
+    "patients", "clinical_notes", "appointments", "audit_log", "record_audit_event", "ssn", "dob", "diagnosis", "insurance_member_id", "debug.log", "api.request", "stream.from_request", "payments", "card_number", "card_cvv", "customer_id_PATCH", "delete_user_account", "appointments_GET", "patients/{patient_id}", "clinical_notes_POST"
+  ],
+  "confusions": [
+    "The skill says a template fits when its title or rules cover the request; CONF-010 template needs table_tags which the workspace lacks, and the skill's recipe requires tags. No guidance on what to do when the required tag is missing and the customer has not yet decided to add it. I chose table-name scopes (PHI-010) instead.",
+    "Recipe 'Protect health data' lists templates including CONF-010 and VND-001; the recipe prerequisites assume the customer already has a tag and approved vendors. Unclear whether to skip template rules when prerequisites are missing or write them and let them report.",
+    "CONF-012 with a tag that does not exist yet: the skill says never accept a warning that a tag does not exist, but here the tag is the value being required, not referenced. Unclear whether this rule is acceptable before the tag is created. Parse gave no warning.",
+    "Severity: `xano policy parse` text output omits the severity line for CONF-012 (medium), while JSON output keeps severity: medium. Looks like a display quirk; I could not tell if medium is a default that is hidden.",
+    "The skill says RET-001's audit-call rules need when.tables and when.statement; it does not say whether when.statement accepts only one statement per rule. I wrote one rule per statement (db.add, db.edit, db.patch, db.del) which parses, but that is four rules per policy for one concept.",
+    "PHI-020 would find nothing in the current workspace for db.add/db.patch/db.del on these tables; it's coverage for future code. Unclear from the skill whether writing rules that currently match no finding is wanted.",
+    "The 'Where values go' section lists debug.log as a log destination, but the LOG-001 template only checks debug.log; the skill says datadog.log needs adding separately. Not relevant here (no datadog.log in workspace) but the template limits text is the only place this is stated.",
+    "The HIPAA recipe's access-record rule uses object.statement_required with reaching_table_tags, which needs a tag; no non-tag form is described for access recording."
+  ],
+  "wished_for": [
+    "A HIPAA or PHI recipe that works without tags: scope by table names and field names, with a clear statement of which rules need tags and which don't.",
+    "A worked example of the object.statement_required when{} selector with one statement, and whether several statements can share one rule.",
+    "A check or template for 'every read of sensitive tables is logged' (access logging), since it is a core HIPAA requirement.",
+    "Guidance on writing rules whose tag does not exist yet: report until the tag is created, or hold the rule back."
+  ],
+  "parse_attempts": 8,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies parse and cover the parts that are checkable with the workspace's current names (PHI field marking, login on PHI endpoints, output fields, debug logs, TLS, audit log writes). But HIPAA is mostly about access logging, approved vendors, tags and runtime controls, and none of those are covered. The parse only shows validity, not that the rules match the intended objects. I did not run xano policy evaluate (forbidden in this run), so every expected finding is a prediction."
+}

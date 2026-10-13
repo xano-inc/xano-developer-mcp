@@ -1,0 +1,57 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "endpoints_have_tests (CHG-001): fits 'no tests' for endpoints; used as-is",
+    "external_calls_handle_errors (LOG-010): fits 'missing error handling' only for api.request; used as-is",
+    "endpoints_stay_short (CONV-040): fits 'giant functions' but object_kinds is limited to query; did not fit functions, so I wrote a function-kind rule instead",
+    "shallow_nesting (CONV-041): nesting part of 'giant functions'; limited to stacks generally with no kind filter, but I folded nesting into REVIEW-001 to keep one policy for functions",
+    "requests_have_timeout (SEC-013): not in the ask; not used",
+    "no_leftover_code (CONV-050): not in the ask; not used",
+    "inputs_validated (VAL-001): not in the ask; not used",
+    "no_secrets_in_code, no_destructive_sql and the access-control templates: not in the ask; not used"
+  ],
+  "templates_used": ["endpoints_have_tests", "external_calls_handle_errors"],
+  "rules": [
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "no tests: endpoints must be called by a test"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests: protected endpoints need a negative test asserting rejection"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling: external calls must be inside try_catch"},
+    {"policy_key": "REVIEW-001", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["function"]}, "covers": "giant functions: function statement count and nesting depth"},
+    {"policy_key": "REVIEW-001", "check": "object.test_coverage", "params": {"object_kinds": ["function"]}, "covers": "no tests: functions must be called by a test"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "stop juniors breaking prod (process, review and deploy gates)", "why": "no check exists"},
+    {"part": "missing error handling outside external calls (e.g. internal logic, DB calls without try_catch)", "why": "no check exists; statement.containment is limited to listed statements"},
+    {"part": "tests that actually check behaviour rather than merely existing", "why": "no check exists; test.assertion_required only checks anonymous rejection, and object.test_coverage only checks that a test calls the object"},
+    {"part": "giant functions measured in lines", "why": "couldn't tell how; the check counts statements and nesting, not lines, and I picked 30 statements as the limit"}
+  ],
+  "assumptions": [
+    "The customer's 'functions' means Xano function objects, not endpoints.",
+    "30 statements and 3 nesting levels are reasonable limits, borrowed from CONV-040 and CONV-041.",
+    "Advisory enforcement is the right starting point for a new policy, per the skill's guidance.",
+    "The customer wants a single review-style policy for functions rather than one policy per check; I used REVIEW-001 for the two function rules.",
+    "Custom key REVIEW-001 avoids any template prefix collision (REVIEW- is not a template prefix)."
+  ],
+  "workspace_names_used": [
+    "policy-authoring-eval (workspace name)",
+    "function kind: acme_sync_shipping_rates (looked at for the giant-function case; not evaluated)",
+    "api.request (statement name used in LOG-010)"
+  ],
+  "confusions": [
+    "The skill says to write only names in the catalogue, but stack.size_limit's object_kinds param is not in the catalogue's param list for the check. I used it because the skill's scope section says every check accepts object_kinds, so I'm not certain it's valid for stack.size_limit.",
+    "Templates CHG-001 and CONV-040 hardcode object_kinds to query. The skill says to start from the template and change only what the request asks, but the request ('no tests', 'giant functions') does not say endpoints only. I was unsure whether to widen the template or write a separate rule. I kept the template as-is and added a function rule elsewhere.",
+    "The skill and catalogue don't say how to combine a template-derived policy with a custom one for the same concern (e.g. two policies both about testing). I avoided duplicating rules but could not confirm the duplicate check would not flag it.",
+    "xano policy parse -f summary output omitted the severity line for the medium-severity policies (LOG-010, REVIEW-001) but showed it for the low one (CHG-001). The -o json output shows severity medium as stored, so the summary view appears to hide it. Not blocking, but confusing when checking the file.",
+    "The brief says to read the policies/ directory for workspace conventions, but the workspace has no policies/ directory and no policies, so there were no conventions to follow."
+  ],
+  "wished_for": [
+    "A recipe for the common code-review complaints (error handling, tests, function size), mapped to checks, so authors don't have to assemble them from templates.",
+    "A check or template for error handling in internal logic, not only external calls.",
+    "A check that flags tests with no meaningful assertion, or at least a documented limit on what object.test_coverage proves.",
+    "Clarification on whether object_kinds is a valid scope param for every check, including stack.size_limit.",
+    "A note in the skill on how to combine a template-derived policy with a custom one covering the same concern without tripping policy_duplicate."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The three policies parse, and cover the three named review complaints partly: tests for endpoints and functions, external-call error handling, and function size. But the customer's goal is 'stop juniors breaking prod', which no check measures, and the policies are advisory and unrun, so I haven't seen which objects fail. Error handling and test quality are only partly covered, and the size limit is statement-based rather than line-based."
+}

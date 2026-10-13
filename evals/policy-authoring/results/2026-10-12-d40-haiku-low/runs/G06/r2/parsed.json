@@ -1,0 +1,126 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "CHG-001.xs",
+    "CONV-040.xs",
+    "LOG-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "CHG-001.xs",
+      "ok": true,
+      "key": "CHG-001",
+      "title": "Endpoints and functions are tested",
+      "statement": "Every endpoint and function is exercised by a workflow test or unit test that asserts something, and every protected endpoint has a test asserting that an anonymous call is rejected. Advisory: a finding lists the endpoint or function with no such test.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CHG-001.R1",
+          "title": "",
+          "check": "object.test_coverage",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CHG-001.R2",
+          "title": "",
+          "check": "test.assertion_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONV-040.xs",
+      "ok": true,
+      "key": "CONV-040",
+      "title": "Endpoints and functions stay short",
+      "statement": "Every endpoint and function holds at most 30 statements and 3 levels of nesting. A function that is too long is split into named functions it calls, and nesting is flattened with early returns or preconditions. Advisory: a finding lists an object over either limit.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CONV-040.R1",
+          "title": "",
+          "check": "stack.size_limit",
+          "params": {
+            "max_statements": 30,
+            "max_nesting": 3,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "LOG-010.xs",
+      "ok": true,
+      "key": "LOG-010",
+      "title": "External calls handle their own failures",
+      "statement": "Every external request sits inside a try block, so a vendor failure reaches error handling instead of reaching the caller unhandled. Advisory: a finding lists an api.request outside a try block. It confirms the try block is there, not that the catch handles the failure.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-010.R1",
+          "title": "Requests sit inside a try_catch",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request"
+            ],
+            "must_be_inside": [
+              "try_catch"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

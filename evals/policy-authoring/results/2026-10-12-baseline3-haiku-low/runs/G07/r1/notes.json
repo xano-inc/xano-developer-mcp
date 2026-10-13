@@ -1,0 +1,50 @@
+{
+  "goal_id": "G07",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): fits the access part of the ask; object.auth_required with except_tags public matches the workspace's public-tagged endpoints (health_GET, login_POST, subscribe_POST).",
+    "endpoints_have_tests (CHG-001): fits change testing; the template scopes object.test_coverage to object_kinds query, which I read as endpoints, and it adds test.assertion_required.",
+    "audit_log_protected (RET-001): fits audit trail evidence; audit_log table and record_audit_event function both exist in the workspace.",
+    "no_secrets_in_code, sensitive_tables_need_login, sensitive_fields_marked, confidential_tables_tagged, tables_classified (CONV-023): did not fit. No table tags exist in the workspace, so tag-based rules would fail on every table and are not evidence of change control or access review.",
+    "tables_have_listed_fields, owner_team_tagged, agreed_tag_vocabulary: did not fit; tags are not part of the ask and the workspace has none to check against.",
+    "approved_vendors_only, no_pii_in_responses, writes_check_first, admin_endpoints_check_role: considered as possible access-control evidence; did not fit the ask (vendor, data output and ordering rules, not change control or access reviews). admin_endpoints_check_role would need a function name I could not confirm."
+  ],
+  "templates_used": ["endpoints_need_login", "endpoints_have_tests", "audit_log_protected"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "access control: endpoints require login (partial evidence for access, not reviews)"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "change control: endpoints are tested"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "change control: protected endpoints have a rejected-anonymous-call test"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit trail: audit log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "audit trail: only the audit function writes the log"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "access reviews (periodic review of who has access, with sign-off)", "why": "no check exists"},
+    {"part": "change approvals (who approved a change before it went live)", "why": "no check exists; it is a process or PR-tool concern"},
+    {"part": "evidence that every data change is audited", "why": "couldn't tell how; RET-001 checks writer location, not coverage of every write"},
+    {"part": "evidence the controls are actually operating over time (the auditor wants history)", "why": "needs runtime/org process; policies record only the latest evaluation"},
+    {"part": "data classification as an access-control input", "why": "no table tags in workspace; would fail everywhere"}
+  ],
+  "assumptions": [
+    "The auditor's 'change controls' means evidence that changes are tested and audited, not an approval workflow.",
+    "'Access reviews' is a human process; the closest product items are auth on endpoints and approval_requests with reviewer_id, neither of which proves a review happened.",
+    "Endpoints in the catalogue correspond to inventory kind 'query' for object_kinds.",
+    "Criterion tags cc6.1, cc7.2 and cc8.1 are the SOC 2 criteria I mapped to; they are my mapping, not platform-provided.",
+    "public tag on the three public endpoints is intended as the exemption; I did not confirm with an owner."
+  ],
+  "workspace_names_used": ["audit_log", "record_audit_event", "approval_requests", "reviewer_id", "customer_id_PATCH", "delete_user_account", "public", "health_GET", "login_POST", "subscribe_POST", "users"],
+  "confusions": [
+    "CHG-001 template scopes to object_kinds query while its title says 'Endpoints'; not obvious whether query is the endpoint kind in the policy vocabulary. I kept the template value.",
+    "Template frameworks give soc2 as a label but no criterion ids; I had to pick cc6.1, cc7.2, cc8.1 myself and the skill does not say whether criterion tags are expected to be real SOC 2 ids.",
+    "Parse output printed a reformatted copy of the file rather than only validation; unclear whether parse warnings about unknown names would appear there (none appeared).",
+    "Working directory changed mid-session when I ran a command in workspace/; I used absolute paths after that."
+  ],
+  "wished_for": [
+    "A catalogue or mapping from SOC 2 criteria (CC6.x, CC7.x, CC8.x) to templates, marking which criteria have no check at all (access reviews, change approvals).",
+    "A recipe for 'evidence the control ran over time': how to show history from repeated evaluations, since a policy only reports the current state.",
+    "An example policy for an approval or reviewer rule, or guidance that such processes are out of scope, stated up front in the templates doc.",
+    "Guidance on whether a template's scope for test coverage (query only) should be widened to all endpoints when the title says endpoints."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies genuinely produce technical evidence for auth on endpoints, test coverage and audit-log write restriction, which is part of change control and access control. But the ask is about access reviews and change controls as processes, and no check covers reviews or approvals. The policy results show only current state, not history an auditor would want. So they support the ask partly, and the reply says so."
+}

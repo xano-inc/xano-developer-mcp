@@ -1,0 +1,43 @@
+{
+  "goal_id": "G10",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): covers endpoint login, not agent tools; no fit",
+    "public_endpoints_harmless (AUTH-003): stack.statement_forbidden on endpoints only; shape matches the delete rule but its title and scope are for public endpoints; no fit",
+    "no_destructive_sql (SEC-010): stack.statement_forbidden for db.truncate and db.direct_query; covers truncation, not record deletes; no fit",
+    "writes_check_first (BIZ-001): stack.statement_order for permission checks before writes on endpoints; close in mechanism, wrong object kind and wrong guard; no fit",
+    "object.statement_required-based templates (admin_endpoints_check_role AUTH-002): require a role check on endpoints; no fit",
+    "no_leftover_code, tokens_expire, others: unrelated"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "AGENT-010", "check": "stack.statement_forbidden", "params": {"statements": ["db.del", "db.bulk.delete", "db.truncate"], "object_kinds": ["tool"]}, "covers": "agents can't delete anything (db.del in delete_customer_note; function-level deletes via called functions)"},
+    {"policy_key": "AGENT-010", "check": "stack.statement_order", "params": {"before": {"functions": ["request_human_approval"]}, "after": ["util.send_email"], "object_kinds": ["tool"]}, "covers": "agents can't email customers without a human approval first (send_customer_email)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "agents shouldn't call tools that were not explicitly given to them", "why": "no check exists"},
+    {"part": "approval is real (a person approved), not just called first", "why": "needs runtime/org process; request_human_approval enforces it at runtime, the policy only checks ordering"},
+    {"part": "email sent by routes other than util.send_email (api.request to a provider, email from functions)", "why": "couldn't tell how; no check follows that as an approval-gated send"}
+  ],
+  "assumptions": [
+    "tool-level rules are the right scope; the customer's agent tools are the only agent-reachable objects in this workspace",
+    "util.send_email is the email statement name used by send_customer_email",
+    "request_human_approval is the approval function the customer uses (issue_refund already calls it)",
+    "a new policy starts active and advisory per the skill's authoring rules; the customer did not ask for blocking"
+  ],
+  "workspace_names_used": ["ai/agent support_agent", "ai/tool delete_customer_note", "ai/tool send_customer_email", "ai/tool issue_refund", "ai/tool lookup_order", "function request_human_approval", "table customer_notes", "table approval_requests", "table payments"],
+  "confusions": [
+    "The skill says a policy key must not use a template prefix with a number no template has; AGENT- is not a template prefix, so a new key was allowed, but the skill does not say so directly.",
+    "Whether stack.statement_order's before-function must be called in a tool's own stack or may come from a called function is not stated for tools; I assumed the tool's own stack.",
+    "The catalogue has no check on an agent's tools list, but the skill's honesty rules expect every ask part to be named; this was a gap, not a confusion, and the skill gives no guidance on agent tool allowlists.",
+    "The statement_forbidden and statement_order descriptions say agent tools are judged as their own objects, not through the agent; it was unclear whether agent-level tool mappings count as objects for those checks."
+  ],
+  "wished_for": [
+    "A check or scope that reads an agent's tools list (for example, a rule that flags any tool not in an allowlist for an agent).",
+    "An example of an approval-gated send (a statement_order rule with a before function and a send statement) in the templates.",
+    "A recipe for agent tool policies: delete and send rules scoped to object_kinds tool, which the templates do not have."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The delete rule and the approval-before-email ordering rule are checkable and I parsed the file with no rule warnings. Medium, not high, because the approval check verifies ordering only, not that a person approved, and because the tools-allowlist part has no check at all. I have not evaluated the policy, so the predicted findings on delete_customer_note and send_customer_email are unconfirmed."
+}

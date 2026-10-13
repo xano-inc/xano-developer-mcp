@@ -1,0 +1,73 @@
+{
+  "goal_id": "G04",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: fits; used, scoped by tables to patients, clinical_notes, appointments",
+    "CONF-010 sensitive_tables_need_login: fits recipe; used with phi tag, which the workspace does not have yet",
+    "CONF-011 sensitive_fields_marked: fits; used with the health field names",
+    "CONF-012 confidential_tables_tagged: fits; used as tag phi (recipe says same tag as CONF-010), tag does not exist yet",
+    "CONF-013 views_hide_sensitive: fits; used, scoped by tables",
+    "DATA-010 no_pii_in_responses: fits; used, scoped to patients.* fields",
+    "LOG-001 no_sensitive_data_in_logs: fits; used",
+    "RET-001 audit_log_protected: fits; used, audit_log and record_audit_event both exist",
+    "SEC-011 tls_verification_on: generic HIPAA transport control; used",
+    "VND-001 approved_vendors_only: recipe-listed, needs hosts or providers the customer has not given; not written",
+    "RET-002 retention cleanup: needs tags and a retention period the customer has not given; not written",
+    "AUTH-050 single auth table: no clinician/auth-table info; not written",
+    "CONF-013/recipe extra rule object.statement_required reaching phi tables: recipe names log_phi_access, which does not exist; not written"
+  ],
+  "templates_used": ["AUTH-010", "CONF-010", "CONF-011", "CONF-012", "CONF-013", "DATA-010", "LOG-001", "RET-001", "SEC-011"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"tables": ["patients", "clinical_notes", "appointments"]}, "covers": "endpoints touching PHI tables require login"},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["phi"]}, "covers": "endpoints reaching PHI tables require login (depends on phi tag)"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["diagnosis", "note", "ssn", "dob", "insurance_member_id"], "attribute": "sensitive", "tables": ["patients", "clinical_notes"]}, "covers": "health fields marked sensitive"},
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["diagnosis", "ssn", "dob", "insurance_member_id"], "tag": "phi"}, "covers": "health tables are classified"},
+    {"policy_key": "CONF-013", "check": "table.view_hide_required", "params": {"fields": ["diagnosis", "note", "ssn", "dob", "insurance_member_id"], "tables": ["patients", "clinical_notes"]}, "covers": "saved views hide health fields"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["patients.ssn", "patients.dob", "patients.insurance_member_id"]}, "covers": "endpoints do not fetch identifiers and DOB"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth"]}, "covers": "logs never carry request or user data"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit log exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "only the audit function writes audit entries (tamper-evidence)"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "transport encryption verified for external calls"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Record who accesses patient data (access log per read)", "why": "no check exists"},
+    {"part": "Approved vendors that may receive health data (BAA vendors)", "why": "needs runtime/org process"},
+    {"part": "Retention and deletion schedule for health records", "why": "no check exists"},
+    {"part": "Clinician-only access (which auth table / role may reach patients)", "why": "couldn't tell how: no clinician auth table or role in workspace"},
+    {"part": "Staff training, access reviews, BAAs, encryption at rest, backups, pen tests", "why": "needs runtime/org process"},
+    {"part": "Health data returned in clinical_notes responses (diagnosis)", "why": "other: DATA-010 limited to patients fields; diagnosis is needed by clinicians"},
+    {"part": "Patient data in the appointments table (patient_id, reason) not tagged or marked", "why": "other: left for owner to decide whether appointments carries phi"}
+  ],
+  "assumptions": [
+    "phi is the health-data tag, as recipe suggests; no such tag exists yet",
+    "patients.dob, patients.ssn, patients.insurance_member_id, clinical_notes.diagnosis, clinical_notes.note are the PHI fields",
+    "record_audit_event is the only audit writer",
+    "appointments_GET with no auth is a real gap (auth attribute absent in file)",
+    "customers.date_of_birth is not PHI for this policy set (not in patients)",
+    "policies stay advisory, active, as templates say"
+  ],
+  "workspace_names_used": [
+    "patients", "clinical_notes", "appointments", "audit_log", "record_audit_event",
+    "patients.ssn", "patients.dob", "patients.insurance_member_id", "diagnosis", "note", "ssn", "dob", "insurance_member_id",
+    "debug.log", "$input", "$auth", "api.request", "stream.from_request", "verify_peer", "verify_host"
+  ],
+  "parse_attempts": 9,
+  "parse_errors_seen": [],
+  "confusions": [
+    "Recipe says the health tag must match CONF-012's tag, but CONF-012's template tag is 'confidential' and the recipe overrides it to phi; not stated explicitly which governs",
+    "Recipe's extra rule 'objects reaching health tables always record the access' names log_phi_access, a function the workspace lacks. Unclear whether to reuse record_audit_event (which writes change audits, not reads), so I left it out",
+    "Skill says a tag the workspace lacks means the rule judges nothing and to propose it, but for table.tag_required the tag is an output, so CONF-012 still applies; parser gave no warning. Not obvious when the parser warns",
+    "Template DATA-010 params take 'fields' as table.field names; unclear whether dotted patients.ssn is the expected form (parser accepted it without warning)",
+    "I first wrote scope 'tables' outside params in two rule blocks by mistake (my error, caught on review before parsing). The skill says scope params sit at the top level of the rule while the catalogue lists them alongside check params; the skill never shows the exact placement, and I only parsed the params-inside form",
+    "Catalogue lists 'tables' as a scope param on table checks (CONF-011, CONF-013), but it is also the param name for table.view_hide_required; unclear if they behave the same",
+    "Template RET-001 is two checks in one policy; I used two rule blocks with title on each. Unclear whether titles are needed to keep rule ids stable"
+  ],
+  "wished_for": [
+    "A recipe step saying which function to use for read-access logging (no check or template for who viewed a record)",
+    "A worked example of HIPAA-style sensitive-tables scope (tables vs tag) in one place",
+    "A parse warning when a field named in a rule is not in any table in scope",
+    "An example for 'at least one of' vs 'all' with tables scope on table.* checks",
+    "Guidance on whether a tag missing from the workspace should still be written into a rule that requires it (CONF-012)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Policies cover part of the ask: login on PHI endpoints, field marking, tagging, view hiding, no PHI fields in responses, no request data in logs, audit-log protection and TLS. They judge nothing until the phi tag and sensitive marks exist, and nothing has been evaluated. Access logging, vendor approval, retention, clinician-only access and organisational controls have no check. Not a HIPAA compliance claim."
+}

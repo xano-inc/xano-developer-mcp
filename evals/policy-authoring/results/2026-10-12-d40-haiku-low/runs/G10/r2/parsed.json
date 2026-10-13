@@ -1,0 +1,69 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AI-TOOL-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "AI-TOOL-001.xs",
+      "ok": true,
+      "key": "AI-TOOL-001",
+      "title": "AI agent tools can't delete records or email without approval",
+      "statement": "AI agent tools never delete records: no db.del, db.bulk.delete, db.truncate or raw SQL in a tool, or in a function a tool calls. Every tool that sends an email calls request_human_approval before the email, so a person approves it first. A tool that must delete or email is exempted by the policy owner, not by its author.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AI-TOOL-001.R1",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.del",
+              "db.bulk.delete",
+              "db.truncate",
+              "db.direct_query"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AI-TOOL-001.R2",
+          "title": "",
+          "check": "stack.statement_order",
+          "params": {
+            "before": {
+              "functions": [
+                "request_human_approval"
+              ]
+            },
+            "after": [
+              "util.send_email"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

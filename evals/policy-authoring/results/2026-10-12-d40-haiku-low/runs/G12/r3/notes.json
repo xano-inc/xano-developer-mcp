@@ -1,0 +1,36 @@
+{
+  "goal_id": "G12",
+  "templates_considered": [
+    "recipe: Protect health data [HIPAA] - considered for the prod/staging part, didn't fit: its rules cover tagged tables, logs, responses and vendors, not copies between environments; its 'cannot see' list names runtime data and copies between environments",
+    "recipe: Record who changed what - checked, didn't fit: audit is about edits, not environment copies or access approval",
+    "CONF-012 confidential_tables_tagged - partial fit only as an adjacent control, not the ask; not written",
+    "CONF-011 sensitive_fields_marked - partial fit only as an adjacent control, not the ask; not written",
+    "RET-001 audit_log_protected - checked, didn't fit: restricts writes to the audit log, not prod access or data copies",
+    "AUTH-010 endpoints_need_login - checked, didn't fit: login is not on-call approval, and no endpoint-level check reads who may reach prod"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "no check exists"},
+    {"part": "devs can only get into prod through the on-call process", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'prod' and 'staging' are environments or branches outside the object definitions the policies read",
+    "No workspace object encodes which environment is prod or staging (grep of pulled workspace found no staging/on-call references)"
+  ],
+  "workspace_names_used": ["patients", "tenants", "clinical_notes"],
+  "confusions": [
+    "The skill's 'Cannot see' list covers runtime data, copies between environments and access reviews, so the answer was clear, but there is no guidance on what to say when the whole ask is outside policies beyond 'write no file'",
+    "The brief says to write no .xs if no policy fits, but the catalogue has no 'deny' check for environment or branch, so it's unclear whether branch-level checks exist at all; the catalogue lists none",
+    "The workspace branch concept is mentioned in the skill, but policies have no reference to which branch is production; it wasn't clear whether a branch name could be used as a scope"
+  ],
+  "wished_for": [
+    "A short decision guide: 'ask is about who may access or copy data' -> not policy-checkable, with the suggested non-policy controls",
+    "A check or param that scopes or identifies environments/branches (e.g. prod vs staging), or a statement about environment copies, if this matters to enterprise customers",
+    "Clarity on whether an empty out/ with reply is the expected output when no policy fits"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "High confidence that no policy in the catalogue can enforce either half: the skill explicitly lists copies between environments, access reviews and people as not visible to any check. Confidence is in the no-policy conclusion, not in a policy design. No .xs was written, so nothing was parsed."
+}

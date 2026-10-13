@@ -1,0 +1,58 @@
+{
+  "goal_id": "G07",
+  "templates_considered": [
+    "endpoints_need_login: fits access control (AUTH-010), used as-is with except_tags public; workspace has public-tagged endpoints",
+    "admin_endpoints_check_role: fits admin role-check (AUTH-002); template scopes by tag admin, workspace has no admin tag, so scoped by api_groups [admin] instead",
+    "audit_log_protected: fits 'who changed what' audit trail (RET-001); audit_log table and record_audit_event function exist in workspace",
+    "endpoints_have_tests: partial fit for change management (CHG-001); checks tests exist, not that changes are approved",
+    "retained_data_cleaned_up: did not fit; no retention ask",
+    "no_pii_in_responses / sensitive_* / no_sensitive_data_in_logs: did not fit the ask (not about change control or access reviews)",
+    "own_records_only / no_self_promotion: considered for access; not included, since the ask is review evidence not per-record authorization",
+    "one_auth_table: considered for access; not included, workspace has several auth tables (users, customers); not sure whether that is intended",
+    "writes_check_first / public_endpoints_harmless / get_endpoints_only_read: did not fit"
+  ],
+  "templates_used": ["endpoints_need_login", "admin_endpoints_check_role", "audit_log_protected", "endpoints_have_tests"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "access: endpoints need login (template as-is)"},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["check_admin_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "access: admin endpoints check role first (template tags changed to api_groups)"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "change trail: audit table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "change trail: only audit function writes audit log"},
+    {"policy_key": "AUDIT-TRAIL-COVERAGE", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "users"]}}, "covers": "change trail: edits to customers/users call audit function"},
+    {"policy_key": "AUDIT-TRAIL-COVERAGE", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "users"]}}, "covers": "change trail: patches of customers/users call audit function"},
+    {"policy_key": "AUDIT-TRAIL-COVERAGE", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "users"]}}, "covers": "change trail: deletes from customers/users call audit function"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "change control: endpoints have tests (weak evidence)"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "change control: tests assert anonymous calls rejected (params none)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "access reviews (periodic review of who can reach the workspace and remove access)", "why": "needs runtime/org process"},
+    {"part": "change approvals (someone other than the author approved the change before release)", "why": "no check exists"},
+    {"part": "evidence that a review or approval happened (records, dates, sign-off)", "why": "needs runtime/org process"},
+    {"part": "who can edit the workspace definitions (team membership, roles in Xano)", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "customers and users are the tables whose changes must be audited (customers is in workspace; users table exists); other tables not audited",
+    "admin API group (canonical admin) is the admin surface; app/admin/stats lives in app group and is not covered by AUTH-002",
+    "check_admin_role is the role-check function name (exists in workspace)",
+    "CC6.1/CC6.3/CC8.1 are the SOC 2 criteria I mapped to; these are my labels, not verified against the auditor's list"
+  ],
+  "workspace_names_used": ["customers", "users", "audit_log", "record_audit_event", "check_admin_role", "admin", "app", "public", "customer_id_PATCH", "delete_user_account", "approval_requests", "health_GET", "login_POST", "subscribe_POST"],
+  "confusions": [
+    "AUTH-002 template fills by tags [admin] but no endpoint has an admin tag; unclear whether to change scope to api_groups or propose the tag. I chose api_groups and flagged it.",
+    "Recipe 'Record who changed what' says extra rules go in one policy with own key, but the skill also says one policy per template; I put RET-001 in its own policy and the extra audit rules in AUDIT-TRAIL-COVERAGE. Unclear if that is the intended split.",
+    "Template key rule: a custom key must not share a template prefix with a number no template has; I used AUDIT-TRAIL-COVERAGE (no hyphen-number), which I assumed is acceptable.",
+    "object.statement_required 'when' takes one statement; to cover edit, patch and delete I needed three rules. Not obvious from the catalogue that a multi-statement list is not allowed in when.",
+    "No guidance on whether 'change control' in a SOC 2 sense should map to tests or to audit trail; the catalogue labels CHG-001 as change management but it only checks tests exist.",
+    "The skill says never claim compliance; the reply needed to explain that without sounding like a refusal, and there is no template text for non-technical customers."
+  ],
+  "wished_for": [
+    "A recipe for 'access review evidence' that says explicitly it cannot be done in policy, with a pointer to what the customer should collect instead",
+    "A template or check for change approval (e.g. a required approval function before a blocking merge), or a clear statement that none exists",
+    "Guidance on mapping SOC 2 criteria to tags, ideally from the platform, so tags are not my guesses",
+    "Confirmation whether when.statement can take a list, or an example of a multi-statement audit rule",
+    "Example of an admin tag convention or how to scope by API group in AUTH-002's template"
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies do cover the parts of change control that exist as workspace definitions (audit trail of edits to customers/users, audit-table write restriction, login and admin role-check on endpoints, and tests). They cannot prove access reviews or change approvals happened, which is the core of the ask. Policies were not evaluated or pushed (forbidden for this task), so I have no observed findings; the outcome of each rule is a prediction from reading the workspace files."
+}

@@ -1,0 +1,33 @@
+{
+  "goal_id": "G13",
+  "templates_considered": [
+    "CONF-010 sensitive_tables_need_login: closest to 'customer data', but it governs which endpoints reach tagged tables, not whether people are trained; no table in the workspace carries a tag, so it would match nothing",
+    "AUTH-010 endpoints_need_login: login-based, says nothing about training",
+    "CONF-012 confidential_tables_tagged: tags tables, not people; would not gate access by training",
+    "CONV-022 owner_team_tagged / CONV-023 tables_classified: tag-presence checks on objects, not people; not relevant to training"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "every team member has completed security awareness training", "why": "no check exists"},
+    {"part": "before they are allowed to touch anything with customer data", "why": "needs runtime/org process: access is granted outside Xano, and no check reads people or their training status"},
+    {"part": "anything with customer data in it (the object side)", "why": "could not tell how: no table or endpoint carries a customer-data tag, and the catalogue has no check that identifies customer data without one"}
+  ],
+  "assumptions": [
+    "'Touching customer data' means reaching tables that hold customer data through Xano endpoints, functions or tasks",
+    "Training status is not stored in the Xano workspace"
+  ],
+  "workspace_names_used": ["customers", "patients", "clinical_notes", "payment_method", "invoices", "audit_log", "customer-data-like tables (no tags present)"],
+  "confusions": [
+    "The brief says to write no .xs file if no policy can do the ask, but the object side (customer-data tables) is partly checkable once tagged; the skill says to cover checkable parts. I judged the training requirement uncheckable, so no file, and I did not write a partial CONF-010 that would match nothing today.",
+    "The skill's template table lists CONF-010 with fill table_tags, but nothing says what to do when the workspace has no tag for the data in question; I had to infer that this means a no-op rule"
+  ],
+  "wished_for": [
+    "A statement in the catalogue or docs on what policies cannot check (people, HR, training records), so a non-technical customer can be told quickly",
+    "Guidance on requests that mix a check-able object side with an uncheckable people side"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "No catalogue check reads people or training records, and the workspace has no customer-data tags to anchor a partial rule. High confidence that no policy here enforces the training requirement. Did not run xano policy evaluate, since no file was written and the brief forbids it."
+}

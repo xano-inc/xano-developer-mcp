@@ -1,0 +1,59 @@
+{
+  "goal_id": "G09",
+  "templates_considered": [
+    "retained_data_cleaned_up (RET-002): fits the 2-year retention half; uses table.coverage_required with tags [\"retained\"]. Used.",
+    "no_pii_in_responses (DATA-010): concerns response fields, not deletion; did not fit.",
+    "sensitive_tables_need_login / confidential_tables_tagged / sensitive_fields_marked (CONF-010/012/011): about access and classification, not deletion; did not fit.",
+    "audit_log_protected (RET-001): about who writes the audit log; did not fit.",
+    "no_destructive_sql (SEC-010): forbids truncate/raw SQL, the opposite of deletion; did not fit.",
+    "own_records_only (AUTH-020) / one_auth_table (AUTH-050): access control; not about erasure; did not fit.",
+    "no_sensitive_data_in_logs (LOG-001): logs only; did not fit."
+  ],
+  "templates_used": ["retained_data_cleaned_up"],
+  "rules": [
+    {
+      "policy_key": "RET-002",
+      "check": "table.coverage_required",
+      "params": {
+        "tags": ["retained"],
+        "referenced_by": {
+          "object_kinds": ["task"],
+          "statements": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"]
+        }
+      },
+      "covers": "Storage limitation: tables holding retained data must be deleted from by a scheduled task. Does not verify the cutoff age, and selects no table until the tables are tagged retained."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "When a user deletes their account, their data is deleted everywhere", "why": "no check exists"},
+    {"part": "Data is not kept longer than 2 years (the age cutoff in the cleanup logic)", "why": "no check exists"},
+    {"part": "Tables holding personal data carry a retained tag", "why": "needs runtime/org process"},
+    {"part": "Which tables count as personal data and how long each should be kept", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The 2-year limit applies to the personal-data tables, and the owner tags them with the tag name retained (the template example).",
+    "A db.bulk.delete in a scheduled task counts as cleanup even if its where clause is not age-based; the check cannot tell."
+  ],
+  "workspace_names_used": [
+    "function delete_user_account", "api/app/account_DELETE (DELETE /account, api_group app)", "function record_audit_event",
+    "task purge_expired_sessions", "task nightly_ticket_summaries", "task retry_failed_webhooks",
+    "table users", "table customers", "table orders", "table sessions", "table support_tickets", "table customer_notes",
+    "table payments", "table patients", "table user_address", "table audit_log",
+    "api group app"
+  ],
+  "confusions": [
+    "The template fill says 'tags' but the parsed output places it as a top-level rule param alongside referenced_by; this is fine, but the skill does not show a worked example for table.coverage_required scope tags, so I inferred it from the catalogue text.",
+    "The skill says a scope param must match an object that exists, but nothing tells me how to express 'every table holding personal data' when no tag exists. The template assumes a tag the workspace does not have.",
+    "The catalogue says a covering task can run only with a repeating schedule that has not ended. The 2-year concern is about records, not schedules, so the check and the requirement only overlap partly; the skill does not say how to phrase that gap in the statement.",
+    "The skill's 'Where values go' and 'Fixing findings' sections are about outputs and fixes; nothing addresses a deletion-completeness requirement across tables."
+  ],
+  "wished_for": [
+    "A check that verifies a delete function removes rows from every table that references the user (a foreign-key walk), or at least that a named function deletes from each tagged table.",
+    "A check on the age of rows used in a delete's where clause (e.g. created_at older than N days), or a parameter on db.bulk.delete that is compared to a retention window.",
+    "A recipe for GDPR storage limitation and erasure that shows how to tag tables and which checks to combine."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The one policy written checks only that a scheduled delete exists for tables tagged retained, and no table carries that tag yet, so it checks nothing today. It does not verify account-deletion completeness or the 2-year cutoff; both are outside the catalogue."
+}

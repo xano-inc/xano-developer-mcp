@@ -1,0 +1,52 @@
+{
+  "goal_id": "G02",
+  "templates_considered": [
+    "CONV-010 functions_snake_case: title fits only the snake_case half of the function ask; it has no prefix rule, so not used",
+    "CONV-012 endpoint_paths_versioned: wants kebab-case and a version segment, which contradicts the customer's snake_case ask; not used",
+    "CONV-011 fields_snake_case: fields were not asked about; not used",
+    "CONV-013 function_arguments_snake_case: arguments were not asked about; not used",
+    "CONV-040/041 size limits and CONV-050 leftover code: not related to the ask; not used"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are lowercase snake_case (URL path segments only)"},
+    {"policy_key": "NAMING-002", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "pattern": "[a-z][a-z0-9_]*s"}, "covers": "tables are plural (approximated as lowercase name ending in s)"},
+    {"policy_key": "NAMING-003", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "prefixes": ["acme_"]}, "covers": "functions start with the client prefix"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoints are lowercase snake_case: endpoint names (query names like getCustomerProfile)", "why": "no check exists; object.naming rejects object_kinds query (the rule warned it selects nothing), so only URL paths are checked"},
+    {"part": "tables are plural", "why": "no plurality check exists; the regex ending-in-s is an approximation that misses irregular plurals and passes singular words ending in s"},
+    {"part": "functions start with the client prefix, for all 12 clients", "why": "needs the client's prefix, which the workspace does not state; only acme_ is visible here, and one policy can list several prefixes but I did not guess the other eleven"}
+  ],
+  "assumptions": [
+    "The client prefix for this workspace is acme_, inferred from five functions named acme_*",
+    "Endpoint paths are the endpoints the customer means by endpoint name; query names are not inspected by object.naming",
+    "Plural means ends in s for this purpose",
+    "Advisory enforcement and low severity fit flag-don't-block; I chose severity low to match the CONV conventions"
+  ],
+  "workspace_names_used": [
+    "acme_calculate_tax, acme_get_tracking, acme_notify_sms, acme_send_invoice_email, acme_sync_shipping_rates (acme_ prefix)",
+    "calculateLateFee, check_admin_role, record_audit_event, request_human_approval, summarize_ticket, delete_user_account (non-prefixed functions)",
+    "payment_method, invoice_item, user_address, audit_log (singular table names); orgs, tenants, sessions, orders (plural)",
+    "bank-accounts/link, shipments/{shipment_id}/track, customers/{customer_id} (endpoint paths)",
+    "getCustomerProfile (query name, not covered by any check)"
+  ],
+  "confusions": [
+    "object.naming with object_kinds query on name_kind object is accepted by the parser but selects nothing for queries; the skill says endpoints are judged through endpoint_path, but the catalogue's object kinds list for naming excludes query, and the skill does not say that query names cannot be checked",
+    "The skill's endpoint naming guidance and the CONV-012 template both talk about endpoint paths but say nothing about snake_case paths; the template is kebab-case, so the customer's ask needed a param change, and I was not sure whether that is a legitimate tweak of a template or a new policy",
+    "No guidance on prefixes for a multi-client setup: is each client workspace its own policy copy, or should one policy list every client prefix?",
+    "I could not tell whether tables plural is meant to be checked at all, since the catalogue has no plurality check"
+  ],
+  "wished_for": [
+    "A plural or singular case option on object.naming, or a template for naming plurals",
+    "A note in the skill that query (endpoint) names are not inspected by object.naming, and the alternative",
+    "A recipe for per-client prefixes across several workspaces, such as one policy per workspace or a shared policy file",
+    "The rule warning for query in object_kinds would be clearer if it said which check selects endpoints by name"
+  ],
+  "parse_attempts": 7,
+  "parse_errors_seen": [
+    "rule warning (not an error): NAMING-001.R2: object_kinds \"query\" is not a kind this check inspects for object.naming; rule removed"
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Tables and functions map cleanly to object.naming and parse without warnings. Endpoint names are not covered at all (only URL paths), tables use an approximate regex, and the function prefix covers only this workspace's acme_ client. I did not run xano policy evaluate (forbidden), so the expected findings are predictions from the files."
+}

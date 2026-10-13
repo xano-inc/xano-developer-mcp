@@ -1,0 +1,57 @@
+{
+  "goal_id": "G05",
+  "templates_considered": [
+    "AUTH-002 admin_endpoints_check_role: fits the role-check half exactly (object.statement_required, functions, first). Used as-is except the template's tags [\"admin\"] is replaced by api_groups [\"admin\"] because the workspace has no admin tag and the admin API group is named.",
+    "AUTH-020 own_records_only: keyword overlap (tenant, scoped, isolation) but its rule is compare_to $auth.id (per-user ownership) and it adds a write rule; the request is an org_id filter on tenants, so it does not fit. Not used; own key chosen.",
+    "AUTH-030 no_self_promotion, AUTH-010 endpoints_need_login, AUTH-050 one_auth_table, DATA-010, CONF-011, CONF-012: considered for the tenants/admin context, none asked for by the request.",
+    "AUTH-003 public_endpoints_harmless, BIZ-001 writes_check_first: considered; BIZ-001 (stack.statement_order) is about checks before writes generally, not the role check specifically; not used.",
+    "RET-001 audit_log_protected: audit log exists in workspace but request did not ask for audit; not used."
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {
+      "policy_key": "AUTH-002",
+      "check": "object.statement_required",
+      "params": {"functions": ["check_admin_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]},
+      "covers": "every endpoint under the admin API group calls the role check first, passing the logged-in user (the 'before doing anything else' part and the role gate call; not what the function decides)"
+    },
+    {
+      "policy_key": "ADMIN-020",
+      "check": "db.where_constraint_required",
+      "params": {"field": "org_id", "table_selector": {"names": ["tenants"]}},
+      "covers": "every read and write of the tenants table, in any endpoint or function, constrains org_id (no compare_to, since the ask names no value)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoints under /admin selected by URL path", "why": "couldn't tell how: scope has no path-prefix param. Covered by api_groups [\"admin\"] instead. /admin/stats lives in the app API group at path admin/stats and is NOT in scope."},
+    {"part": "check that the role is 'admin' or 'support_lead'", "why": "no check reads what a called function decides; the rule only confirms the call is first. The value test lives in check_admin_role's precondition, which I read and which matches the ask, but no policy verifies it."},
+    {"part": "tenants table never touched without org_id filter, across org-wide or cross-org staff needs", "why": "needs runtime/org process: whether any staff action must reach tenants across orgs is a policy owner decision; the rule has no exemption and none was added."},
+    {"part": "filter must equal the caller's org", "why": "couldn't tell how: the ask says 'filtering by org_id' with no value; the check can require a constraint but cannot know the caller's org, so compare_to was left empty. Caller-org ownership needs a field on the staff user (none seen on users table)."}
+  ],
+  "assumptions": [
+    "The admin API group (canonical 'admin', served at /api:admin) is what the customer means by /admin.",
+    "check_admin_role is the role-check function the customer means; it tests role == 'admin' or 'support_lead'.",
+    "'Endpoint' means query-kind objects, as the template used.",
+    "Severity critical for role check (template value), high for tenant filter (my choice; not in the brief).",
+    "Prediction only, not run: admin/tenants_GET (no role check, unfiltered db.query on tenants) and admin/tenants/tenant_id_PATCH (db.get before role check; db.get and db.edit by id with no org_id filter) would be reported. orgs/{org_id}/tenants_GET and users_GET look compliant. Not verified: the brief forbids evaluate."
+  ],
+  "workspace_names_used": ["api_group admin", "function check_admin_role", "table tenants", "field tenants.org_id", "users.role via check_admin_role", "api/admin/tenants_GET.xs", "api/admin/tenants/tenant_id_PATCH.xs", "api/admin/orgs/org_id/tenants_GET.xs", "api/admin/users_GET.xs", "api/app/admin/stats_GET.xs"],
+  "confusions": [
+    "AUTH-002 template uses tags [\"admin\"] in its rule, but the admin API group has no admin tag; the skill says scope by named API groups, so I switched to api_groups. Unclear whether templates should keep their tag example.",
+    "The skill has no path-prefix scope. 'every endpoint under /admin' cannot be expressed exactly; the same URL prefix can exist in another API group (app/admin/stats).",
+    "AUTH-020 keyword list includes 'tenant', but its template rule constrains to $auth.id; no template covers tenant-level org filtering, so I wrote a key of my own. Guidance on when a template's keywords match but its rule doesn't fit would help.",
+    "db.where_constraint_required doc says db.get is judged by its where, but db.get uses field_name/field_value, not a where; unclear whether a db.get by id is judged or skipped, which matters for tenant_id_PATCH.",
+    "Unclear whether compare_to should be the caller's org when the ask says only 'filtering by org_id'.",
+    "Parse gave no warnings, so I could not check that check_admin_role, admin group, tenants and org_id resolve on the branch beyond reading the pulled files."
+  ],
+  "wished_for": [
+    "A path-prefix scope (or an example of mapping URL prefixes to API groups) for 'everything under /admin' requests.",
+    "A template or recipe for tenant/org isolation (org_id filter on a table), separate from owner-scoped AUTH-020.",
+    "An example of a policy with two rules that split role check and table isolation, and a note on whether to put them in one policy or two.",
+    "Clear guidance on db.get in where_constraint_required."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The role-check rule covers the call-first requirement on the admin API group, and the tenant rule covers org_id filtering on tenants. Coverage gaps: URL-path /admin is approximated by API group (misses app/admin/stats), the role value is only read in the function, and the org-value check is missing. Neither policy was evaluated against the workspace or published, so the expected findings are my predictions only."
+}

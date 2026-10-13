@@ -1,0 +1,70 @@
+{
+  "goal_id": "G04",
+  "templates_considered": [
+    "RET-001: audit_log only written by audit function; fits the audit-control part of the ask. Used as-is with its own names.",
+    "AUTH-010 endpoints_need_login: fits the access part, but covers every endpoint; narrowed to PHI tables with a new key HIPAA-010 instead.",
+    "CONF-010 sensitive_tables_need_login: needs a phi table tag that does not exist; not used.",
+    "CONF-011 sensitive_fields_marked: right check, but the ask is PHI tables only; adapted into HIPAA-020 with a tables scope.",
+    "CONF-012 confidential_tables_tagged: needs tags to be added to tables; proposed in reply, not used.",
+    "CONF-013 views_hide_sensitive: no saved-view files found in the pull; not used, not checked further.",
+    "DATA-010 no_pii_in_responses: same idea as HIPAA-030 but the template uses fields without table scoping; I used db.output_fields_forbidden with patients.* names.",
+    "LOG-001 no_sensitive_data_in_logs: right idea; adapted into HIPAA-050 with a tables scope and debug.log only.",
+    "RET-002 retained_data_cleaned_up: needs a retained tag on tables; no tags exist; not used.",
+    "AUTH-020 own_records_only: patients have no owner field to constrain on; did not fit.",
+    "VND-001 approved_vendors_only: needs an approved vendor list from the customer; not used.",
+    "SEC-014 tokens_expire: relevant to automatic logoff, but the token setting is not in a statement I could find; not used.",
+    "SEC-012, CHG-001, CONV-023 and others: outside the PHI ask or need tags; not used."
+  ],
+  "templates_used": ["RET-001"],
+  "rules": [
+    {"policy_key": "HIPAA-010", "check": "object.auth_required", "params": {"tables": ["patients", "appointments", "clinical_notes"]}, "covers": "access control: PHI endpoints require login"},
+    {"policy_key": "HIPAA-020", "check": "table.field_attribute_required", "params": {"field_names": ["ssn", "dob", "insurance_member_id", "address", "phone", "diagnosis", "note"], "attribute": "sensitive", "value": true, "tables": ["patients", "appointments", "clinical_notes"]}, "covers": "PHI identifiers and clinical text marked sensitive"},
+    {"policy_key": "HIPAA-030", "check": "db.output_fields_forbidden", "params": {"fields": ["patients.ssn", "patients.insurance_member_id"], "tables": ["patients"]}, "covers": "minimum necessary: patient reads do not fetch SSN or insurance ID"},
+    {"policy_key": "HIPAA-040", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "tables": ["patients", "appointments", "clinical_notes"]}, "covers": "audit controls: PHI access calls the audit function"},
+    {"policy_key": "HIPAA-050", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input"], "tables": ["patients", "appointments", "clinical_notes"]}, "covers": "no request input (PHI) written to logs"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit controls: the audit log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "audit controls: only the audit function writes audit records"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Role-based access to PHI beyond login (least privilege)", "why": "no check exists"},
+    {"part": "Retention periods and cleanup for PHI", "why": "needs runtime/org process"},
+    {"part": "Encryption at rest and in transit, backups, automatic logoff, emergency access", "why": "needs runtime/org process"},
+    {"part": "Business associate agreements, risk analysis, workforce training, breach notification", "why": "needs runtime/org process"},
+    {"part": "Tagging PHI tables as phi so rules can use tags", "why": "other"},
+    {"part": "Which vendors may receive patient data", "why": "other"},
+    {"part": "Audit log content (who read which PHI) beyond the audit call", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "patients, appointments and clinical_notes are the PHI tables; the customer named them.",
+    "record_audit_event is the audit function; audit_log is the audit table.",
+    "tables scope on object and table checks selects objects that reach the named tables directly or through functions, as the skill describes.",
+    "The sensitive attribute is the one table.field_attribute_required reads with attribute and value true.",
+    "A name-based scope is acceptable now because the workspace has no PHI tags; the customer may add tags later."
+  ],
+  "workspace_names_used": [
+    "patients", "appointments", "clinical_notes", "audit_log", "record_audit_event",
+    "ssn", "dob", "insurance_member_id", "address", "phone", "diagnosis", "note",
+    "patients.ssn", "patients.insurance_member_id", "debug.log", "customer_id_PATCH", "delete_user_account",
+    "appointments_GET", "clinical_notes_POST", "patients/{patient_id}"
+  ],
+  "confusions": [
+    "The skill says to start from a template when one fits, but AUTH-010 fits only if scoped to PHI tables; it was unclear whether to keep the template key with a narrowed scope or use a new key. I used HIPAA-010.",
+    "The skill says scope params go at the top level of params, but nothing says whether they can sit alongside a check's own params in the same params object; parse accepted it, but I could not confirm the rule matches what I intended without evaluate.",
+    "table.field_attribute_required lists field_names+ and field_types+ as 'must set at least one', while the description says if both are set both must match; the '+' marker is ambiguous, so I set only field_names.",
+    "The pulled table files show no sensitive attribute on any field, so I could not tell how a sensitive flag is written in the pulled XanoScript; the attribute check may flag every listed field.",
+    "Tables have no tags in the pull, and the skill says to scope by tag, not name; there is no guidance on what to do when the tag does not yet exist beyond proposing it.",
+    "The 'where values go' guidance covers debug.log but says nothing about whether logging a whole variable (not request input) counts as a leak; I kept HIPAA-050 to request input only.",
+    "No check tells whether an endpoint reads PHI versus writes it, so HIPAA-040 applies the audit call to reads and writes alike; the skill does not say whether that is intended."
+  ],
+  "wished_for": [
+    "A HIPAA or PHI starting bundle (templates for PHI tables, audit calls and minimum-necessary fields) with worked examples of tables scope.",
+    "A recipe for adding a tag to a table and then scoping rules by it, in the workspace-change flow.",
+    "A check that reads whether an endpoint is read-only versus writing, so audit rules can target reads or writes.",
+    "A check for role or least-privilege access to a named table.",
+    "An example of the XanoScript form of a sensitive field, so the pulled files can be checked against the attribute check."
+  ],
+  "parse_attempts": 19,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Six policies parse with no rule warnings, and the PHI-table rules probably flag the real gaps (public appointments endpoint, PHI logging, unaudited PHI access, returned SSN). But HIPAA is mostly outside what a policy can check: encryption, BAAs, training, retention and role-based access are not covered. I did not run policy evaluate, so the findings are predictions. The name-based scopes and the untested sensitive attribute check could also miss or over-match."
+}

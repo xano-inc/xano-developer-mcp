@@ -1,0 +1,113 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "NAMING-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "NAMING-001.xs",
+      "ok": true,
+      "key": "NAMING-001",
+      "title": "Endpoints, tables and functions follow the naming convention",
+      "statement": "Endpoint paths are lowercase snake_case, table names are plural, and function names start with the client prefix acme_. Violations are flagged, never blocked. Renaming changes every URL and call that uses a name, so renames are the owner's decision. An object that must keep its name is exempted by the owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "NAMING-001.R1",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "endpoint_path",
+            "case_style": "snake_case",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "NAMING-001.R2",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [
+              "s"
+            ],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "table"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "NAMING-001.R3",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [
+              "acme_"
+            ],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

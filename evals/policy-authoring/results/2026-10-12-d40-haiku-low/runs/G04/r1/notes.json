@@ -1,0 +1,88 @@
+{
+  "goal_id": "G04",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): used, unscoped, with the template's public exemption",
+    "own_records_only (AUTH-020): did not fit; the ask is about who may read health data, not per-user row ownership, and there is no user_id on patients or clinical_notes",
+    "no_self_promotion (AUTH-030): did not fit; no request input writes a role on health tables. users.role exists, but the ask is not about privilege escalation",
+    "public_endpoints_harmless (AUTH-003): not used; ask did not mention public write endpoints",
+    "admin_endpoints_check_role (AUTH-002): not used; there is an admin area and a check_admin_role function, but the ask does not name admin access to health data",
+    "tokens_expire (SEC-014): not used; no session-length requirement was asked for",
+    "writes_check_first (BIZ-001): not used; not asked",
+    "protected_endpoints_run_middleware (AUTH-040): not used; no middleware exists in the pull and none was named",
+    "one_auth_table (AUTH-050): not used; users is the only auth table and nothing was asked about it",
+    "no_pii_in_responses (DATA-010): used, with fields from patients and clinical_notes",
+    "sensitive_tables_need_login (CONF-010): used with table_tags phi, per the HIPAA recipe. Vacuous until a table carries phi",
+    "sensitive_fields_marked (CONF-011): used with real field names from the health tables",
+    "confidential_tables_tagged (CONF-012): used with tag phi instead of the template example confidential, to match the recipe and CONF-010",
+    "views_hide_sensitive (CONF-013): used, no params",
+    "no_sensitive_data_in_logs (LOG-001): used; filled debug.log and datadog.log with the template's logic",
+    "audit_log_protected (RET-001): used with audit_log and record_audit_event, both found in the workspace",
+    "retained_data_cleaned_up (RET-002): not used; needs a retained tag that does not exist, and the retention age is not checkable",
+    "no_secrets_in_code (SEC-012): not used; no secret was asked about, and pulled endpoints showed none in view",
+    "approved_vendors_only (VND-001): not used; needs approved hosts or providers the customer has not given",
+    "tls_verification_on (SEC-011): used on api.request",
+    "external_calls_handle_errors (LOG-010): not used; not asked",
+    "requests_have_timeout (SEC-013): not used; not asked",
+    "no_destructive_sql (SEC-010): not used; not asked",
+    "middleware_surfaces_errors (LOG-011): not used; no middleware in the pull",
+    "get_endpoints_only_read (API-010): not used; not asked",
+    "inputs_validated (VAL-001): not used; not asked",
+    "triggers_write_elsewhere (RET-010): not used; no triggers in the pull",
+    "endpoints_have_tests (CHG-001): not used; not asked",
+    "functions_snake_case, fields_snake_case, endpoint_paths_versioned, function_arguments_snake_case, agreed_tag_vocabulary, tags_kebab_case, owner_team_tagged, tables_classified, ai_tools_described, endpoints_stay_short, shallow_nesting, no_leftover_code, tables_have_listed_fields (CONV-010..060): not used; conventions were not asked for",
+    "Recipe: Protect health data [HIPAA]: followed. Recipe extra rule (object.statement_required for log_phi_access) not written: no such function exists in the workspace",
+    "Recipe: Protect payment card data: not applicable",
+    "Recipe: Erase and expire personal data [GDPR]: not applicable; GDPR and retention not in the ask",
+    "Recipe: Keep code easy to review: not applicable",
+    "Recipe: Record who changed what [SOC 2, HIPAA]: partly. RET-001 covers write location. The per-endpoint audit call rules were not written; they need when.tables on patients, appointments and clinical_notes and were not asked for explicitly"
+  ],
+  "templates_used": [
+    "endpoints_need_login",
+    "sensitive_tables_need_login",
+    "sensitive_fields_marked",
+    "confidential_tables_tagged",
+    "no_pii_in_responses",
+    "no_sensitive_data_in_logs",
+    "views_hide_sensitive",
+    "tls_verification_on",
+    "audit_log_protected"
+  ],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "patients, appointments, clinical notes endpoints must require login; public endpoints are exempt by tag"},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["phi"]}, "covers": "endpoints reaching health tables require login. Vacuous until a table carries phi"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["ssn", "dob", "diagnosis", "note", "insurance_member_id"], "attribute": "sensitive"}, "covers": "health fields marked sensitive in schema"},
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["ssn", "dob", "diagnosis", "note"], "tag": "phi"}, "covers": "health tables are tagged phi"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["ssn", "dob", "insurance_member_id", "diagnosis"]}, "covers": "endpoints do not fetch health identifiers or diagnoses; sensitive fields also forbidden by default"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log", "datadog.log"], "param_names": ["value", "message", "attributes"], "must_not_reference": ["$input", "$auth"]}, "covers": "logs do not carry request input or logged-in user, which may hold health data"},
+    {"policy_key": "CONF-013", "check": "table.view_hide_required", "params": {}, "covers": "saved views hide sensitive fields such as health data"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "external requests verify TLS, so health data in transit is not exposed to interception"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit log exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "only the audit function writes audit entries"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Record every read of health data (who accessed which patient) - needs an access-log function such as log_phi_access and an object.statement_required rule naming it", "why": "other"},
+    {"part": "Approved vendors that may receive health data (VND-001 hosts or providers)", "why": "needs runtime/org process"},
+    {"part": "Retention period for health records (RET-002 and age of deleted rows)", "why": "no check exists"},
+    {"part": "Health tables tagged phi (patients, appointments, clinical_notes)", "why": "other"},
+    {"part": "Per-endpoint audit calls on edits and deletes of health tables", "why": "other"},
+    {"part": "Staff training, access reviews, business associate agreements, encryption at rest, backups, penetration tests", "why": "needs runtime/org process"}
+  ],
+  "workspace_names_used": [
+    "patients", "appointments", "clinical_notes", "audit_log", "record_audit_event", "users", "orgs",
+    "ssn", "dob", "diagnosis", "note", "insurance_member_id",
+    "debug.log", "datadog.log", "api.request", "public", "app"
+  ],
+  "assumptions": [
+    "The ask covers health data in patients, appointments and clinical_notes and endpoints that touch them, not the whole workspace",
+    "phi is the right tag name for health data, per the recipe. It does not exist in the workspace yet",
+    "The template's default public exemption (except_tags public) is correct for AUTH-010, and the public tag is the workspace's real exemption tag",
+    "ssn, dob, diagnosis, note and insurance_member_id are the health-data fields. Other fields such as email, phone, address and first_name were left out to keep the set to health data; the owner may want them added",
+    "The HIPAA ask is best served by advisory policies that the owner can later make blocking"
+  ],
+  "parse_attempts": 9,
+  "parse_errors_seen": [
+    "CONF-010.R1: table_tags \"phi\" is on no table in this workspace, so no access to it is judged (warning, not an error; the policy parses)"
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "All nine policy files parse and every name they use exists in the workspace, except the phi tag. The policies cover the health-data checks the catalogue supports for these tables: auth, field marking, output, logs, TLS, saved views and the audit log. Two parts of the ask are not covered and are flagged: the phi tag must be added before CONF-010 and CONF-012 judge anything, and there is no access-log function, so reads of health data are not recorded. Vendors, retention and organisational controls are out of reach. I have not run xano policy evaluate, so the predicted findings are unverified."
+}

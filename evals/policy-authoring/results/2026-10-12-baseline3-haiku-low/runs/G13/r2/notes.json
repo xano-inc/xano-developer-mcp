@@ -1,0 +1,39 @@
+{
+  "goal_id": "G13",
+  "templates_considered": [
+    "CONF-010 sensitive_tables_need_login: fits the adjacent part (customer data reached only by logged-in endpoints) but needs tags on customer tables, and none exist; does not cover training",
+    "CONF-012 confidential_tables_tagged: fits the tagging prerequisite; does not cover training",
+    "CONF-011 sensitive_fields_marked: adjacent (sensitive fields); does not cover training",
+    "AUTH-010 endpoints_need_login: adjacent; a login is not training",
+    "CONV-022 owner_team_tagged / CONV-023 tables_classified: tag-based, unrelated to training",
+    "CHG-001 endpoints_have_tests: unrelated to training"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "everyone on the team has completed security awareness training", "why": "no check exists"},
+    {"part": "completed before being allowed to touch customer data", "why": "needs runtime/org process; training status is a person attribute, not a workspace object"},
+    {"part": "touching anything with customer data", "why": "couldn't tell how: no tables are tagged as customer data, so no scope selects them; tagging is a workspace change I was not allowed to make"}
+  ],
+  "assumptions": [
+    "Customer data means the tables under table/ that hold customer, patient, order, payment or user information (customers, orders, invoices, payment_method, customer_notes, clinical_notes, patients, users)",
+    "No training record exists anywhere in the workspace; I searched table/ for training, awareness and certification terms and found nothing"
+  ],
+  "workspace_names_used": [
+    "customers", "orders", "invoices", "payment_method", "customer_notes", "clinical_notes", "patients", "users", "orgs", "audit_log"
+  ],
+  "confusions": [
+    "The skill's honesty and scope rules say to cover every checkable part and name the rest; with no training check, the policy-writing path has nothing to cover, and the brief's 'write no .xs file' path was the only honest result. The skill does not say how to handle a request that is entirely about people rather than objects.",
+    "The catalogue has no check that reads people, roles, memberships or external HR/LMS data, and the guidance does not say so up front. A short list of 'what policies cannot see' would have saved the search.",
+    "The templates doc says to start from a template whose title covers part of the request. 'Users only reach their own records' and 'Sensitive tables are only reached by logged-in endpoints' share words with the ask but do not check training, so I did not use them. Their titles are close enough to mislead a non-technical reader."
+  ],
+  "wished_for": [
+    "A statement in the skill that policies only evaluate workspace objects and cannot check people, memberships or external systems, with a pointer to where such controls belong",
+    "A recipe for a 'customer data' tag convention, so a request about customer-data tables can be turned into a tagging proposal plus the matching rules",
+    "The catalogue's object list showing which tables carry tags before any policy is written"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "High confidence that no policy can enforce training completion: no check reads people or training data, and the workspace has no training field. The reply says so. Confidence is about the 'no policy' decision, not about any policy meeting the goal. The customer-data tagging options are offered as a proposal, not written."
+}

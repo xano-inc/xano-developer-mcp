@@ -1,0 +1,54 @@
+{
+  "goal_id": "G11",
+  "templates_considered": [
+    "SEC-013 requests_have_timeout: fits the timeout part. Its rule uses statement.param_bound, which judges an omitted timeout at its 10s default and so passes it; added statement.param_required to require an explicit value",
+    "LOG-010 external_calls_handle_errors: fits the error-handling part. Its rule lists only api.request; its own limits note says to add the other external statements, so I extended it",
+    "AUTH-010, DATA-010, VND-001, SEC-012, SEC-011: considered for neighbouring concerns; not part of the ask (SEC-012 noted in reply as a finding, not written)",
+    "Recipes: none fit; no recipe covers resilience of external calls"
+  ],
+  "templates_used": ["SEC-013", "LOG-010"],
+  "rules": [
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "every external request has a timeout of 30s or less"},
+    {"policy_key": "SEC-013", "check": "statement.param_required", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda"], "param_names": ["timeout"]}, "covers": "every external request sets its timeout explicitly, so an omitted one is not silently judged at the default"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda", "cloud.algolia.request", "cloud.elasticsearch.request", "cloud.aws.opensearch.request", "db.external.postgres.direct_query", "db.external.mysql.direct_query", "db.external.mssql.direct_query", "db.external.oracle.direct_query", "db.external.snowflake.direct_query", "ai.external.mcp.tool.run", "ai.external.mcp.tool.list", "ai.external.mcp.server_details", "ai.agent.run"], "must_be_inside": ["try_catch.try"]}, "covers": "every external call sits in a try block so a vendor failure reaches error handling"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "the catch block actually handles the failure (fallback, error to caller)", "why": "no check exists"},
+    {"part": "retries are bounded (the retry_failed_webhooks while-loop)", "why": "no check exists"},
+    {"part": "timeouts on ai.external.mcp.*, db.external.*.direct_query and ai.agent.run", "why": "no check exists; these statements take no timeout param"},
+    {"part": "error handling is good in practice, not just present", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'any external API call' includes ai.agent.run (model provider call) and external DB direct queries, so I included them in LOG-010 but they have no timeout rule",
+    "util.send_email was not treated as an external API call",
+    "a 30-second max is the template's value and a reasonable one for this customer; I did not confirm it with the customer",
+    "statement.param_required treats an explicit timeout = 10 as not set (the catalogue says the pull drops it); this edge case is not handled",
+    "the timeout in acme_get_tracking (60) should be flagged; I did not evaluate, only read it"
+  ],
+  "workspace_names_used": [
+    "shipfast (api.shipfast.example) vendor calls in acme_get_tracking, acme_sync_shipping_rates, api/app/shipments/quote",
+    "acme_get_tracking, acme_sync_shipping_rates, acme_notify_sms, retry_failed_webhooks",
+    "api/app/payments/charge, api/app/payments/fraud_check, api/app/bank_accounts/link, ai/tool/issue_refund",
+    "summarize_ticket, nightly_ticket_summaries, api/app/support/chat (ai.agent.run)",
+    "webhook_deliveries table, payments table"
+  ],
+  "confusions": [
+    "SEC-013 template rule uses statement.param_bound alone; its description says an omitted timeout is judged at 10s, so the rule can pass a call with no timeout. The template summary says 'times out within 30 seconds' and doesn't mention that the timeout must be set; I had to infer that statement.param_required was the missing piece",
+    "statement.param_required's description excludes a value equal to the default (timeout = 10) because a pull drops it. Not clear if an explicit timeout = 10 is reported or silently passes",
+    "LOG-010's template limits note says to add other external statements, but the template's rule and the 'Where values go' section differ on whether api.request alone is enough; I extended it",
+    "statement.containment: the catalogue says try_catch means the try branch, and that a try_catch.try name is accepted; the template used plain try_catch. I used try_catch.try to be explicit, unverified whether it differs",
+    "xano policy parse human-readable output drops the severity line, while -o json keeps it; easy to misread the file as lacking severity",
+    "ai.agent.run is not in the templates' external-call list; its inclusion is my judgement"
+  ],
+  "wished_for": [
+    "a template or recipe for 'external calls are resilient': timeout set explicitly and bounded, call inside try, retry bounded",
+    "a note on the SEC-013 template saying the timeout must be explicit, or a second rule shipped with the template",
+    "a check that confirms the catch branch does something (not just exists)",
+    "a check that bounds while-loops that contain external calls",
+    "a worked example combining statement.param_required and statement.param_bound on timeout"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The timeout half is covered by an explicit-set rule plus a max-bound rule, so an omitted timeout is caught. The error-handling half only proves the call is in a try block, not that the failure is handled, and the timeout bound cannot cover AI or external-DB statements. Neither policy was evaluated against the workspace, so the flagged list in the reply is from reading, not from the platform."
+}

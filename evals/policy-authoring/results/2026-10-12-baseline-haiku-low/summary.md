@@ -1,6 +1,6 @@
 # Policy-authoring eval: 2026-10-12-baseline-haiku-low
 
-Model haiku, effort low, kit `baselines/2026-10-12/kit`, 28 runs, rubric v3, scored against workspace 9040.
+Model haiku, effort low, kit `baselines/2026-10-12/kit`, 28 runs, rubric v5, scored against workspace 9040.
 
 **Total 176/202 (87%)** (bonus +18 not counted, penalties -0); policy files parse-clean 58/58; unknown-name warnings 0; cost $0.52; mean wall time 59 s per run.
 
@@ -15,11 +15,11 @@ Model haiku, effort low, kit `baselines/2026-10-12/kit`, 28 runs, rubric v3, sco
 | G07 | 6.0/6 (100%) | 6, 6 | +1, +1 | 0, 0 | 3 (3), 3 (3) | 0, 0 | no, no | low, low | 0.017, 0.018 | 55, 55 |
 | G08 | 5.0/5 (100%) | 5, 5 | +0, +0 | 0, 0 | 1 (1), 1 (1) | 0, 0 | no, no | medium, medium | 0.011, 0.012 | 35, 41 |
 | G09 | 5.0/9 (56%) | 6, 4 | +0, +0 | 0, 0 | 2 (2), 1 (1) | 0, 0 | no, no | low, low | 0.019, 0.016 | 57, 46 |
-| G10 | 6.0/7 (86%) | 6, 6 | +0, +0 | 0, 0 | 2 (2), 2 (2) | 0, 0 | no, no | medium, medium | 0.017, 0.022 | 50, 76 |
+| G10 | 5.0/7 (71%) | 5, 5 | +0, +0 | 0, 0 | 2 (2), 2 (2) | 0, 0 | no, no | medium, medium | 0.017, 0.022 | 50, 76 |
 | G11 | 6.0/6 (100%) | 6, 6 | +1, +1 | 0, 0 | 2 (2), 2 (2) | 0, 0 | no, no | medium, medium | 0.023, 0.021 | 75, 65 |
 | G12 | 6.0/6 (100%) | 6, 6 | +0, +0 | 0, 0 | 0 (0), 0 (0) | 0, 0 | yes (ok), yes (ok) | low, low | 0.013, 0.013 | 48, 39 |
 | G13 | 6.0/6 (100%) | 6, 6 | +0, +0 | 0, 0 | 0 (0), 0 (0) | 0, 0 | yes (ok), yes (ok) | high, high | 0.009, 0.010 | 31, 27 |
-| G14 | 5.0/8 (63%) | 5, 5 | +1, +1 | 0, 0 | 1 (1), 2 (2) | 0, 0 | no, no | low, medium | 0.024, 0.026 | 63, 83 |
+| G14 | 6.0/8 (76%) | 5, 7 | +1, +1 | 0, 0 | 1 (1), 2 (2) | 0, 0 | no, no | low, medium | 0.024, 0.026 | 63, 83 |
 
 ## Per goal
 
@@ -148,8 +148,8 @@ Model haiku, effort low, kit `baselines/2026-10-12/kit`, 28 runs, rubric v3, sco
 
 | Check | Points | r1 | r2 |
 |---|---|---|---|
-| tools_cannot_delete | 3 | 3 | 3 |
-| approval_before_action | 2 | 1 (approval required (statement_required), scoped to tools/tags that exist) | 1 (approval required (statement_required), scoped to tools/tags that exist) |
+| deletes_guarded | 3 | 2 (deletes in tools forbidden outright (stricter than asked)) | 2 (deletes in tools forbidden outright (stricter than asked)) |
+| approval_before_email | 2 | 1 (approval required (statement_required), scoped to tools/tags that exist) | 1 (approval required (statement_required), scoped to tools/tags that exist) |
 | tool_allowlist_not_checkable | 2 | 2 | 2 |
 
 - r1: rules: AGENT-010.R1 stack.statement_forbidden; AGENT-020.R1 object.statement_required
@@ -193,7 +193,7 @@ Model haiku, effort low, kit `baselines/2026-10-12/kit`, 28 runs, rubric v3, sco
 | Check | Points | r1 | r2 |
 |---|---|---|---|
 | ai_not_in_loops | 3 | 3 | 3 |
-| audit_trail | 2 | 0 | 0 |
+| audit_trail | 2 | 0 | 2 |
 | email_tables_tagged | 1 | 0 | 0 |
 | caps_retries_not_checkable | 2 | 2 | 2 |
 | bonus: while_loop_guard | +1 | +1 | +1 |

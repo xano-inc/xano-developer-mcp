@@ -1,0 +1,60 @@
+{
+  "goal_id": "G07",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): fits 'access control' part; used as-is",
+    "admin_endpoints_check_role (AUTH-002): fits role checks for staff; template scope tags [\"admin\"] matches nothing here because no workspace object carries an admin tag, so I scoped by api_groups [\"admin\"] instead and changed functions to check_admin_role (the workspace's real name, template example was require_admin)",
+    "no_self_promotion (AUTH-030): fits 'users can't grant themselves access'; used, but dropped is_admin from fields since the workspace has no such field",
+    "endpoints_have_tests (CHG-001): fits 'change control' only weakly (testing before a change ships, not an approval trail); used as-is",
+    "audit_log_protected (RET-001): fits 'evidence of who changed data'; used with the workspace's audit_log table and record_audit_event function",
+    "own_records_only (AUTH-020): partial fit to access; not used, the ask is about reviews and change control, not per-user data isolation, and it needs field choices I did not want to guess",
+    "one_auth_table (AUTH-050): access-related but not asked for; not used",
+    "no_destructive_sql, functions_snake_case, tables_have_listed_fields, others: no fit to change control or access review"
+  ],
+  "templates_used": ["AUTH-010", "AUTH-002", "AUTH-030", "CHG-001", "RET-001"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "access: only logged-in callers reach app endpoints; public ones are exempt by tag"},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["check_admin_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "access: admin API endpoints must run the role check first, so staff access is gated"},
+    {"policy_key": "AUTH-030", "check": "db.write_from_input_forbidden", "params": {"fields": ["role"]}, "covers": "access: users cannot change their own role from request input"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "change control: each endpoint has a test before it ships"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "change control: those tests assert something"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "change record: the audit log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "change record: only the audit function writes to the audit log"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Access reviews: periodic review that each user's access is still right, with a sign-off", "why": "needs runtime/org process"},
+    {"part": "Evidence that a human approved each change before it went live (change approval trail)", "why": "no check exists"},
+    {"part": "Evidence that the policies were run and results kept for the auditor over time", "why": "needs runtime/org process"},
+    {"part": "Removing access when someone leaves or changes role (access removal)", "why": "needs runtime/org process"},
+    {"part": "Who may change a workspace's code or policies (change permissions)", "why": "no check exists"},
+    {"part": "SOC 2 'change controls' as a whole", "why": "couldn't tell how: the ask is ambiguous, and policies only read stored definitions, so they can show shape, not that a process ran"}
+  ],
+  "assumptions": [
+    "The customer's 'access reviews' means access to the app and admin endpoints, not a periodic review meeting",
+    "Admin endpoints are the four in api_group 'admin' (users_GET, tenants_GET, orgs/org_id/tenants_GET, tenants/tenant_id_PATCH)",
+    "check_admin_role is the role check the admin API is meant to use",
+    "Public endpoints are the three with tags = [\"public\"]: login, health, newsletter subscribe",
+    "audit_log is the audit trail for change; record_audit_event is the function that should write it",
+    "Criterion tags (cc6.1, cc6.2, cc6.3, cc7.2, cc8.1) are my mapping of the SOC 2 Common Criteria; the customer's auditor should confirm the mapping",
+    "The policies are advisory, not blocking, since a new policy should not block anything until the owner decides"
+  ],
+  "workspace_names_used": [
+    "users", "role", "audit_log", "record_audit_event", "check_admin_role", "api_group admin", "tags public", "auth = \"users\"", "function.run check_admin_role", "$auth"
+  ],
+  "confusions": [
+    "AUTH-002 template scopes by tags [\"admin\"], but the admin API endpoints only share an api_group, and no object carries an admin tag; the skill's rule to scope by tag would make this rule match nothing. I used api_groups, which the skill allows, but the template's example and scope disagree with the workspace and the skill did not say which to prefer",
+    "AUTH-030 template lists is_admin and role; the skill says to write only names the workspace has, but the template fields list is a template, and I could not tell if a template field the workspace lacks is an error or just harmless",
+    "CHG-001 is named 'Endpoints are tested', but the customer's ask is change control. The skill does not say how to decide when a template title only partly fits a compliance ask",
+    "Whether to put a SOC 2 criterion in tags is not explained: the skill says to record the criterion as a tag, but tags also decide which policies apply to objects in some checks, and the criterion tags are on policies only",
+    "The skill says a rule warning means it is wrong, but xano policy parse printed no warnings, so I could not confirm the workspace-name warnings it describes; I did not run evaluate, which the brief forbids, so I cannot tell which objects match"
+  ],
+  "wished_for": [
+    "A template or check for periodic access review (with a recorded sign-off), or at least a clear statement that none exists",
+    "A check that a change to an endpoint was approved (or a link to a change-approval object), for the change-control part of SOC 2",
+    "A worked example of mapping a compliance framework (e.g. SOC 2 CC6/CC8) to templates, with the criterion tags",
+    "A note on whether a template's example names (is_admin, require_admin) must be replaced with workspace names, and how to tell when a template scope matches nothing before evaluating"
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The five policies parse (exit 0, no warnings) and cover access to endpoints, admin role checks, self-promotion, endpoint tests and the audit log. But the ask is for SOC 2 evidence of change controls and access reviews, which a policy cannot prove: policies check stored definitions when they run, not that a review or approval happened, and access reviews have no check at all. I did not run xano policy evaluate (forbidden by the brief), so I cannot say which objects pass or fail."
+}

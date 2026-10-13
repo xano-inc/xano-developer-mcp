@@ -1,0 +1,109 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "LOG-010.xs",
+    "SEC-013.xs"
+  ],
+  "policies": [
+    {
+      "file": "LOG-010.xs",
+      "ok": true,
+      "key": "LOG-010",
+      "title": "External calls handle their own failures",
+      "statement": "Every external request must sit inside a try block, so a vendor failure (timeout, outage, error response) reaches error handling in the catch branch instead of hanging or crashing the caller. A call that cannot be wrapped is exempted by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "must_be_inside": [
+              "try_catch"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-013.xs",
+      "ok": true,
+      "key": "SEC-013",
+      "title": "External requests time out quickly",
+      "statement": "Every external request must set a timeout, and that timeout must be 30 seconds or less, so one slow vendor cannot stall the app. A request that legitimately needs longer is exempted by the policy owner, not by raising the timeout here.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "SEC-013.R1",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "min": null,
+            "max": 30,
+            "unit": "seconds",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "SEC-013.R2",
+          "title": "",
+          "check": "statement.param_required",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

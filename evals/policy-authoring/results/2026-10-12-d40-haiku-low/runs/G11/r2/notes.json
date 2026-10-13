@@ -1,0 +1,79 @@
+{
+  "goal_id": "G11",
+  "templates_considered": [
+    "external_calls_handle_errors (LOG-010): fits. Its check (statement.containment, try_catch) covers the error-handling half of the ask. Its statement list is api.request only; I added stream.from_request and webflow.request as the limits text advises.",
+    "requests_have_timeout (SEC-013): fits. Its statement.param_bound rule covers the 30-second cap. Its statement list is api.request, stream.from_request, webflow.request, which I kept.",
+    "no_destructive_sql, middleware_surfaces_errors, get_endpoints_only_read, inputs_validated, triggers_write_elsewhere: no fit, not related to outbound calls.",
+    "AUTH-*, DATA-*, CONF-*, SEC-012 (literal.credential_shape), VND-001 (outbound.vendor_allowlist): no fit for this ask. Noted SEC-012 in the reply because acme_notify_sms has a literal credential in an outbound URL. VND-001 would be relevant to the vendor side but the ask is about timeout and error handling only."
+  ],
+  "templates_used": ["external_calls_handle_errors", "requests_have_timeout"],
+  "rules": [
+    {
+      "policy_key": "LOG-010",
+      "check": "statement.containment",
+      "params": {
+        "statements": ["api.request", "stream.from_request", "webflow.request"],
+        "must_be_inside": ["try_catch"]
+      },
+      "covers": "Every external call sits inside a try block so a vendor failure reaches error handling (the 'some kind of error handling' part, presence only)"
+    },
+    {
+      "policy_key": "SEC-013",
+      "check": "statement.param_bound",
+      "params": {
+        "statements": ["api.request", "stream.from_request", "webflow.request"],
+        "param_names": ["timeout"],
+        "max": 30,
+        "unit": "seconds"
+      },
+      "covers": "Every external call has a timeout no longer than 30 seconds (the 'timeout set' part, upper bound)"
+    },
+    {
+      "policy_key": "SEC-013",
+      "check": "statement.param_required",
+      "params": {
+        "statements": ["api.request", "stream.from_request", "webflow.request"],
+        "param_names": ["timeout"]
+      },
+      "covers": "Every external call sets timeout explicitly. Added because the param_bound rule judges an omitted timeout at its 10-second default and would pass it"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling: that the catch branch actually handles the failure (returns a fallback or a clear error)", "why": "couldn't tell how: the check confirms only the try_catch placement; what the catch does is not readable as a check"},
+    {"part": "external calls made through AI agents, MCP servers and direct DB connections, plus api.microservice, api.lambda and cloud.* requests", "why": "other: I scoped to the three statements the templates and the ask point at; those others have a different timeout or none (ai.external.mcp.* and db.external.* take no timeout)"},
+    {"part": "a vendor being down does not hang the app (the whole-app effect)", "why": "needs runtime/org process: a timeout limits each call, but whether a hung vendor can still exhaust workers or threads is a runtime fact no check reads"}
+  ],
+  "assumptions": [
+    "The customer's 'external API call' means the api.request, stream.from_request and webflow.request statements, the ones the templates name.",
+    "A timeout of 30 seconds is an acceptable cap, from the SEC-013 template's summary, not from the customer.",
+    "Advisory enforcement is the right starting point, per the skill's rule for new policies.",
+    "The pulled workspace reflects the stored definitions (the pull was read-only and I did not evaluate)."
+  ],
+  "workspace_names_used": [
+    "function: acme_get_tracking (try_catch around api.request, timeout = 60)",
+    "function: acme_sync_shipping_rates (api.request inside foreach, no timeout, no try_catch)",
+    "function: acme_notify_sms (api.request, no timeout, no try_catch)",
+    "api endpoint: shipments/quote POST (api.request, no timeout, no try_catch)",
+    "api endpoint: payments/charge POST (api.request, timeout = 20, no try_catch)",
+    "api endpoint: payments/fraud_check POST (api.request, timeout = 15, no try_catch)",
+    "api endpoint: bank-accounts/link POST (api.request, timeout = 20, no try_catch)",
+    "ai tool: issue_refund (api.request, timeout = 20, no try_catch)",
+    "task: retry_failed_webhooks (api.request inside while, no timeout, no try_catch)"
+  ],
+  "confusions": [
+    "The LOG-010 template summary says 'so a vendor failure reaches error handling', which reads as if the check verifies handling. Its limits text says it confirms only the try placement. I wrote the statement to match the limits, not the summary.",
+    "The SEC-013 template's rule uses only max: 30 and does not mention that an omitted timeout passes. The limits text says so, but it is easy to miss. I added a param_required rule to close that gap; the template does not suggest it and I was not sure whether to put it in the same policy or a separate one.",
+    "The skill says one policy per template and extra rules in a policy of your own key. I put the extra param_required rule inside SEC-013 (the template's key) rather than making a new key. The skill's 'add only what the request asks' seemed to allow it, but this is a judgment call.",
+    "xano policy parse (text mode) does not print the severity line, though -o json shows severity medium. I checked with JSON to confirm the value was kept.",
+    "Statement names for stream.from_request and webflow.request come from the skill's statement list and the catalogue; I did not verify webflow.request exists in this workspace (no rule warning was raised)."
+  ],
+  "wished_for": [
+    "A template or recipe for 'every external call has a timeout and error handling' that already includes param_required on timeout, since the bare param_bound rule passes omitted timeouts.",
+    "A note in the LOG-010 template or the check that the catch body is not checked, next to the summary's 'reaches error handling' wording.",
+    "A catalogue list (or a recipe) of which statements take a timeout and which do not, in one place, so the statement list is not assembled from several sections of the skill."
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The two rule families do check what the ask names: a timeout on every external call (with a cap and an explicit-set rule) and a try block around every call. But the error-handling rule checks only that a try block exists, not that the catch handles the failure, and a hang across the app has runtime causes no check reads. Predictions about findings are from reading the pulled code; I did not run xano policy evaluate, which the brief forbids."
+}

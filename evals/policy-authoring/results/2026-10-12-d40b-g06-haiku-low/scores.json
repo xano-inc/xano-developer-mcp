@@ -1,0 +1,350 @@
+{
+  "label": "2026-10-12-d40b-g06-haiku-low",
+  "rubric_version": 5,
+  "workspace_id": "9040",
+  "scored_at": "2026-10-13T04:06:31.143Z",
+  "run": {
+    "label": "2026-10-12-d40b-g06-haiku-low",
+    "model": "haiku",
+    "effort": "low",
+    "kit": "live",
+    "kit_sha256_16": "5f04da9f0ca89039",
+    "repeats": 3,
+    "goals": [
+      "G06"
+    ],
+    "workspace_id": "9040",
+    "instance": "http://localhost:9999",
+    "repo_commit": "bdc11b6d5739c23cc7a86707205eec110363edfb",
+    "claude_version": "2.1.296 (Claude Code)",
+    "started": "2026-10-13T04:04:51.810Z",
+    "ended": "2026-10-13T04:06:24.160Z",
+    "total_cost_usd": 0.07225379
+  },
+  "totals": {
+    "runs": 3,
+    "points": 23,
+    "max": 24,
+    "cost_usd": 0.07225379,
+    "wall_ms_mean": 83642,
+    "policy_files": 15,
+    "parse_ok": 15,
+    "unknown_name_warnings": 0,
+    "bonus_points": 0,
+    "penalty": 0,
+    "pct": 96
+  },
+  "results": [
+    {
+      "goal_id": "G06",
+      "repeat": 1,
+      "points": 8,
+      "max": 8,
+      "pct": 100,
+      "earned": 8,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "external_calls_try_catch",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "LOG-010.R1"
+          ],
+          "desc": "statement.containment api.request inside try_catch (LOG-010)."
+        },
+        {
+          "id": "tests",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CHG-001.R1",
+            "REVIEW-001.R2"
+          ],
+          "desc": "object.test_coverage (CHG-001)."
+        },
+        {
+          "id": "function_size",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_statements covering functions."
+        },
+        {
+          "id": "nesting",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_nesting (CONV-041)."
+        },
+        {
+          "id": "leftover_code",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONV-050.R1",
+            "CONV-050.R2",
+            "CONV-050.R3"
+          ],
+          "desc": "Disabled statements / unused variables / unused inputs (CONV-050)."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "timeouts",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "External calls time out (SEC-013)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 6,
+      "parse_ok": 6,
+      "parse_errors": [],
+      "rules": [
+        "CHG-001.R1 object.test_coverage",
+        "CHG-001.R2 test.assertion_required",
+        "CONV-040.R1 stack.size_limit",
+        "CONV-050.R1 stack.disabled_statement_forbidden",
+        "CONV-050.R2 object.unused_input_forbidden",
+        "CONV-050.R3 stack.unused_variable_forbidden",
+        "LOG-010.R1 statement.containment",
+        "PERF-001.R1 statement.param_bound",
+        "REVIEW-001.R1 object.description_required",
+        "REVIEW-001.R2 object.test_coverage"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.026799440000000004,
+      "wall_ms": 79278,
+      "num_turns": 22,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G06",
+      "repeat": 2,
+      "points": 7,
+      "max": 8,
+      "pct": 88,
+      "earned": 7,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "external_calls_try_catch",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "LOG-010.R1"
+          ],
+          "desc": "statement.containment api.request inside try_catch (LOG-010)."
+        },
+        {
+          "id": "tests",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CHG-001.R1"
+          ],
+          "desc": "object.test_coverage (CHG-001)."
+        },
+        {
+          "id": "function_size",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_statements covering functions."
+        },
+        {
+          "id": "nesting",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_nesting (CONV-041)."
+        },
+        {
+          "id": "leftover_code",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Disabled statements / unused variables / unused inputs (CONV-050)."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "timeouts",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "External calls time out (SEC-013)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "CHG-001.R1 object.test_coverage",
+        "CHG-001.R2 test.assertion_required",
+        "CONV-040.R1 stack.size_limit",
+        "LOG-010.R1 statement.containment"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01886427,
+      "wall_ms": 79310,
+      "num_turns": 14,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G06",
+      "repeat": 3,
+      "points": 8,
+      "max": 8,
+      "pct": 100,
+      "earned": 8,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "external_calls_try_catch",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "LOG-010.R1"
+          ],
+          "desc": "statement.containment api.request inside try_catch (LOG-010)."
+        },
+        {
+          "id": "tests",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CHG-001.R1"
+          ],
+          "desc": "object.test_coverage (CHG-001)."
+        },
+        {
+          "id": "function_size",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_statements covering functions."
+        },
+        {
+          "id": "nesting",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_nesting (CONV-041)."
+        },
+        {
+          "id": "leftover_code",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONV-050.R1",
+            "CONV-050.R2",
+            "CONV-050.R3"
+          ],
+          "desc": "Disabled statements / unused variables / unused inputs (CONV-050)."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "timeouts",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "External calls time out (SEC-013)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 6,
+      "parse_ok": 6,
+      "parse_errors": [],
+      "rules": [
+        "CHG-001.R1 object.test_coverage",
+        "CHG-001.R2 test.assertion_required",
+        "CONV-040.R1 stack.size_limit",
+        "CONV-050.R1 stack.disabled_statement_forbidden",
+        "CONV-050.R2 object.unused_input_forbidden",
+        "CONV-050.R3 stack.unused_variable_forbidden",
+        "LOG-010.R1 statement.containment",
+        "PERF-001.R1 statement.param_bound",
+        "REVIEW-010.R1 object.description_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.02659008,
+      "wall_ms": 92337,
+      "num_turns": 21,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    }
+  ]
+}

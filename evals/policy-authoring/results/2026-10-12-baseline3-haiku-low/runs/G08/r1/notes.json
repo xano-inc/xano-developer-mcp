@@ -1,0 +1,57 @@
+{
+  "goal_id": "G08",
+  "templates_considered": [
+    "no_secrets_in_code (SEC-012): direct fit. Check literal.credential_shape covers API keys, tokens, PEM keys and credentialed URLs in function/endpoint definitions and agent settings.",
+    "no_pii_in_responses (DATA-010): not relevant, it is about response fields.",
+    "no_destructive_sql (SEC-010): not relevant.",
+    "approved_vendors_only (VND-001): adjacent (hardcoded external hosts) but does not address credentials.",
+    "tokens_expire (SEC-014): about login token lifetime, not hardcoded tokens.",
+    "no_sensitive_data_in_logs (LOG-001): about logs, not hardcoded secrets."
+  ],
+  "templates_used": ["no_secrets_in_code"],
+  "rules": [
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {},
+      "covers": "No API keys, tokens, or credential-shaped secrets hardcoded in functions or endpoints (defaults: all patterns, locations definition and agent_settings). Covers the Twilio credential in acme_notify_sms."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "Passwords stored as plain literals with no recognizable credential format (e.g. password = \"...\")",
+      "why": "no check exists"
+    },
+    {
+      "part": "Requirement that secrets come from environment variables specifically, not merely avoid literals",
+      "why": "other: the check flags literal secrets; it does not verify that a $env reference is used in their place. Passing the check means no recognizable literal, not that every secret is read from an env var."
+    },
+    {
+      "part": "Actually removing the existing Twilio key and moving it to an env var",
+      "why": "needs runtime/org process: key rotation and env var setup are the customer's job, and the brief forbids workspace edits."
+    }
+  ],
+  "assumptions": [
+    "The customer's ask 'API keys or passwords' maps to credential-shaped literals; a plain password with no shape is outside the check.",
+    "Function and endpoint are both in scope for the check (object_kinds excludes only api_group and channel).",
+    "Default locations (definition, agent_settings) are what we want; env is not scanned because env is where secrets belong.",
+    "Advisory enforcement is the right starting point for a new policy, per the skill's guidance.",
+    "The contractor's function is acme_notify_sms; its credential is in a URL, matching the url_credentials pattern. The value is not recorded here or in the reply."
+  ],
+  "workspace_names_used": ["acme_notify_sms", "acme_send_invoice_email", "acme_get_tracking"],
+  "confusions": [
+    "The statement field: the template summary says 'API keys, tokens, private keys, encryption keys and credentialed URLs' and the customer said 'passwords'. The check's description does not say whether a password in a URL counts as credentialed; I inferred yes from url_credentials. I first wrote 'passwords' in the statement, then removed it because the check cannot match plain passwords, which made the statement overclaim.",
+    "The check's 'Fix' guidance says a value already in an env var needs no change and narrowing locations is the owner's call. It is unclear whether the statement should tell the owner that env var references are the required form, or only that literals are forbidden.",
+    "parse -o json prints the normalized policy with an empty 'narrative' and 'rationale' and a 'tag' array, while the file format uses 'tags'. Not a problem, but the mapping is not documented in the skill that I could see.",
+    "The template params are empty, so the template gives no hint about which locations or patterns a team would narrow to. I chose to keep defaults."
+  ],
+  "wished_for": [
+    "A short example showing how to state in a policy statement that a secret must come from $env (the check's Fix text says this, but the template and skill do not show a worked statement for it).",
+    "A check or pattern for generic password assignments (identifier named password/passwd/secret with a string literal). Without it, the customer's password case is not covered.",
+    "Guidance on whether a credential inside a URL in a function body is credential_shape (url_credentials) and whether its fingerprint is the right way to exempt known test values."
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The template's check matches recognizable credential literals in functions and endpoints, which covers the Twilio case and the core of the ask. It does not cover plain passwords with no recognizable format, and it cannot verify that secrets are read from env vars rather than just not written as literals. Parse is clean with no warnings. The policy is not yet published or evaluated, so I have not confirmed it flags acme_notify_sms in the live branch."
+}

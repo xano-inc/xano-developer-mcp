@@ -1,0 +1,42 @@
+{
+  "goal_id": "G09",
+  "repeat": 3,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:54:03.633Z",
+  "wall_ms": 74170,
+  "duration_ms": 73110,
+  "cost_usd": 0.02067451,
+  "num_turns": 16,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "ERASURE-010.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 3,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit && cat kit/policy-templates.md && python3 -c \"import json;d=json.load(open('kit/catalogue.json'));print(json.dumps(d,indent=1)[:20000])\"",
+    "xano workspace pull -d ./workspace 2>&1 | tail -20; echo ---; xano policy list 2>&1 | head -40; echo ---; find workspace -type f | head -200",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G09-r3/workspace && cat api/app/account_DELETE.xs function/delete_user_account.xs; echo ----USERS; cat table/users.xs table/sessions.xs table/user_address.xs table/newsletter_subscri…",
+    "grep -rn \"tags\\|table = \\\"users\\\"\\|table = \\\"customers\\\"\\|table = \\\"orgs\\\"\\|created_at\" table/ | head -80; echo ---; grep -rln \"delete\\|retain\\|retention\" . ; echo ---; cat table/customers.xs table/orders.xs table/support_tickets.xs | head -120; echo; cat function/record_audit_event.xs | head -30; e…",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G09-r3 && grep -rln \"verb=DELETE\" workspace/api; grep -rn \"api_group\" workspace/api/app/account_DELETE.xs; python3 -c \"import json;d=json.load(open('kit/catalogue.json'));\nfor t in d…",
+    "python3 -c \"\nimport json;d=json.load(open('kit/catalogue.json'));print(list(d.keys()))\nfor r in d.get('recipes',[]): print(json.dumps(r)[:400])\nfor k in d:\n  if 'blind' in k or 'cannot' in k or 'not' in k: print(k, json.dumps(d[k])[:1500])\n\"",
+    "python3 -c \"\nimport json;d=json.load(open('kit/catalogue.json'));print(json.dumps(d['document'])[:3000])\"",
+    "xano policy parse out/ERASURE-010.xs 2>&1; echo \"exit=$?\"",
+    "xano policy parse out/ERASURE-010.xs 2>&1; echo \"exit=$?\""
+  ],
+  "final_message": "Wrote `out/ERASURE-010.xs` (parses clean, 2 parse runs), `out/reply.md` and `out/notes.json`. Confidence the policy achieves the goal: low. It only checks that `DELETE /account` calls `delete_user_account`; the deletion gaps and the 2-year retention limit are not covered, and I did not run `xano policy evaluate`."
+}

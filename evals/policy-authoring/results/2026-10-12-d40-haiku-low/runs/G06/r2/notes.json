@@ -1,0 +1,62 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "CHG-001 endpoints_have_tests: fits 'no tests'; used, extended object_kinds to include function",
+    "CONV-040 endpoints_stay_short: fits 'giant functions'; used with template limits 30 statements / 3 nesting",
+    "LOG-010 external_calls_handle_errors: partial fit for 'missing error handling'; covers only api.request in try_catch, not error handling generally; used",
+    "PERF-001 reads_are_paged: not asked for; skipped",
+    "CONV-050 no_leftover_code: not asked for; skipped",
+    "CONV-010 / CONV-013 naming templates: not asked for; skipped",
+    "Keep code easy to review recipe: its rules overlap with what was asked, but it also brings naming and paging rules the customer did not ask for; used its templates individually instead of its extra rules",
+    "AUTH-010 / SEC-011 / VND-001 and other access, secrets and integrations templates: no match to the ask; skipped"
+  ],
+  "templates_used": ["CHG-001", "CONV-040", "LOG-010"],
+  "rules": [
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query", "function"]}, "covers": "no tests (endpoints and functions)"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests (protected endpoints must have an anonymous-rejection test)"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant 200 line functions (statements, not lines)"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling, external calls only"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "missing error handling in general (beyond external calls)", "why": "no check exists"},
+    {"part": "external calls other than api.request (stream.from_request, ai.external.mcp.*, db.external.*)", "why": "other"},
+    {"part": "naming, dead code, paging and other conventions", "why": "other"},
+    {"part": "'stop juniors breaking prod' at runtime", "why": "needs runtime/org process"},
+    {"part": "who approved a change (review process)", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'200 line function' maps to stack statements, since the catalogue says lines are roughly statements; 30 statements per template kept as default",
+    "'no tests' means endpoints and functions; tasks and tools left out",
+    "functions are included in CHG-001 and CONV-040 because the customer complains about giant functions",
+    "advisory enforcement is right for a first rollout; blocking is the owner's choice",
+    "severity kept as template defaults (low, low, medium)",
+    "no tags or exemptions needed: workspace has only 'public' and 'smoke' tags, none for exemptions"
+  ],
+  "workspace_names_used": [
+    "function: acme_sync_shipping_rates",
+    "function: acme_get_tracking",
+    "api.request in: acme_get_tracking, acme_sync_shipping_rates, acme_notify_sms, issue_refund, retry_failed_webhooks, quote_POST, fraud_check_POST, charge_POST, link_POST",
+    "workflow_test: health_check, invoices_require_login",
+    "tags: public, smoke"
+  ],
+  "confusions": [
+    "The skill says 'write a new policy with the template's rules'; the 'Keep code easy to review' recipe says 'one policy per template' but also gives one policy with its own key for extra rules. Unclear which applies when only some templates of a recipe fit the ask.",
+    "The template CONV-040 limits (30 statements) were a hint; there is no guidance on picking a limit from a '200 line' complaint. I guessed the template's default.",
+    "LOG-010's template is titled and scoped to api.request, but the limits note says to add other outbound statements. The skill says to cover all of them; it is unclear whether a partial rule counts as coverage. I used the template rule as written and flagged the gap.",
+    "CHG-001 template says 'every endpoint' but its first rule is object_kinds query only. Extending it to function was my call; the skill does not say whether functions should be added to a template.",
+    "The skill says 'Write only names the catalogue and workspace have' and 'tag only if the workspace has it'; no guidance on whether a policy with no tags needs tags for the 'owner' or 'classification' parts of the customer's ask.",
+    "xano policy parse text output omitted the severity line for LOG-010 while it printed it for CHG-001 and CONV-040; the -o json output has severity 'medium'. Looks like a display quirk; recorded as a confusion, not a parse error.",
+    "No check for missing null checks or error handling in functions; the customer's most common review item is not covered and the skill does not offer a fallback."
+  ],
+  "wished_for": [
+    "A recipe for 'code review hygiene' that picks the three or four templates most dev leads ask for, with the statement wording and size limits explained.",
+    "Guidance on mapping 'lines' in a customer's ask to statements, with a worked example of a 200-line function.",
+    "A check or template for generic error handling in functions (not just external calls), or an explicit 'not checkable' entry for it.",
+    "A note on whether a template's rules may be extended to more object kinds, and how to say so in the statement.",
+    "An example of an advisory-first rollout (what to say the owner must decide before making it blocking)."
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three rules are valid and parse cleanly, and they cover tests, function size and external-call error handling, which are the checkable parts of the ask. Confidence is only medium because general error handling, runtime behaviour and the review process are not checkable, and I did not run policy evaluate, so the matches are predictions."
+}

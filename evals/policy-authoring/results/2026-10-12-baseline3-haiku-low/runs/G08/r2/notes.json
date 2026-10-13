@@ -1,0 +1,60 @@
+{
+  "goal_id": "G08",
+  "templates_considered": [
+    "no_secrets_in_code (SEC-012): fits directly. Covers hardcoded API keys, tokens and private keys via literal.credential_shape; the Twilio literal in acme_notify_sms is in scope.",
+    "no_sensitive_data_in_logs (LOG-001): does not fit. The ask is about hardcoded secrets in definitions, not secrets leaking into logs.",
+    "no_pii_in_responses (DATA-010): does not fit. Not about response data.",
+    "approved_vendors_only (VND-001): does not fit. Not about which vendors receive data."
+  ],
+  "templates_used": ["no_secrets_in_code"],
+  "rules": [
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {},
+      "covers": "API keys, tokens, private keys and credentialed URLs written as literals in functions and endpoints (and other definition objects). Template defaults kept: all patterns, definition and agent_settings locations, no scope narrowing, no allowed_secrets."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "Passwords or keys in an unrecognized format typed as literals",
+      "why": "no check exists"
+    },
+    {
+      "part": "Positive requirement that values come from environment variables (not just that literals are absent)",
+      "why": "no check exists; literal.credential_shape only forbids recognized literals and never requires $env references"
+    },
+    {
+      "part": "Remediation of the existing Twilio literal in acme_notify_sms (env var, code change, token rotation)",
+      "why": "other: outside the policy; needs the user to set an env var and rotate the exposed token. Offered as a code change for the user to approve, not made."
+    }
+  ],
+  "assumptions": [
+    "'Function or endpoint' in the ask is the scope the customer cares about; the template's unscoped rule also covers other definition objects, which I judged acceptable and stated in the reply.",
+    "Advisory enforcement is the default for a new policy per the templates guidance; the customer's wish to 'never' allow hardcoded secrets may imply blocking, which I left as a question.",
+    "The Twilio literal in acme_notify_sms is matched by url_credentials and/or twilio patterns; I did not run evaluate, so this is a prediction only.",
+    "The checks pattern set covers Twilio, so no pattern narrowing was needed."
+  ],
+  "workspace_names_used": [
+    "acme_notify_sms (function holding the inline Twilio credential)",
+    "$env.STRIPE_SECRET_KEY, $env.RESEND_API_KEY, $env.SHIPFAST_API_KEY (existing env var usage, cited as good practice)",
+    "policy_authoring_eval (workspace name, not used in the policy)"
+  ],
+  "confusions": [
+    "The template has no tags, but the skill asks to record framework criteria as tags, and the template lists frameworks: [soc2]. Unclear whether to add tags = [\"soc2\"]; I left tags off to match the template exactly.",
+    "The template's statement is a bare summary. The skill says a statement should also say why and how exemptions work. There are no exemptions for this policy, so I kept the summary unchanged and did not add guidance.",
+    "The check's own 'fix' hint says a value already in an environment variable needs no change, and the check cannot tell whether a value came from env. The ask's 'must come from env vars' therefore cannot be expressed as a positive rule. The skill does not say how to handle a requirement that only a forbid-check can partly express.",
+    "The check's description says Twilio matches identifiers (aws and twilio match identifiers rather than secrets). The rule reports the Twilio finding, but the catalogue does not say which pattern will match the inline credentials in acme_notify_sms, which made the prediction less certain.",
+    "Whether a policy file written to out/ is validated against a /policies/ path is unclear. Parse accepted the file in out/ without complaint."
+  ],
+  "wished_for": [
+    "A recipe for requiring env-var use positively (e.g. a check that asserts $env references where a literal would have been), or a statement of what the catalogue cannot express.",
+    "A note that the template's rule is unscoped and applies to every definition object, with a suggested object_kinds narrowing example for 'functions and endpoints only'.",
+    "Guidance on whether to set tags for framework criteria when the template lists frameworks but no tags.",
+    "Guidance on when to recommend blocking versus advisory for a critical template that the customer describes as a hard rule."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The template fits the core ask (no hardcoded API keys or tokens in functions and endpoints) and the parse was clean with no warnings. Confidence is only medium: the check cannot require env vars positively, it only catches recognized credential shapes, and I have not run evaluate, so the Twilio finding is a prediction."
+}

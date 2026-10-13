@@ -1,0 +1,57 @@
+{
+  "goal_id": "G03",
+  "templates_considered": [
+    "LOG-001 no_sensitive_data_in_logs: fits 'cardholder data can't be logged' via debug.log; used as-is",
+    "VND-001 approved_vendors_only: fits 'only Stripe and Plaid'; used, hosts filled",
+    "DATA-010 no_pii_in_responses: relates to what is returned, not stored or logged; did not fit the ask",
+    "CONF-011 sensitive_fields_marked: would mark fields sensitive, not forbid storing them; did not fit",
+    "CONF-012 confidential_tables_tagged: tagging only, does not stop raw storage; did not fit",
+    "CONF-010 sensitive_tables_need_login: login gating only, not storage or logging; did not fit",
+    "RET-002 retained_data_cleaned_up: retention, not raw storage; did not fit"
+  ],
+  "templates_used": ["LOG-001", "VND-001"],
+  "rules": [
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data (arrives as input) must not be logged"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "cardholder/bank data only to Stripe and Plaid"},
+    {"policy_key": "PCI-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv"], "forbidden": true}, "covers": "raw PAN and CVV not stored in schema"},
+    {"policy_key": "PCI-001", "check": "db.write_from_input_forbidden", "params": {"fields": ["card_number", "card_cvv"]}, "covers": "raw PAN and CVV not written from request input"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cardholder data must not be stored raw (only the PAN and CVV are covered; expiry, cardholder name, bank account and routing numbers are not)", "why": "other"},
+    {"part": "encryption, tokenisation, retention, and access to stored data", "why": "no check exists"},
+    {"part": "what is sent to an approved vendor (the payload) and whether the vendor is actually the one used at runtime", "why": "couldn't tell how"},
+    {"part": "logging of values read back from the database or from function results", "why": "no check exists"},
+    {"part": "the PCI audit itself and the compliance claim", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'Stripe and Plaid only' means hosts api.stripe.com and production.plaid.com; sandbox hosts not approved",
+    "'cardholder stuff' means card_number and card_cvv for the rules; other fields left for the customer to decide",
+    "PCI-001 as a key: no template title covers raw-storage prohibition, so a key of our own",
+    "tags = [\"pci-dss\"] as the framework record; no criterion numbers invented",
+    "forbidden: true on table.field_attribute_required reports every selected field, per the param description"
+  ],
+  "workspace_names_used": [
+    "table payments, fields card_number, card_cvv, card_expiry, cardholder_name, bank_account_number, bank_routing_number",
+    "api/app payments/charge (POST), bank-accounts/link (POST), payments/fraud_check (POST)",
+    "function acme_notify_sms, acme_send_invoice_email, acme_sync_shipping_rates",
+    "ai/agent support_agent, ai/tool issue_refund",
+    "hosts api.riskscreen.example, api.stripe.com, production.plaid.com, api.twilio.com (in acme_notify_sms)"
+  ],
+  "confusions": [
+    "table.field_attribute_required lists field_names+ and field_types+ both marked '+'; unclear whether field_names alone satisfies the at-least-one requirement (parse accepted it)",
+    "The skill says a template's rules are used as written, but LOG-001's expression rule reads 'Logs don't contain request, user or secret data' while the ask is only cardholder data; kept the template rule as-is and said so in the reply",
+    "outbound.vendor_allowlist with only hosts set: the catalogue says empty providers reports all providers as not yet reviewed; unclear whether that also flags providers the customer does not use (e.g. the AI model providers in support_agent)",
+    "The skill's 'Fixing findings' and 'Changing the policy' rules apply to a policy I am writing new; unclear whether a new policy's advisory defaults should be stated to a non-technical CTO before publishing",
+    "No check covers 'stored raw' in a general sense; the closest is the schema forbidden flag plus write_from_input, which only cover named fields. The customer must name each field, so the rule quality depends on a list the customer may not have"
+  ],
+  "wished_for": [
+    "A check or param to forbid storing a value class such as PAN (Luhn-valid digit strings) in any text field, not just named fields",
+    "A PCI DSS starter template with the criteria as tags (framework list shows soc2, hipaa, gdpr only)",
+    "An example of a vendor allowlist for a payments-only workspace, with the exact host forms (sandbox vs production)",
+    "Guidance on how to report a secret found in a URL (acme_notify_sms) without quoting it, and whether a secret check is in scope for a PCI-only ask"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The logging and vendor parts are backed by templates that check what the customer asked, but neither has been evaluated against the workspace. The storage rule covers only the two named fields, so it misses the other cardholder fields and any raw PAN written to another field. Other parts (encryption, retention, runtime payloads) are not checkable, so the policies cannot make the audit pass."
+}

@@ -1,0 +1,54 @@
+{
+  "goal_id": "G14",
+  "templates_considered": [
+    "CONF-012 (confidential_tables_tagged): fits the tagging half of the email request; used with its check table.tag_required, tag and field names filled in",
+    "CONF-010 (sensitive_tables_need_login): partial fit for the audit half; template rule is object.tagged_table_access with only table_tags, so I added function record_audit_event and kept the key",
+    "RET-001 (audit_log_protected): considered; it restricts who writes audit_log, which is not what the customer asked (they want changes to customer data recorded)",
+    "AUTH-003 / BIZ-001 / SEC-013 / LOG-010 / SEC-011: considered for retries and external calls; none states a retry or spend limit",
+    "CHG-001, RET-002, SEC-014: not relevant to the ask"
+  ],
+  "templates_used": ["CONF-012", "CONF-010"],
+  "rules": [
+    {"policy_key": "COST-010", "check": "statement.containment", "params": {"statements": ["ai.agent.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI call inside a loop cost $900"},
+    {"policy_key": "COST-020", "check": "statement.containment", "params": {"statements": ["api.request"], "must_not_be_inside": ["while"]}, "covers": "background task retrying forever (proxy: any outbound request inside a while loop)"},
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["email", "requester_email"], "field_types": ["email"], "tag": "pii"}, "covers": "every table that stores customer emails is tracked (tagged)"},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["pii"], "function": "record_audit_event"}, "covers": "who changed what: objects reaching tagged tables call the audit function unconditionally"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Cap on AI spend (a budget or dollar limit)", "why": "no check exists"},
+    {"part": "Background task retries forever: whether a retry loop has an attempt cap or backoff", "why": "couldn't tell how; statement.containment only forbids outbound requests inside a while loop, so bounded retries are also flagged and retries via a task schedule are not seen"},
+    {"part": "Audit records what changed (the changes payload), not just that the audit function is called", "why": "no check exists"},
+    {"part": "Tables get the pii tag", "why": "needs runtime/org process: tags decide which policies apply, and the workspace must not be changed"},
+    {"part": "Who changed what in a write done outside the audit call (e.g. direct db.direct_query)", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "customer emails = email-typed fields named email or requester_email: customers.email, users.email, newsletter_subscribers.email, patients.email, support_tickets.requester_email",
+    "tenants.billing_email is text, not email type, so it is excluded by field_types",
+    "record_audit_event is the audit function (it writes audit_log)",
+    "ai.agent.run is the AI call statement name, as used in nightly_ticket_summaries",
+    "while/for/foreach are valid must_not_be_inside block names (taken from the stack.size_limit description, not from a param enum)",
+    "the customer wants advisory policies; I did not choose blocking"
+  ],
+  "workspace_names_used": ["customers", "users", "newsletter_subscribers", "patients", "support_tickets", "requester_email", "record_audit_event", "audit_log", "ai.agent.run", "api.request", "nightly_ticket_summaries", "retry_failed_webhooks", "webhook_deliveries"],
+  "confusions": [
+    "No check covers cost, spend or loop-bound logic; the catalogue has no loop or retry check, so the cost half of the ask rests on a containment proxy with no guidance from the skill",
+    "The skill lists which block names must_not_be_inside accepts only indirectly (try_catch examples and the stack.size_limit description); no enum or list of block names is given, so I guessed foreach, for and while",
+    "Template CONF-010's title says logged-in endpoints only, but I used it for audit; the template gives no guidance for adding a function param, so I had to decide that myself",
+    "Template CONF-012 has no field_types example and its fill example uses text fields; the email-typed choice was my call",
+    "The skill says tags decide which policies apply but does not say how a tag gets onto a table in the first place; it only says propose it for the user",
+    "object.tagged_table_access forces login on every endpoint reaching a tagged table, which the template title doesn't reflect; the skill should say so for this template",
+    "xano policy parse plain output omits severity when it is medium (the -o json output and the file itself keep it); this looked like a dropped field until I checked"
+  ],
+  "wished_for": [
+    "A cost/loop check, or at least a recipe for bounding AI and retry loops (e.g. max iterations on while, a call-count cap)",
+    "A list of valid block names for must_be_inside / must_not_be_inside",
+    "A template for audit trails that also checks the changes payload",
+    "Guidance on how to tag tables safely (who proposes, how the tag is applied) for the pii case"
+  ],
+  "parse_attempts": 10,
+  "parse_errors_seen": [
+    "Rule warning: CONF-010.R1: table_tags \"pii\" is on no table in this workspace, so no access to it is judged (expected: the tag is not yet applied)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies parse and map to real names, and two cost patterns and the tagging/audit half have checks. But the spend cap and bounded-retry parts aren't checkable; the loop rules are proxies; and I haven't run evaluate, so the predicted findings are unverified."
+}

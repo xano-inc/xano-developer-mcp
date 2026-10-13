@@ -1,0 +1,47 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "ERASURE-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "ERASURE-010.xs",
+      "ok": true,
+      "key": "ERASURE-010",
+      "title": "Account deletion runs the erasure function",
+      "statement": "Every DELETE endpoint must always call delete_user_account, the function that removes a user's personal data. This is part of the right to erasure under GDPR Article 17. The check confirms the call is made; it does not confirm that the function deletes every table holding the user's data. An endpoint that cannot call it must be exempted by the policy owner, not left unchecked.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "ERASURE-010.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "delete_user_account"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [
+              "DELETE"
+            ],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "CONF-010.xs",
+    "CONF-012.xs",
+    "COST-010.xs",
+    "COST-020.xs"
+  ],
+  "policies": [
+    {
+      "file": "CONF-010.xs",
+      "ok": true,
+      "key": "CONF-010",
+      "title": "Sensitive tables are only reached by logged-in endpoints",
+      "statement": "Any endpoint, message handler, AI tool or task that reaches a pii-tagged table, such as one holding customer emails, must call record_audit_event unconditionally in its own stack, so every change to customer data leaves a who-changed-what row in audit_log. Endpoints that reach these tables must also require a login. A call made through another function, or inside a conditional, does not count. Exempting an object is the policy owner's decision.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "CONF-010.R1",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "pii"
+            ],
+            "auth_tables": [],
+            "function": "record_audit_event",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CONF-010.R1",
+          "text": "table_tags \"pii\" is on no table in this workspace, so no access to it is judged."
+        }
+      ]
+    },
+    {
+      "file": "CONF-012.xs",
+      "ok": true,
+      "key": "CONF-012",
+      "title": "Tables holding confidential data are tagged",
+      "statement": "Every table that stores a customer email address carries the pii tag, so the audit and access policies can find it. Tagging is the owner's decision, because tags decide which policies apply. A table whose email field has another name is not covered until its field name is added to field_names by the owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-012.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "email",
+              "requester_email"
+            ],
+            "field_types": [
+              "email"
+            ],
+            "include_sensitive": false,
+            "tag": "pii",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "COST-010.xs",
+      "ok": true,
+      "key": "COST-010",
+      "title": "AI agent calls are not made inside loops",
+      "statement": "An AI agent run must not sit inside a foreach, for or while loop, because one loop can multiply the model bill without a limit. Batch the work, or move the call out of the loop with a stated item cap. An object that must loop over AI calls on purpose is the policy owner's decision: exempt it with the except_tags only after they approve.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "COST-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.agent.run"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "foreach",
+              "for",
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "COST-020.xs",
+      "ok": true,
+      "key": "COST-020",
+      "title": "External calls are not retried inside while loops",
+      "statement": "An outbound request (api.request) must not sit inside a while loop. A retry loop with no attempt cap can run forever and keep billing or hammering a vendor. Retry a bounded number of times with a for loop or a counter, or move the retry into a separate function with a stated limit. Changing a retry loop is a code change the owner approves.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "COST-020.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

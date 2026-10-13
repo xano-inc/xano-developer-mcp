@@ -1,0 +1,70 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "external_calls_handle_errors (LOG-010): fits 'missing error handling', but its rule only checks api.request; used",
+    "endpoints_have_tests (CHG-001): fits 'no tests' for endpoints; used",
+    "endpoints_stay_short (CONV-040): fits '200 line functions'; used, 30 statements / 3 nesting levels",
+    "no_leftover_code (CONV-050): not in the ask literally, part of the code_review_basics recipe; used",
+    "reads_are_paged (PERF-001): not in the ask, part of the code_review_basics recipe; used",
+    "recipe code_review_basics: the goal matches it directly (keywords: code review, error handling, breaking prod, juniors); followed",
+    "table/function templates (AUTH-*, DATA-*, SEC-*, etc.): no match to the ask; not used",
+    "ai_tools_described (CONV-030) / object.description_required: recipe extra rule for functions; used inside REVIEW-001 with its own key"
+  ],
+  "templates_used": ["LOG-010", "CHG-001", "CONV-040", "CONV-050", "PERF-001"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling (external HTTP calls only)"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "no tests (endpoints)"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests (anonymous call rejected test for protected endpoints)"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant 200 line functions"},
+    {"policy_key": "CONV-050", "check": "stack.disabled_statement_forbidden", "params": {}, "covers": "leftover code (not in the ask; recipe default)"},
+    {"policy_key": "CONV-050", "check": "object.unused_input_forbidden", "params": {}, "covers": "leftover code (not in the ask; recipe default)"},
+    {"policy_key": "CONV-050", "check": "stack.unused_variable_forbidden", "params": {}, "covers": "leftover code (not in the ask; recipe default)"},
+    {"policy_key": "PERF-001", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 1000, "unit": "rows", "object_kinds": ["query", "tool"]}, "covers": "unbounded list reads (not in the ask; recipe default)"},
+    {"policy_key": "REVIEW-001", "check": "object.description_required", "params": {"object_kinds": ["function"], "min_length": 20}, "covers": "functions with no description (recipe extra rule)"},
+    {"policy_key": "REVIEW-001", "check": "object.test_coverage", "params": {"object_kinds": ["function"]}, "covers": "no tests for functions (template only covers endpoints)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Junior devs breaking prod: stopping the change from reaching prod", "why": "needs runtime/org process"},
+    {"part": "Blocking merges/pushes; the ask is to stop breakage, but all rules are advisory", "why": "other: the skill says write advisory and leave blocking to the owner; not my call"},
+    {"part": "Error handling for non-HTTP outbound calls (stream.from_request, ai.external.mcp.*, db.external.*.direct_query)", "why": "no check exists in the template; LOG-010 only lists api.request. The workspace has external calls in ai/tool/issue_refund.xs and api/app/payments/charge_POST.xs that go through statements the template does not list; a custom rule could cover them"},
+    {"part": "Error handling that actually handles the failure (what the catch does)", "why": "no check exists; the containment check confirms the try_catch exists, not what happens in the catch"},
+    {"part": "Tests that assert something useful (not just that a test exists)", "why": "no check exists; test.assertion_required only checks an anonymous call is rejected; CHG-001's limits say assertion content is not checked"},
+    {"part": "Tests for endpoints beyond the two smoke tests, and tests of functions other than the description rule", "why": "covered as far as the checks go; the workspace has only two workflow tests (health_check, invoices_require_login), so most endpoints will likely fail CHG-001; the customer should know this before it lands"},
+    {"part": "'Giant functions' in the sense of 200 lines of text, not statements", "why": "couldn't tell how: stack.size_limit counts statements, which the skill calls roughly one per line of logic; a 200-line file of nested statements is not the same count"},
+    {"part": "Code review itself: reviewers' time, PR process, who approved", "why": "needs runtime/org process; policies read stored definitions, not reviews"}
+  ],
+  "assumptions": [
+    "Customer's 'juniors breaking prod' is served by quality rules; the policies do not stop prod breakage directly",
+    "'200 line functions' maps to stack.size_limit at 30 statements (the template default), not a literal line count",
+    "The customer wants advisory policies first; I did not choose blocking",
+    "Workspace functions with 'acme_' prefix and calculateLateFee are real names from function/*.xs",
+    "No tags need to exist; LOG-010, CONV-040, CONV-050, PERF-001 and REVIEW-001 have none; CHG-001 carries tags = [\"soc2\"] from the template's frameworks"
+  ],
+  "workspace_names_used": [
+    "function: acme_calculate_tax, acme_get_tracking, acme_notify_sms, acme_send_invoice_email, acme_sync_shipping_rates, calculateLateFee, check_admin_role, delete_user_account, record_audit_event, request_human_approval, summarize_ticket",
+    "query/endpoint files: api/app/*, api/admin/* (e.g. invoices_GET, payments/charge_POST)",
+    "tool: issue_refund, lookup_order, send_customer_email, delete_customer_note",
+    "task: retry_failed_webhooks, nightly_ticket_summaries, purge_expired_sessions",
+    "workflow_test: health_check, invoices_require_login (tag smoke)",
+    "table: invoices, invoice_item, payments, audit_log, etc. (not used in rules directly)",
+    "db.query per_page: invoices_GET.xs uses $input.per_page with default 25"
+  ],
+  "confusions": [
+    "The recipe 'code_review_basics' lists 5 templates and one extra rule, but the skill also says one policy per template: that produces 6 files for one ask. I followed it, but it is not obvious whether a team wants six policies or one combined policy.",
+    "LOG-010's template covers only api.request; the limits text says to add stream.from_request, ai.external.mcp.* and db.external.*.direct_query to cover every outbound call, but the template rule itself does not include them. I did not change the template's rule, so coverage is narrower than the ask implies.",
+    "CHG-001 template uses object.test_coverage on query only; the recipe's extra rule for functions is not in any template, so I wrote it into REVIEW-001 myself; I was guessing the param shape from the check description.",
+    "The parse summary output (default format) omits the severity line for medium-severity policies (LOG-010, PERF-001), while the -o json output keeps it. This looks like a display quirk, and I could not tell from the skill whether medium is the default and is therefore dropped.",
+    "Template 'Fill' says _nothing_ for most template rules, but the actual template rules include more params than the table shows (e.g. CONV-040 has max_statements and max_nesting, not a fill). Fine, but the skill could say the template values are the rule values.",
+    "The skill says a policy file may carry tags only when the workspace has them or they are proposed; the template frameworks field maps to tags. I put soc2 on CHG-001 without knowing whether the workspace has a soc2 tag. It is an unverified tag, and the skill's rule is unclear on whether framework tags are created or just referenced."
+  ],
+  "wished_for": [
+    "A ready-made 'code review basics' example file set under policies/ so the six-file pattern is copy-able",
+    "A way to see, from the catalogue, which external statements a template rule covers, not only its limits text",
+    "Guidance on whether a policy can cover a set of templates in one file (the recipe's 'one policy per template' vs. one combined policy)",
+    "A catalogue example for object.test_coverage on functions, and for what counts as a test calling a function"
+  ],
+  "parse_attempts": 7,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The files parse with no rule warnings, and five templates plus one extra rule cover error handling on HTTP calls, untested endpoints/functions, long stacks, leftover code, and unbounded reads. Confidence is only medium because: (1) the ask is about stopping prod breakage, which no check reads; (2) LOG-010 covers api.request only, and the workspace has other outbound calls; (3) 'tested' is checked for existence, not quality; (4) I did not run xano policy evaluate (forbidden in this run), so the findings each rule would produce on the workspace are predictions, not observations. Predictions: PERF-001 will report invoices_GET because per_page comes from input; CHG-001 will likely report most endpoints because only two smoke tests exist; CONV-040 may report acme_sync_shipping_rates, which the file comment says has grown over time."
+}

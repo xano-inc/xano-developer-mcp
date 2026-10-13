@@ -1,0 +1,42 @@
+{
+  "goal_id": "G02",
+  "templates_considered": [
+    "CONV-010 functions_snake_case: fits the function snake_case part; started from it, but the request adds a prefix and a different key was not needed",
+    "CONV-012 endpoint_paths_versioned: partly fits (endpoint path naming) but requires versioned kebab-case, the opposite of the customer's snake_case; not used",
+    "CONV-011 fields_snake_case: fields were not asked for; not used",
+    "CONV-013 function_arguments_snake_case: inputs were not asked for; not used",
+    "CONV-023 tables_classified / CONV-050 and other templates: no template covers table plurality; not used"
+  ],
+  "templates_used": ["CONV-010"],
+  "rules": [
+    {"policy_key": "CONV-010", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "case_style": "snake_case", "prefixes": ["acme_"]}, "covers": "functions are snake_case and start with the client prefix (prefix value assumed)"},
+    {"policy_key": "ENDPOINT-NAMING-010", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are lowercase snake_case (path segments)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "tables are plural", "why": "no check exists"},
+    {"part": "client prefix differs per client; one workspace policy cannot hold 12 prefixes", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "client prefix is acme_, the prefix most functions in this workspace use",
+    "endpoints means endpoint paths (judged by name_kind endpoint_path), not endpoint display names",
+    "enforcement advisory and active true, per the request 'flag it, don't block it'",
+    "the policy key for the endpoint rule is free-form: no template matches snake_case unversioned paths",
+    "the CONV-010 key was reused for the function rule because the template fits that part of the request"
+  ],
+  "workspace_names_used": ["acme_calculate_tax", "acme_send_invoice_email", "acme_get_tracking", "acme_sync_shipping_rates", "acme_notify_sms", "calculateLateFee", "check_admin_role", "delete_user_account", "record_audit_event", "summarize_ticket", "request_human_approval", "bank-accounts/link", "getCustomerProfile"],
+  "confusions": [
+    "CONV-012 template (versioned kebab-case endpoint paths) directly contradicts a snake_case request; unclear whether to start from it and change its case style or write a new policy. I wrote a new key.",
+    "The skill says a template fits when its title covers part of the request, yet the CONV-010 title (Functions are snake_case) does not mention a prefix; changing the rule params under that key while keeping the title felt inconsistent",
+    "object.naming with name_kind object lists object_kinds including table, so a plurality pattern could be attempted on tables, but the check has no plural option; the docs do not say whether pattern can express plurality reliably",
+    "prefix in the rule is a workspace-specific literal; the skill gives no guidance on policies that must cover many workspaces with different prefixes"
+  ],
+  "wished_for": [
+    "a plural-noun or word-form check for table names, or a documented pattern recipe that reliably tests plurality",
+    "a template for a 'name must start with the client prefix' rule, with a note to set the prefix per workspace",
+    "guidance on whether a new policy may reuse a template key when only some rules change"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The function and endpoint naming rules parse and map to object.naming, which is the right check. Confidence is held back because the client prefix is assumed, the per-client scope is not solved by one policy, and table plurality is not covered at all. Predicted findings were not run through xano policy evaluate, which the brief forbids."
+}

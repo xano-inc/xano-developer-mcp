@@ -1,0 +1,58 @@
+{
+  "goal_id": "G14",
+  "templates_considered": [
+    "endpoints_need_login: not the ask; no login ask here",
+    "no_pii_in_responses (DATA-010): about responses, not change tracking",
+    "sensitive_tables_need_login (CONF-010): needs a table tag the workspace lacks; also forces login on public endpoints",
+    "confidential_tables_tagged (CONF-012): tags tables with matching fields, but no tag exists in the workspace and tagging was not asked for",
+    "audit_log_protected (RET-001): restricts writes to audit_log itself, not writes to email tables",
+    "retained_data_cleaned_up (RET-002): cleanup, not audit",
+    "no_destructive_sql / get_endpoints_only_read / triggers_write_elsewhere: unrelated",
+    "no template covers AI calls in loops or task while-loops; wrote own key COST-001"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["ai.agent.run", "ai.external.mcp.tool.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI call inside a loop caused the $900 bill"},
+    {"policy_key": "COST-001", "check": "stack.statement_forbidden", "params": {"statements": ["while"], "object_kinds": ["task"]}, "covers": "background task retrying forever; approximation: forbids all while loops in tasks, not retry counts or schedule-driven retries"},
+    {"policy_key": "AUDIT-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "who changed what: the audit table exists"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "any", "when": {"statement": "db.add", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: inserts into email tables call the audit function"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "any", "when": {"statement": "db.edit", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: edits to email tables call the audit function"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "any", "when": {"statement": "db.patch", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: patches to email tables call the audit function"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "any", "when": {"statement": "db.del", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: deletes from email tables call the audit function"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Spend cap on AI calls so a loop cannot run up $900", "why": "no check exists"},
+    {"part": "Background task retries forever (retry frequency, schedule-driven re-runs)", "why": "no check exists"},
+    {"part": "Every table that stores customer emails, automatically (new tables)", "why": "couldn't tell how: field-name matching needs a tag rule; no tag exists in the workspace, so I named the five tables instead"},
+    {"part": "Who read a record (read tracking)", "why": "no check exists; audit rule covers writes only"},
+    {"part": "What the audit call records (correct actor/changes)", "why": "runtime data; policies read definitions only"}
+  ],
+  "assumptions": [
+    "customer emails live in customers.email, users.email, newsletter_subscribers.email, support_tickets.requester_email and patients.email (all email-typed fields in the pulled workspace)",
+    "record_audit_event is the customer's audit function (it writes audit_log)",
+    "the ai.agent.run loop in nightly_ticket_summaries is the shape of the customer's $900 incident",
+    "advisory enforcement is the right default; the customer did not ask for blocking",
+    "no existing tags on tables; I did not add a pii tag"
+  ],
+  "workspace_names_used": [
+    "customers", "users", "newsletter_subscribers", "support_tickets", "patients", "audit_log",
+    "record_audit_event", "nightly_ticket_summaries", "retry_failed_webhooks", "Ticket Summarizer",
+    "customer_id_PATCH", "customers_POST", "subscribe_POST"
+  ],
+  "confusions": [
+    "stack.statement_forbidden with 'while' for tasks: unclear whether a loop statement name is valid there; the skill lists loops as statement names but the forbidden-statement examples only show API/db statements. Parse accepted it, but I could not confirm it matches at evaluation",
+    "object.statement_required with a when block: the when.statement must be one statement, so an edit-plus-delete-plus-add policy needs one rule per write statement. The skill does not say this; I inferred it from the param description",
+    "no check or recipe for 'every table that holds field X' combined with audit; table.tag_required needs a tag and the rule lists exact table names only for audit, so the 'every table' part fell back to a named list",
+    "policy naming: the skill says not to invent a template prefix with a number no template has; COST- and AUDIT- are not template prefixes, but there is no guidance for a non-template key family"
+  ],
+  "wished_for": [
+    "a cost/spend recipe or check (AI call count per task run, or a spend cap), since the customer's primary worry is cost",
+    "a check that flags scheduled tasks whose re-runs are not bounded, or a retry-setting read",
+    "a check that matches fields by name or type across all tables, and reports untagged ones, without needing an exact table list",
+    "a recipe for 'audit every write to personal data' pairing object.statement_required with a table list and per-statement rules"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The AI-in-loop rule is a direct match to the incident, and the audit rules fully cover writes to the five named tables. The retry rule is a proxy, spend caps and retry frequency are not checkable, the email table list is fixed rather than automatic, and nothing has been evaluated against the workspace yet."
+}

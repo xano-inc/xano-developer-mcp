@@ -1,0 +1,49 @@
+{
+  "goal_id": "G11",
+  "templates_considered": [
+    "requests_have_timeout (SEC-013): fits. Title covers 'external calls have a timeout'; fill was empty; its statement.param_bound rule has an omitted-timeout gap (judged at 10s default), so I added a statement.param_required rule.",
+    "external_calls_handle_errors (LOG-010): fits. Title covers 'error handling around external calls'; I widened its statements to add stream.from_request.",
+    "approved_vendors_only (VND-001): did not fit. Ask is about timeouts and error handling, not which vendors are allowed.",
+    "tls_verification_on (SEC-011): did not fit. Ask is not about TLS.",
+    "middleware_surfaces_errors (LOG-011): did not fit. Concerns middleware swallowing errors, not outbound calls."
+  ],
+  "templates_used": ["requests_have_timeout", "external_calls_handle_errors"],
+  "rules": [
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "timeout no longer than 30s on outbound calls"},
+    {"policy_key": "SEC-013", "check": "statement.param_required", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"]}, "covers": "timeout must be set explicitly, since an unset timeout is judged at the 10s default and passes param_bound"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request"], "must_be_inside": ["try_catch"]}, "covers": "outbound calls sit inside a try so vendor failures reach error handling"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling is sensible inside the catch (fallback, clear error), not just present", "why": "no check exists"},
+    {"part": "external calls via db.external and ai.external.mcp.* have timeouts", "why": "no check exists; the timeout check says these take no timeout and cannot be bounded"},
+    {"part": "the app does not hang at runtime when a vendor is down", "why": "needs runtime/org process"},
+    {"part": "retry loop in task retry_failed_webhooks has no exit on persistent failure", "why": "other; outside the ask, and no check fits a loop bound"}
+  ],
+  "assumptions": [
+    "The customer's 'external API call' means api.request, stream.from_request and webflow.request.",
+    "enforcement left advisory, since the customer did not ask for blocking and the current workspace would fail the rules.",
+    "Two policy files, one per template, rather than one combined policy, to keep the template keys.",
+    "A timeout written in a call is in seconds (matches the unit in the template)."
+  ],
+  "workspace_names_used": [
+    "function acme_get_tracking", "function acme_sync_shipping_rates", "function acme_notify_sms",
+    "api shipments/quote (POST, group app)", "task retry_failed_webhooks",
+    "api.request statements with url to api.shipfast.example"
+  ],
+  "confusions": [
+    "The check catalogue says statement.param_bound judges an omitted timeout at its default, which passes a 30s max. The template's rule therefore does not catch the 'nothing had a timeout' case; the reader has to know to add statement.param_required. The template summary ('time out within 30 seconds') reads as if it covers unset timeouts.",
+    "The LOG-010 template's limits say to add stream.from_request, ai.external.mcp.* and db.external.*.direct_query to cover every outbound call, but the template's rule only lists api.request. Unclear whether to widen the template's own statements list or leave it; I widened it to stream.from_request only, since the mcp/db kinds are not in the same statement family.",
+    "The policy-templates.md table says 'Fill: _nothing_' for both templates, which I read as correct; the rule params are complete.",
+    "xano policy parse summary output drops the severity line; only -o json shows it. Looked like a loss at first.",
+    "The skill says a policy file carries no comments, but the workspace function files use // comments. Fine for policies; just easy to mix up."
+  ],
+  "wished_for": [
+    "A template or recipe for 'every outbound call has a timeout AND no unset timeouts' that combines param_bound with param_required, since the template covers only the first.",
+    "A note in the SEC-013 template limits or summary that an unset timeout passes param_bound at its default.",
+    "A way to see which statements the check would match in the workspace before publishing, without evaluating (read-only preview)."
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The two rules directly express 'timeout set and at most 30s' and 'wrapped in try'. Confidence stops at medium because the try check does not prove the catch handles failure, the catalogue has no timeout check for db.external or MCP calls, and I could not run an evaluation (forbidden), so the list of current failures comes from reading the code, not from the platform."
+}

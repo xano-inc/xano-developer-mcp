@@ -1,0 +1,111 @@
+{
+  "goal_id": "G03",
+  "templates_considered": [
+    "protect_card_data (recipe, not a template): fits best. Its one rule (table.field_attribute_required, forbidden on card_number/cvv/cvc/pan) is the basis of PCI-001. Its other prerequisites (VND-001, SEC-012, DATA-010, CONF-011, TLS) only partly match the ask.",
+    "approved_vendors_only (VND-001): fits. Used its outbound.vendor_allowlist check with hosts set to Stripe and Plaid. Renamed the key PCI-003 and rewrote the statement for the customer's list.",
+    "no_sensitive_data_in_logs (LOG-001): fits. Used its statement.expression_rule rule, extended to datadog.log. Renamed the key PCI-002.",
+    "no_pii_in_responses (DATA-010): considered, not used. The ask is about storage, logs and vendors, not responses. payment_id_GET returns the whole payments record, but the record will no longer hold card fields once PCI-001 is fixed.",
+    "sensitive_fields_marked (CONF-011): considered, not used. The workspace has no fields marked sensitive, and the ask doesn't mention marking. Adding it would be a separate change to the schema.",
+    "sensitive_tables_need_login (CONF-010) / confidential_tables_tagged (CONF-012): considered, not used. They depend on a table tag (phi, pci or similar) that the workspace doesn't have. Tags would have to be added to tables, which the brief forbids me from doing.",
+    "no_secrets_in_code (SEC-012): considered, not used for the ask. It is outside the cardholder rules, but it would catch the Twilio credential in acme_notify_sms.xs. I mention it in the reply and did not write it as a rule.",
+    "tls_verification_on (SEC-011): considered, not used. The ask doesn't mention TLS, and the Stripe and Plaid calls use https literals with no TLS override in the code I read.",
+    "audit_log_protected (RET-001): considered, not used. The ask doesn't mention audit-log writes, though a PCI audit might. No rule added."
+  ],
+  "templates_used": [
+    "approved_vendors_only",
+    "no_sensitive_data_in_logs"
+  ],
+  "rules": [
+    {
+      "policy_key": "PCI-001",
+      "check": "table.field_attribute_required",
+      "params": {
+        "field_names": ["card_number", "card_cvv", "cvv", "cvc", "pan", "track_data"],
+        "forbidden": true
+      },
+      "covers": "cardholder data (full card number, CVV and track data) can't be stored raw"
+    },
+    {
+      "policy_key": "PCI-002",
+      "check": "statement.expression_rule",
+      "params": {
+        "statements": ["debug.log", "datadog.log"],
+        "param_names": ["value", "message", "attributes"],
+        "must_not_reference": ["$input", "$auth", "$env"]
+      },
+      "covers": "cardholder data can't be logged"
+    },
+    {
+      "policy_key": "PCI-003",
+      "check": "outbound.vendor_allowlist",
+      "params": {
+        "hosts": ["api.stripe.com", "production.plaid.com"]
+      },
+      "covers": "cardholder data can't go to any vendor other than Stripe and Plaid (the rule also reports cloud, email and AI providers, since providers is left empty)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "Bank account data (bank_account_number, bank_routing_number) can't be stored raw",
+      "why": "other"
+    },
+    {
+      "part": "Whether cardholder data actually reaches a log, a vendor or a response at runtime",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "PCI audit controls: encryption at rest, network segmentation, backups, pen tests, access reviews, change approval, training",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Vendor scoping: only cardholder-bearing vendors should be checked, not every outbound destination",
+      "why": "no check exists"
+    },
+    {
+      "part": "Card-adjacent fields under names other than the exact ones listed (pan_last_digits, acct_no)",
+      "why": "couldn't tell how"
+    },
+    {
+      "part": "Vendor check for a sandbox Plaid host",
+      "why": "other"
+    }
+  ],
+  "assumptions": [
+    "The ask's 'cardholder stuff' means PAN, CVV/CVC, expiry and cardholder name. PCI treats storing PAN and CVV as forbidden; I forbade those two plus cvc/pan/track_data, and did not forbid expiry or cardholder name, which PCI permits when PAN is protected.",
+    "'Stripe and Plaid only' means api.stripe.com and production.plaid.com. I did not add sandbox.plaid.com.",
+    "The vendor rule should cover every outbound destination, not only ones that carry cardholder data, because the check cannot tell which data goes where and the ask says 'any vendor'.",
+    "PCI-001 and PCI-002 apply workspace-wide: the check cannot be restricted to tables or endpoints carrying cardholder data, since the workspace has no tags.",
+    "Advisory enforcement, per the authoring guidance, unless the owner chooses blocking. The customer wants to pass an audit, which may call for blocking; I did not make that choice for them.",
+    "The tags pci-dss and req-3 / req-10 / req-12 are my labels, not something the catalogue defines. I did not check them against a PCI control list."
+  ],
+  "workspace_names_used": [
+    "table payments: card_number, card_cvv, cardholder_name, bank_account_number, bank_routing_number",
+    "table payment_method: card_last4, card_token",
+    "function acme_notify_sms (Twilio URL with credential)",
+    "api/app/payments/charge_POST (debug.log of $input; db.add payments with card fields; api.request to api.stripe.com)",
+    "api/app/payments/fraud_check_POST (api.riskscreen.example with card_number)",
+    "api/app/bank_accounts/link_POST (production.plaid.com)",
+    "api.shipfast.example, api.twilio.com, resend (service_provider), anthropic and openai agent providers (non-approved destinations PCI-003 will report)",
+    "no tags on any table, no fields marked sensitive, no existing policies (xano policy list returned none)"
+  ],
+  "confusions": [
+    "The skill document is very large and the Bash tool persisted it in pieces, so I read the policy file format and the first part of the rules; I relied on kit/catalogue.json for the check parameters instead of the skill's full catalogue.",
+    "The recipe protect_card_data lists a rule with a 'needs' of [] and a forbidden param, but gives no example of the full parameter set for forbidden=true. It was clear enough to copy, but a worked example would have helped.",
+    "The template LOG-001 says only debug.log is checked and that datadog.log must be added by hand. The template's rule does not include datadog.log, so I had to extend it. The 'message' and 'attributes' param names for datadog.log came from the check's description, not from a parameter list I could confirm.",
+    "xano policy parse printed the file back by default. I could not tell from the plain output whether it parsed; the exit code (0) and -o json output with empty rule_warnings were the signal I used.",
+    "The catalogue's recipes are framed as 'protect X' bundles with prerequisites that need tags. The workspace has no tags, and I could not tell whether the policies should be written against tags that do not yet exist or against names instead. I used names.",
+    "The customer's wording 'can't get sent to any vendor' maps to outbound.vendor_allowlist, but the check also flags cloud, email and AI providers when providers is empty. I could not tell from the catalogue whether an empty providers list is meant to mean 'all of them unapproved' or 'no providers checked'. The description says 'not yet reviewed', so I went with the former.",
+    "The 'blocking' decision: the authoring guidance says to write advisory and say blocking is the owner's choice. That is right here, but the customer is trying to pass an audit, and the reply has to explain the choice without sounding like it is the platform's decision."
+  ],
+  "wished_for": [
+    "A recipe or template for PCI-style card data handling that uses names rather than tags, or a note on how to start when no tags exist.",
+    "A short explanation of how the vendor check treats an empty providers list, with an example of an approved list that covers only hosts.",
+    "A worked example of the full rule for table.field_attribute_required with forbidden true, and for statement.expression_rule on datadog.log.",
+    "Parse output that says 'ok' explicitly, or prints a summary, instead of echoing the file.",
+    "A way to see rule warnings for names the workspace does not have, without running evaluate (I could not run it). Parse showed none, but I could not tell if it checks field names."
+  ],
+  "parse_attempts": 6,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three rules parse with zero rule warnings and use the checks the catalogue documents for each part of the ask. Confidence is only medium because: (1) I could not run evaluate, so I have not seen the findings each rule produces; (2) rules match exact field names, and the workspace has no tags or sensitive markings, so a card-like field under another name would be missed; (3) PCI-003 reports every non-approved vendor, not just those that carry card data, so it will be noisy and may need scoping the check does not offer; (4) bank account data is not covered; (5) most of a PCI audit is controls the policies cannot see."
+}

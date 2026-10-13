@@ -1,0 +1,69 @@
+{
+  "goal_id": "G03",
+  "templates_considered": [
+    "no_pii_in_responses (DATA-010): fits, the ask is about cardholder fields not returned; used",
+    "sensitive_fields_marked (CONF-011): fits; used with the card fields",
+    "no_sensitive_data_in_logs (LOG-001): fits 'cardholder can't be logged'; used, and added a datadog.log rule because the template limits say it only checks debug.log",
+    "no_secrets_in_code (SEC-012): fits the recipe's processor-key prerequisite and the Twilio credential found in the workspace; used",
+    "approved_vendors_only (VND-001): fits 'Stripe and Plaid only'; used with hosts",
+    "tls_verification_on (SEC-011): in the PCI recipe; used",
+    "sensitive_tables_need_login (CONF-010): plausible for card tables but needs a sensitive tag the workspace lacks; not used, proposed in reply",
+    "confidential_tables_tagged (CONF-012): needs a confidential tag the workspace lacks; not used",
+    "audit_log_protected (RET-001): not asked; not used",
+    "endpoints_need_login (AUTH-010): not asked explicitly; not used, mentioned as a gap",
+    "protect_card_data recipe (PCI DSS): followed; its extra card-field rule is written as PCI-001 with a key of my own"
+  ],
+  "templates_used": ["DATA-010", "CONF-011", "LOG-001", "SEC-012", "VND-001", "SEC-011", "PCI-001 (recipe extra rule, own key)"],
+  "rules": [
+    {"policy_key": "PCI-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "cvv", "cvc", "pan", "card_expiry", "cardholder_name"], "forbidden": true}, "covers": "cardholder data can't be stored raw"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name"], "attribute": "sensitive"}, "covers": "cardholder fields are marked sensitive so DATA-010 and views treat them as sensitive"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["card_number", "card_cvv", "card_expiry", "cardholder_name"], "object_kinds": ["query"]}, "covers": "endpoints don't return cardholder data (partial: the check reads fetches, not the response)"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data can't be logged (debug logs)"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["datadog.log"], "param_names": ["message", "attributes"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data can't be logged (Datadog logs)"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "cardholder data can't go to vendors other than Stripe and Plaid (destination only; broader than card flows)"},
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "processor keys and credentials are not hardcoded (supports the PCI recipe)"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "card details go only over verified TLS"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cardholder data must not be sent to vendors other than Stripe and Plaid, judged by what is sent", "why": "no check exists"},
+    {"part": "bank account and routing numbers in payments (the ask mentions bank data)", "why": "other: the ask is scoped to cardholder data; bank data not in the stated rule"},
+    {"part": "pass our PCI audit", "why": "needs runtime/org process"},
+    {"part": "encryption at rest, retention, Datadog log contents outside definitions", "why": "needs runtime/org process"},
+    {"part": "who may call the payment endpoints", "why": "other: needs sensitive tables tagged (CONF-010); tags missing in workspace, not written"}
+  ],
+  "assumptions": [
+    "'Stripe and Plaid only' means hosts api.stripe.com and production.plaid.com",
+    "'cardholder stuff' means card_number, card_cvv, card_expiry and cardholder_name in payments",
+    "'stored raw' includes expiry and cardholder name, so PCI-001 forbids them too",
+    "outbound.vendor_allowlist left with default kinds and no providers, so AI agents, email and cloud calls are reported as not yet reviewed",
+    "The workspace stores only payments table card fields; payment_method holds card_last4 and card_token and is not flagged",
+    "Customer's policy tags are free text, so 'pci_dss' is used as a tag"
+  ],
+  "workspace_names_used": [
+    "payments", "card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number",
+    "payment_method", "card_last4", "card_token", "invoices", "clinical_notes", "payments/charge", "payments/fraud_check",
+    "api.stripe.com", "production.plaid.com", "api.riskscreen.example", "api.shipfast.example", "api.twilio.com",
+    "debug.log", "record_audit_event", "audit_log", "$env.STRIPE_SECRET_KEY"
+  ],
+  "confusions": [
+    "Recipe 'protect_card_data' extra rule lists card_number, cvv, cvc, pan. The workspace field is card_cvv, not cvv, so the exact-name rule misses it unless the name is added. I added card_cvv.",
+    "Recipe prerequisites say to list card_last4 and billing_address for CONF-011 and DATA-010. Putting card_last4 in DATA-010 would stop endpoints returning last four digits, which PCI allows; I left it out and the recipe does not say which to choose.",
+    "Recipe puts extra rules in one policy with a key of my own, but the skill's step 5 says one policy per template. I did both: one policy per template, plus PCI-001 for the extra card-field rule. Unclear which the product expects.",
+    "The LOG-001 template limits say only debug.log is checked and datadog.log must be added separately; the template itself has no datadog rule. I added one, but it isn't in the template.",
+    "Whether 'forbidden' on table.field_attribute_required should cover cardholder_name and card_expiry, which PCI allows storing under protection. The skill gives no guidance, so I followed the customer's 'stored raw' wording.",
+    "outbound.vendor_allowlist judges every outbound destination; no scope param narrows it to calls that carry cardholder data without tags on the card tables. Unclear how to express 'only card flows'.",
+    "No provider ids for Stripe or Plaid are listed in the catalogue examples, so I used hosts, not providers.",
+    "I could not run xano policy evaluate (forbidden by the brief), so all findings listed in the reply are predictions and labelled as such."
+  ],
+  "wished_for": [
+    "A recipe or check that scopes an outbound rule to objects that reach tables tagged as cardholder data, with a worked example.",
+    "The catalogue's list of provider ids (for example stripe, plaid) to match the vendor rule's providers param.",
+    "A template or example for datadog.log that matches the debug.log LOG-001 rule.",
+    "Guidance on whether a field forbidden on storage should also be in the sensitive-marking rule, to avoid duplicate coverage.",
+    "A note in the PCI recipe that card field names must match the workspace's own names (card_cvv, not cvv)."
+  ],
+  "parse_attempts": 15,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Each rule parses cleanly and covers a real part of the ask: storage of card fields, logging, vendor destinations, hardcoded secrets and TLS. But the vendor rule judges destinations only, not what is sent, so it is broader than card flows and cannot prove a card never reaches a vendor. Bank data is out of the stated rule, and I could not run evaluate, so the findings are predictions. The customer's PCI audit needs controls a policy cannot see."
+}

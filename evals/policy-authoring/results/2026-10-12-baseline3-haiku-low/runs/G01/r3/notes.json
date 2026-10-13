@@ -1,0 +1,47 @@
+{
+  "goal_id": "G01",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): fits. Covers the no-auth half of the ask; catalogue marks it as having no fill, so I scoped it with tables.",
+    "no_pii_in_responses (DATA-010): did not fit. It checks which fields are fetched, not whether a whole table is returned.",
+    "own_records_only (AUTH-020): did not fit. Customers should see their org's invoices, but the ask is about auth on the table, not row scoping.",
+    "inputs_validated (VAL-001): partial fit at most. object.input_rules paging_max_required only applies to inputs that reach per_page, so the export endpoint (no inputs) would not be flagged."
+  ],
+  "templates_used": ["endpoints_need_login"],
+  "rules": [
+    {
+      "policy_key": "AUTH-010",
+      "check": "object.auth_required",
+      "params": {"tables": ["invoices"], "except_tags": ["public"]},
+      "covers": "Endpoints that reach the invoices table must require login (the 'without auth' part). Flagged in workspace: api/app/invoices/export_GET.xs."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoint returns the full invoices table (no filter, no paging)", "why": "no check exists"},
+    {"part": "the endpoint is not a 'returns' check on the response, only on the fetch; nothing reads the response object", "why": "no check exists"},
+    {"part": "'nobody ships' enforcement at push time (blocking vs advisory)", "why": "other: a choice for the user, not a gap; I defaulted to advisory per skill rules for new policies"},
+    {"part": "'including me at 2am' (process/human discipline beyond a gate)", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'Full invoices table' means the invoices table declared in workspace/table/invoices.xs, reached by an endpoint.",
+    "Scoping by table name 'invoices' is acceptable; the table has no tags, so a tag scope was not available.",
+    "The 'public' tag as exemption, copied from the template. The parser gave no warning about it, but I did not verify that any object carries it.",
+    "Auth table name for the fix is 'users' (taken from invoices_GET.xs), not confirmed by the customer."
+  ],
+  "workspace_names_used": [
+    "invoices", "invoice_item", "users", "orgs", "app", "invoices/export", "invoices_GET", "invoices/{invoice_id}"
+  ],
+  "confusions": [
+    "The catalogue has no check for 'returns an unbounded list'. The skill says to cover every part of the ask and name what no check reads, but it is unclear whether a stack-level statement check (e.g. statement.param_forbidden on a db.query without return paging) could approximate it. I did not try, as it would be a guess.",
+    "The AUTH-010 template has no fill and an empty examples map, so the question of how to scope a template to one table, with a statement that still says 'every endpoint', was left to me.",
+    "The skill says a new policy should be 'active = true + advisory', but the customer's wording ('nobody ever ships') reads as blocking. The skill gives no guidance on resolving this between a customer's wording and the default."
+  ],
+  "wished_for": [
+    "A check that flags a db.query with no where and no paging (unbounded read), or an object.statement_required-style check for 'return has paging'.",
+    "An example of scoping a template by table ('tables: [...]') with a rewritten statement, since templates are written for every endpoint.",
+    "Guidance on whether 'blocking' is the default when the user's words imply it."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policy catches the leak the customer described (the no-auth export endpoint) and parses. It does not cover the 'full table' half of the ask, and it is advisory, not blocking. I have not run xano policy evaluate, so the finding is predicted from reading the file, not observed."
+}

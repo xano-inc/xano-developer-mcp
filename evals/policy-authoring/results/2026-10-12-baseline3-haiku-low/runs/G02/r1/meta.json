@@ -1,0 +1,42 @@
+{
+  "goal_id": "G02",
+  "repeat": 1,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:47:06.436Z",
+  "wall_ms": 59931,
+  "duration_ms": 59076,
+  "cost_usd": 0.01705266,
+  "num_turns": 12,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "CONV-010.xs",
+    "CONV-NAMING-ENDPOINTS.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 2,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit && wc -c kit/catalogue.json",
+    "xano workspace pull -d ./workspace 2>&1 | tail -20; echo ---; xano policy list 2>&1 | head -40; echo ---; find ./workspace -type f | head -100",
+    "grep -rh -m1 -E '^(query|function|table|task|workflow_test|tool|agent|api_group|addon|middleware) ' workspace | head -0; for f in workspace/api/*/*.xs workspace/api/app/*.xs workspace/api/app/*/*.xs workspace/api/app/*/*/*.xs workspace/api/admin/*/*/*.xs; do echo \"$f: $(grep -m1 -E '^\\s*(query|api_g…",
+    "python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nprint(type(d), list(d.keys())[:10] if isinstance(d,dict) else len(d))\nchecks = d.get('checks', d) if isinstance(d,dict) else d\nfor c in checks:\n    if isinstance(c,dict) and c.get('id')=='object.naming':\n        print(json.dumps(c, …",
+    "python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nfor c in d['items']:\n    if c.get('id')=='object.naming':\n        print(json.dumps(c, indent=1)[:5000])\nprint([t.get('id') for t in d['templates']][:80])\n\" 2>&1 | head -150",
+    "python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nfor c in d['items']:\n    if c.get('id')=='object.naming':\n        for k,v in c['params'].items():\n            if k in ('object_kinds','prefixes','suffixes','pattern','allowed_names','except_tags','tags'): print(k, json.dumps(v)[:900…",
+    "mkdir -p out && cat > out/CONV-010.xs <<'EOF'\npolicy \"CONV-010\" {\n  title = \"Functions are snake_case and carry the client prefix\"\n  statement = \"Every function name is snake_case and starts with the client prefix acme_, so functions from every team read the same way. This is advisory: it flags a fu…",
+    "cat > out/reply.md <<'EOF'\nHere is what I would set up. Both policies are advisory and active: they flag and never block a save, merge or push.\n\n**Two policy files written (in `out/`):**\n\n1. **`CONV-010.xs`: Functions are snake_case and carry the client prefix.** One `object.naming` rule on function…"
+  ],
+  "final_message": "Wrote `out/CONV-010.xs`, `out/CONV-NAMING-ENDPOINTS.xs` (both parse with no rule warnings), `out/reply.md` and `out/notes.json`. Confidence: medium. Functions and endpoint paths are covered, but the `acme_` prefix is my assumption and table plurality has no check."
+}

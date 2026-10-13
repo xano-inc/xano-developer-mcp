@@ -1,0 +1,38 @@
+{
+  "goal_id": "G08",
+  "repeat": 3,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:53:20.328Z",
+  "wall_ms": 39303,
+  "duration_ms": 38249,
+  "cost_usd": 0.01271322,
+  "num_turns": 12,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "SEC-012.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 2,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit && wc -c kit/*",
+    "xano workspace pull -d ./workspace 2>&1 | tail -20; echo ---; xano policy list 2>&1 | head -50",
+    "python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nprint(list(d.keys()) if isinstance(d,dict) else type(d))\ndef walk(o,path=''):\n    if isinstance(o,dict):\n        for k,v in o.items():\n            if (isinstance(v,str) and 'credential' in v and 'SEC' in str(o)) or k in ('id','key')…",
+    "python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nc=[i for i in d['items'] if i['id']=='literal.credential_shape'][0]\nprint(json.dumps(c['params'],indent=1)[:3000]); print(c.get('example')); print([k for k in c if k not in ('description','params')])\nprint(json.dumps(c.get('limits',…",
+    "xano policy parse -f out/SEC-012.xs -o json 2>&1 | head -60"
+  ],
+  "final_message": "Wrote `out/SEC-012.xs` (parses with no warnings), `out/reply.md` and `out/notes.json`. Confidence: medium. The API-key and token half is covered by the SEC-012 template, but plain passwords have no check. Did not run `xano policy evaluate`, which the brief forbids, so the prediction that `acme_notify_sms` will be flagged is untested."
+}

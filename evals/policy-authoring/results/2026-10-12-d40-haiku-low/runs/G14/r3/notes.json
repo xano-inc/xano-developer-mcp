@@ -1,0 +1,58 @@
+{
+  "goal_id": "G14",
+  "templates_considered": [
+    "RET-001: fits the audit-log part of 'who changed what'; used as is",
+    "RET-002 / DATA-010 / CONF-011 / CONF-012: did not fit; no retention, output or classification part in the ask",
+    "AUTH-010 / AUTH-020 / AUTH-030 / SEC-010 / CONV-*: no fit for cost or audit",
+    "SEC-013 (external requests time out): considered for runaway retries; a timeout limits one call, not the number of calls, so not used",
+    "PERF-001 (endpoints never return every row): considered under the AI-cost recipe; the ask is not about pagination, so not used",
+    "VND-001 (approved vendors): from the AI-cost recipe; the ask does not mention vendors, so not used",
+    "CONV-030 (AI tools described): considered; not part of the ask, so not used"
+  ],
+  "templates_used": ["RET-001"],
+  "rules": [
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["ai.agent.run", "ai.external.mcp.tool.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI call inside a loop ($900 case)"},
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["api.request"], "must_not_be_inside": ["while"]}, "covers": "background task retrying forever: proxy, forbids HTTP requests inside a while loop; does not see retry counts or schedules"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "who changed what: audit log exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "who changed what: only the audit function writes the log"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.add", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: adds to email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: edits of email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: patches of email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: deletes from email tables are audited"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Cap what AI calls cost / stop the $900 bill", "why": "no check exists"},
+    {"part": "Retry forever: how often a failed task runs again, retry counts, schedules", "why": "no check exists (tasks have no retry setting a check reads); only the while-loop proxy is covered"},
+    {"part": "'Every table that stores customer emails' as a classification (tag)", "why": "couldn't tell how: no table in the workspace has a tag; tag-based selection needs tags first, so I used exact table names and proposed tagging instead"},
+    {"part": "Audit: who the actor is and what values changed", "why": "couldn't tell how: checks only that the audit call is present, not its arguments"},
+    {"part": "Audit: bulk writes (db.bulk.*), db.add_or_edit, raw SQL on email tables", "why": "couldn't tell how: the when.statement param takes one statement name per rule; I did not write rules for these"},
+    {"part": "Audit: changes made at runtime by people or outside code", "why": "needs runtime/org process: policies read definitions only"}
+  ],
+  "assumptions": [
+    "'Customer emails' = email-typed fields on customers, users, newsletter_subscribers, support_tickets (requester_email), patients (email); orgs.billing_email excluded as the organisation's address",
+    "'AI call' = ai.agent.run and ai.external.mcp.tool.run; AI over HTTP would be an api.request and is caught by the while-loop rule only",
+    "'Retried forever' is a while loop around an HTTP request, the shape of retry_failed_webhooks",
+    "Advisory enforcement: the customer did not ask for blocking, and the skill says to write new policies advisory",
+    "Policy header tags omitted: no tag vocabulary is known for this workspace"
+  ],
+  "workspace_names_used": [
+    "customers", "users", "newsletter_subscribers", "support_tickets", "patients", "orgs", "audit_log", "record_audit_event", "nightly_ticket_summaries", "retry_failed_webhooks", "Ticket Summarizer", "Support Agent", "requester_email", "billing_email"
+  ],
+  "confusions": [
+    "Cost recipe ('Keep AI calls affordable') lists its templates as VND-001, PERF-001, SEC-013, CONV-030, which do not address loops or spend; the only loop rule is an extra rule in the recipe, so it is unclear whether the recipe is a fit for a cost-only ask",
+    "statement.containment with must_not_be_inside 'while' applied to api.request: the catalogue says the check reports a statement inside a block, not whether the loop is bounded; I had to choose a proxy for 'retries forever' without a check that reads retries",
+    "RET-001 template fill lists R1 names for workspace.object_required and R2 restricted_tables/allowed_functions; the policies topic does not say whether the template's own key may be reused on a new file when the rule text is identical",
+    "The brief says 'tracked somehow' for email tables; the skill's guidance is to propose a tag separately, but with no tags in the workspace, the policy needs exact names, so the scope choice (exact names vs tag) is left to me without a clear default for a first policy",
+    "The skill says to 'read the policies under /policies/' for conventions, but the workspace pull and the xano policy list output (none found) gave no existing conventions for key format or tag exemptions"
+  ],
+  "wished_for": [
+    "A check that reads task retry settings or a bounded-retry pattern, so retry-forever can be tested directly",
+    "A check or param that caps the count of a loop (e.g. max iterations) or a spend-oriented recipe",
+    "A recipe showing when to use when.statement with multiple statements (add/edit/patch/del) on one rule, rather than four rules",
+    "A worked example of an audit recipe that targets tables by a tag and a worked example of the tag-proposal flow"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The AI-in-loop case is covered directly and the audit-log and audited-write rules parse with no name warnings against the real workspace names. The runaway-retry case is only a proxy: it forbids any HTTP request inside a while loop and does not see retry counts or schedules, so a retry on a schedule would pass. Spend caps are not checkable. Parse passed; no evaluate was run, so no finding is confirmed."
+}

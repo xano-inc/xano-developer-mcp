@@ -1,0 +1,66 @@
+{
+  "goal_id": "G11",
+  "templates_considered": [
+    "requests_have_timeout (SEC-013): fits the timeout part; template rule is statement.param_bound max 30, which judges an omitted timeout at its 10s default and so passes it. Added a statement.param_required rule for explicit timeout.",
+    "external_calls_handle_errors (LOG-010): fits the error-handling part (try around external calls). Its limits note says to add stream.from_request, so I added it.",
+    "tls_verification_on (SEC-011): does not fit the ask (TLS, not timeout or error handling). Not used.",
+    "approved_vendors_only (VND-001): does not fit the ask. Not used.",
+    "no_secrets_in_code (SEC-012): does not fit the ask, but the workspace has a credential in a URL (acme_notify_sms.xs) that it would catch. Mentioned to the customer, not written."
+  ],
+  "templates_used": ["requests_have_timeout", "external_calls_handle_errors"],
+  "rules": [
+    {
+      "policy_key": "SEC-013",
+      "check": "statement.param_bound",
+      "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"], "max": 30, "unit": "seconds"},
+      "covers": "external requests time out within 30 seconds (template rule)"
+    },
+    {
+      "policy_key": "SEC-013",
+      "check": "statement.param_required",
+      "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["timeout"]},
+      "covers": "every external request sets a timeout explicitly, since an omitted timeout passes param_bound"
+    },
+    {
+      "policy_key": "LOG-010",
+      "check": "statement.containment",
+      "params": {"statements": ["api.request", "stream.from_request"], "must_be_inside": ["try_catch"]},
+      "covers": "external calls sit inside a try block so failures reach error handling"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling actually handles the failure (catch branch does something useful, not empty)", "why": "no check exists"},
+    {"part": "retries, circuit breaker or fallback behaviour when a vendor is down", "why": "no check exists"},
+    {"part": "external calls made by MCP servers (ai.external.mcp.*) and db.external.*, which take no timeout", "why": "no check exists"},
+    {"part": "webflow.request timeout coverage in param_required", "why": "couldn't tell how: unsure whether webflow.request declares a timeout param, so left it out of param_required (kept in param_bound)"},
+    {"part": "a vendor being down bringing the whole app down (isolation between endpoints)", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "statement.param_required with param_names timeout is the right way to require an explicit timeout; an omitted timeout is otherwise judged at default 10s and passes param_bound",
+    "stream.from_request has a timeout param (template limits text implies it does)",
+    "webflow.request is a statement name that exists as written in the template",
+    "adding stream.from_request to LOG-010 is in scope of the ask (customer said external API calls)",
+    "customer wants both rules in advisory mode, as the template and skill default"
+  ],
+  "workspace_names_used": [
+    "api.request statements in api/app/shipments/quote_POST.xs, api/app/payments/charge_POST.xs, api/app/payments/fraud_check_POST.xs, api/app/bank_accounts/link_POST.xs, function/acme_get_tracking.xs, function/acme_sync_shipping_rates.xs, function/acme_notify_sms.xs, ai/tool/issue_refund.xs, task/retry_failed_webhooks.xs",
+    "try_catch in function/acme_get_tracking.xs (only try block in the workspace)"
+  ],
+  "confusions": [
+    "The catalogue's templates list external_calls_handle_errors with statements [api.request] only, while its limits text says to add stream.from_request for full coverage. Not clear whether the template should be used as-is or extended; I extended it.",
+    "statement.param_bound judges an omitted param at its runtime default, and the 10s default passes a max of 30. The template's SEC-013 therefore does not by itself enforce 'has a timeout set', which the customer asked for. Not obvious from the template summary; I had to read the check description to see it.",
+    "statement.param_required says a value equal to the default is not counted as set (timeout = 10). Unclear what happens to a customer who sets timeout = 10 deliberately: the rule would flag it, which may be surprising.",
+    "The parse summary output drops the severity line, while -o json keeps it. Did not affect the file but made the summary look incomplete.",
+    "Whether a template's rule set should be combined with extra rules in the same policy versus a second policy key is not explained. I kept one key per template and added the extra rule to SEC-013."
+  ],
+  "wished_for": [
+    "A template or recipe for 'external calls have an explicit timeout AND error handling' that shows param_bound plus param_required together, since the template alone does not enforce an explicit timeout",
+    "A check that the catch branch does something (non-empty, or calls a function, or returns an error), since the most common real failure is an empty or swallowing catch",
+    "Clarity on whether webflow.request, stream.from_request and the ai.external.mcp.* statements take a timeout param, and which statements in each check accept it",
+    "Guidance on whether to set a timeout explicitly to the default value (10) when the rule forbids it"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The two policies parse with no rule warnings and cover the timeout and try-block parts of the ask. They do not cover whether the catch handles the failure, retries, or non-HTTP external calls. I did not run xano policy evaluate (forbidden in this task), so the expected findings are predictions from reading the code, not observed results."
+}

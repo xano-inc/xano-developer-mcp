@@ -1,0 +1,42 @@
+{
+  "goal_id": "G03",
+  "repeat": 1,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:48:02.160Z",
+  "wall_ms": 57280,
+  "duration_ms": 56151,
+  "cost_usd": 0.016645609999999998,
+  "num_turns": 11,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "LOG-001.xs",
+    "PCI-001.xs",
+    "VND-001.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 1,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "cd ./kit && ls -la; cd ..; xano policy catalogue -o json > /dev/null 2>&1; echo \"exit $?\"; xano policy list 2>&1 | head -50",
+    "xano workspace pull -d ./workspace 2>&1 | tail -5; echo ---; cd ./workspace && find . -type f | head -300; echo ---; cd .. && grep -ril -E 'card|pan|pci|cvv|iban|account_number|stripe|plaid|bank' ./workspace | head -50",
+    "cd ./workspace && cat table/payments.xs table/payment_method.xs api/app/payments/charge_POST.xs api/app/bank_accounts/link_POST.xs api/app/payments/fraud_check_POST.xs ai/tool/issue_refund.xs function/acme_sync_shipping_rates.xs; echo ---; cat policy_authoring_eval.xs; echo ---; ls ../workspace/tag …",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G03-r1 && python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nprint(d.keys() if isinstance(d,dict) else type(d))\nts=d.get('templates',[])\nfor t in ts:\n  if t.get('id'…",
+    "cat > out/LOG-001.xs <<'EOF'\npolicy \"LOG-001\" {\n  title = \"Logs don't contain request, user or secret data\"\n  statement = \"Debug logs never reference request input, the logged-in user or environment variables. Cardholder data (card number, CVV, expiry, cardholder name) arrives as request input, so i…",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G03-r1/workspace && grep -rn -E 'url = |provider|model' . | grep -v -E 'stripe|plaid' | head -30; grep -rn -E 'debug.log|datadog' . | head -20",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G03-r1 && cat > out/reply.md <<'EOF'\nHere is what I can set up for the cardholder and vendor parts of your ask. I have not published anything; these are files in `out/` for you to re…"
+  ],
+  "final_message": "Wrote `out/LOG-001.xs`, `out/VND-001.xs`, `out/PCI-001.xs`, `out/reply.md` and `out/notes.json`; all three policies parse, confidence: low. I did not run `xano policy evaluate`, so the workspace's actual findings are unknown."
+}

@@ -1,0 +1,18 @@
+{
+  "label": "2026-10-12-d40b-g06-haiku-low",
+  "model": "haiku",
+  "effort": "low",
+  "kit": "live",
+  "kit_sha256_16": "5f04da9f0ca89039",
+  "repeats": 3,
+  "goals": [
+    "G06"
+  ],
+  "workspace_id": "9040",
+  "instance": "http://localhost:9999",
+  "repo_commit": "bdc11b6d5739c23cc7a86707205eec110363edfb",
+  "claude_version": "2.1.296 (Claude Code)",
+  "started": "2026-10-13T04:04:51.810Z",
+  "ended": "2026-10-13T04:06:24.160Z",
+  "total_cost_usd": 0.07225379
+}

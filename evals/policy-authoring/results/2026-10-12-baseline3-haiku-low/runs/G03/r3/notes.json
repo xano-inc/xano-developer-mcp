@@ -1,0 +1,56 @@
+{
+  "goal_id": "G03",
+  "templates_considered": [
+    "no_sensitive_data_in_logs (LOG-001): fits 'cardholder data can't be logged'; used as-is, two rules (debug.log, plus datadog.log since the template limits say debug.log only)",
+    "approved_vendors_only (VND-001): fits 'Stripe and Plaid only'; used with hosts filled in",
+    "no_pii_in_responses (DATA-010): partial fit for responses, but the ask is about logs, storage and vendors; not used",
+    "sensitive_fields_marked (CONF-011): marks fields sensitive but does not stop storage; not a fit",
+    "confidential_tables_tagged (CONF-012): tags tables, does not stop raw storage; not a fit",
+    "no_secrets_in_code (SEC-012): not asked, but acme_notify_sms has a literal Twilio credential in its URL; not added, mentioned in reply",
+    "sensitive_tables_need_login (CONF-010) / tagged_table_access: needs table tags the workspace lacks; not used"
+  ],
+  "templates_used": ["no_sensitive_data_in_logs", "approved_vendors_only"],
+  "rules": [
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data can't be logged (debug.log)"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["datadog.log"], "param_names": ["message"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data can't be logged (datadog.log; template limit note says to add it)"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "cardholder data can't go to any vendor not on the approved list (destination-level only)"},
+    {"policy_key": "PCI-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name"], "forbidden": true}, "covers": "cardholder data can't be stored raw (schema field names only)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cardholder data can't be stored raw: encryption or tokenisation actually applied", "why": "no check exists"},
+    {"part": "cardholder data can't be stored raw: data stored under a field name other than the listed four", "why": "couldn't tell how; only exact field names are matched"},
+    {"part": "cardholder data can't be sent to unapproved vendors: what a request carries", "why": "no check exists; outbound.vendor_allowlist judges destinations only"},
+    {"part": "cardholder data can't be logged: data logged indirectly (values read back from the DB, function results, logs in tasks and triggers)", "why": "no check exists; LOG-001 limits say values read back from the database or a function call are not traced"},
+    {"part": "PCI scope: bank account and routing numbers", "why": "other; not cardholder data under the ask's wording, so left out and offered to the customer"},
+    {"part": "PCI controls beyond these: access control to card data, audit logging, secrets management, key rotation", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'Cardholder stuff' means card_number, card_cvv, card_expiry and cardholder_name, the fields in the payments table",
+    "'Stripe and Plaid only' means api.stripe.com and production.plaid.com; sandbox hosts were not added",
+    "Forbidding a field in any table schema is the closest available proxy for 'can't be stored raw'",
+    "Blocking all $input in debug.log/datadog.log is acceptable as the closest proxy for 'cardholder data can't be logged'",
+    "Policies should be active and advisory on creation, per the skill's rule for new policies",
+    "Policy tag 'pci-dss' is a label only; no PCI requirement numbers were cited because I could not verify their exact ids from the kit"
+  ],
+  "workspace_names_used": ["payments", "card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number", "payment_method", "charge (payments/charge_POST)", "clinical_notes", "debug.log", "api.stripe.com", "production.plaid.com", "api.shipfast.example", "api.riskscreen.example", "api.twilio.com", "acme_notify_sms", "acme_send_invoice_email", "send_customer_email", "ticket_summarizer", "support_agent"],
+  "confusions": [
+    "The skill says a template's rules are read with `xano policy catalogue`, but the kit catalogue.json templates list only gives check names and needs, not the full params; I had to read the example values from the template JSON, not from the param list.",
+    "The catalogue lists table.field_attribute_required with field_types+ and field_names+ both marked '+', and the skill says 'a rule must set at least one of'. Not clear whether field_names alone satisfies it with forbidden=true; the parse passed, but I did not confirm the semantics.",
+    "outbound.vendor_allowlist: unclear whether providers (e.g. stripe, plaid) exist as provider ids; the catalogue examples list aws, google, azure, xano, openai, anthropic only, so I used hosts.",
+    "LOG-001 template says debug.log only is checked, and suggests adding datadog.log; the datadog.log message param name was taken from the limits note, not a params table.",
+    "Not clear whether expression_rule judges disabled (!debug.log) statements, which exist in acme_sync_shipping_rates. Left unresolved.",
+    "The skill's statement says a policy file carries no comments, which is a fair rule, but the kit gives no example of a policy tied to a framework criterion such as PCI DSS, so I did not know how to cite the requirement precisely."
+  ],
+  "wished_for": [
+    "A PCI DSS (or generic payment card) template or example set: cardholder data not stored raw, not logged, vendors allowlisted",
+    "A check that judges what data a call carries, or data-flow tags on fields, so 'cardholder data' can be scoped by tag rather than by name",
+    "A check or param to forbid specific field names only where the field is in a card-data table, or a tag that marks card fields (e.g. cardholder) across tables",
+    "Full param tables for each template in kit/policy-templates.md (the templates doc lists check names and 'Fill' only)",
+    "A list of valid provider ids for outbound.vendor_allowlist, and whether a host allowlist can cover a provider's sandbox and production hosts together",
+    "Guidance on whether expression_rule covers disabled statements"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies parse, but each covers only a proxy: field names (not data), destinations (not contents), and debug/datadog logs only. A PCI audit needs encryption, tokenisation, access control and process evidence that no check can see. Predictions of findings are from reading code, not from running evaluate, which is forbidden in this run."
+}

@@ -1,0 +1,52 @@
+{
+  "goal_id": "G09",
+  "templates_considered": [
+    "RET-002 retained_data_cleaned_up: fits the 2-year retention part; used with tags filled from example",
+    "DATA-010 no_pii_in_responses: 'gdpr' and 'personal data' words match, but the ask is deletion and retention, not responses; not used",
+    "CONF-011 sensitive_fields_marked: GDPR words match; ask does not mention marking fields; not used",
+    "CONF-012 confidential_tables_tagged: would tag tables; not requested; not used",
+    "LOG-001 no_sensitive_data_in_logs: privacy words; not requested; not used",
+    "RET-001 audit_log_protected: audit words only; not used",
+    "CONF-010 sensitive_tables_need_login: gdpr words; not about deletion; not used",
+    "AUTH-020 own_records_only: not about deletion; not used"
+  ],
+  "templates_used": ["RET-002"],
+  "rules": [
+    {"policy_key": "RET-002", "check": "table.coverage_required", "params": {"tags": ["retained"], "referenced_by": {"object_kinds": ["task"], "statements": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"]}}, "covers": "data kept longer than 2 years: a cleanup task exists for each retention-tagged table (does not check age)"},
+    {"policy_key": "GDPR-ERASURE", "check": "table.coverage_required", "params": {"tags": ["personal"], "referenced_by": {"object_kinds": ["function"], "tags": ["erasure"], "statements": ["db.del", "db.bulk.delete"]}}, "covers": "account deletion removes user data everywhere: every personal-tagged table is deleted from by an erasure-tagged function"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "when a user deletes their account, their data is actually deleted everywhere (correct deletion, not just coverage)", "why": "other"},
+    {"part": "deletion reaches third parties (card processor, email, AI summaries, backups)", "why": "needs runtime/org process"},
+    {"part": "data is not kept longer than 2 years (age of records)", "why": "no check exists"},
+    {"part": "the erasure function actually deletes the right records, not just the right tables", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "Tag names 'personal', 'retained' and 'erasure' are what the customer would adopt; none exist in the workspace (policies left unchanged)",
+    "The ask 'delete their stuff everywhere' means table coverage by an erasure-tagged function, which is the only checkable reading",
+    "'2 years' is the customer's intended retention period, written into the RET-002 statement as intent only",
+    "delete_user_account (called by DELETE /account) is the intended erasure function, but it is not tagged erasure and does not cover most personal tables",
+    "Severity high for the GDPR erasure policy is my choice; the customer did not say"
+  ],
+  "workspace_names_used": ["sessions", "purge_expired_sessions", "delete_user_account", "account", "user_address", "users", "orders", "invoices", "payments", "payment_method", "support_tickets", "customer_notes", "shipments", "newsletter_subscribers", "patients", "appointments", "clinical_notes", "customers"],
+  "confusions": [
+    "Recipe 'Erase and expire personal data' says to write one function and tag it, but the recipe's words for erasure tags and the coverage rule's referenced_by.tags are not explained together: it was unclear whether the erasure function must be tagged in the workspace before any rule can run",
+    "The RET-002 template's fill example is tags ['retained'], but it is not stated whether the template's fill tag is a scope param (tags) or a referenced_by param; I used the scope param, which parsed",
+    "The catalogue limit 'the age lives in the task's own query' is stated, but no guidance says how to express a retention period as a policy (none exists); the statement had to carry it as intent",
+    "The parse warnings name missing tags as warnings, but the skill says not to accept warnings; I kept the rules with the tags the customer needs and proposed the tags instead of changing the workspace, which means both rules currently select nothing"
+  ],
+  "wished_for": [
+    "A check or param for record age / retention period (e.g. a db.bulk.delete where expires_at or created_at is older than N days)",
+    "A recipe or template for 'delete a user everywhere' that shows how to tag personal tables and the erasure function together",
+    "A check that verifies the erasure function deletes the records that identify the user (e.g. where user_id equals $input), not just that it deletes from the table",
+    "Guidance on whether a policy written before its tags exist should be published (it parses but selects nothing) or held until the tags are added"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "RET-002.R1: tags \"retained\" is on no table on this branch, so it selects nothing (warning; parse exit 0)",
+    "GDPR-ERASURE.R1: tags \"personal\" is on no table on this branch, so it selects nothing (warning; parse exit 0)",
+    "GDPR-ERASURE.R1: referenced_by.tags \"erasure\" is on no function on this branch, so no object covers a table through it (warning; parse exit 0)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Both rules parse, but none of their tags exist, so as written they select nothing and check nothing until the customer tags tables and the erasure function. Even then, the erasure rule only checks table coverage, not that delete_user_account removes the right records, and it cannot see third-party copies or backups. The 2-year limit is not checkable at all: RET-002 only confirms a cleanup task exists. The workspace's delete_user_account currently misses most personal tables (orders, payments, support_tickets and others), so the rule would flag real gaps once tagged."
+}

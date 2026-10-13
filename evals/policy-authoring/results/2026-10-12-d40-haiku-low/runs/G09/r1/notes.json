@@ -1,0 +1,63 @@
+{
+  "goal_id": "G09",
+  "templates_considered": [
+    "RET-002 retained_data_cleaned_up: fits the 'expire data' half, but its table scope is tags: [retained] and no table in the workspace carries any tag, so it would pass with zero tables judged. Not used as-is.",
+    "AUTH-010 endpoints_need_login, AUTH-020 own_records_only: not relevant to account deletion or retention.",
+    "CONF-011 sensitive_fields_marked, DATA-010 no_pii_in_responses, LOG-001 no_sensitive_data_in_logs: the GDPR recipe pulls these in; they are about marking/exposure, not deletion or age. Not used; the ask did not request them.",
+    "CONV-022/CONV-023 owner and classification tags: no fit; they would only add tags.",
+    "RET-001 audit_log_protected: about who writes the audit log, not deletion. Not used."
+  ],
+  "templates_used": [],
+  "rules": [
+    {
+      "policy_key": "PRIV-010",
+      "check": "table.coverage_required",
+      "params": {"table_selector": {"has_fk_to": "users"}, "referenced_by": {"object_kinds": ["function"], "statements": ["db.del", "db.bulk.delete"]}},
+      "covers": "When a user deletes their account, their records everywhere get deleted (approximation: checks that some function deletes from each table that points at users; does not check that it is the account-deletion path)"
+    },
+    {
+      "policy_key": "PRIV-010",
+      "check": "table.coverage_required",
+      "params": {"table_selector": {"has_field": "created_at"}, "referenced_by": {"object_kinds": ["task"], "statements": ["db.del", "db.bulk.delete"]}},
+      "covers": "Don't keep customer data longer than 2 years (approximation: checks each timestamped table has a scheduled cleanup task; the 2-year age is not read by any check)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "2-year maximum retention: the actual age cutoff in each cleanup query", "why": "no check exists"},
+    {"part": "Deletion from backups, exports, logs, and third-party vendors/AI tools", "why": "runtime data and copies between environments; not in definitions"},
+    {"part": "Newsletter subscribers and support_tickets.requester_email (personal data with no link to users) on account deletion", "why": "couldn't tell how: no check selects by email field plus cross-link; has_field 'email' would also catch customers and patients, which is off-scope for account deletion"},
+    {"part": "Whether tables like invoices/orders/audit_log may legitimately be kept longer (legal retention exceptions)", "why": "needs runtime/org process; the policy has no exemption on table.coverage_required"},
+    {"part": "Erasure request process, response time, staff training", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "has_fk_to 'users' matches orders.user_id, sessions.user_id, support_tickets.user_id, user_address.user_id",
+    "has_field 'created_at' matches the 17 tables that declare created_at (checked by grep of workspace/table)",
+    "delete_user_account (called via DELETE /account) is the account-deletion path; its db.bulk.delete on user_address and sessions and db.del on users count toward coverage",
+    "purge_expired_sessions is active (schedule has no end date) and is the only task with a delete statement",
+    "A rule with no tags on tables is acceptable: the customer did not want to add tags at this stage",
+    "Predicted findings (not evaluated; evaluate is forbidden here): rule 1 -> support_tickets, orders; rule 2 -> 16 tables (all created_at tables except sessions)"
+  ],
+  "workspace_names_used": [
+    "users", "user_address", "sessions", "support_tickets", "orders", "newsletter_subscribers", "delete_user_account", "purge_expired_sessions", "account_DELETE (DELETE /account, api group app)", "audit_log", "invoices", "payments", "customers", "patients", "orgs", "tenants", "webhook_deliveries", "approval_requests", "clinical_notes", "customer_notes", "shipments"
+  ],
+  "confusions": [
+    "RET-002 (template) takes tags: [retained], but nothing is tagged in this workspace, so the template would pass vacuously. Nothing in the skill warns that a template over an untagged workspace reports nothing; I could not tell whether that is intended.",
+    "The GDPR recipe says to tag tables (personal, retained) and the erasure function (erasure) first, but the brief forbids changing the workspace and tag changes are the owner's call. I had to build the policy without tags, and the recipe's erasure rule (tags on the function) is not reproducible without them.",
+    "table.coverage_required: 'Scope selects the tables; referenced_by selects the covering objects' and 'reaches a table through called functions'. It is not clear whether referenced_by.statements requires the covering object to delete from that table in the same statement, or just any reference; I assumed the statement must aim at the table as its primary table.",
+    "has_field matches the exact schema field name only; no way to select 'any table with a timestamp', so created_at is my proxy for personal/customer data and it also catches tables like orgs, tenants, audit_log.",
+    "No check reads retention age, and the skill's own 'What no check can see' section says so, but the recipe wording ('Erase and expire personal data') suggests a retention policy is achievable; the customer will read the policy name as more than it is.",
+    "The template table lists RET-002 fill as tags only, with no way to scope coverage to tables without tags; the fallback to has_field / has_fk_to is only mentioned in the parameter description, not in the recipe.",
+    "The brief says to use `xano policy parse` to find workspace names, but parse output did not flag any unknown names (no warnings shown in text or json output) even though I did not try a deliberately wrong name, so I cannot confirm how strict the name check is."
+  ],
+  "wished_for": [
+    "A recipe variant for 'no tags yet' showing has_fk_to / has_field selectors for account-deletion and retention coverage.",
+    "A check or param that reads a retention window from task queries, or at least a convention for declaring max age on a table (for example a table-level attribute), so the 2-year limit is checkable.",
+    "A coverage param to exempt named tables (for example invoices kept for tax), like except_tags on other checks.",
+    "A way to say 'table holds data about a user' without listing tables (a user-link selector across has_fk_to chains, e.g. customers via org).",
+    "Guidance on whether a policy that passes over an empty tag set is a finding, a pass, or a warning."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy checks that tables tied to users have a delete function and that timestamped tables have a cleanup task. It cannot check the 2-year age, cannot exempt legally retained tables, cannot see backups or vendor copies, and misses newsletter and support-ticket personal data. The findings are predictions from reading the workspace; I did not run evaluate because the brief forbids it."
+}

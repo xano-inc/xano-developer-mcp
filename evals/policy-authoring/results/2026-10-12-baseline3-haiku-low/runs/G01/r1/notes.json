@@ -1,0 +1,52 @@
+{
+  "goal_id": "G01",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): fits. Title covers 'nobody ships an endpoint without auth'; its rule object.auth_required directly catches the unauth invoices/export endpoint.",
+    "own_records_only (AUTH-020): partial. Covers per-user row filtering, but the ask is about auth. Its db.where_constraint_required compare_to $auth.id does not match the org-scoped $me.org_id pattern used in invoices_GET, so it would be a poor fit without rework. Not used.",
+    "no_pii_in_responses (DATA-010): considered for 'full invoices table' leak, but the ask is about auth, not data content. Not used.",
+    "sensitive_tables_need_login (CONF-010): considered; would need the invoices table tagged sensitive, which the workspace lacks. Not used."
+  ],
+  "templates_used": ["endpoints_need_login"],
+  "rules": [
+    {
+      "policy_key": "AUTH-010",
+      "check": "object.auth_required",
+      "params": {"except_tags": ["public"]},
+      "covers": "Every endpoint, including invoices/export, must require login; deliberately public endpoints (tag public) are exempt."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Returns the full invoices table (all orgs' rows, unpaged) once a caller is in", "why": "no check exists"},
+    {"part": "'nobody ships' implies blocking enforcement", "why": "other: a policy-owner decision; written as advisory per default, flagged in reply"},
+    {"part": "Preventing it at 2am, before a push", "why": "needs runtime/org process: blocking enforcement and a push gate are the only enforcement; not decided here"}
+  ],
+  "assumptions": [
+    "The 'public' tag is the workspace's exemption convention, since login_POST, health_GET and subscribe_POST already carry it.",
+    "AUTH-010 as a template is the right fit for 'without auth' and needs no changes.",
+    "The customer wants the policy advisory until they say otherwise, as the default for a new policy."
+  ],
+  "workspace_names_used": [
+    "invoices (table)",
+    "invoices_GET (query, api group app, auth users)",
+    "invoices/export (query, api group app, no auth)",
+    "invoices/{invoice_id} (query, auth users)",
+    "app (api_group)",
+    "public (tag on health_GET, login_POST, subscribe_POST)",
+    "users (auth table)",
+    "orgs, org_id"
+  ],
+  "confusions": [
+    "The skill says 'read the policy file' before any change and 'run xano policy evaluate' after; I could not run evaluate or create/publish because the brief forbids those, so I stopped at parse. The reply states this.",
+    "Brief says 'write the .xs file you would publish' but the skill's file layout is /policies/<KEY>.xs inside the project. I wrote out/AUTH-010.xs as instructed, not policies/AUTH-010.xs, and did not check whether a policies/ directory is expected in this workspace pull.",
+    "Template fill/examples: AUTH-010 has no fill needs and examples is empty; the skill says fill from check example, which I didn't need. No confusion here, but the 'Fill' column is unclear about when 'nothing' means no params at all."
+  ],
+  "wished_for": [
+    "A template or recipe for 'every endpoint in group X must be authed, with a blocking enforcement' so the enforcement choice is spelled out next to the template.",
+    "A check or param to flag unpaged or unfiltered db.query returns (e.g., a table read with no where and no paging) so 'returns the full table' is covered directly.",
+    "Guidance on whether a new policy the customer calls 'must not ship' should default to blocking, with an explicit note on what blocking gates."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "AUTH-010 directly catches an unauthenticated endpoint, and the workspace has one (invoices/export) that it would flag, so the 'without auth' half is well covered. Confidence is not high because the policy is advisory, not blocking, so it doesn't stop shipping as the customer wants; it doesn't check the full-table data exposure once auth is added; and I have not run xano policy evaluate to confirm the predicted finding."
+}

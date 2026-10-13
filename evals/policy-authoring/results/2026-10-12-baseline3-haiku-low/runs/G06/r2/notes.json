@@ -1,0 +1,50 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "endpoints_have_tests (CHG-001): fits 'no tests'; template scope is query only, widened to query, function, task",
+    "endpoints_stay_short (CONV-040): fits 'giant functions'; template scope is query only, widened to function and task",
+    "shallow_nesting (CONV-041): partly fits; nesting is not in the ask beyond what CONV-040 already sets, so not used separately",
+    "external_calls_handle_errors (LOG-010): partly fits 'missing error handling'; checks api.request only",
+    "no_leftover_code (CONV-050): did not fit; ask did not mention dead code",
+    "owner_team_tagged, tables_classified, agreed_tag_vocabulary, object.naming templates: did not fit; not in ask",
+    "no_destructive_sql, get_endpoints_only_read, inputs_validated, middleware_surfaces_errors: did not fit the ask"
+  ],
+  "templates_used": ["endpoints_have_tests", "endpoints_stay_short", "external_calls_handle_errors"],
+  "rules": [
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query", "function", "task"]}, "covers": "no tests"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests (anonymous call rejection asserted)"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function", "task"]}, "covers": "giant functions; nesting"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling (external calls only)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "juniors breaking prod", "why": "needs runtime/org process"},
+    {"part": "error handling beyond external api.request calls", "why": "no check exists"},
+    {"part": "a 'you know the drill' catch-all for review habits", "why": "couldn't tell how; the customer did not name the rest"}
+  ],
+  "assumptions": [
+    "'Giant 200 line functions' maps to stack.size_limit statement count, not line count (no line-count check exists)",
+    "'No tests' means object.test_coverage over functions and tasks as well as queries",
+    "'Missing error handling' means api.request calls, the only error-handling check available",
+    "Advisory and active is the right default for new policies, per the skill",
+    "No severity or tags beyond the template ones; no framework named, so no tags added"
+  ],
+  "workspace_names_used": [
+    "acme_get_tracking", "acme_notify_sms", "acme_sync_shipping_rates", "issue_refund", "retry_failed_webhooks", "charge_POST", "workflow_test/health_check", "workflow_test/invoices_require_login", "function/record_audit_event"
+  ],
+  "confusions": [
+    "Templates set object_kinds to query only; the ask named functions and tasks, and the skill says to start from the template and change only what the request asks, which was ambiguous when the user's ask is 'the whole codebase'. I widened the scope and recorded it.",
+    "Skill says a rule title is optional and should only be set when scope makes the label misleading; I set titles on CONV-040 and LOG-010 rules because the widened scope or partial coverage made the template label misleading. Judgement call, not stated explicitly.",
+    "xano policy parse human-readable output omitted the 'severity' line for LOG-010 even though the file has it; -o json showed severity medium. Printed output may not reflect the file, which confused my check.",
+    "Skill says 'Fill every need' from template examples; CHG-001 and LOG-010 needed no fill, so nothing to check there, but the catalogue 'examples' field is empty for these templates."
+  ],
+  "wished_for": [
+    "A check that counts stack lines or measures function length in lines, to match 'giant 200 line function' asks",
+    "A template or recipe for 'error handling beyond api.request' (db calls, function.run) or a note on which statements are external",
+    "Guidance on whether to widen a template's object_kinds when the ask is codebase-wide, versus keeping the template as-is",
+    "A recipe for 'stop juniors breaking prod' that says explicitly which parts are out of policy scope"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Tests and function size map to real checks and parse cleanly. Error handling is covered only for api.request, not for error handling generally. The 'juniors breaking prod' part is not checkable. Policies are not evaluated, so I cannot confirm the findings a real workspace would produce."
+}

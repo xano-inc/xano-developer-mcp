@@ -1,0 +1,49 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "LOG-010 external_calls_handle_errors: fits 'missing error handling' only for api.request; no template for general error handling",
+    "CHG-001 endpoints_have_tests: fits 'no tests'; uses object.test_coverage + test.assertion_required",
+    "CONV-040 endpoints_stay_short: fits 'giant functions' but scoped to query only; ask names functions, so widened object_kinds to query+function",
+    "CONV-041 shallow_nesting: same check as CONV-040 with max_nesting only; folded into CONV-040 rather than a second policy",
+    "AUTH-010 endpoints_need_login: not asked",
+    "SEC-010/API-010/VAL-001/CONV-050 etc: not asked"
+  ],
+  "templates_used": ["external_calls_handle_errors", "endpoints_have_tests", "endpoints_stay_short"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling (external calls only)"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "no tests (endpoints must be called by a test that asserts)"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests (protected endpoints must have anonymous-rejection test); only loosely related to the ask, kept because the template bundles it"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant 200 line functions (statement count proxy, not lines)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "missing error handling beyond api.request (db calls, catch quality)", "why": "no check exists"},
+    {"part": "stop juniors breaking prod", "why": "needs runtime/org process"},
+    {"part": "quality of tests (they assert something real, pass)", "why": "no check exists; object.test_coverage only checks an assertion follows the call"},
+    {"part": "200 lines vs 30 statements", "why": "couldn't tell how: the ask is in lines, checks count statements; chose 30 from template example"}
+  ],
+  "assumptions": [
+    "'giant functions' means Xano functions as well as endpoints",
+    "30 statements / 3 levels from the template's own example is an acceptable size bar",
+    "advisory enforcement is right for a new policy per the skill",
+    "CHG-001 scope stays endpoints-only as in the template",
+    "tags omitted: workspace tag vocabulary not checked"
+  ],
+  "workspace_names_used": ["api_group/endpoint names not needed", "tables: none referenced", "policies: none existing (xano policy list returned 'No policies found.')"],
+  "confusions": [
+    "CHG-001 template bundles test.assertion_required, which checks anonymous-rejection tests; the customer's ask is about tests in general, so the match is loose and the skill gives no guidance on when to keep bundled rules that exceed the ask",
+    "Template-first vs. change-only-what-was-asked: the skill says start from template and add only what the request asks, but the template scopes to query only while the ask names functions; no guidance on widening template scope",
+    "object.test_coverage and CONV-040 template examples: the catalogue's examples are empty for templates ('examples': {}), so the fill values came only from the template's rule params, not from a stated example",
+    "The skill's 'Fix' notes and limits text are long; the catalogue's limits for CONV-040 mention on a blocking policy a change to an oversized object is blocked, which I didn't need but shows the gating story is spread across several fields",
+    "xano policy parse default summary output omits the severity line, while -o json shows it; I only noticed by diffing"
+  ],
+  "wished_for": [
+    "A check or template for general error handling (e.g. db calls inside try_catch, catch blocks must not be empty)",
+    "A line-count based size check, or guidance that statements are a proxy for lines",
+    "Guidance on whether to keep template-bundled rules that exceed the user's ask",
+    "Recipe showing how to widen a template's object_kinds scope without breaking the template-first rule"
+  ],
+  "parse_attempts": 7,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Three checks map cleanly to three of the four asks and parse with no rule warnings, but they are advisory, unevaluated (no evaluate run), and only partially cover error handling and test quality; the size threshold is a statement-count proxy for line count."
+}

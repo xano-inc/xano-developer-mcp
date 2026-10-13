@@ -1,0 +1,39 @@
+{
+  "goal_id": "G08",
+  "repeat": 1,
+  "label": "2026-10-12-d40-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "live",
+  "started": "2026-10-13T03:41:03.893Z",
+  "wall_ms": 40139,
+  "duration_ms": 39118,
+  "cost_usd": 0.01441923,
+  "num_turns": 15,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "SEC-012.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": false,
+  "parse_calls": 2,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "cat .claude/skills/xano-policies/SKILL.md; echo ---; ls -R kit; echo ---; cat kit/policy-templates.md",
+    "cat kit/catalogue.json | head -c 20000",
+    "cd kit && python3 -I -c \"\nimport json\nd=json.load(open('catalogue.json'))\nprint(d.keys())\nfor i in d['items']: print(i['id'],'|',i.get('label'),'|',i.get('category'))\nprint([k for k in d if k!='items'])\n\" ; grep -n -i \"secret\\|env\\|hardcod\\|api key\\|credential\\|literal\" ../.claude/skills/xano-polici…",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-d40-haiku-low/G08-r1 && grep -n -i \"SEC-012\\|credential\" kit/policy-templates.md; python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nfor i in d['items']:\n  if i['id']=='literal.credenti…",
+    "grep -n -i \"no_secrets\\|SEC-012\" -A12 kit/policy-templates.md | head -60; echo ---; grep -n -i \"^## \\|^### \\|step\" .claude/skills/xano-policies/SKILL.md | head -60; echo ---; xano policy list 2>&1 | head -30",
+    "xano policy parse out/SEC-012.xs 2>&1; echo \"exit=$?\"; xano policy parse -o json out/SEC-012.xs 2>&1 | head -c 1500"
+  ],
+  "final_message": "Wrote `out/SEC-012.xs` (parses cleanly, exit 0), `out/reply.md` and `out/notes.json`. Confidence: medium. The rule catches recognisable keys like Twilio but not plain passwords, and I did not evaluate it against the workspace."
+}

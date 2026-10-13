@@ -1,0 +1,35 @@
+{
+  "goal_id": "G12",
+  "templates_considered": [
+    "table.write_location_restricted / RET-001 audit_log_protected: restricts writes to a table, not copies between environments; did not fit",
+    "VND-001 approved_vendors_only (outbound.vendor_allowlist): controls destinations, not data content; did not fit",
+    "CONF-010 sensitive_tables_need_login / CONF-012 confidential_tables_tagged: about sensitive data access on endpoints, not environment separation; did not fit",
+    "AUTH-050 one_auth_table (table.auth_table_rules): end-user logins, not developer access to prod; did not fit",
+    "SEC-012 no_secrets_in_code (literal.credential_shape): could partly relate to tenants.db_connection_string but does not address prod-to-staging data flow; did not fit the ask"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "no check exists"},
+    {"part": "devs can only get into prod through the on-call process", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Staging and prod are separate branches or environments that the policy engine can see only through stored definitions",
+    "The tenants table's db_connection_string is the only environment wiring visible in the workspace"
+  ],
+  "workspace_names_used": ["tenants", "db_connection_string", "orgs", "support_tickets", "patients"],
+  "confusions": [
+    "The catalogue and skill describe objects, branches and checks, but there is no check or object kind for environments, data copies or workspace membership. The customer's ask spans those, and the skill doesn't say what to do when a whole request is out of scope beyond writing no policy.",
+    "The skill's rule 'Write no policy only when no part is checkable' left me unsure whether a partial policy on the tenants table (secret handling) should be offered as coverage of part 1. I judged it did not cover the ask, so I did not write it.",
+    "The object kind list does not include branches or environments, so 'branch' scope and environment-level rules are not expressible."
+  ],
+  "wished_for": [
+    "A check or object kind for environment or branch configuration, e.g. whether a database connection targets a production host",
+    "A check on workspace members or roles (who can access production), or a documented boundary saying those are out of policy scope",
+    "A worked example of an out-of-scope request answer, so the reply can be consistent"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No policy achieves the goal: no check reads environment data flow or team access, so no .xs file was written. High confidence in that negative finding; the goal itself is not achievable by policy."
+}

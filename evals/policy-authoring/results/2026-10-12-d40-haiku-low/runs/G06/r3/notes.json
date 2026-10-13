@@ -1,0 +1,53 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "endpoints_have_tests (CHG-001): fits 'no tests'. Used as-is, plus a function coverage rule because the ask is about code review and functions carry the logic.",
+    "endpoints_stay_short (CONV-040): fits 'giant functions'. Used with template defaults (30 statements, 3 nesting). User said 200 lines; a statement is not a line, so the number is a judgement call.",
+    "external_calls_handle_errors (LOG-010): partial fit for 'missing error handling'. Template covers api.request only; I extended the statement list per the template's limits text.",
+    "shallow_nesting (CONV-041): folded into CONV-040's max_nesting; not a separate policy.",
+    "endpoints_stay_short recipe items: 'Keep code easy to review' recipe considered. Its CONV-010/CONV-013 naming, CONV-050 leftover code and PERF-001 paging were not asked for, so left out.",
+    "no_destructive_sql, inputs_validated, no_sensitive_data_in_logs, others: not related to the ask; not used."
+  ],
+  "templates_used": ["CHG-001", "CONV-040", "LOG-010"],
+  "rules": [
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "No tests: every endpoint is called by a test"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "No tests: protected endpoints have a test that asserts anonymous calls are rejected"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["function"]}, "covers": "No tests: every function is called by a test (added beyond template)"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "Giant functions: statement and nesting caps (template default, not the 200 lines in the ask)"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request", "ai.external.mcp.tool.run", "db.external.postgres.direct_query", "db.external.mysql.direct_query"], "must_be_inside": ["try_catch"]}, "covers": "Missing error handling: external calls sit in a try_catch (external calls only)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Missing error handling in general (functions and logic that call nothing external)", "why": "no check exists"},
+    {"part": "Tests that are meaningful, not just present (the assertion's content)", "why": "no check exists; the checks only confirm an assertion follows the call"},
+    {"part": "Giant functions measured in lines rather than statements", "why": "couldn't tell how: stack.size_limit counts statements, and the user's 200 lines was not converted to a number the team agreed to"},
+    {"part": "Stopping juniors breaking prod (a gate)", "why": "needs runtime/org process: advisory policies block nothing; blocking is the owner's choice and I did not set it"},
+    {"part": "Code review of quality, naming, judgment", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "The three policies stay advisory; the ask says 'stop' but the skill says to write new policies advisory and say that blocking is the owner's choice",
+    "Test coverage applies to all queries and all functions; no except_tags exemptions added, since none were asked for and none exist in the workspace",
+    "A statement is roughly a line of logic, so 30 statements is a stricter default than the user's 200-line complaint",
+    "Workspace names used: api groups app and admin, functions check_admin_role, record_audit_event, request_human_approval, tests invoices_require_login and health_check"
+  ],
+  "workspace_names_used": ["invoices_require_login", "health_check", "check_admin_role", "record_audit_event", "request_human_approval", "app", "admin"],
+  "confusions": [
+    "The recipe 'Keep code easy to review' lists CHG-001, CONV-040, CONV-050, PERF-001, CONV-010, CONV-013 plus extra rules. It was a close match, but the recipe says 'Write one policy per template' and it is not clear whether the recipe should be followed when the user only asked for three parts of it.",
+    "CHG-001's template covers endpoints only; the ask is about code review, which covers functions too. The skill says to start from the template and add only what is asked, so the function rule is a judgement call that I made.",
+    "The skill's Templates section says a template fits when 'its title, rules or words cover the request or part of it', so partial fits (LOG-010) are allowed, but no guidance says what to tell the user about the uncovered part beyond 'What no check can see'.",
+    "stack.size_limit's 'lines' vs 'statements': skill says a user's lines are statements 'roughly', so the 200-line ask has no exact mapping; I had to pick 30 from the template.",
+    "xano policy parse text output for LOG-010 omitted the severity line, while -o json returned severity medium and the source file has it. Unclear whether this is a display bug or the parser dropped it from the text rendering.",
+    "Did not run xano policy evaluate (forbidden in this run), so the prediction of which objects get flagged is not checked."
+  ],
+  "wished_for": [
+    "A recipe or template for a 'code review hygiene' policy that maps 'lines' to statements and gives an example of the 200-line equivalent",
+    "A function-level test coverage template, since CHG-001 covers endpoints only",
+    "A check for error handling in functions beyond external calls, or a clear statement that none exists",
+    "Guidance on whether to write one policy per template or merge several templates when the customer asks for only some of a recipe's parts"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [
+    "No errors. LOG-010 text output dropped severity line; -o json shows severity medium"
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three policies parse and map to the three asked parts (tests, function length, error handling), but each covers only part of its ask: coverage checks existence, not quality; size limit uses statements not lines; error handling covers external calls only. No evaluate run, so flagged objects are unknown. Advisory enforcement means it will not stop bad changes until the owner makes it blocking."
+}

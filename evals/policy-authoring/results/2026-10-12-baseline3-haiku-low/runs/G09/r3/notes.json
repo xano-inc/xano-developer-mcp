@@ -1,0 +1,76 @@
+{
+  "goal_id": "G09",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: about login, not deletion; not used",
+    "AUTH-020 own_records_only: about reads/writes scoped to the owner; not a deletion check; not used",
+    "RET-002 retained_data_cleaned_up: fits the 2-year retention half, but needs a 'retained' tag on tables, and no table has one; not used, proposed instead",
+    "CONF-012 confidential_tables_tagged / CONV-023 tables_classified: tagging, not deletion or retention; not used",
+    "DATA-010 no_pii_in_responses: about responses, not stored data; not used",
+    "RET-001 audit_log_protected: about who writes the audit log; not the ask; not used",
+    "CHG-001 endpoints_have_tests: unrelated to the ask; not used"
+  ],
+  "templates_used": [],
+  "rules": [
+    {
+      "policy_key": "ERASURE-010",
+      "check": "object.statement_required",
+      "params": {
+        "functions": ["delete_user_account"],
+        "placement": "unconditional",
+        "verbs": ["DELETE"],
+        "object_kinds": ["query"]
+      },
+      "covers": "Account deletion: the DELETE endpoint always calls the erasure function. Checks the call only, not what the function deletes."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "When a user deletes their account, their data is deleted everywhere (all tables holding user data)",
+      "why": "no check exists"
+    },
+    {
+      "part": "Customer data is not kept longer than 2 years",
+      "why": "needs runtime/org process"
+    }
+  ],
+  "assumptions": [
+    "'Their stuff everywhere' means every table with a user link (user_id, customer_id, requester_email), not only the users table.",
+    "The only DELETE endpoint in the workspace is DELETE /account; verbs scope therefore covers the deletion path.",
+    "The customer wants an advisory policy first, not blocking, since the template and brief default to advisory.",
+    "2 years is a retention limit on personal data; the customer has not said which tables or what counts as the start of the period.",
+    "orders and audit_log may need to be kept for legal reasons; I did not decide that and did not write a rule for it."
+  ],
+  "workspace_names_used": [
+    "delete_user_account",
+    "account_DELETE (endpoint in api group 'app')",
+    "users",
+    "sessions",
+    "user_address",
+    "support_tickets",
+    "orders",
+    "audit_log",
+    "purge_expired_sessions",
+    "record_audit_event"
+  ],
+  "confusions": [
+    "object.statement_required says it requires a call to a function, but nothing in the catalogue says whether a required function must itself delete particular tables; a policy that says 'deletes everywhere' has no check to express it.",
+    "table.coverage_required (RET-002) confirms a cleanup task exists for each tagged table, not that it deletes the right rows; the 2-year cutoff (a created_at filter) cannot be checked.",
+    "Whether a 'retained' tag must be added to tables before RET-002 can run is clear from the template's 'needs: tags', but the skill's rule 6 (propose the tag separately) and the template's example (tags: [retained]) do not say what to do when no table carries the tag: whether to write the rule anyway or stop.",
+    "The catalogue's object.statement_required description does not say whether 'placement: unconditional' means the call must be in the endpoint's own stack or may be in a called function.",
+    "The parser warned that verbs only matches endpoints and suggested object_kinds; the skill does not mention that verbs need object_kinds to be explicit for a clean parse.",
+    "No recipe or template exists for 'deletion reaches every personal-data table'; the catalogue only has the RET-002 and RET-001 templates, which cover related but different things."
+  ],
+  "wished_for": [
+    "A check that verifies a delete function removes or clears every table with a link to the deleted entity (for example, every table with user_id -> users), or a way to name the expected tables.",
+    "A template for GDPR erasure (Article 17) and a template for retention periods (Article 5(1)(e)) that takes a retention period, not just a cleanup task.",
+    "A check that tests a timestamp filter on cleanup tasks (for example, created_at older than N days).",
+    "Example of how to propose a tag on tables for the customer to decide, and a way to show which tables would be tagged before any change is made.",
+    "A recipe that combines object.statement_required with table references, for a 'deletion path covers these tables' check."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "Rule warning: verbs only matches endpoints, so this rule inspects endpoints only; set object_kinds: [\"query\"] to say so. (resolved by adding object_kinds)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy parses and checks that the DELETE endpoint calls delete_user_account, which is a real but narrow part of the ask. It does not check that deletion covers all tables with user data (orders, support_tickets and audit_log are not deleted by the current function), and it does not enforce the 2-year retention limit, which needs a retained tag on tables that the workspace lacks. I did not run xano policy evaluate, so no finding is confirmed."
+}

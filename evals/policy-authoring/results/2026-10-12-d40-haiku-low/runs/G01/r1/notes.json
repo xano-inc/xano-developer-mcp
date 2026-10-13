@@ -1,0 +1,49 @@
+{
+  "goal_id": "G01",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: fits. Covers 'require auth' but its rule is all endpoints with except_tags public; the ask is scoped to the invoices table. Used as the base, with tables scope added.",
+    "AUTH-020 own_records_only: partial fit. Covers per-user row scoping, not whether anonymous callers reach the table. Not used.",
+    "AUTH-003 public_endpoints_harmless: no fit. Concerns writes from public endpoints, not reads of invoices.",
+    "DATA-010 no_pii_in_responses: partial fit. Would need field names; the ask is about the whole table being returned, not specific fields. Not used.",
+    "PERF-001 (statement.param_bound via template): partial fit. The export endpoint returns the full table with no paging, which fits 'the full invoices table', but the ask names auth. Not used, mentioned to the customer.",
+    "CONF-010 sensitive_tables_need_login: no fit as-is. Needs a table tag on invoices; workspace has none and I may not change it.",
+    "RET-001, CHG-001, others: no fit."
+  ],
+  "templates_used": ["AUTH-010"],
+  "rules": [
+    {
+      "policy_key": "AUTH-010",
+      "check": "object.auth_required",
+      "params": {"tables": ["invoices"]},
+      "covers": "Endpoints that return invoices must require login: invoices/export GET and invoices/{invoice_id} GET are currently reported, invoices_GET is not."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "the endpoint returns the full invoices table (unbounded read)", "why": "other: a PERF-001 rule (statement.param_bound on db.query per_page) could catch it, but the ask named auth, so I did not add it"},
+    {"part": "'nobody ships' it, including at 2am: blocking the ship", "why": "other: enforcement is advisory per the skill's default; blocking is the policy owner's choice and I did not set it"},
+    {"part": "what a logged-in user may see of invoices", "why": "no check exists"},
+    {"part": "the endpoint being tagged or scoped by something other than its table name", "why": "needs runtime/org process: no invoices table tag exists in the workspace to scope by"}
+  ],
+  "assumptions": [
+    "'Invoices table' is the table named invoices (workspace/table/invoices.xs).",
+    "auth = \"users\" on an endpoint means it requires login; endpoints with no auth line are public.",
+    "No except_tags exemption is wanted for this policy."
+  ],
+  "workspace_names_used": ["invoices", "users", "app", "invoices/export", "invoices/{invoice_id}", "invoices_GET", "orgs", "invoice_item", "audit_log"],
+  "confusions": [
+    "The AUTH-010 template rule carries except_tags: [\"public\"]. The skill does not say whether an override of tables scope should keep or drop it; I dropped it, and the reasoning is in the reply.",
+    "The template title 'Endpoints require login' is misleading once the rule is scoped to one table; the skill says to change the rule title in that case but does not say whether to change the policy title. I kept the policy title and added a rule title.",
+    "The skill says to run xano policy evaluate to verify which objects a rule should match. The brief forbids evaluate, so I could only predict matches from the workspace files (export_GET and invoice_id_GET have no auth line), not run them.",
+    "The skill's step-by-step says to check each template's examples and each check's example; the catalogue examples for object.auth_required do not include tables, so I wrote the scope from the param description.",
+    "Whether an endpoint that reaches invoices only through a called function is caught is stated in the catalogue description but I could not verify it without evaluate."
+  ],
+  "wished_for": [
+    "A template or recipe for 'scope require-login to one named table', since the AUTH-010 template is all-endpoints and people will often want the narrower form.",
+    "A note on whether a template's exemptions (except_tags public) should be kept when the user narrows scope.",
+    "Guidance on what to do when the user says 'nobody ships' but the skill's default is advisory: a short sentence about how to explain the blocking choice would help."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The rule uses the real invoices table and the check's tables scope, and parses with no warnings. It is advisory, so it does not block a ship as asked until enforcement is changed. It is also unverified: evaluate was forbidden, so I have not confirmed it flags the two unauthenticated endpoints."
+}

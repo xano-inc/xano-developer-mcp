@@ -1,0 +1,79 @@
+{
+  "goal_id": "G03",
+  "templates_considered": [
+    "LOG-001 (no_sensitive_data_in_logs): fits the 'can't be logged' part; used, extended with datadog.log and $input/$auth/$env as the template has them",
+    "VND-001 (approved_vendors_only): fits the vendor part; used with hosts only",
+    "CONF-011 (sensitive_fields_marked): considered for 'not stored raw'; marking a field sensitive is not protection, so not used",
+    "DATA-010 (no_pii_in_responses): considered; it covers responses, not storage or logs, so not used",
+    "CONF-010 (sensitive_tables_need_login): considered; no table carries a sensitive tag in the workspace, so it would match nothing; not used",
+    "CONF-012 (confidential_tables_tagged): considered; tags tables but does not stop raw storage; not used",
+    "SEC-012 (no_secrets_in_code): considered; out of this ask (Twilio literal is noticed, not policed here); not used"
+  ],
+  "templates_used": ["LOG-001", "VND-001"],
+  "rules": [
+    {
+      "policy_key": "LOG-001",
+      "check": "statement.expression_rule",
+      "params": {
+        "statements": ["debug.log", "datadog.log"],
+        "param_names": ["value", "message"],
+        "must_not_reference": ["$input", "$auth", "$env"]
+      },
+      "covers": "cardholder and bank data must not be logged (debug.log and datadog.log only)"
+    },
+    {
+      "policy_key": "VND-001",
+      "check": "outbound.vendor_allowlist",
+      "params": {
+        "hosts": ["api.stripe.com", "production.plaid.com"]
+      },
+      "covers": "data only goes to Stripe and Plaid; other http destinations and email/cloud providers reported as not reviewed"
+    },
+    {
+      "policy_key": "PCI-010",
+      "check": "table.field_attribute_required",
+      "params": {
+        "field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number"],
+        "forbidden": true
+      },
+      "covers": "cardholder and bank data not stored raw, approximated by forbidding the named fields in any table"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cardholder data must not be stored raw (encryption or tokenization cannot be verified; only field names are checked; differently named fields are missed)", "why": "no check exists"},
+    {"part": "cardholder data must not go to any vendor not on the approved list, beyond destination: what data reaches approved vendors (Stripe, Plaid) is not inspected", "why": "no check exists"},
+    {"part": "cardholder data must not be logged: only debug.log and datadog.log are checked; other log sinks like audit_log.changes are not", "why": "other"},
+    {"part": "passing a PCI audit", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Stripe host is api.stripe.com; Plaid production host is production.plaid.com; sandbox and development Plaid hosts excluded pending customer decision",
+    "Cardholder and bank field names are those on the payments table: card_number, card_cvv, card_expiry, cardholder_name, bank_account_number, bank_routing_number",
+    "Forbidding $input root in logs is acceptable even though it also bans non-card input in logs",
+    "PCI-010 as a custom key is acceptable since no template covers raw storage",
+    "tags = pci-dss is a label only; no criterion mapping claimed"
+  ],
+  "workspace_names_used": [
+    "payments", "card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number",
+    "payment_method", "card_token", "audit_log", "changes", "payments/charge", "payments/fraud_check", "bank-accounts/link",
+    "api.stripe.com", "production.plaid.com", "api.riskscreen.example", "api.twilio.com", "acme_notify_sms", "acme_send_invoice_email", "resend",
+    "debug.log"
+  ],
+  "confusions": [
+    "No check tests whether a value is stored encrypted or tokenized. table.field_attribute_required with forbidden:true reads like a storage rule but is only a name match. The skill does not say this in the check list; I had to infer it from the description.",
+    "LOG-001 template limits say only debug.log is checked and suggest adding datadog.log. Unclear whether extending a template's rule is a 'change beyond the request' under the handover rule; I extended it because the ask says logs generally.",
+    "VND-001 fill says hosts or providers. With providers empty, email and cloud kinds are reported as not reviewed, which is what the ask needs, but the skill does not say so for the hosts-only case.",
+    "Forbidding $input root in logs is the only way to catch $input|json_encode. Scope-wise this is broader than the ask and the skill does not give a narrower recipe for 'sensitive input fields in logs'.",
+    "Custom key PCI-010: the key guidance forbids a template prefix with an unused number; PCI- is not a template prefix, but it is unclear whether a customer-chosen prefix is expected.",
+    "No guidance on mapping a framework criterion to a tag, beyond 'record the criterion as a tag'. I left the tag as the label pci-dss without a criterion number."
+  ],
+  "wished_for": [
+    "A check or recipe for 'sensitive data is encrypted or tokenized', or at least a documented limit that field-name checks cannot prove storage protection",
+    "A recipe for 'sensitive fields must not reach logs' that uses the field names directly, without banning all of $input",
+    "Notes on whether a hosts-only vendor allowlist still reports email and cloud providers as not reviewed",
+    "An example of a PCI or card-data policy built from these checks, to show how the pieces combine"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "All three files parse with exit 0 and no name warnings. Logging and vendor destinations are covered by the checks as described. Raw storage is only approximated by name, and nothing checks what data reaches approved vendors. Not evaluated against the workspace, so the findings are predictions. Passing an audit needs more than these policies."
+}

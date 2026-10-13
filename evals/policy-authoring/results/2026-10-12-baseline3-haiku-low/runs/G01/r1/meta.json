@@ -1,0 +1,40 @@
+{
+  "goal_id": "G01",
+  "repeat": 1,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:47:06.431Z",
+  "wall_ms": 41265,
+  "duration_ms": 40167,
+  "cost_usd": 0.01312749,
+  "num_turns": 13,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "AUTH-010.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 1,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit; cat kit/policy-templates.md; echo ---; cat kit/catalogue.json | head -c 60000",
+    "cd ./ && python3 -c \"\nimport json;d=json.load(open('kit/catalogue.json'))\nprint(d.keys() if isinstance(d,dict) else type(d))\nt=d.get('templates',[]) if isinstance(d,dict) else []\nfor x in t:\n  if x.get('id') in ('endpoints_need_login','own_records_only') or 'login' in str(x.get('title','')).lower():…",
+    "cd ./workspace && find . -type f | head -100; echo ---; grep -ril invoice . | head -30",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G01-r1 && cat workspace/api/app/invoices_GET.xs; echo ---; cat workspace/api/app/app.xs; echo ---; cat workspace/api/app/invoices/export_GET.xs; echo ---; cat workspace/api/app/invoi…",
+    "grep -rn \"tags\" workspace | head -40; echo ---; cat workspace/policy_authoring_eval.xs 2>/dev/null; ls workspace | head; echo ---; xano policy catalogue 2>&1 | grep -n -A12 \"AUTH-010\" | head -40; echo; ls out",
+    "mkdir -p out/parse && cp out/AUTH-010.xs out/parse/ && cd out/parse && xano policy parse AUTH-010.xs 2>&1; echo \"exit=$?\"",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G01-r1 && rm -rf out/parse && ls out"
+  ],
+  "final_message": "Wrote `out/AUTH-010.xs` (parses cleanly), `out/reply.md` and `out/notes.json`; confidence medium, because the policy is advisory and can't stop a live push, and I did not run `xano policy evaluate`."
+}

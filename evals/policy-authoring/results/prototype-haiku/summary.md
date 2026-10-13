@@ -1,8 +1,8 @@
 # Policy-authoring eval: prototype-haiku
 
-Model ?, effort ?, kit `/private/tmp/claude-502/-Users-robert-xano-dev-xano-policies/85c8ceca-8037-4333-811a-45dc43103fe4/scratchpad/runs/haiku`, 14 runs, rubric v3, scored against workspace 9040.
+Model ?, effort ?, kit `/private/tmp/claude-502/-Users-robert-xano-dev-xano-policies/85c8ceca-8037-4333-811a-45dc43103fe4/scratchpad/runs/haiku`, 14 runs, rubric v5, scored against workspace 9040.
 
-**Total 73/101 (72%)** (bonus +3 not counted, penalties -9); policy files parse-clean 36/36; unknown-name warnings 10; cost $0.00; mean wall time 0 s per run.
+**Total 72/101 (71%)** (bonus +3 not counted, penalties -9); policy files parse-clean 36/36; unknown-name warnings 10; cost $0.00; mean wall time 0 s per run.
 
 | Goal | Score (mean) | Per repeat | Bonus | Penalties | Policies (parse ok) | Unknown names | Refused | Confidence | Cost $ | Time s |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -15,7 +15,7 @@ Model ?, effort ?, kit `/private/tmp/claude-502/-Users-robert-xano-dev-xano-poli
 | G07 | 6.0/6 (100%) | 6 | +0 | 0 | 3 (3) | 0 | no | low | - | - |
 | G08 | 5.0/5 (100%) | 5 | +0 | 0 | 1 (1) | 0 | no | medium | - | - |
 | G09 | 4.0/9 (44%) | 4 | +0 | -1 | 2 (2) | 1 | no | low | - | - |
-| G10 | 6.0/7 (86%) | 6 | +0 | 0 | 2 (2) | 0 | no | low | - | - |
+| G10 | 5.0/7 (71%) | 5 | +0 | 0 | 2 (2) | 0 | no | low | - | - |
 | G11 | 6.0/6 (100%) | 6 | +0 | 0 | 2 (2) | 0 | no | medium | - | - |
 | G12 | 6.0/6 (100%) | 6 | +0 | 0 | 0 (0) | 0 | yes (ok) | low | - | - |
 | G13 | 6.0/6 (100%) | 6 | +0 | 0 | 0 (0) | 0 | yes (ok) | low | - | - |
@@ -144,8 +144,8 @@ Model ?, effort ?, kit `/private/tmp/claude-502/-Users-robert-xano-dev-xano-poli
 
 | Check | Points | r1 |
 |---|---|---|
-| tools_cannot_delete | 3 | 3 |
-| approval_before_action | 2 | 1 (approval required somewhere (statement_required), scope selects nothing or order not judged) |
+| deletes_guarded | 3 | 2 (deletes in tools forbidden outright (stricter than asked)) |
+| approval_before_email | 2 | 1 (approval required somewhere (statement_required), scope selects nothing or order not judged) |
 | tool_allowlist_not_checkable | 2 | 2 |
 
 - r1: rules: AGENT-010.R1 stack.statement_forbidden; AGENT-020.R1 object.statement_required. untagged: AGENT-020.R1: tags "sends-email" is on no tool on this branch, so it selects nothing.

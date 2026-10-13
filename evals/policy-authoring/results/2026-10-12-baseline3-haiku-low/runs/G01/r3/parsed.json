@@ -1,0 +1,40 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUTH-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUTH-010.xs",
+      "ok": true,
+      "key": "AUTH-010",
+      "title": "Endpoints that reach the invoices table require login",
+      "statement": "Every endpoint that reads or returns the invoices table must require authentication. A deliberately public endpoint that reaches invoices carries the `public` tag, signed off by the platform owner. An endpoint that cannot require login is exempted by that owner decision, not by leaving auth off.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "invoices"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [
+              "public"
+            ],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

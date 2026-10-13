@@ -1,0 +1,45 @@
+{
+  "goal_id": "G08",
+  "templates_considered": [
+    "SEC-012 no_secrets_in_code: covers 'no API keys or passwords hardcoded'; fits the API-key half directly",
+    "DATA-010 no_pii_in_responses: did not fit, the ask is about hardcoded secrets not returned data",
+    "LOG-001 no_sensitive_data_in_logs: did not fit, not about logs"
+  ],
+  "templates_used": ["SEC-012"],
+  "rules": [
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {},
+      "covers": "API keys, tokens and private keys written as literals in functions and endpoints (default locations definition and agent_settings, all patterns)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "passwords hardcoded in a function or endpoint", "why": "no check exists"},
+    {"part": "checking that values in the workspace env are not themselves secrets/over-shared", "why": "other: env not scanned by default, and that is by design"},
+    {"part": "values must come from env vars (positive requirement that the literal is replaced)", "why": "no check exists; the check only flags literals, it does not require $env references"}
+  ],
+  "assumptions": [
+    "'API keys' means credential-shaped keys the built-in patterns recognise (Twilio in particular)",
+    "Default locations (definition, agent_settings) are right for 'in a function or endpoint'",
+    "Empty params = all patterns, which includes ones added later; accepted as intended",
+    "No tags added: the customer named no framework, so no SOC 2 tag was invented",
+    "Severity critical, active true, enforcement advisory, as in the template"
+  ],
+  "workspace_names_used": ["acme_notify_sms (function)"],
+  "confusions": [
+    "The catalogue entry for literal.credential_shape says env is not scanned by default, but the template SEC-012 summary says secrets 'are never written as literals in an object's definition' only. Fine, but the template does not say whether to keep the default locations.",
+    "No check is described as covering a plain password literal. The template title 'No secrets are hardcoded' and the customer's 'passwords' wording suggest it does; it does not, and the template does not warn about it. literal_keys is about crypto key/IV arguments only.",
+    "The skill says a check's Fix note 'replaces' to $env, but the check itself cannot test for a positive reference. The Fix note and the flag are one-directional, which I had to explain to the customer.",
+    "The brief says to read the workspace; grepping for the Twilio credential needed care not to echo the value. Pulling the workspace gives no obvious way to tell a literal from an env reference without reading the value."
+  ],
+  "wished_for": [
+    "A line in the template or catalogue saying which secret kinds the default patterns do NOT catch (plain passwords especially)",
+    "A recipe for 'require env reference' versus 'forbid literal', since literal.credential_shape only forbids",
+    "A short note that default locations exclude the env values"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The API-key/token half is covered directly by a template and a dedicated check, and it would flag the Twilio literal already in acme_notify_sms (predicted, not evaluated). The password half is not covered by any check, and the policy cannot require a positive $env reference, so a clean run would not prove the ask is met. I did not run xano policy evaluate, which the brief forbids, so the prediction is untested."
+}

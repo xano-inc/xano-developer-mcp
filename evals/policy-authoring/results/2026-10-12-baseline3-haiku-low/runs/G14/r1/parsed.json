@@ -1,0 +1,112 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUDIT-010.xs",
+    "COST-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUDIT-010.xs",
+      "ok": true,
+      "key": "AUDIT-010",
+      "title": "Changes to customer email are audited",
+      "statement": "Every endpoint, AI tool, task or message handler that writes an email address (the email or requester_email field) must call the record_audit_event function unconditionally, so the audit_log records who changed what. Functions that do the write are not inspected by this rule yet: keep the audit call in the caller that always runs. An object that cannot audit its write is exempted by the policy owner, not by tagging it.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AUDIT-010.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "fields": [
+                "email",
+                "requester_email"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "task",
+              "tool",
+              "message"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "COST-010.xs",
+      "ok": true,
+      "key": "COST-010",
+      "title": "AI calls and retries stay inside bounded work",
+      "statement": "No AI agent call sits inside a loop, because one loop can run the call thousands of times and run up the bill. No background task uses a while loop, because a while loop that retries can run forever. A task that must retry uses a bounded foreach over the items to retry, with an attempt limit written in the task. A task or call that truly needs a loop the rule does not allow is exempted by the policy owner, not by renaming it.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "COST-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.agent.run"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "foreach",
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "COST-010.R2",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "while"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "task"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

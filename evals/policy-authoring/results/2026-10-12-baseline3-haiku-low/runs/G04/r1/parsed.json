@@ -1,0 +1,270 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "HIPAA-010.xs",
+    "HIPAA-020.xs",
+    "HIPAA-030.xs",
+    "HIPAA-040.xs",
+    "HIPAA-050.xs",
+    "RET-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "HIPAA-010.xs",
+      "ok": true,
+      "key": "HIPAA-010",
+      "title": "Endpoints that reach patient records require login",
+      "statement": "Every endpoint that reads or writes patients, appointments or clinical_notes must require a login (an auth table). A deliberately public endpoint must not reach these tables; if one must, the platform owner exempts it by tag.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "HIPAA-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "patients",
+              "appointments",
+              "clinical_notes"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "HIPAA-020.xs",
+      "ok": true,
+      "key": "HIPAA-020",
+      "title": "Patient identifiers and clinical text are marked sensitive",
+      "statement": "The fields that hold patient identifiers and clinical text on patients, appointments and clinical_notes must be marked sensitive, so that the platform treats them as protected data in views, outputs and checks.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "HIPAA-020.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "ssn",
+              "dob",
+              "insurance_member_id",
+              "address",
+              "phone",
+              "diagnosis",
+              "note"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "patients",
+              "appointments",
+              "clinical_notes"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "HIPAA-030.xs",
+      "ok": true,
+      "key": "HIPAA-030",
+      "title": "Patient reads don't fetch SSN or insurance IDs",
+      "statement": "Statements that read patients must not fetch the SSN or insurance member ID. Callers need the minimum necessary PHI; a flow that truly needs one of these fields is an exemption for the policy owner, not a silent change.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "HIPAA-030.R1",
+          "title": "",
+          "check": "db.output_fields_forbidden",
+          "params": {
+            "fields": [
+              "patients.ssn",
+              "patients.insurance_member_id"
+            ],
+            "include_sensitive": true,
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "patients"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "HIPAA-040.xs",
+      "ok": true,
+      "key": "HIPAA-040",
+      "title": "PHI access is recorded in the audit log",
+      "statement": "Every endpoint that reads or writes patients, appointments or clinical_notes must always call record_audit_event, so that each access to protected health information leaves a row in audit_log.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "HIPAA-040.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "patients",
+              "appointments",
+              "clinical_notes"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "HIPAA-050.xs",
+      "ok": true,
+      "key": "HIPAA-050",
+      "title": "Debug logs in PHI code never log request input",
+      "statement": "Statements in code that reaches patients, appointments or clinical_notes must not write request input to logs. Logging request data would copy protected health information into log storage.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "HIPAA-050.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "patients",
+              "appointments",
+              "clinical_notes"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "The audit_log table must exist, and only the record_audit_event function may write to it. Audit records are only trustworthy if one reviewed path writes them.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

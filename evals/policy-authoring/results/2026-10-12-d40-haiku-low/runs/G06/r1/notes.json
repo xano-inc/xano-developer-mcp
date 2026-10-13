@@ -1,0 +1,59 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "LOG-010 external_calls_handle_errors: fits 'missing error handling' for external calls only; general error handling is not checkable",
+    "CHG-001 endpoints_have_tests: fits 'no tests'; template scopes object.test_coverage to query only, widened to function",
+    "CONV-040 endpoints_stay_short: fits 'giant functions'; stack.size_limit with max_statements 30, max_nesting 3",
+    "CONV-041 shallow_nesting: overlaps CONV-040 (same check, max_nesting only); folded into CONV-040 to avoid a second stack.size_limit rule",
+    "CONV-050 no_leftover_code: not asked for",
+    "PERF-001 pagination template: not asked for",
+    "CONV-010/CONV-013 naming: not asked for; recipe says agree naming convention first",
+    "Recipe 'Keep code easy to review': covers the goal but also brings naming, leftover-code and paging rules the customer did not name; used its templates CHG-001 and CONV-040 only"
+  ],
+  "templates_used": ["LOG-010", "CHG-001", "CONV-040"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda", "cloud.algolia.request", "cloud.elasticsearch.request", "cloud.aws.opensearch.request", "db.external.postgres.direct_query", "db.external.mysql.direct_query", "db.external.mssql.direct_query", "db.external.oracle.direct_query", "db.external.snowflake.direct_query"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling (external calls only)"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query", "function"]}, "covers": "no tests (endpoints and functions)"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests: template rule, anonymous-rejection assertion; goes beyond the ask"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant functions"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling beyond external calls (catch quality, precondition use, errors reaching callers)", "why": "no check exists"},
+    {"part": "whether tests assert meaningful behaviour", "why": "no check exists; test.assertion_required and object.test_coverage only confirm an assertion follows a call"},
+    {"part": "'stop juniors breaking prod' in general (deploys, data, runtime behaviour)", "why": "needs runtime/org process"},
+    {"part": "'you know the drill' extras: naming, leftover code, paging, owner tags", "why": "other: not named by the customer; need a team convention decided first"},
+    {"part": "a 200-line function specifically", "why": "couldn't tell how: 'lines' mapped to statements per skill guidance; 30-statement template limit may be looser or tighter than the customer's idea of 200 lines"}
+  ],
+  "assumptions": [
+    "Customer's 'breaking prod' is served by advisory review findings, not blocking gates",
+    "A 200-line function is roughly 100-200 statements, so the 30-statement template limit flags it",
+    "Customer wants functions tested as well as endpoints",
+    "The external statement list in LOG-010 is the full set of outbound statements named in the skill; parse raised no unknown-name warning",
+    "Workspace has no existing policies (xano policy list: 'No policies found.'), so no duplicate refusal risk"
+  ],
+  "workspace_names_used": [
+    "function: record_audit_event, check_admin_role, request_human_approval, summarize_ticket, calculate_late_fee, delete_user_account (scope discussed; not used in rules)",
+    "workflow_test: health_check, invoices_require_login (existing tests exist; CHG-001 would judge coverage against them)",
+    "tags: public, smoke (seen in endpoint definitions; not used in rules)"
+  ],
+  "confusions": [
+    "Skill says a template's rules are kept, but CHG-001's object.test_coverage template is query-only while the customer said 'no tests' generally: unclear whether widening scope to function counts as adding beyond the template or as a change to the template. Took the widening as allowed by 'add only what the request asks beyond it'",
+    "CHG-001 bundles test.assertion_required (anonymous-rejection) with the no-tests ask; no way to split it without dropping a template rule, and the skill's 'keep its rules' pushes toward keeping it",
+    "CONV-040 and CONV-041 both use stack.size_limit; the skill and catalogue both list each as separate templates, so it was unclear whether to keep two policies or fold; folded",
+    "Skill: 'one policy per template'. For a single customer goal that spans three templates it was unclear whether to produce one combined policy with three rules or three policies. Chose three, following 'one policy per template'",
+    "LOG-010 template's own rule covers only api.request. The catalogue 'limits' text says to add the other external statements, but the skill's template table does not say so; took the limits text",
+    "Catalogue template CONV-040 has max_statements and max_nesting in one rule; skill's table says 'Fill: _nothing_', which hides the params that the catalogue puts there",
+    "The skill does not say how to map 'lines of code' to statements in plain language beyond a one-line note in the stack.size_limit description"
+  ],
+  "wished_for": [
+    "A plain-language mapping from 'lines of code' to statements, with a worked example of a 200-line function",
+    "A check or documented recipe for 'catch branch handles the error' (e.g. must_contain catch statement)",
+    "Guidance on splitting one template across policies vs one policy with several rules when a goal spans several templates",
+    "An option to scope CHG-001's test.assertion_required separately from object.test_coverage",
+    "A short 'what counts as a test asserting something' example in the skill"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three named items (external-call error wrapping, test existence per endpoint/function, stack size and nesting) are each checked by a real rule, and all three files parse with no warnings against the workspace. But the goal is 'stop juniors breaking prod'. Those checks cover only structure: a catch can be empty, a test can assert nothing meaningful, and runtime and review failures are invisible. The 30-statement limit is a guess at the customer's '200 lines' mapping and was not confirmed with them. No evaluate was run, since the brief forbids it, so the predicted matches are unverified."
+}

@@ -1,0 +1,37 @@
+{
+  "goal_id": "G13",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): adjacent only; checks login on endpoints, not training. Not used.",
+    "sensitive_tables_need_login (CONF-010): adjacent only; needs table tags, and no workspace table has a tag. Not used.",
+    "sensitive_fields_marked (CONF-011): no fit; field marking, not people.",
+    "confidential_tables_tagged (CONF-012): no fit; tagging, not people.",
+    "audit_log_protected (RET-001): no fit; it covers who writes the audit log, not training.",
+    "no_pii_in_responses (DATA-010): no fit; response fields, not people."
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "every team member has completed security awareness training", "why": "no check exists"},
+    {"part": "training must be done before someone may touch customer data", "why": "needs runtime/org process"},
+    {"part": "who counts as on the team and who touches customer data", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Customer data means the workspace's customer-data tables: customers, payments, payment_method, patients, clinical_notes, invoices (inferred from table names and schema; no table carries a tag).",
+    "The ask is about people's training status, not about endpoint access control, so I did not write an access-control policy in its place."
+  ],
+  "workspace_names_used": ["customers", "payments", "payment_method", "patients", "clinical_notes", "invoices", "users", "audit_log"],
+  "confusions": [
+    "The skill's recipes cover many compliance goals but none covers staff training or access onboarding; I had to infer that no check fits from the 'What no check can see' section.",
+    "The catalogue's not_checkable entry for people and training is present but phrased as a limitation of the 'people' domain, not as guidance on what to recommend the user do instead. Unclear whether the product wants me to point to an external process.",
+    "Customer-data is not a term the catalogue defines; I had to map it to tables by name, and the sensitive-data templates (CONF-010, CONF-012) need tags the workspace doesn't have."
+  ],
+  "wished_for": [
+    "A short guidance paragraph for asks that are about people or processes: what policies can and cannot cover, and what the customer should do instead.",
+    "A worked example of an advisory policy that uses table names (object.auth_required with tables) for a customer-data control, labelled as not a substitute for training.",
+    "Clearer guidance on whether to write no file or a partial file when the core of the ask is uncheckable but an adjacent control is checkable."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The requested control (training completion before touching customer data) is about people and org process, which no check can read; I wrote no policy. Confidence that a policy achieves the goal is low by design, and I did not attempt to parse one because none was written."
+}

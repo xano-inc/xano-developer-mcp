@@ -1,0 +1,443 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUTH-010.xs",
+    "CONF-010.xs",
+    "CONF-011.xs",
+    "CONF-012.xs",
+    "CONF-013.xs",
+    "DATA-010.xs",
+    "LOG-001.xs",
+    "RET-001.xs",
+    "SEC-012.xs",
+    "SEC-014.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUTH-010.xs",
+      "ok": true,
+      "key": "AUTH-010",
+      "title": "Endpoints require login",
+      "statement": "Every endpoint requires authentication, unless it is deliberately open to anonymous callers and carries the `public` tag, signed off by the platform owner. Related to HIPAA access control for ePHI.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [
+              "public"
+            ],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONF-010.xs",
+      "ok": true,
+      "key": "CONF-010",
+      "title": "Sensitive tables are only reached by logged-in endpoints",
+      "statement": "Every endpoint that reaches a table tagged `confidential`, directly or through a function, requires authentication. Related to HIPAA access control for ePHI. Depends on the confidential tag being set on the patient, appointment and clinical note tables; until it is, this rule matches no table.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "CONF-010.R1",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "confidential"
+            ],
+            "auth_tables": [],
+            "function": "",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CONF-010.R1",
+          "text": "table_tags \"confidential\" is on no table in this workspace, so no access to it is judged."
+        }
+      ]
+    },
+    {
+      "file": "CONF-011.xs",
+      "ok": true,
+      "key": "CONF-011",
+      "title": "Sensitive fields are marked sensitive",
+      "statement": "The patient identifiers, contact details, clinical and appointment fields of the patients, appointments and clinical notes tables are marked sensitive in their schema. Related to HIPAA safeguards for ePHI. Only the fields listed here are checked; a personal-data field under another name is not found.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CONF-011.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "ssn",
+              "dob",
+              "insurance_member_id",
+              "first_name",
+              "last_name",
+              "email",
+              "phone",
+              "address",
+              "reason",
+              "diagnosis",
+              "note"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "patients",
+              "appointments",
+              "clinical_notes"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONF-012.xs",
+      "ok": true,
+      "key": "CONF-012",
+      "title": "Tables holding confidential data are tagged",
+      "statement": "A patient, appointment or clinical note table with a field that holds confidential health data carries the `confidential` tag. Related to HIPAA data classification for ePHI.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-012.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "ssn",
+              "insurance_member_id",
+              "reason",
+              "diagnosis",
+              "note"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "confidential",
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "patients",
+              "appointments",
+              "clinical_notes"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONF-013.xs",
+      "ok": true,
+      "key": "CONF-013",
+      "title": "Saved views hide sensitive fields",
+      "statement": "Every saved table view hides the fields marked sensitive in its table's schema, and password fields. Related to HIPAA minimum necessary for ePHI. Checks saved views only; a share link made with the default view is outside this rule.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-013.R1",
+          "title": "",
+          "check": "table.view_hide_required",
+          "params": {
+            "fields": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "DATA-010.xs",
+      "ok": true,
+      "key": "DATA-010",
+      "title": "Endpoints don't return personal data",
+      "statement": "Endpoints never fetch the patient's SSN or insurance member ID from the patients table, or any field marked sensitive. Related to HIPAA minimum necessary for ePHI. An endpoint that must return one of these is exempted by the policy owner, not by its own tag.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "DATA-010.R1",
+          "title": "",
+          "check": "db.output_fields_forbidden",
+          "params": {
+            "fields": [
+              "patients.ssn",
+              "patients.insurance_member_id"
+            ],
+            "include_sensitive": true,
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Logs don't contain request, user or secret data",
+      "statement": "Debug logs never reference request input, the logged-in user or environment variables, so no patient data or secret is written to logs. Related to HIPAA audit controls and ePHI handling. Only debug.log is checked.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "The audit_log table exists, and only the record_audit_event function writes to it. Related to HIPAA audit controls for ePHI. A caller can still pass whatever values it likes to that function; this rule checks where the writes are defined, not what they contain.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "The audit log table exists",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "Only the audit function writes it",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-012.xs",
+      "ok": true,
+      "key": "SEC-012",
+      "title": "No secrets are hardcoded",
+      "statement": "API keys, tokens, private keys, encryption keys and credentialed URLs are never written as literals in an object's definition or agent settings; they belong in environment variables. Related to HIPAA safeguards for ePHI.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "SEC-012.R1",
+          "title": "",
+          "check": "literal.credential_shape",
+          "params": {
+            "patterns": [],
+            "locations": [
+              "definition",
+              "agent_settings"
+            ],
+            "allowed_secrets": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-014.xs",
+      "ok": true,
+      "key": "SEC-014",
+      "title": "Login tokens expire within an hour",
+      "statement": "Every authentication token expires within one hour of being created, and every signed token (JWS or JWE) within the lifetime the owner chooses. Related to HIPAA automatic logoff for ePHI sessions. A token-signing object that must live longer is exempted by the policy owner, never by its own tag.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SEC-014.R1",
+          "title": "Tokens expire within one hour",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "security.create_auth_token"
+            ],
+            "param_names": [
+              "expiration"
+            ],
+            "min": 1,
+            "max": 3600,
+            "unit": "seconds",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "SEC-014.R2",
+          "title": "Signed tokens expire",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "security.jws_encode",
+              "security.jwe_encode",
+              "security.jwe_encode_legacy",
+              "mvp:crypto_jws_encode",
+              "mvp:crypto_jwe_encode2"
+            ],
+            "param_names": [
+              "ttl"
+            ],
+            "min": 1,
+            "max": 3600,
+            "unit": "seconds",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

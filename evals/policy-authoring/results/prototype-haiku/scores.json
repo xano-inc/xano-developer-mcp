@@ -1,15 +1,15 @@
 {
   "label": "prototype-haiku",
-  "rubric_version": 3,
+  "rubric_version": 5,
   "workspace_id": "9040",
-  "scored_at": "2026-10-13T03:34:22.202Z",
+  "scored_at": "2026-10-13T04:00:20.891Z",
   "run": {
     "label": "prototype-haiku",
     "imported_from": "/private/tmp/claude-502/-Users-robert-xano-dev-xano-policies/85c8ceca-8037-4333-811a-45dc43103fe4/scratchpad/runs/haiku"
   },
   "totals": {
     "runs": 14,
-    "points": 73,
+    "points": 72,
     "max": 101,
     "cost_usd": 0,
     "wall_ms_mean": 0,
@@ -18,7 +18,7 @@
     "unknown_name_warnings": 10,
     "bonus_points": 3,
     "penalty": 9,
-    "pct": 72
+    "pct": 71
   },
   "results": [
     {
@@ -908,32 +908,32 @@
     {
       "goal_id": "G10",
       "repeat": 1,
-      "points": 6,
+      "points": 5,
       "max": 7,
-      "pct": 86,
-      "earned": 6,
+      "pct": 71,
+      "earned": 5,
       "bonus_points": 0,
       "penalty": 0,
       "required": [
         {
-          "id": "tools_cannot_delete",
+          "id": "deletes_guarded",
           "max": 3,
-          "points": 3,
-          "via": "matched",
+          "points": 2,
+          "via": "deletes in tools forbidden outright (stricter than asked)",
           "evidence": [
             "AGENT-010.R1"
           ],
-          "desc": "stack.statement_forbidden on delete statements, object_kinds [tool]."
+          "desc": "Tool deletes need a human approval first: stack.statement_order with request_human_approval before db.del/db.bulk.delete, scoped to tools. Forbidding deletes in tools outright is stricter than the ask (it blocks approved deletes) and scores 2."
         },
         {
-          "id": "approval_before_action",
+          "id": "approval_before_email",
           "max": 2,
           "points": 1,
           "via": "approval required somewhere (statement_required), scope selects nothing or order not judged",
           "evidence": [
             "AGENT-020.R1"
           ],
-          "desc": "stack.statement_order: request_human_approval before util.send_email / db.del."
+          "desc": "stack.statement_order: request_human_approval before util.send_email."
         },
         {
           "id": "tool_allowlist_not_checkable",
@@ -1184,7 +1184,7 @@
           "evidence": [
             "CUST-EMAIL-010.R2"
           ],
-          "desc": "Objects reaching customer-email tables call record_audit_event (tagged_table_access with function), or the audit log is protected (RET-001)."
+          "desc": "Objects reaching customer-email tables call record_audit_event (tagged_table_access with function), or the audit log is protected (RET-001). The audit_changes recipe's form also counts: object.statement_required with function record_audit_event when a write statement reaches the email tables."
         },
         {
           "id": "email_tables_tagged",

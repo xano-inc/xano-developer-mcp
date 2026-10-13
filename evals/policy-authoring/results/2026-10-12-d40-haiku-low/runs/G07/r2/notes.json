@@ -1,0 +1,66 @@
+{
+  "goal_id": "G07",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: used. Login requirement is part of access control evidence.",
+    "AUTH-002 admin_endpoints_check_role: used, but scope changed. Template rule uses tags [\"admin\"], and the workspace has no admin tag; admin endpoints are in api_group \"admin\" (api/admin/*). Used api_groups [\"admin\"] instead and rewrote the statement to match.",
+    "RET-001 audit_log_protected: used. Real names audit_log and record_audit_event found in the workspace.",
+    "CHG-001 endpoints_have_tests: used. Change-management testing evidence. Only 2 workflow tests exist (health_check, invoices_require_login), so this will likely produce many findings.",
+    "AUTH-020 own_records_only: not used. Covers row-level data isolation, which is access control but not what the ask names (change controls and access reviews). Could be offered as a follow-up.",
+    "AUTH-030 no_self_promotion: not used. Relevant to role changes, but the ask does not mention privilege escalation.",
+    "AUTH-050 one_auth_table: not used. Not in the ask.",
+    "Recipe 'Record who changed what' (SOC 2/HIPAA): used as the basis for audit-customer-data-changes, with its db.edit, db.patch and db.del rules, plus db.add (I added this for creates). Recipe names record_audit_event as an example function; the workspace has it.",
+    "Recipe 'Keep AI calls affordable and agents safe' (approval check): considered for the request_human_approval step. Not used: its stack.statement_order rule covers agent deletes and emails, not change approval of code or schema."
+  ],
+  "templates_used": ["AUTH-010", "AUTH-002", "RET-001", "CHG-001"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "access: who can reach endpoints (login required unless public)"},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["check_admin_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "access: staff-only admin endpoints check the caller's role first"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "change control: the audit log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "change control: only one function writes the audit log"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "change control: endpoints are tested before release"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "change control: protected endpoints have a test that an anonymous call is rejected"},
+    {"policy_key": "audit-customer-data-changes", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.add", "tables": ["customers", "payments", "invoices", "orders", "users"]}}, "covers": "change control: creates of customer data are logged with who made them"},
+    {"policy_key": "audit-customer-data-changes", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "payments", "invoices", "orders", "users"]}}, "covers": "change control: edits of customer data are logged"},
+    {"policy_key": "audit-customer-data-changes", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "payments", "invoices", "orders", "users"]}}, "covers": "change control: patches of customer data are logged"},
+    {"policy_key": "audit-customer-data-changes", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "payments", "invoices", "orders", "users"]}}, "covers": "change control: deletes of customer data are logged"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "access reviews (periodic review of who has access, with records of the decision)", "why": "needs runtime/org process"},
+    {"part": "change approvals (someone signs off on a code or schema change before it goes live)", "why": "needs runtime/org process"},
+    {"part": "evidence that a review happened (who reviewed, when, what they decided)", "why": "needs runtime/org process"},
+    {"part": "which permissions/roles a person holds and whether they are still needed (beyond endpoint role checks)", "why": "no check exists"},
+    {"part": "which tables count as customer data", "why": "couldn't tell how; guessed table list"}
+  ],
+  "assumptions": [
+    "'Change controls' means: changes to customer data are logged with who made them, and endpoints are tested before release.",
+    "'Access reviews' cannot be checked by a policy; the closest evidence is who can reach endpoints (AUTH-010) and which admin endpoints check the role (AUTH-002).",
+    "Customer data = tables customers, payments, invoices, orders, users. These names come from the workspace.",
+    "The admin API group (api_group 'admin') is the set of staff endpoints; no endpoint in the workspace is tagged 'admin'.",
+    "record_audit_event is the audit function; it writes to audit_log.",
+    "Policy tags such as soc2 and cc6.1 are labels relating a policy to a framework criterion; they do not claim the criterion is met.",
+    "Policies stay advisory and active, the template default. Blocking was not requested."
+  ],
+  "workspace_names_used": [
+    "audit_log", "record_audit_event", "check_admin_role", "customers", "payments", "invoices", "orders", "users", "api_group admin", "tag public", "request_human_approval", "approval_requests", "delete_user_account", "customer_id_PATCH", "customers_POST", "health_GET", "auth/login_POST", "newsletter/subscribe_POST", "invoices_require_login", "health_check"
+  ],
+  "confusions": [
+    "AUTH-002 template rule uses tags [\"admin\"] but the workspace has no admin tag; the skill says to scope by API group names when they are named, but the ask doesn't name them. I used api_groups because the workspace's admin endpoints are in api_group 'admin'. Unclear whether the template intends a tag, which the customer would need to add.",
+    "Template key choice for a custom policy: the skill says not to use a template prefix with a number no template has. I used a descriptive key (audit-customer-data-changes) with no prefix. Unclear whether the product expects a prefix convention for custom keys.",
+    "The recipe 'Record who changed what' has no single example for when.tables with multiple tables, and says one rule per statement (db.edit, db.patch, db.del). I wasn't sure whether db.add should be included; I added it because creating a record is also a change.",
+    "The policy skill says rule params list only settings you set; the CHG-001 template's test.assertion_required has no params, so I wrote the rule with no params block. Not confusing, but worth stating in the template.",
+    "I could not tell from the skill whether the statement of a policy may be rewritten when the template's scope is changed (AUTH-002). I rewrote it to match the api_groups scope.",
+    "Whether 'tags' on a policy must come from a vocabulary was not stated. I used soc2 and cc6.1 / cc7.2 / cc8.1; parse accepted them.",
+    "The skill says no check reads who approved a change. The product's request_human_approval approval flow exists in the workspace, but there is no way to tie it to changes to code or schema. The skill does not say whether a policy can rely on it."
+  ],
+  "wished_for": [
+    "A recipe for SOC 2 change management that names the criteria (CC6.1, CC7.2, CC8.1) and the checks that cover each one, so the customer gets a map rather than a guess.",
+    "A check or documented gap for access reviews, or at least a standard statement saying it is a process outside the workspace, so the reply can say it plainly.",
+    "Guidance on which tables count as customer data, or a tag convention for it (for example a 'customer-data' tag), so audit rules do not depend on a guessed list.",
+    "A recipe example for the audit-function rule where the function name is the workspace's own (record_audit_event) and there are several tables.",
+    "Guidance on whether a template's scope (tags) can be swapped for api_groups, and whether the statement may change along with it."
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies cover the parts of change control and access control that the product can check: audit logging of customer-data writes, the audit log being write-restricted, admin role checks, endpoint login, and endpoint tests. Access reviews and change approvals are outside the product and cannot be checked by any policy, which is half of what the auditor asked for. The rules were parsed (all five files exit 0 with no warnings), but I did not run xano policy evaluate, so I don't know which objects will fail. The customer-data table list is a guess."
+}

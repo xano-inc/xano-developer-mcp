@@ -1,0 +1,83 @@
+{
+  "goal_id": "G10",
+  "templates_considered": [
+    "endpoints_need_login: no fit, the ask is about agent tools, not endpoints",
+    "no_pii_in_responses: no fit, not about returned data",
+    "own_records_only: no fit, not about per-user record ownership",
+    "approved_vendors_only: partial, covers email providers, but not the approval requirement; the ask is approval, not vendor choice",
+    "no_self_promotion: no fit",
+    "public_endpoints_harmless: no fit, not about public endpoints",
+    "writes_check_first: no fit, endpoint-only and about caller checks, not human approval",
+    "no_destructive_sql: partial, bans truncate and raw SQL, not db.del; the ask allows deletes with approval",
+    "endpoints_have_tests: no fit",
+    "protected_endpoints_run_middleware: no fit",
+    "ai_tools_described: no fit, about tool descriptions",
+    "agreed_tag_vocabulary: no fit",
+    "table_write_location_restricted: considered as a way to force writes through approved functions, but it does not express approval and the ask is not about table tags"
+  ],
+  "templates_used": [],
+  "rules": [
+    {
+      "policy_key": "AGENT-010",
+      "check": "stack.statement_order",
+      "params": {
+        "before": {"functions": ["request_human_approval"]},
+        "after": ["db.del", "db.bulk.delete", "util.send_email"],
+        "object_kinds": ["tool"]
+      },
+      "covers": "deletes and customer emails by agent tools only after a human approval call"
+    },
+    {
+      "policy_key": "AGENT-020",
+      "check": "object.statement_required",
+      "params": {
+        "functions": ["request_human_approval"],
+        "placement": "unconditional",
+        "object_kinds": ["tool"],
+        "when": {"statement": "util.send_email"}
+      },
+      "covers": "every agent tool that emails a customer calls the approval function on every path"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "agents shouldn't call tools the owner hasn't explicitly given them", "why": "no check exists"},
+    {"part": "agents can't delete anything", "why": "other: read as approval-gated deletes, not a ban; a ban is a one-line stack.statement_forbidden the owner can choose"},
+    {"part": "the approval is actually granted and its id is passed through", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Customer 'without a human approving it first' applies to both deletes and emails.",
+    "request_human_approval is the approval mechanism, as in the workspace's function file.",
+    "Tool objects are the agent's tools; the agent object itself carries no tool allowlist check.",
+    "db.bulk.delete and util.send_email are valid statement names for ordering checks.",
+    "stack.statement_order flags an after-statement with no preceding guard at all, not only a wrong order."
+  ],
+  "workspace_names_used": [
+    "support_agent",
+    "send_customer_email",
+    "delete_customer_note",
+    "issue_refund",
+    "request_human_approval",
+    "approval_requests",
+    "lookup_order",
+    "delete_user_account",
+    "acme_send_invoice_email"
+  ],
+  "confusions": [
+    "No check for an agent's tool allowlist. The catalogue's agent entries cover only naming, settings, tags, descriptions and credential literals, so the 'only tools I gave it' part of the ask has no home. The skill doesn't say this up front.",
+    "The catalogue says db.del is judged inside called functions for stack.statement_forbidden, but it's unclear whether stack.statement_order follows called functions. I assumed it doesn't, so a delete hidden in a helper would be missed.",
+    "stack.statement_order's before param says a guard must be 'ahead of each after match', but it doesn't say whether the guard has to be unconditional. That matters for approval gates, so I added AGENT-020 to cover the unconditional case separately.",
+    "Choosing between a ban (stack.statement_forbidden) and an approval gate (ordering or statement_required) for deletes wasn't spelled out. The ask said 'without approval', which pointed to the gate, but a product default would help.",
+    "The catalogue's object_kinds lists are long and contain 'tool' in several entries, so grepping it for agent-tool checks gives a lot of noise. A per-object-kind index would help.",
+    "Parsing with `xano policy parse -f` printed the reformatted file and no warnings. I couldn't tell whether a missing workspace name would show as a warning, since all names I used exist."
+  ],
+  "wished_for": [
+    "An example of approval-gated deletes and emails in one policy, using request_human_approval.",
+    "A check that compares an agent's tools list against an allowlist, or a recipe for expressing one.",
+    "Clarity on whether stack.statement_order and object.statement_required follow called functions.",
+    "A template for human-in-the-loop approval requirements."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The approval-before-email and approval-before-delete parts map to real checks, and both files parse. Confidence is only medium because I couldn't evaluate the rules against the workspace (not allowed), the tool-allowlist half of the ask has no check, and the ordering check's handling of called functions and conditional guards is unclear from the catalogue."
+}

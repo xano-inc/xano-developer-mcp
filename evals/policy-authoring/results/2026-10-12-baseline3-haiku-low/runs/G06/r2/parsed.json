@@ -1,0 +1,128 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "CHG-001.xs",
+    "CONV-040.xs",
+    "LOG-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "CHG-001.xs",
+      "ok": true,
+      "key": "CHG-001",
+      "title": "Endpoints, functions and tasks are tested",
+      "statement": "Every endpoint, function and task is exercised by a workflow test or unit test that asserts something, and every protected endpoint has a test asserting that an anonymous call is rejected. A test that exists but fails still counts for this check.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CHG-001.R1",
+          "title": "",
+          "check": "object.test_coverage",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "function",
+              "task"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CHG-001.R2",
+          "title": "",
+          "check": "test.assertion_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONV-040.xs",
+      "ok": true,
+      "key": "CONV-040",
+      "title": "Endpoints, functions and tasks stay short",
+      "statement": "Endpoints, functions and tasks hold at most 30 statements and 3 levels of nesting; the logic lives in functions that are called from the stack. Objects over the limit are not to be disabled, deleted or commented out to pass: split them into called functions, or ask the policy owner to exempt a legacy object.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CONV-040.R1",
+          "title": "Endpoints, functions and tasks stay short; logic lives in functions",
+          "check": "stack.size_limit",
+          "params": {
+            "max_statements": 30,
+            "max_nesting": 3,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "function",
+              "task"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "LOG-010.xs",
+      "ok": true,
+      "key": "LOG-010",
+      "title": "External calls handle their own failures",
+      "statement": "Every api.request sits inside a try block, so a vendor failure reaches error handling instead of reaching the caller unhandled. This covers api.request only; other outbound statements are not checked by this policy.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-010.R1",
+          "title": "Requests sit inside a try_catch",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request"
+            ],
+            "must_be_inside": [
+              "try_catch"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

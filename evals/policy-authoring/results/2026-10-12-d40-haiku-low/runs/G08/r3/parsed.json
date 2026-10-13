@@ -1,0 +1,45 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "SEC-012.xs"
+  ],
+  "policies": [
+    {
+      "file": "SEC-012.xs",
+      "ok": true,
+      "key": "SEC-012",
+      "title": "No secrets are hardcoded",
+      "statement": "API keys, tokens, private keys and credentialed URLs must never be written as literal values in an endpoint or function. They must come from workspace environment variables ($env), so the value is set per environment and rotated there. A value that cannot be moved is exempted only by the policy owner's decision, never by editing the code.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "SEC-012.R1",
+          "title": "",
+          "check": "literal.credential_shape",
+          "params": {
+            "patterns": [],
+            "locations": [
+              "definition",
+              "agent_settings"
+            ],
+            "allowed_secrets": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "function",
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

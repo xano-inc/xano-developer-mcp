@@ -1,0 +1,35 @@
+{
+  "goal_id": "G13",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: nearest access-control template; checks API login, not training. Did not fit as the requested control, and would be a misleading approximation.",
+    "CONF-010 sensitive_tables_need_login: needs tables carrying a tag; workspace tables have no tags, so it would judge nothing without a proposed tag. Did not use.",
+    "CONF-011 sensitive_fields_marked: schema attribute check; not about people or training. Did not fit.",
+    "CONF-012 confidential_tables_tagged: would propose tags, not enforce training. Did not fit.",
+    "AUTH-020 own_records_only, AUTH-030 no_self_promotion, AUTH-002 admin_endpoints_check_role: access-per-record or role checks; none reads training. Did not fit.",
+    "Recipe 'Protect health data' and 'Erase and expire personal data': matched the words customer data/patients, but both are built on tags and runtime controls, and the recipe's own 'cannot see' list includes people and training. Did not fit."
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "every team member has completed security awareness training", "why": "no check exists"},
+    {"part": "before they are allowed to touch anything with customer data", "why": "no check exists; people and access controls outside workspace definitions"}
+  ],
+  "assumptions": [
+    "The customer means people working on the workspace, not end users of the API.",
+    "Customer-data tables would be customers, patients, payments, orders, invoices, clinical_notes; this was only an assumption and no policy was written from it."
+  ],
+  "workspace_names_used": ["customers", "patients", "payments", "orders", "invoices", "clinical_notes"],
+  "confusions": [
+    "The skill says to write no policy only when no part of the request is checkable, but also warns against approximations that check something else. For a request about people's training, the skill's 'What no check can see' section lists people and training, which settled it, but the step-5 rule alone would not have. A sentence in step 5 naming people-based requests would help.",
+    "Tables in this workspace carry no tags and no sensitive attributes, so the tag-based recipes (health data, personal data) would need a tagging step before they judge anything. The recipes say this, but the workspace-side precondition was not obvious when reading the request alone.",
+    "The skill has no template or recipe for 'only trained or approved people can change this data'. The closest is the CONF-010/CONF-011 family, which are about endpoints and schema rather than people."
+  ],
+  "wished_for": [
+    "A short section mapping common non-technical asks (training, background checks, access reviews) to the right non-policy control, so the assistant can route the customer without guessing.",
+    "An example of an advisory policy that says in its statement what it does not cover, for when the closest checkable control is only partial."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "High confidence that no policy can check security training or who may touch customer data: the skill's 'What no check can see' section names people and training explicitly, and no catalogue check reads them. I did not run xano policy evaluate or push because no policy file was written; no workspace changes were made. The workspace was read with xano workspace pull and xano policy list only."
+}

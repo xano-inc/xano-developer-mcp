@@ -1,0 +1,66 @@
+{
+  "goal_id": "G10",
+  "templates_considered": [
+    "BIZ-001 writes_check_first: uses the same check (stack.statement_order) but is scoped to endpoints with a precondition on $auth; the ask is about agent tools and human approval, so it did not fit",
+    "AUTH-003 public_endpoints_harmless: about public endpoints, not agents; did not fit",
+    "AUTH-002 admin_endpoints_check_role: role checks, not approvals; did not fit",
+    "AUTH-040 protected_endpoints_run_middleware: not related; did not fit",
+    "Recipe 'Keep AI calls affordable and agents safe': matches the approval part (approval rule before deletes and emails). Its approval rule is the one used. Its VND-001 vendor rule, PERF-001 and SEC-013 were not asked for and were left out. Its 'AI tools cannot delete records' rule (stack.statement_forbidden on tool) was left out because it forbids approved deletes too, which the ask does not require",
+    "CONV-030 ai_tools_described: not asked for; did not use"
+  ],
+  "templates_used": [],
+  "rules": [
+    {
+      "policy_key": "AGENT-010",
+      "check": "stack.statement_order",
+      "params": {
+        "before": {"functions": ["request_human_approval"]},
+        "after": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query", "util.send_email"],
+        "object_kinds": ["tool"]
+      },
+      "covers": "Agent tools delete records or email customers only after a human approval call (approval part of the ask). db.direct_query included because raw SQL can delete; it also matches reads, a deliberate over-match"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "AI agents shouldn't be able to call tools I haven't explicitly given them", "why": "no check exists"},
+    {"part": "Approval is a real human decision, not just a function call that runs first", "why": "no check exists; the check confirms ordering only, per the stack.statement_order description ('It confirms the call comes first, not what the function decides')"}
+  ],
+  "assumptions": [
+    "'they' in the ask means AI agents, so scope is object_kinds: [tool] only, not functions or tasks that agents never call",
+    "request_human_approval is the approval gate: it throws unless an approved approval_request exists",
+    "Deleting via a function a tool calls is caught because called functions are followed",
+    "A flag without a block is acceptable as a first policy, per the skill's advisory-by-default rule for new policies",
+    "I could not run xano policy evaluate (forbidden), so the expected findings on delete_customer_note and send_customer_email come from reading code, not from a result"
+  ],
+  "workspace_names_used": [
+    "request_human_approval",
+    "approval_requests",
+    "delete_customer_note",
+    "send_customer_email",
+    "lookup_order",
+    "issue_refund",
+    "support_agent",
+    "record_audit_event",
+    "delete_user_account",
+    "customer_notes",
+    "payments",
+    "orders",
+    "audit_log"
+  ],
+  "confusions": [
+    "The skill says a template's Fill column for BIZ-001 is '_nothing_', but its stack.statement_order rule needs before and after params. The catalogue has them; the skill table reads as if the template is ready to use as-is, which it is not",
+    "The skill lists db.del, db.bulk.delete and db.truncate as the deletes, but does not say whether raw SQL deletes count. I included db.direct_query and had to decide myself",
+    "Recipe 'Keep AI calls affordable and agents safe' bundles an approval rule with 'AI tools cannot delete records' (stack.statement_forbidden). Those two are in direct conflict for approved deletes: the forbidden one blocks deletes even after approval. The recipe does not say which to keep when the customer asks for approval rather than prohibition",
+    "The skill's example for stack.statement_order says it confirms ordering only, but does not say how a conditional { throw } approval gate is treated. request_human_approval throws inside a conditional, which the catalogue says is not a precondition; because the check matches on the function call itself, it works, but the reasoning is not spelled out for the approval case",
+    "No guidance on how to express 'the agent may only call listed tools' with any check; the skill's Agent tool allowlists entry says it is not checkable yet, but does not point to an alternative such as the MCP forbidden-statement recipe"
+  ],
+  "wished_for": [
+    "A check or param that reads an agent's tool list against an allowlist (the main unmet part of this ask)",
+    "A recipe or template for 'agent tools need human approval before side effects' that shows the before/after params directly, instead of expecting it to be built from the recipe's extra rules",
+    "Clarity on whether a check can verify the approval result (for example, an approved status), not only the call order"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The approval-before-delete-or-email part is covered by stack.statement_order scoped to tool objects, and the policy parses cleanly. Confidence is not high because the check confirms only that the approval call runs first, not that a person approved; the tool-allowlist part is not covered at all; and I could not evaluate the policy against the workspace, so the expected findings are from reading the code"
+}

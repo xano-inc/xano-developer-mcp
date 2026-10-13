@@ -1,0 +1,51 @@
+{
+  "goal_id": "G02",
+  "templates_considered": [
+    "CONV-010: functions_snake_case. Partial fit only: the template's rule is snake_case, but the ask is a client prefix. Did not use it because it would add a case rule the customer did not ask for.",
+    "CONV-011: fields_snake_case. Did not fit: the ask covers endpoints, tables and functions, not fields.",
+    "CONV-012: endpoint_paths_versioned. Did not fit: its rule is kebab-case with a version segment, which conflicts with the snake_case ask.",
+    "CONV-013: function_arguments_snake_case. Did not fit: the ask covers function names, not arguments.",
+    "CONV-021: tags_kebab_case. Did not fit: tags are not in the ask.",
+    "CONV-023: tables_classified. Did not fit: this is about classification tags, not table names."
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are always lowercase snake_case"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "suffixes": ["s"]}, "covers": "tables are plural (suffix heuristic)"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "prefixes": ["acme_"]}, "covers": "functions start with the client prefix"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "flag it, don't block it", "why": "other"},
+    {"part": "one policy covering 12 client workspaces", "why": "other"},
+    {"part": "client prefix differs per client; each workspace needs its own prefix value", "why": "needs runtime/org process"},
+    {"part": "tables are plural: a suffix check cannot judge irregular plurals such as people", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "acme_ is the client prefix for this workspace, inferred from the five functions that already use it.",
+    "Endpoint paths are judged per segment, so bank-accounts and getCustomerProfile count as violations.",
+    "Plural means ending in s, per the object.naming example for table names.",
+    "Advisory severity and enforcement match 'flag it, don't block it'."
+  ],
+  "workspace_names_used": [
+    "acme_ (function prefix)",
+    "customers", "invoice_item", "payment_method", "user_address", "audit_log",
+    "bank-accounts/link", "getCustomerProfile",
+    "check_admin_role", "delete_user_account", "record_audit_event", "request_human_approval", "summarize_ticket", "calculateLateFee"
+  ],
+  "confusions": [
+    "The template CONV-010 is listed as 'Functions are snake_case', but the customer asked for a client prefix. The template and the ask partly overlap, and the skill does not say what to do when a template fits in part.",
+    "The skill says to start from a template when it fits, but the closest endpoint template (CONV-012) contradicts the ask (kebab-case vs snake_case). The skill does not say how to handle a conflict like this.",
+    "No guidance on how to write one policy that covers the same rule across many workspaces that differ only in a param value (the client prefix).",
+    "Whether 'suffixes: [s]' with name_kind object on tables should carry a tag or exemption for irregular plurals was not clear.",
+    "The skill says to use xano policy create --template; I did not use it, so the CLI flags for building from a template were not tested."
+  ],
+  "wished_for": [
+    "A recipe for a naming convention with a per-client prefix, showing how to reuse one policy across several workspaces.",
+    "A recommended way to express irregular plurals in the table plural check.",
+    "Guidance on when a partial template match should be used versus writing a custom key."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three rules parse cleanly and match the three parts of the ask. Confidence is not higher because the client prefix is assumed, the plural check is only a suffix heuristic, and I could not run xano policy evaluate, so the flagged names above are predictions from reading the workspace."
+}

@@ -1,0 +1,40 @@
+{
+  "goal_id": "G01",
+  "templates_considered": [
+    "AUTH-010: endpoints_need_login, fits directly (endpoints require login; invoices scope via tables param)",
+    "AUTH-020: own_records_only, did not fit; ask is about login, not per-user row filtering",
+    "DATA-010: no_pii_in_responses, did not fit; invoices are not personal-data fields named in the ask",
+    "PERF-001 (no template key in kit for unbounded reads beyond statement.param_bound): not used; ask focuses on auth, 'full table' only partially addressed",
+    "CONF-010: sensitive_tables_need_login, did not fit; needs a table tag, and invoices carries none"
+  ],
+  "templates_used": ["AUTH-010"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"tables": ["invoices"]}, "covers": "any endpoint returning invoices without login, including the export endpoint"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoint returns the full invoices table (unpaged)", "why": "other: only partly checkable; PERF-001 / statement.param_bound would judge unbounded db.query reads, but the ask named auth"},
+    {"part": "'nobody ships' enforced on every push, including at 2am", "why": "needs runtime/org process: enforcement is advisory by skill rule, so it does not block until the owner makes it blocking"},
+    {"part": "who may call it beyond login (role)", "why": "no check reads role beyond AUTH-002 which needs a named function; the ask did not name one"}
+  ],
+  "assumptions": [
+    "invoices is the table name in workspace/table/invoices.xs",
+    "api/app/invoices/export_GET.xs (path invoices/export, api_group app) is the unauthenticated full-table endpoint the customer means",
+    "auth = \"users\" on invoices_GET and invoice_id_GET is a login, so they pass",
+    "The customer wants advisory first; skill rule says new policies start advisory and blocking is owner's choice"
+  ],
+  "workspace_names_used": ["invoices", "app", "invoices/export", "invoices/{invoice_id}", "invoices_GET", "users", "orgs", "customers", "invoice_item"],
+  "confusions": [
+    "The skill says to scope by tables when the user names tables, but the 'full table' phrasing did not say whether 'endpoint returns the table' means reach or read; I used reach (the rule's default scope with tables), which is what the check does",
+    "Brief forbids policy evaluate, so I could not confirm predicted findings; the skill's honesty rules say to run evaluate before reporting outcomes, which conflicts with the brief here",
+    "The catalogue has no 'unbounded read' template key; PERF-001 is listed in the skill but I only saw it in the templates list by words, so checking whether it is a template vs a recipe was not obvious"
+  ],
+  "wished_for": [
+    "A worked example of scoping object.auth_required by table for an endpoint that reaches a table through a query and not a function",
+    "Clear guidance on whether a 'returns everything' ask should be one policy or two when the check covers only auth",
+    "A way to preview findings without evaluate, for offline/dry-run authoring"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The rule is correct for the auth half and parses with no warnings and the table name is real, but the 'full table' half is only partly covered, the 2am-blocking goal is not met while advisory, and I could not run evaluate to confirm the predicted finding on export_GET."
+}

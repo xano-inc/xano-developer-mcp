@@ -1,0 +1,40 @@
+{
+  "goal_id": "G13",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: partial fit; checks login on endpoints, not training. Offered as an adjacent option, not written",
+    "CONF-010 sensitive_tables_need_login: partial fit; needs table_tags, and no table in the workspace carries a tag",
+    "CONF-012 confidential_tables_tagged / CONV-020 agreed_tag_vocabulary: considered for tagging customer-data tables; proposed only, since tags are the owner's call",
+    "DATA-010, LOG-001, CONF-011: relate to data handling, not to who may touch data; not used",
+    "AUTH-020 own_records_only: about row ownership, not training; not used"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "everyone on the team has done security awareness training", "why": "no check exists"},
+    {"part": "before they're allowed to touch anything with customer data", "why": "needs runtime/org process (access gating outside the definitions)"},
+    {"part": "a login-gated version of customer-data access as a stand-in", "why": "other: it checks login, not training; offered as an option, not written, because it changes who can call endpoints and needs the owner's decision"}
+  ],
+  "assumptions": [
+    "'Customer data' means the tables holding customer, payment, patient or order records in the workspace",
+    "No table carries a tag today; tags were read from table files and none were found",
+    "Endpoints health_GET and newsletter/subscribe_POST look public by design but this was not verified against their definitions"
+  ],
+  "workspace_names_used": [
+    "customers", "invoices", "payments", "payment_method", "patients", "clinical_notes", "orders", "support_tickets", "users", "audit_log", "health_GET", "newsletter/subscribe_POST"
+  ],
+  "confusions": [
+    "The skill's 'What no check can see' section names 'People and training' as out of scope but gives no recipe or wording for a customer who asks for a training gate. The reply had to be built from that section alone",
+    "The brief says to write no .xs when no policy can do the ask, but the skill also says to check the checkable part. It was unclear whether a login-gate stand-in counts as the checkable part or as a different requirement. I treated it as a different requirement",
+    "The skill's Templates section and the policy-templates.md table list many templates, but none cover a people or access-gate requirement. The lookup by words ('security', 'training', 'awareness') returned nothing useful",
+    "Did not run xano policy parse, since no file was written. The brief asks for parse on each file, so this is a deliberate gap, not an oversight"
+  ],
+  "wished_for": [
+    "A short 'can't be enforced by policy' guidance example with a suggested next step for a customer asking for a person-level control (training, background check, access review), that points at the Xano access-control or org process instead",
+    "A check or template for 'users with a role can reach tagged tables' or similar role-gating on tagged tables, so a stand-in can be written from a template without inventing rules",
+    "Templates that map to 'customer data' generically, since the customer's word 'customer data' does not match the template words for PII, PHI or PCI"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No check reads training completion or a person's status, so no policy can achieve the stated goal. The login-gate option is an approximation that checks something different. I wrote no .xs file, so nothing was parsed or evaluated"
+}

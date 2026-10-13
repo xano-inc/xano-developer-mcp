@@ -1,0 +1,35 @@
+{
+  "goal_id": "G12",
+  "templates_considered": [
+    "CONF-010 sensitive_tables_need_login: closest in spirit (sensitive tables), but needs table tags that don't exist in the workspace and does not address prod-to-staging copies",
+    "CONF-012 confidential_tables_tagged / CONV-023 tables_classified: could tag tables, but tagging does not enforce anything about environments",
+    "SEC-012 no_secrets_in_code: relevant to keeping prod credentials out of definitions, but does not address the ask directly",
+    "VND-001 approved_vendors_only: found the literal production.plaid.com URL in link_POST.xs; this is vendor allowlisting, not prod/staging separation",
+    "AUTH-010 endpoints_need_login, AUTH-002 admin_endpoints_check_role: relate to access, but not to on-call gating of prod access"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "runtime/org process: policies read definitions only, never records or data copied between environments or branches; no environment or prod marker exists in the definitions"},
+    {"part": "devs can only get into prod through the on-call process", "why": "needs runtime/org process: who may reach prod and whether an on-call approval happened live outside object definitions; no check reads access reviews or approvals"}
+  ],
+  "assumptions": [
+    "'prod' and 'staging' are environments/branches, not objects in the definitions; the workspace pull shows no environment markers",
+    "the approval_requests table is for agent-proposed actions, not an on-call approval record"
+  ],
+  "workspace_names_used": [
+    "table patients", "table approval_requests", "table audit_log", "api/app/bank_accounts/link_POST.xs (literal production.plaid.com URL)"
+  ],
+  "confusions": [
+    "The skill's 'What no check can see' list covers runtime data and copies between environments, but gives no guidance on how to tell a customer about a goal that is wholly out of scope versus partly covered; I had to decide the reply shape myself",
+    "The brief says to write no .xs file when no policy can do the ask, but the skill's step 5 says to write no policy only when no part is checkable; I read that no part of this ask is checkable by a definition check, so I wrote none"
+  ],
+  "wished_for": [
+    "A short recipe for requests about environments, branches or data copies: what can be checked (for example, tagged tables or credentials that are literal vs env) and an explicit 'no policy' answer template",
+    "A check or attribute that marks a table or endpoint as production or staging, or a branch-level environment marker that policies can read"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Neither half of the ask is enforceable from object definitions: the data rule depends on runtime copies and environment separation, and the access rule depends on an org on-call process. No candidate template or check covers either part, so I wrote no policy. Confidence that a policy achieves the goal is low by design, since none was written."
+}

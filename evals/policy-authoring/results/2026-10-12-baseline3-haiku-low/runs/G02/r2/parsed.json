@@ -1,0 +1,95 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "CONV-010.xs",
+    "ENDPOINT-NAMING-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "CONV-010.xs",
+      "ok": true,
+      "key": "CONV-010",
+      "title": "Functions are snake_case and start with the client prefix",
+      "statement": "Every function name is lowercase words joined by underscores and starts with the client prefix acme_, such as acme_calculate_tax. A function that does not follow this is flagged, not blocked. Renaming a function changes every function.run call that uses it, so rename only when the callers can be updated. A name that must stay as it is is listed in allowed_names by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CONV-010.R1",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "snake_case",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [
+              "acme_"
+            ],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "ENDPOINT-NAMING-010.xs",
+      "ok": true,
+      "key": "ENDPOINT-NAMING-010",
+      "title": "Endpoint paths are lowercase snake_case",
+      "statement": "Every segment of an endpoint path is lowercase words joined by underscores, such as customers/{customer_id} or shipments/quote. A path segment holding a {parameter} is skipped. An endpoint that does not follow this is flagged, not blocked. Changing a path changes the URL that callers use, so rename only when the callers can be moved over. A path that must stay as it is is listed in allowed_names by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "ENDPOINT-NAMING-010.R1",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "endpoint_path",
+            "case_style": "snake_case",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

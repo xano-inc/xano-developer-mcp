@@ -1,0 +1,71 @@
+{
+  "goal_id": "G10",
+  "templates_considered": [
+    "AUTH-003 public_endpoints_harmless: about endpoints, not agent tools; didn't fit",
+    "SEC-010 no_destructive_sql: stack.statement_forbidden covers truncate and raw SQL only, not db.del; partial fit, and it targets all stacks, not tools; didn't use the template key",
+    "AUTH-040 / AUTH-002 / others in Access control: about endpoints, not agents; didn't fit",
+    "BIZ-001 writes_check_first: stack.statement_order for precondition-before-write; the ask is about approval before email, not a precondition; didn't fit as a template, same check family",
+    "Recipe 'Keep AI calls affordable and agents safe': covers approval before deletes and emails, and tools that cannot delete; also adds AI-loop, model-provider and vendor rules the customer did not ask for; used only the approval and delete parts",
+    "VND-001 approved_vendors_only: about outbound hosts and providers, not in the ask; didn't fit"
+  ],
+  "templates_used": [],
+  "rules": [
+    {
+      "policy_key": "AI-TOOL-001",
+      "check": "stack.statement_forbidden",
+      "params": {
+        "statements": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"],
+        "object_kinds": ["tool"]
+      },
+      "covers": "AI agents can't delete anything (tool stacks and functions they call)"
+    },
+    {
+      "policy_key": "AI-TOOL-001",
+      "check": "stack.statement_order",
+      "params": {
+        "before": {"functions": ["request_human_approval"]},
+        "after": ["util.send_email"],
+        "object_kinds": ["tool"]
+      },
+      "covers": "AI agents can't email customers without a human approval call first"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "agents can only call tools the customer explicitly gave them", "why": "no check exists"},
+    {"part": "email sent via raw HTTP api.request to a mail provider", "why": "other: rule reads util.send_email only; api.request would need a vendor rule, which is outside the ask"},
+    {"part": "the approval is real (a person approved), not just called", "why": "needs runtime/org process; statement_order confirms call order only"},
+    {"part": "delete with approval (if the customer meant deletes allowed after approval)", "why": "couldn't tell how: ask was ambiguous; chose blocked outright"}
+  ],
+  "assumptions": [
+    "'can't delete anything' = deletes forbidden outright in tools, not approval-gated",
+    "'without a human approving' applies to emails (the approval function is request_human_approval)",
+    "'AI agents' = tools in the ai/tool folder, used by the Support Agent (canonical support-agent)",
+    "db.direct_query included as a delete path (raw SQL can delete); accepted that it also flags raw SQL reads in tools",
+    "statement_forbidden and statement_order both reach into called functions, since check text says so for forbidden; not verified for statement_order",
+    "policy key AI-TOOL-001: no template uses the AI- prefix, so a custom key is correct"
+  ],
+  "workspace_names_used": [
+    "ai/tool: delete_customer_note, send_customer_email, issue_refund, lookup_order",
+    "ai/agent: support_agent (canonical support-agent, tools list)",
+    "function: request_human_approval, record_audit_event, delete_user_account",
+    "table: approval_requests, customer_notes, audit_log",
+    "statements seen in workspace: db.del, db.bulk.delete, util.send_email, function.run"
+  ],
+  "confusions": [
+    "Template prefix rule: 'never a template prefix such as AUTH- or DATA- with a number no template has' left unclear whether a new prefix like AI- is fine; I assumed yes",
+    "Recipe 'Keep AI calls affordable and agents safe' bundles approval and cost rules; the 'Extra rules' include AI-loop and vendor rules the ask did not request; unclear how much of a recipe to take when the ask covers only part of it",
+    "Whether statement_order's before/after search reaches into called functions is not stated (statement_forbidden says it does)",
+    "Whether object_kinds: ['tool'] works on stack.statement_order is inferred from the recipe, not from a param description",
+    "Recipe says 'one policy per goal' but skill step 5 also says one per template; with no template fitting, one custom policy with two rules seemed right"
+  ],
+  "wished_for": [
+    "A check or param to restrict which tools an agent may be given (the agent's tools list). The skill lists it as not yet covered",
+    "A worked example for 'approval before action' that names the approval function, showing the object_kinds scope on a tool",
+    "A note on whether stack checks follow function.run into the approval function's own stack, so approval-function behaviour is clear",
+    "A template for 'AI tools can't do destructive or outbound actions without approval', since the existing recipe spans more than this ask"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Deletes and email-approval are both checkable and the rules parse cleanly, with no warnings. Not run against the workspace, so the predicted findings are untested. The tool allowlist part is not checkable at all, and email sent over raw HTTP is not covered. The policy is advisory, so it blocks nothing until the owner changes it."
+}

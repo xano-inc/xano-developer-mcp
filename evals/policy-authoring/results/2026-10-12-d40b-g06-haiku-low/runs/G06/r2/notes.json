@@ -1,0 +1,51 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "LOG-010 external_calls_handle_errors: fits 'missing error handling'; used as-is (api.request only)",
+    "CHG-001 endpoints_have_tests: fits 'no tests'; used, extended object_kinds to add function",
+    "CONV-040 endpoints_stay_short: fits 'giant functions'; used with catalogue values (30 statements, 3 nesting)",
+    "CONV-050 no_leftover_code: in code_review_basics recipe, not in the ask; left out",
+    "PERF-001 reads_are_paged: in code_review_basics recipe, not in the ask; left out",
+    "recipe code_review_basics: fits the goal most closely; used its first three templates, skipped the other two and its extra description rule as not asked",
+    "SEC-013 requests_have_timeout, CONV-030 ai_tools_described: not asked; not considered further",
+    "AUTH-010, DATA-010, LOG-001 and other data/security templates: the ask is about code quality, not access or data; not used"
+  ],
+  "templates_used": ["LOG-010", "CHG-001", "CONV-040"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling on external calls"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query", "function"]}, "covers": "no tests for endpoints and functions"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests (tests must assert; anonymous-call rejection test for protected endpoints)"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant functions and deep nesting (counts statements, not raw lines)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling beyond api.request (stream.from_request, ai.external.mcp.*, db.external.*.direct_query)", "why": "other"},
+    {"part": "tests actually pass / are meaningful", "why": "no check exists"},
+    {"part": "200-line functions as lines rather than statements", "why": "other"},
+    {"part": "'breaking prod' in general (approvals, release process, runtime behaviour)", "why": "needs runtime/org process"},
+    {"part": "'you know the drill' (the reviewer's unstated list)", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "A 200-line function is roughly 200 statements, so the 30-statement template limit flags it",
+    "The customer wants advisory policies first, as the skill says for new policies",
+    "Only endpoints and functions were meant for the test and size rules; tasks and tools were not added",
+    "'Missing error handling' means external calls, since no check reads try/catch around db writes"
+  ],
+  "workspace_names_used": [],
+  "confusions": [
+    "The skill says to use the template's examples for a missing setting, but the catalogue shows empty examples for most templates; I used the template rule params as given",
+    "Template limits for CONV-040 say a 30-statement limit blocks rewrites of legacy objects on a blocking policy, but gives no way to phase in a limit (e.g. a higher start value), so the choice of 30 vs a looser limit was left to me",
+    "The recipe for code review says to create each template as its own policy, but also says to put extra rules in one policy of my own; it does not say whether a single-template recipe should also get its own policy when the ask only covers some of its parts",
+    "The catalogue's CHG-001 template uses object_kinds query only; the ask says no tests in general, so I widened it to function, which I could not confirm is the intended default",
+    "Policy files carry no tags in my final version: I dropped tags I could not confirm exist in the workspace"
+  ],
+  "wished_for": [
+    "A template or check for try/catch around database writes, or for error handling on every outbound statement at once",
+    "Guidance on how to phase in a size limit (advisory warn level, or a stepped max) for codebases with existing long functions",
+    "A recipe note on which parts of a recipe to skip when the request covers only some of them",
+    "Working examples for tests that check they pass, not just that they exist"
+  ],
+  "parse_attempts": 9,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Three checks map directly to the named complaints (error handling, tests, size), and all three parse with no rule warnings. But the ask also covers 'you know the drill' and 200-line functions as lines, and tests are only checked for existence. The policies reduce the review noise, but do not prevent prod breakage by themselves."
+}

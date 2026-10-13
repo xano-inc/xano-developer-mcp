@@ -1,0 +1,58 @@
+{
+  "goal_id": "G03",
+  "templates_considered": [
+    "VND-001: used. Matches 'only Stripe and Plaid' vendor ask. Hosts parameter fits; providers left empty so email and AI providers are reported.",
+    "LOG-001: used. Matches 'cardholder can't be logged'. Template rule kept; added a datadog.log rule because the template limits note says debug.log alone is not full coverage.",
+    "SEC-012: not used. PCI DSS-tagged and in the PCI recipe, but the customer did not ask for secrets. Workspace has a literal Twilio credential in acme_notify_sms.xs, so flagged in reply as a suggestion.",
+    "CONF-011: not used. Recipe lists it, but the customer's ask is storage, not marking sensitive; no existing 'sensitive' attribute was checked.",
+    "DATA-010: not used. Output fields are not in the ask.",
+    "PCI recipe 'Protect payment card data': used as the basis for the storage rule. Its extra rule (table.field_attribute_required forbidden) is the PCI-001 policy. Recipe's 'First' steps (route card details via processor tokens, approve hosts, env vars for keys) are not what the customer asked for and are not automated here.",
+    "AUTH-010, CONF-010, CONF-012, RET-001, RET-002 etc.: no fit for the three asks; no tables or endpoints in the workspace carry tags that these would need."
+  ],
+  "templates_used": ["VND-001", "LOG-001"],
+  "rules": [
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "Cardholder and bank data only goes to Stripe and Plaid (HTTP destinations); providers left unset so email and AI model providers are reported as unreviewed"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "Cardholder data can't be logged via debug.log (template rule)"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["datadog.log"], "param_names": ["message", "attributes"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "Cardholder data can't be logged via datadog.log (added; template only covers debug.log)"},
+    {"policy_key": "PCI-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name"], "forbidden": true}, "covers": "Cardholder data can't be stored raw in any table; reports payments table"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Cardholder data can't be sent to any vendor not on the approved list (data-level, not destination-level)", "why": "other", "detail": "VND-001 checks destination hosts and providers only. It cannot see what fields an approved vendor receives, and it does not inspect the payload sent to Stripe or Plaid."},
+    {"part": "Cardholder data can't be logged, beyond debug.log and datadog.log", "why": "other", "detail": "Other logging statements or loggers are not checked; the workspace uses none beyond these two. LOG-001 blocks any $input in logs, not just card fields, a coarser approximation of 'cardholder data'."},
+    {"part": "Cardholder data can't be stored raw (bank data, PAN in other field names, encryption at rest)", "why": "other", "detail": "PCI-001 lists only the four card field names found in payments. Bank account and routing numbers, and any field name not listed, are not checked. Encryption at rest is infrastructure, not a definition."},
+    {"part": "Pass the PCI audit", "why": "needs runtime/org process", "detail": "Audit readiness depends on people, access reviews, infrastructure and runtime data, which the policy cannot read."}
+  ],
+  "assumptions": [
+    "'Stripe and Plaid only' means api.stripe.com and production.plaid.com, the hosts seen in the workspace.",
+    "'Cardholder stuff' means card_number, card_cvv, card_expiry and cardholder_name in the payments table; bank_account_number and bank_routing_number treated as out of this policy.",
+    "Policies written advisory and active, per the skill's default for a new policy; blocking is the owner's choice.",
+    "Policy tag 'pci_dss' used as the framework criterion; no PCI requirement numbers used because none were verifiable from the kit.",
+    "Forbidding raw card fields applies to all tables, since the check reports every table that declares a listed field; this matches 'can't be stored raw'."
+  ],
+  "workspace_names_used": [
+    "payments (table)",
+    "card_number, card_cvv, card_expiry, cardholder_name (payments fields)",
+    "bank_account_number, bank_routing_number (payments fields, noted but not used)",
+    "api.stripe.com, production.plaid.com (hosts in charge_POST, issue_refund, link_POST)",
+    "payments/charge (charge_POST), clinical_notes (debug.log on $input), payments/fraud_check (riskscreen host)",
+    "debug.log, datadog.log (statements)"
+  ],
+  "confusions": [
+    "LOG-001's limits note says only debug.log is checked and datadog.log must be added, but the template's own rule has no datadog rule. Unclear whether to add a second rule in the same policy or a separate policy; I used a second rule.",
+    "The skill says 'Use a template only when it covers the request'. The PCI recipe's extra rules overlapped the customer's storage ask but are not a template, so I had to choose a new key (PCI-001). Unclear whether a key like PCI-001 is safe, since templates use prefixes like AUTH- and DATA- and PCI- is not one of them; I assumed it is.",
+    "outbound.vendor_allowlist: 'providers empty reports all as not yet reviewed' is ambiguous for the email and AI provider kinds. I could not tell whether leaving providers unset is the intended way to say 'none approved' or whether it should be listed explicitly with an ID I can't verify.",
+    "The recipe's 'First' steps reference tags on tables (e.g. for CONF-010), but the workspace's tables carry no tags. I did not use tag-based rules.",
+    "xano policy parse printed a reformatted file to stdout and did not say whether it validated workspace names; it printed no warnings. I could not tell whether it checks host names or statements against the workspace.",
+    "Whether 'approved vendor' in VND-001 should cover kinds like email and cloud is unclear from the check's params list; the catalogue only shows hosts/providers, not which kinds need which."
+  ],
+  "wished_for": [
+    "A recipe or example for 'approved vendors are X only' that spells out which kinds to include and how to say 'none approved' for email and AI providers.",
+    "A check or param for card-data (PAN) detection in fields or payloads, not only by field name.",
+    "PCI DSS requirement numbers mapped to templates, so tags like pci_dss_3.3 can be used properly.",
+    "A worked example of a log rule that forbids card fields only, not all request input."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The three stated restrictions are each covered by a real check, and all three files parse. But the stated goal is passing a PCI audit, which these policies cannot establish. Storage coverage is by field name only; logging coverage forbids all input rather than card data alone; vendor coverage checks hosts, not data sent to them. I have not run evaluate, so the predicted findings are unverified."
+}

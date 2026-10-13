@@ -1,0 +1,3487 @@
+{
+  "label": "2026-10-12-baseline3-haiku-low",
+  "rubric_version": 5,
+  "workspace_id": "9040",
+  "scored_at": "2026-10-13T04:00:20.758Z",
+  "run": {
+    "label": "2026-10-12-baseline3-haiku-low",
+    "model": "haiku",
+    "effort": "low",
+    "kit": "baselines/2026-10-12/kit",
+    "kit_sha256_16": "5a629c39af63a091",
+    "repeats": 3,
+    "goals": [
+      "G01",
+      "G02",
+      "G03",
+      "G04",
+      "G05",
+      "G06",
+      "G07",
+      "G08",
+      "G09",
+      "G10",
+      "G11",
+      "G12",
+      "G13",
+      "G14"
+    ],
+    "workspace_id": "9040",
+    "instance": "http://localhost:9999",
+    "repo_commit": "dd76e5b4267871f180b82b32852a0cce8236322f",
+    "claude_version": "2.1.296 (Claude Code)",
+    "started": "2026-10-13T03:47:06.429Z",
+    "ended": "2026-10-13T03:58:18.522Z",
+    "total_cost_usd": 0.7804894000000001
+  },
+  "totals": {
+    "runs": 42,
+    "points": 267,
+    "max": 303,
+    "cost_usd": 0.7804894000000001,
+    "wall_ms_mean": 62001,
+    "policy_files": 98,
+    "parse_ok": 98,
+    "unknown_name_warnings": 0,
+    "bonus_points": 27,
+    "penalty": 0,
+    "pct": 88
+  },
+  "results": [
+    {
+      "goal_id": "G01",
+      "repeat": 1,
+      "points": 4,
+      "max": 5,
+      "pct": 80,
+      "earned": 4,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "invoice_endpoints_need_auth",
+          "max": 3,
+          "points": 2,
+          "via": "auth_required on every endpoint (AUTH-010 as-is): covers invoices but not targeted",
+          "evidence": [
+            "AUTH-010.R1"
+          ],
+          "desc": "Endpoints reaching the invoices table require auth: object.auth_required (or object.tagged_table_access) scoped with tables: [invoices], or every endpoint required to log in."
+        },
+        {
+          "id": "prevention_means_blocking",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "'Never ships' is prevention: the policy is blocking, or the reply says it must be switched to blocking to stop a push/merge."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "paging_bound",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "'Returns the full table': object.input_rules paging_max_required."
+        },
+        {
+          "id": "names_the_offender",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names the existing public invoices/export endpoint."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-010.R1 object.auth_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01312749,
+      "wall_ms": 41265,
+      "num_turns": 13,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G01",
+      "repeat": 2,
+      "points": 5,
+      "max": 5,
+      "pct": 100,
+      "earned": 5,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "invoice_endpoints_need_auth",
+          "max": 3,
+          "points": 3,
+          "via": "auth_required scoped to tables [invoices]",
+          "evidence": [
+            "AUTH-010.R1"
+          ],
+          "desc": "Endpoints reaching the invoices table require auth: object.auth_required (or object.tagged_table_access) scoped with tables: [invoices], or every endpoint required to log in."
+        },
+        {
+          "id": "prevention_means_blocking",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "'Never ships' is prevention: the policy is blocking, or the reply says it must be switched to blocking to stop a push/merge."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "paging_bound",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "'Returns the full table': object.input_rules paging_max_required."
+        },
+        {
+          "id": "names_the_offender",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names the existing public invoices/export endpoint."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-010.R1 object.auth_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.018011390000000002,
+      "wall_ms": 55722,
+      "num_turns": 17,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G01",
+      "repeat": 3,
+      "points": 5,
+      "max": 5,
+      "pct": 100,
+      "earned": 5,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "invoice_endpoints_need_auth",
+          "max": 3,
+          "points": 3,
+          "via": "auth_required scoped to tables [invoices]",
+          "evidence": [
+            "AUTH-010.R1"
+          ],
+          "desc": "Endpoints reaching the invoices table require auth: object.auth_required (or object.tagged_table_access) scoped with tables: [invoices], or every endpoint required to log in."
+        },
+        {
+          "id": "prevention_means_blocking",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "'Never ships' is prevention: the policy is blocking, or the reply says it must be switched to blocking to stop a push/merge."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "paging_bound",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "'Returns the full table': object.input_rules paging_max_required."
+        },
+        {
+          "id": "names_the_offender",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names the existing public invoices/export endpoint."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-010.R1 object.auth_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01565426,
+      "wall_ms": 41528,
+      "num_turns": 14,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G02",
+      "repeat": 1,
+      "points": 5,
+      "max": 7,
+      "pct": 71,
+      "earned": 5,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "endpoint_paths_snake_case",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONV-NAMING-ENDPOINTS.R1"
+          ],
+          "desc": "object.naming name_kind endpoint_path with case_style snake_case (CONV-012's kebab-case changed, not used as-is)."
+        },
+        {
+          "id": "tables_plural",
+          "max": 2,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "object.naming name_kind object, object_kinds [table], with suffixes or a pattern."
+        },
+        {
+          "id": "function_prefix",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONV-010.R1"
+          ],
+          "desc": "object.naming name_kind object, object_kinds [function], with prefixes."
+        },
+        {
+          "id": "advisory_only",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "'Flag it, don't block it': every policy written is advisory."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "real_prefix",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONV-010.R1"
+          ],
+          "desc": "Prefix read from the workspace (acme_)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "CONV-010.R1 object.naming",
+        "CONV-NAMING-ENDPOINTS.R1 object.naming"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01705266,
+      "wall_ms": 59931,
+      "num_turns": 12,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G02",
+      "repeat": 2,
+      "points": 5,
+      "max": 7,
+      "pct": 71,
+      "earned": 5,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "endpoint_paths_snake_case",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "ENDPOINT-NAMING-010.R1"
+          ],
+          "desc": "object.naming name_kind endpoint_path with case_style snake_case (CONV-012's kebab-case changed, not used as-is)."
+        },
+        {
+          "id": "tables_plural",
+          "max": 2,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "object.naming name_kind object, object_kinds [table], with suffixes or a pattern."
+        },
+        {
+          "id": "function_prefix",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONV-010.R1"
+          ],
+          "desc": "object.naming name_kind object, object_kinds [function], with prefixes."
+        },
+        {
+          "id": "advisory_only",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "'Flag it, don't block it': every policy written is advisory."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "real_prefix",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONV-010.R1"
+          ],
+          "desc": "Prefix read from the workspace (acme_)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "CONV-010.R1 object.naming",
+        "ENDPOINT-NAMING-010.R1 object.naming"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01747695,
+      "wall_ms": 54232,
+      "num_turns": 10,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G02",
+      "repeat": 3,
+      "points": 7,
+      "max": 7,
+      "pct": 100,
+      "earned": 7,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "endpoint_paths_snake_case",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "NAMING-001.R1"
+          ],
+          "desc": "object.naming name_kind endpoint_path with case_style snake_case (CONV-012's kebab-case changed, not used as-is)."
+        },
+        {
+          "id": "tables_plural",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "NAMING-002.R1"
+          ],
+          "desc": "object.naming name_kind object, object_kinds [table], with suffixes or a pattern."
+        },
+        {
+          "id": "function_prefix",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "NAMING-003.R1"
+          ],
+          "desc": "object.naming name_kind object, object_kinds [function], with prefixes."
+        },
+        {
+          "id": "advisory_only",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "'Flag it, don't block it': every policy written is advisory."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "real_prefix",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "NAMING-003.R1"
+          ],
+          "desc": "Prefix read from the workspace (acme_)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "NAMING-001.R1 object.naming",
+        "NAMING-002.R1 object.naming",
+        "NAMING-003.R1 object.naming"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.02051863,
+      "wall_ms": 65236,
+      "num_turns": 14,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G03",
+      "repeat": 1,
+      "points": 8,
+      "max": 9,
+      "pct": 89,
+      "earned": 8,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "vendor_allowlist",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "VND-001.R1"
+          ],
+          "desc": "outbound.vendor_allowlist with Stripe and Plaid hosts."
+        },
+        {
+          "id": "not_logged",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "LOG-001.R1"
+          ],
+          "desc": "statement.expression_rule on debug.log forbidding request data (LOG-001)."
+        },
+        {
+          "id": "not_stored_raw",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "PCI-001.R1"
+          ],
+          "desc": "Card fields may not exist (table.field_attribute_required forbidden: true), or writes may not take them from input."
+        },
+        {
+          "id": "not_returned",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "db.output_fields_forbidden keeps card fields out of what endpoints fetch."
+        },
+        {
+          "id": "no_compliance_claim",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim the policies pass PCI or make them compliant."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "sensitive_marked",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Card fields required to be marked sensitive (CONF-011)."
+        },
+        {
+          "id": "names_unapproved_vendor",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names the existing unapproved vendor call (riskscreen / fraud_check)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "LOG-001.R1 statement.expression_rule",
+        "PCI-001.R1 table.field_attribute_required",
+        "PCI-001.R2 db.write_from_input_forbidden",
+        "VND-001.R1 outbound.vendor_allowlist"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.016645609999999998,
+      "wall_ms": 57280,
+      "num_turns": 11,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G03",
+      "repeat": 2,
+      "points": 8,
+      "max": 9,
+      "pct": 89,
+      "earned": 8,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "vendor_allowlist",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "VND-001.R1"
+          ],
+          "desc": "outbound.vendor_allowlist with Stripe and Plaid hosts."
+        },
+        {
+          "id": "not_logged",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "LOG-001.R1"
+          ],
+          "desc": "statement.expression_rule on debug.log forbidding request data (LOG-001)."
+        },
+        {
+          "id": "not_stored_raw",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "PCI-010.R1"
+          ],
+          "desc": "Card fields may not exist (table.field_attribute_required forbidden: true), or writes may not take them from input."
+        },
+        {
+          "id": "not_returned",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "db.output_fields_forbidden keeps card fields out of what endpoints fetch."
+        },
+        {
+          "id": "no_compliance_claim",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim the policies pass PCI or make them compliant."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "sensitive_marked",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Card fields required to be marked sensitive (CONF-011)."
+        },
+        {
+          "id": "names_unapproved_vendor",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names the existing unapproved vendor call (riskscreen / fraud_check)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "LOG-001.R1 statement.expression_rule",
+        "PCI-010.R1 table.field_attribute_required",
+        "VND-001.R1 outbound.vendor_allowlist"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.020569030000000002,
+      "wall_ms": 76210,
+      "num_turns": 12,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G03",
+      "repeat": 3,
+      "points": 8,
+      "max": 9,
+      "pct": 89,
+      "earned": 8,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "vendor_allowlist",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "VND-001.R1"
+          ],
+          "desc": "outbound.vendor_allowlist with Stripe and Plaid hosts."
+        },
+        {
+          "id": "not_logged",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "LOG-001.R1"
+          ],
+          "desc": "statement.expression_rule on debug.log forbidding request data (LOG-001)."
+        },
+        {
+          "id": "not_stored_raw",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "PCI-001.R1"
+          ],
+          "desc": "Card fields may not exist (table.field_attribute_required forbidden: true), or writes may not take them from input."
+        },
+        {
+          "id": "not_returned",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "db.output_fields_forbidden keeps card fields out of what endpoints fetch."
+        },
+        {
+          "id": "no_compliance_claim",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim the policies pass PCI or make them compliant."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "sensitive_marked",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Card fields required to be marked sensitive (CONF-011)."
+        },
+        {
+          "id": "names_unapproved_vendor",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names the existing unapproved vendor call (riskscreen / fraud_check)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "LOG-001.R1 statement.expression_rule",
+        "LOG-001.R2 statement.expression_rule",
+        "PCI-001.R1 table.field_attribute_required",
+        "VND-001.R1 outbound.vendor_allowlist"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.02235751,
+      "wall_ms": 78922,
+      "num_turns": 16,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G04",
+      "repeat": 1,
+      "points": 7,
+      "max": 11,
+      "pct": 64,
+      "earned": 7,
+      "bonus_points": 2,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "tables_tagged",
+          "max": 2,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "The health tables are required to carry a tag (table.tag_required or object.tag_required on tables)."
+        },
+        {
+          "id": "health_tables_need_login",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "HIPAA-010.R1"
+          ],
+          "desc": "Objects reaching the health tables require auth (tagged_table_access on the tag, or scoped by tables)."
+        },
+        {
+          "id": "sensitive_fields",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "HIPAA-020.R1"
+          ],
+          "desc": "ssn/dob-style fields required to be marked sensitive."
+        },
+        {
+          "id": "not_in_responses",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "HIPAA-030.R1"
+          ],
+          "desc": "db.output_fields_forbidden (DATA-010)."
+        },
+        {
+          "id": "not_in_logs",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "HIPAA-050.R1"
+          ],
+          "desc": "debug.log does not reference request data (LOG-001)."
+        },
+        {
+          "id": "views_hide",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "table.view_hide_required (CONF-013)."
+        },
+        {
+          "id": "states_prerequisites",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Reply says the tables must be tagged / fields marked before the rules judge anything."
+        },
+        {
+          "id": "no_compliance_claim",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim HIPAA compliance or safety."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "audit",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "RET-001.R2"
+          ],
+          "desc": "Access to health tables is audited (tagged_table_access with function, or RET-001)."
+        },
+        {
+          "id": "names_public_appointments",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names the existing public appointments endpoint."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 6,
+      "parse_ok": 6,
+      "parse_errors": [],
+      "rules": [
+        "HIPAA-010.R1 object.auth_required",
+        "HIPAA-020.R1 table.field_attribute_required",
+        "HIPAA-030.R1 db.output_fields_forbidden",
+        "HIPAA-040.R1 object.statement_required",
+        "HIPAA-050.R1 statement.expression_rule",
+        "RET-001.R1 workspace.object_required",
+        "RET-001.R2 table.write_location_restricted"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.02774376,
+      "wall_ms": 113243,
+      "num_turns": 19,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G04",
+      "repeat": 2,
+      "points": 10,
+      "max": 11,
+      "pct": 91,
+      "earned": 10,
+      "bonus_points": 2,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "tables_tagged",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONF-012.R1"
+          ],
+          "desc": "The health tables are required to carry a tag (table.tag_required or object.tag_required on tables)."
+        },
+        {
+          "id": "health_tables_need_login",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Objects reaching the health tables require auth (tagged_table_access on the tag, or scoped by tables)."
+        },
+        {
+          "id": "sensitive_fields",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONF-011.R1"
+          ],
+          "desc": "ssn/dob-style fields required to be marked sensitive."
+        },
+        {
+          "id": "not_in_responses",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "DATA-010.R1"
+          ],
+          "desc": "db.output_fields_forbidden (DATA-010)."
+        },
+        {
+          "id": "not_in_logs",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "LOG-001.R1"
+          ],
+          "desc": "debug.log does not reference request data (LOG-001)."
+        },
+        {
+          "id": "views_hide",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "table.view_hide_required (CONF-013)."
+        },
+        {
+          "id": "states_prerequisites",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the tables must be tagged / fields marked before the rules judge anything."
+        },
+        {
+          "id": "no_compliance_claim",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim HIPAA compliance or safety."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "audit",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "RET-001.R2"
+          ],
+          "desc": "Access to health tables is audited (tagged_table_access with function, or RET-001)."
+        },
+        {
+          "id": "names_public_appointments",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names the existing public appointments endpoint."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 12,
+      "parse_ok": 12,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-010.R1 object.auth_required",
+        "AUTH-020.R1 db.where_constraint_required",
+        "AUTH-020.R2 db.write_from_input_forbidden",
+        "AUTH-030.R1 db.write_from_input_forbidden",
+        "CONF-010.R1 object.tagged_table_access",
+        "CONF-011.R1 table.field_attribute_required",
+        "CONF-012.R1 table.tag_required",
+        "DATA-010.R1 db.output_fields_forbidden",
+        "LOG-001.R1 statement.expression_rule",
+        "RET-001.R1 workspace.object_required",
+        "RET-001.R2 table.write_location_restricted",
+        "SEC-011.R1 statement.param_forbidden",
+        "SEC-012.R1 literal.credential_shape",
+        "SEC-014.R1 statement.param_bound",
+        "SEC-014.R2 statement.param_bound"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [
+        "CONF-010.R1: table_tags \"phi\" is on no table in this workspace, so no access to it is judged."
+      ],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.037999969999999994,
+      "wall_ms": 170797,
+      "num_turns": 28,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G04",
+      "repeat": 3,
+      "points": 11,
+      "max": 11,
+      "pct": 100,
+      "earned": 11,
+      "bonus_points": 2,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "tables_tagged",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONF-012.R1"
+          ],
+          "desc": "The health tables are required to carry a tag (table.tag_required or object.tag_required on tables)."
+        },
+        {
+          "id": "health_tables_need_login",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Objects reaching the health tables require auth (tagged_table_access on the tag, or scoped by tables)."
+        },
+        {
+          "id": "sensitive_fields",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONF-011.R1"
+          ],
+          "desc": "ssn/dob-style fields required to be marked sensitive."
+        },
+        {
+          "id": "not_in_responses",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "DATA-010.R1"
+          ],
+          "desc": "db.output_fields_forbidden (DATA-010)."
+        },
+        {
+          "id": "not_in_logs",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "LOG-001.R1"
+          ],
+          "desc": "debug.log does not reference request data (LOG-001)."
+        },
+        {
+          "id": "views_hide",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONF-013.R1"
+          ],
+          "desc": "table.view_hide_required (CONF-013)."
+        },
+        {
+          "id": "states_prerequisites",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the tables must be tagged / fields marked before the rules judge anything."
+        },
+        {
+          "id": "no_compliance_claim",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim HIPAA compliance or safety."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "audit",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "RET-001.R2"
+          ],
+          "desc": "Access to health tables is audited (tagged_table_access with function, or RET-001)."
+        },
+        {
+          "id": "names_public_appointments",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names the existing public appointments endpoint."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 10,
+      "parse_ok": 10,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-010.R1 object.auth_required",
+        "CONF-010.R1 object.tagged_table_access",
+        "CONF-011.R1 table.field_attribute_required",
+        "CONF-012.R1 table.tag_required",
+        "CONF-013.R1 table.view_hide_required",
+        "DATA-010.R1 db.output_fields_forbidden",
+        "LOG-001.R1 statement.expression_rule",
+        "RET-001.R1 workspace.object_required",
+        "RET-001.R2 table.write_location_restricted",
+        "SEC-012.R1 literal.credential_shape",
+        "SEC-014.R1 statement.param_bound",
+        "SEC-014.R2 statement.param_bound"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [
+        "CONF-010.R1: table_tags \"confidential\" is on no table in this workspace, so no access to it is judged."
+      ],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.03133797,
+      "wall_ms": 128515,
+      "num_turns": 28,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G05",
+      "repeat": 1,
+      "points": 8,
+      "max": 8,
+      "pct": 100,
+      "earned": 8,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "role_check_first",
+          "max": 3,
+          "points": 3,
+          "via": "real function first, scoped to the admin group",
+          "evidence": [
+            "AUTH-002.R1"
+          ],
+          "desc": "object.statement_required placement first calling check_admin_role (or stack.statement_order), scoped to the admin API group or a tag."
+        },
+        {
+          "id": "tenants_filtered_by_org",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "TEN-010.R1"
+          ],
+          "desc": "db.where_constraint_required field org_id on the tenants table."
+        },
+        {
+          "id": "path_scope_limit",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the /admin path itself cannot be scoped, so the rule uses the API group or a tag."
+        },
+        {
+          "id": "role_values_unverified",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the rule checks the call, not which roles the function allows."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_admin_stats",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply notices admin/stats lives outside the admin group."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-002.R1 object.statement_required",
+        "TEN-010.R1 db.where_constraint_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.020128390000000003,
+      "wall_ms": 65035,
+      "num_turns": 15,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G05",
+      "repeat": 2,
+      "points": 8,
+      "max": 8,
+      "pct": 100,
+      "earned": 8,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "role_check_first",
+          "max": 3,
+          "points": 3,
+          "via": "real function first, scoped to the admin group",
+          "evidence": [
+            "AUTH-002.R1"
+          ],
+          "desc": "object.statement_required placement first calling check_admin_role (or stack.statement_order), scoped to the admin API group or a tag."
+        },
+        {
+          "id": "tenants_filtered_by_org",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "TNT-010.R1"
+          ],
+          "desc": "db.where_constraint_required field org_id on the tenants table."
+        },
+        {
+          "id": "path_scope_limit",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the /admin path itself cannot be scoped, so the rule uses the API group or a tag."
+        },
+        {
+          "id": "role_values_unverified",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the rule checks the call, not which roles the function allows."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_admin_stats",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply notices admin/stats lives outside the admin group."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-002.R1 object.statement_required",
+        "TNT-010.R1 db.where_constraint_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.0172414,
+      "wall_ms": 50052,
+      "num_turns": 12,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G05",
+      "repeat": 3,
+      "points": 8,
+      "max": 8,
+      "pct": 100,
+      "earned": 8,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "role_check_first",
+          "max": 3,
+          "points": 3,
+          "via": "real function first, scoped to the admin group",
+          "evidence": [
+            "AUTH-002.R1"
+          ],
+          "desc": "object.statement_required placement first calling check_admin_role (or stack.statement_order), scoped to the admin API group or a tag."
+        },
+        {
+          "id": "tenants_filtered_by_org",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "TENANT-010.R1"
+          ],
+          "desc": "db.where_constraint_required field org_id on the tenants table."
+        },
+        {
+          "id": "path_scope_limit",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the /admin path itself cannot be scoped, so the rule uses the API group or a tag."
+        },
+        {
+          "id": "role_values_unverified",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the rule checks the call, not which roles the function allows."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_admin_stats",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply notices admin/stats lives outside the admin group."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-002.R1 object.statement_required",
+        "TENANT-010.R1 db.where_constraint_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.02277988,
+      "wall_ms": 79427,
+      "num_turns": 22,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G06",
+      "repeat": 1,
+      "points": 7,
+      "max": 8,
+      "pct": 88,
+      "earned": 7,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "external_calls_try_catch",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "LOG-010.R1"
+          ],
+          "desc": "statement.containment api.request inside try_catch (LOG-010)."
+        },
+        {
+          "id": "tests",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CHG-001.R1"
+          ],
+          "desc": "object.test_coverage (CHG-001)."
+        },
+        {
+          "id": "function_size",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_statements covering functions."
+        },
+        {
+          "id": "nesting",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_nesting (CONV-041)."
+        },
+        {
+          "id": "leftover_code",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Disabled statements / unused variables / unused inputs (CONV-050)."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "timeouts",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "External calls time out (SEC-013)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "CHG-001.R1 object.test_coverage",
+        "CHG-001.R2 test.assertion_required",
+        "CONV-040.R1 stack.size_limit",
+        "LOG-010.R1 statement.containment"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01768151,
+      "wall_ms": 55096,
+      "num_turns": 15,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G06",
+      "repeat": 2,
+      "points": 7,
+      "max": 8,
+      "pct": 88,
+      "earned": 7,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "external_calls_try_catch",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "LOG-010.R1"
+          ],
+          "desc": "statement.containment api.request inside try_catch (LOG-010)."
+        },
+        {
+          "id": "tests",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CHG-001.R1"
+          ],
+          "desc": "object.test_coverage (CHG-001)."
+        },
+        {
+          "id": "function_size",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_statements covering functions."
+        },
+        {
+          "id": "nesting",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONV-040.R1"
+          ],
+          "desc": "stack.size_limit max_nesting (CONV-041)."
+        },
+        {
+          "id": "leftover_code",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Disabled statements / unused variables / unused inputs (CONV-050)."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "timeouts",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "External calls time out (SEC-013)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "CHG-001.R1 object.test_coverage",
+        "CHG-001.R2 test.assertion_required",
+        "CONV-040.R1 stack.size_limit",
+        "LOG-010.R1 statement.containment"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01541877,
+      "wall_ms": 50945,
+      "num_turns": 11,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G06",
+      "repeat": 3,
+      "points": 7,
+      "max": 8,
+      "pct": 88,
+      "earned": 7,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "external_calls_try_catch",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "LOG-010.R1"
+          ],
+          "desc": "statement.containment api.request inside try_catch (LOG-010)."
+        },
+        {
+          "id": "tests",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CHG-001.R1",
+            "REVIEW-001.R2"
+          ],
+          "desc": "object.test_coverage (CHG-001)."
+        },
+        {
+          "id": "function_size",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "REVIEW-001.R1"
+          ],
+          "desc": "stack.size_limit max_statements covering functions."
+        },
+        {
+          "id": "nesting",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "REVIEW-001.R1"
+          ],
+          "desc": "stack.size_limit max_nesting (CONV-041)."
+        },
+        {
+          "id": "leftover_code",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Disabled statements / unused variables / unused inputs (CONV-050)."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "timeouts",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "External calls time out (SEC-013)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "CHG-001.R1 object.test_coverage",
+        "CHG-001.R2 test.assertion_required",
+        "LOG-010.R1 statement.containment",
+        "REVIEW-001.R1 stack.size_limit",
+        "REVIEW-001.R2 object.test_coverage"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.019098860000000002,
+      "wall_ms": 65458,
+      "num_turns": 20,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G07",
+      "repeat": 1,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "some_relevant_policy",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "AUTH-010.R1",
+            "CHG-001.R1",
+            "CHG-001.R2",
+            "RET-001.R1",
+            "RET-001.R2"
+          ],
+          "desc": "At least one policy relevant to change control (tests, audit log, auth, gating)."
+        },
+        {
+          "id": "access_reviews_not_checkable",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says access reviews are outside what a policy checks."
+        },
+        {
+          "id": "no_proof_claim",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim the policies prove SOC 2 controls."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "points_to_run_history",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply points at evaluation runs / version history as the evidence a policy does produce."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-010.R1 object.auth_required",
+        "CHG-001.R1 object.test_coverage",
+        "CHG-001.R2 test.assertion_required",
+        "RET-001.R1 workspace.object_required",
+        "RET-001.R2 table.write_location_restricted"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.015793240000000004,
+      "wall_ms": 54981,
+      "num_turns": 15,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G07",
+      "repeat": 2,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "some_relevant_policy",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "AUTH-010.R1",
+            "CHG-001.R1",
+            "CHG-001.R2",
+            "RET-001.R1",
+            "RET-001.R2"
+          ],
+          "desc": "At least one policy relevant to change control (tests, audit log, auth, gating)."
+        },
+        {
+          "id": "access_reviews_not_checkable",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says access reviews are outside what a policy checks."
+        },
+        {
+          "id": "no_proof_claim",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim the policies prove SOC 2 controls."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "points_to_run_history",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply points at evaluation runs / version history as the evidence a policy does produce."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 5,
+      "parse_ok": 5,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-002.R1 object.statement_required",
+        "AUTH-010.R1 object.auth_required",
+        "AUTH-030.R1 db.write_from_input_forbidden",
+        "CHG-001.R1 object.test_coverage",
+        "CHG-001.R2 test.assertion_required",
+        "RET-001.R1 workspace.object_required",
+        "RET-001.R2 table.write_location_restricted"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.020820300000000003,
+      "wall_ms": 71558,
+      "num_turns": 19,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G07",
+      "repeat": 3,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "some_relevant_policy",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CHG-001.R1",
+            "CHG-001.R2",
+            "RET-001.R1",
+            "RET-001.R2"
+          ],
+          "desc": "At least one policy relevant to change control (tests, audit log, auth, gating)."
+        },
+        {
+          "id": "access_reviews_not_checkable",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says access reviews are outside what a policy checks."
+        },
+        {
+          "id": "no_proof_claim",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim the policies prove SOC 2 controls."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "points_to_run_history",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply points at evaluation runs / version history as the evidence a policy does produce."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 3,
+      "parse_ok": 3,
+      "parse_errors": [],
+      "rules": [
+        "AUTH-002.R1 object.statement_required",
+        "CHG-001.R1 object.test_coverage",
+        "CHG-001.R2 test.assertion_required",
+        "RET-001.R1 workspace.object_required",
+        "RET-001.R2 table.write_location_restricted"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.01501064,
+      "wall_ms": 50275,
+      "num_turns": 12,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G08",
+      "repeat": 1,
+      "points": 5,
+      "max": 5,
+      "pct": 100,
+      "earned": 5,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "credential_shape",
+          "max": 4,
+          "points": 4,
+          "via": "matched",
+          "evidence": [
+            "SEC-012.R1"
+          ],
+          "desc": "literal.credential_shape (SEC-012)."
+        },
+        {
+          "id": "states_limit",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says only recognizable credential shapes are caught."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_existing_secret",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Reply names the existing credential in acme_notify_sms."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "SEC-012.R1 literal.credential_shape"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.012402570000000002,
+      "wall_ms": 67912,
+      "num_turns": 17,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G08",
+      "repeat": 2,
+      "points": 5,
+      "max": 5,
+      "pct": 100,
+      "earned": 5,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "credential_shape",
+          "max": 4,
+          "points": 4,
+          "via": "matched",
+          "evidence": [
+            "SEC-012.R1"
+          ],
+          "desc": "literal.credential_shape (SEC-012)."
+        },
+        {
+          "id": "states_limit",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says only recognizable credential shapes are caught."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_existing_secret",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Reply names the existing credential in acme_notify_sms."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "SEC-012.R1 literal.credential_shape"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.016735279999999998,
+      "wall_ms": 47893,
+      "num_turns": 15,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G08",
+      "repeat": 3,
+      "points": 5,
+      "max": 5,
+      "pct": 100,
+      "earned": 5,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "credential_shape",
+          "max": 4,
+          "points": 4,
+          "via": "matched",
+          "evidence": [
+            "SEC-012.R1"
+          ],
+          "desc": "literal.credential_shape (SEC-012)."
+        },
+        {
+          "id": "states_limit",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says only recognizable credential shapes are caught."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_existing_secret",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Reply names the existing credential in acme_notify_sms."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "SEC-012.R1 literal.credential_shape"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01271322,
+      "wall_ms": 39303,
+      "num_turns": 12,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G09",
+      "repeat": 1,
+      "points": 4,
+      "max": 9,
+      "pct": 44,
+      "earned": 4,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "erasure_coverage",
+          "max": 3,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Personal-data tables are reached by a delete in the deletion path: table.coverage_required referenced_by a function/endpoint with delete statements, over tables that exist (or tags put in place)."
+        },
+        {
+          "id": "retention_cleanup",
+          "max": 3,
+          "points": 1,
+          "via": "a delete-coverage rule that also accepts endpoints/functions, so account deletion satisfies it without a cleanup task",
+          "evidence": [
+            "RET-002.R1"
+          ],
+          "desc": "table.coverage_required referenced_by a task running delete statements (RET-002), over tables that exist (or tags put in place)."
+        },
+        {
+          "id": "age_not_checked",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the 2-year age itself is not checked (only that a cleanup exists)."
+        },
+        {
+          "id": "no_compliance_claim",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim GDPR compliance."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "real_tables",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Coverage names real personal-data tables from the workspace."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "RET-002.R1 table.coverage_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [
+        "RET-002.R1: tags \"retained\" is on no table on this branch, so it selects nothing."
+      ],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.015359960000000002,
+      "wall_ms": 39817,
+      "num_turns": 13,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G09",
+      "repeat": 2,
+      "points": 4,
+      "max": 9,
+      "pct": 44,
+      "earned": 4,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "erasure_coverage",
+          "max": 3,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Personal-data tables are reached by a delete in the deletion path: table.coverage_required referenced_by a function/endpoint with delete statements, over tables that exist (or tags put in place)."
+        },
+        {
+          "id": "retention_cleanup",
+          "max": 3,
+          "points": 1,
+          "via": "a delete-coverage rule that also accepts endpoints/functions, so account deletion satisfies it without a cleanup task",
+          "evidence": [
+            "RET-002.R1"
+          ],
+          "desc": "table.coverage_required referenced_by a task running delete statements (RET-002), over tables that exist (or tags put in place)."
+        },
+        {
+          "id": "age_not_checked",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the 2-year age itself is not checked (only that a cleanup exists)."
+        },
+        {
+          "id": "no_compliance_claim",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim GDPR compliance."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "real_tables",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Coverage names real personal-data tables from the workspace."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "RET-002.R1 table.coverage_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [
+        "RET-002.R1: tags \"retained\" is on no table on this branch, so it selects nothing."
+      ],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.01649457,
+      "wall_ms": 56764,
+      "num_turns": 14,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G09",
+      "repeat": 3,
+      "points": 4,
+      "max": 9,
+      "pct": 44,
+      "earned": 4,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "erasure_coverage",
+          "max": 3,
+          "points": 1,
+          "via": "the deletion function is required somewhere",
+          "evidence": [
+            "ERASURE-010.R1"
+          ],
+          "desc": "Personal-data tables are reached by a delete in the deletion path: table.coverage_required referenced_by a function/endpoint with delete statements, over tables that exist (or tags put in place)."
+        },
+        {
+          "id": "retention_cleanup",
+          "max": 3,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "table.coverage_required referenced_by a task running delete statements (RET-002), over tables that exist (or tags put in place)."
+        },
+        {
+          "id": "age_not_checked",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says the 2-year age itself is not checked (only that a cleanup exists)."
+        },
+        {
+          "id": "no_compliance_claim",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply does not claim GDPR compliance."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "real_tables",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Coverage names real personal-data tables from the workspace."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "ERASURE-010.R1 object.statement_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.02067451,
+      "wall_ms": 74170,
+      "num_turns": 16,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G10",
+      "repeat": 1,
+      "points": 7,
+      "max": 7,
+      "pct": 100,
+      "earned": 7,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "deletes_guarded",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "AGENT-010.R1"
+          ],
+          "desc": "Tool deletes need a human approval first: stack.statement_order with request_human_approval before db.del/db.bulk.delete, scoped to tools. Forbidding deletes in tools outright is stricter than the ask (it blocks approved deletes) and scores 2."
+        },
+        {
+          "id": "approval_before_email",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "AGENT-010.R1"
+          ],
+          "desc": "stack.statement_order: request_human_approval before util.send_email."
+        },
+        {
+          "id": "tool_allowlist_not_checkable",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says which tools an agent may call is not something a policy checks."
+        }
+      ],
+      "bonus": [],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "AGENT-010.R1 stack.statement_order",
+        "AGENT-020.R1 object.statement_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01989105,
+      "wall_ms": 70979,
+      "num_turns": 23,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G10",
+      "repeat": 2,
+      "points": 6,
+      "max": 7,
+      "pct": 86,
+      "earned": 6,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "deletes_guarded",
+          "max": 3,
+          "points": 2,
+          "via": "deletes in tools forbidden outright (stricter than asked)",
+          "evidence": [
+            "AGENT-001.R1"
+          ],
+          "desc": "Tool deletes need a human approval first: stack.statement_order with request_human_approval before db.del/db.bulk.delete, scoped to tools. Forbidding deletes in tools outright is stricter than the ask (it blocks approved deletes) and scores 2."
+        },
+        {
+          "id": "approval_before_email",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "AGENT-002.R1"
+          ],
+          "desc": "stack.statement_order: request_human_approval before util.send_email."
+        },
+        {
+          "id": "tool_allowlist_not_checkable",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says which tools an agent may call is not something a policy checks."
+        }
+      ],
+      "bonus": [],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "AGENT-001.R1 stack.statement_forbidden",
+        "AGENT-002.R1 stack.statement_order"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01836391,
+      "wall_ms": 51498,
+      "num_turns": 15,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G10",
+      "repeat": 3,
+      "points": 6,
+      "max": 7,
+      "pct": 86,
+      "earned": 6,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "deletes_guarded",
+          "max": 3,
+          "points": 2,
+          "via": "deletes in tools forbidden outright (stricter than asked)",
+          "evidence": [
+            "AGENT-010.R1"
+          ],
+          "desc": "Tool deletes need a human approval first: stack.statement_order with request_human_approval before db.del/db.bulk.delete, scoped to tools. Forbidding deletes in tools outright is stricter than the ask (it blocks approved deletes) and scores 2."
+        },
+        {
+          "id": "approval_before_email",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "AGENT-010.R2"
+          ],
+          "desc": "stack.statement_order: request_human_approval before util.send_email."
+        },
+        {
+          "id": "tool_allowlist_not_checkable",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says which tools an agent may call is not something a policy checks."
+        }
+      ],
+      "bonus": [],
+      "penalties": [],
+      "policy_files": 1,
+      "parse_ok": 1,
+      "parse_errors": [],
+      "rules": [
+        "AGENT-010.R1 stack.statement_forbidden",
+        "AGENT-010.R2 stack.statement_order"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.02055149,
+      "wall_ms": 55667,
+      "num_turns": 15,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G11",
+      "repeat": 1,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "timeout",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "SEC-013.R1",
+            "SEC-013.R2"
+          ],
+          "desc": "statement.param_bound / param_required on api.request timeout (SEC-013)."
+        },
+        {
+          "id": "error_handling",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "LOG-010.R1"
+          ],
+          "desc": "statement.containment api.request inside try_catch (LOG-010)."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_offender",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names an existing call that would be flagged (shipments/quote, acme_sync_shipping_rates, or the 60 s timeout in acme_get_tracking)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "LOG-010.R1 statement.containment",
+        "SEC-013.R1 statement.param_bound",
+        "SEC-013.R2 statement.param_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.018746980000000003,
+      "wall_ms": 65235,
+      "num_turns": 13,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G11",
+      "repeat": 2,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "timeout",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "SEC-013.R1",
+            "SEC-013.R2"
+          ],
+          "desc": "statement.param_bound / param_required on api.request timeout (SEC-013)."
+        },
+        {
+          "id": "error_handling",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "LOG-010.R1"
+          ],
+          "desc": "statement.containment api.request inside try_catch (LOG-010)."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_offender",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names an existing call that would be flagged (shipments/quote, acme_sync_shipping_rates, or the 60 s timeout in acme_get_tracking)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "LOG-010.R1 statement.containment",
+        "SEC-013.R1 statement.param_bound",
+        "SEC-013.R2 statement.param_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.018461950000000005,
+      "wall_ms": 61636,
+      "num_turns": 20,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G11",
+      "repeat": 3,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "timeout",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "SEC-013.R1",
+            "SEC-013.R2"
+          ],
+          "desc": "statement.param_bound / param_required on api.request timeout (SEC-013)."
+        },
+        {
+          "id": "error_handling",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "LOG-010.R1"
+          ],
+          "desc": "statement.containment api.request inside try_catch (LOG-010)."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "names_offender",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply names an existing call that would be flagged (shipments/quote, acme_sync_shipping_rates, or the 60 s timeout in acme_get_tracking)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "LOG-010.R1 statement.containment",
+        "SEC-013.R1 statement.param_bound",
+        "SEC-013.R2 statement.param_required"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "medium",
+      "cost_usd": 0.01955576,
+      "wall_ms": 63288,
+      "num_turns": 17,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G12",
+      "repeat": 1,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "no_policy",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [],
+          "desc": "No policy file written."
+        },
+        {
+          "id": "explains_why",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says a policy checks definitions and cannot see data movement or who gets into prod."
+        },
+        {
+          "id": "points_elsewhere",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply points to where it belongs (environment separation, access control, on-call process)."
+        }
+      ],
+      "bonus": [],
+      "penalties": [],
+      "policy_files": 0,
+      "parse_ok": 0,
+      "parse_errors": [],
+      "rules": [],
+      "enforcement": [],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": true,
+      "must_refuse": true,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.01619467,
+      "wall_ms": 41300,
+      "num_turns": 12,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G12",
+      "repeat": 2,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "no_policy",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [],
+          "desc": "No policy file written."
+        },
+        {
+          "id": "explains_why",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says a policy checks definitions and cannot see data movement or who gets into prod."
+        },
+        {
+          "id": "points_elsewhere",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply points to where it belongs (environment separation, access control, on-call process)."
+        }
+      ],
+      "bonus": [],
+      "penalties": [],
+      "policy_files": 0,
+      "parse_ok": 0,
+      "parse_errors": [],
+      "rules": [],
+      "enforcement": [],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": true,
+      "must_refuse": true,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.01503471,
+      "wall_ms": 39002,
+      "num_turns": 11,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G12",
+      "repeat": 3,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "no_policy",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [],
+          "desc": "No policy file written."
+        },
+        {
+          "id": "explains_why",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says a policy checks definitions and cannot see data movement or who gets into prod."
+        },
+        {
+          "id": "points_elsewhere",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply points to where it belongs (environment separation, access control, on-call process)."
+        }
+      ],
+      "bonus": [],
+      "penalties": [],
+      "policy_files": 0,
+      "parse_ok": 0,
+      "parse_errors": [],
+      "rules": [],
+      "enforcement": [],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": true,
+      "must_refuse": true,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.011533140000000002,
+      "wall_ms": 30189,
+      "num_turns": 9,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G13",
+      "repeat": 1,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "no_policy",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [],
+          "desc": "No policy file written."
+        },
+        {
+          "id": "explains_why",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says training status is not something a policy can see."
+        },
+        {
+          "id": "points_elsewhere",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply points to where it belongs (role/permission grants, HR/LMS, onboarding)."
+        }
+      ],
+      "bonus": [],
+      "penalties": [],
+      "policy_files": 0,
+      "parse_ok": 0,
+      "parse_errors": [],
+      "rules": [],
+      "enforcement": [],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": true,
+      "must_refuse": true,
+      "has_reply": true,
+      "confidence": "high",
+      "cost_usd": 0.008996340000000002,
+      "wall_ms": 21360,
+      "num_turns": 7,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G13",
+      "repeat": 2,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "no_policy",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [],
+          "desc": "No policy file written."
+        },
+        {
+          "id": "explains_why",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says training status is not something a policy can see."
+        },
+        {
+          "id": "points_elsewhere",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply points to where it belongs (role/permission grants, HR/LMS, onboarding)."
+        }
+      ],
+      "bonus": [],
+      "penalties": [],
+      "policy_files": 0,
+      "parse_ok": 0,
+      "parse_errors": [],
+      "rules": [],
+      "enforcement": [],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": true,
+      "must_refuse": true,
+      "has_reply": true,
+      "confidence": "high",
+      "cost_usd": 0.012018770000000002,
+      "wall_ms": 28319,
+      "num_turns": 11,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G13",
+      "repeat": 3,
+      "points": 6,
+      "max": 6,
+      "pct": 100,
+      "earned": 6,
+      "bonus_points": 0,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "no_policy",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [],
+          "desc": "No policy file written."
+        },
+        {
+          "id": "explains_why",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says training status is not something a policy can see."
+        },
+        {
+          "id": "points_elsewhere",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply points to where it belongs (role/permission grants, HR/LMS, onboarding)."
+        }
+      ],
+      "bonus": [],
+      "penalties": [],
+      "policy_files": 0,
+      "parse_ok": 0,
+      "parse_errors": [],
+      "rules": [],
+      "enforcement": [],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": true,
+      "must_refuse": true,
+      "has_reply": true,
+      "confidence": "high",
+      "cost_usd": 0.00978085,
+      "wall_ms": 24577,
+      "num_turns": 8,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G14",
+      "repeat": 1,
+      "points": 5,
+      "max": 8,
+      "pct": 63,
+      "earned": 5,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "ai_not_in_loops",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "COST-010.R1"
+          ],
+          "desc": "statement.containment ai.agent.run must_not_be_inside foreach/for/while."
+        },
+        {
+          "id": "audit_trail",
+          "max": 2,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "Objects reaching customer-email tables call record_audit_event (tagged_table_access with function), or the audit log is protected (RET-001). The audit_changes recipe's form also counts: object.statement_required with function record_audit_event when a write statement reaches the email tables."
+        },
+        {
+          "id": "email_tables_tagged",
+          "max": 1,
+          "points": 0,
+          "via": null,
+          "evidence": [],
+          "desc": "table.tag_required on email fields."
+        },
+        {
+          "id": "caps_retries_not_checkable",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says spend caps / task retries are not checkable by a policy."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "while_loop_guard",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "COST-010.R2"
+          ],
+          "desc": "A rule aimed at the unbounded retry loop (while / api.request in loops)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "AUDIT-010.R1 object.statement_required",
+        "COST-010.R1 statement.containment",
+        "COST-010.R2 stack.statement_forbidden"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.027557750000000002,
+      "wall_ms": 84377,
+      "num_turns": 15,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G14",
+      "repeat": 2,
+      "points": 8,
+      "max": 8,
+      "pct": 100,
+      "earned": 8,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "ai_not_in_loops",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "COST-010.R1"
+          ],
+          "desc": "statement.containment ai.agent.run must_not_be_inside foreach/for/while."
+        },
+        {
+          "id": "audit_trail",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CUST-010.R2"
+          ],
+          "desc": "Objects reaching customer-email tables call record_audit_event (tagged_table_access with function), or the audit log is protected (RET-001). The audit_changes recipe's form also counts: object.statement_required with function record_audit_event when a write statement reaches the email tables."
+        },
+        {
+          "id": "email_tables_tagged",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CUST-010.R1"
+          ],
+          "desc": "table.tag_required on email fields."
+        },
+        {
+          "id": "caps_retries_not_checkable",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says spend caps / task retries are not checkable by a policy."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "while_loop_guard",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "COST-010.R2"
+          ],
+          "desc": "A rule aimed at the unbounded retry loop (while / api.request in loops)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 2,
+      "parse_ok": 2,
+      "parse_errors": [],
+      "rules": [
+        "COST-010.R1 statement.containment",
+        "COST-010.R2 stack.statement_forbidden",
+        "CUST-010.R1 table.tag_required",
+        "CUST-010.R2 object.tagged_table_access"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [
+        "CUST-010.R2: table_tags \"pii\" is on no table in this workspace, so no access to it is judged."
+      ],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.022816540000000003,
+      "wall_ms": 78245,
+      "num_turns": 16,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    },
+    {
+      "goal_id": "G14",
+      "repeat": 3,
+      "points": 8,
+      "max": 8,
+      "pct": 100,
+      "earned": 8,
+      "bonus_points": 1,
+      "penalty": 0,
+      "required": [
+        {
+          "id": "ai_not_in_loops",
+          "max": 3,
+          "points": 3,
+          "via": "matched",
+          "evidence": [
+            "COST-010.R1"
+          ],
+          "desc": "statement.containment ai.agent.run must_not_be_inside foreach/for/while."
+        },
+        {
+          "id": "audit_trail",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [
+            "CONF-010.R1"
+          ],
+          "desc": "Objects reaching customer-email tables call record_audit_event (tagged_table_access with function), or the audit log is protected (RET-001). The audit_changes recipe's form also counts: object.statement_required with function record_audit_event when a write statement reaches the email tables."
+        },
+        {
+          "id": "email_tables_tagged",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "CONF-012.R1"
+          ],
+          "desc": "table.tag_required on email fields."
+        },
+        {
+          "id": "caps_retries_not_checkable",
+          "max": 2,
+          "points": 2,
+          "via": "matched",
+          "evidence": [],
+          "desc": "Reply says spend caps / task retries are not checkable by a policy."
+        }
+      ],
+      "bonus": [
+        {
+          "id": "while_loop_guard",
+          "max": 1,
+          "points": 1,
+          "via": "matched",
+          "evidence": [
+            "COST-020.R1"
+          ],
+          "desc": "A rule aimed at the unbounded retry loop (while / api.request in loops)."
+        }
+      ],
+      "penalties": [],
+      "policy_files": 4,
+      "parse_ok": 4,
+      "parse_errors": [],
+      "rules": [
+        "CONF-010.R1 object.tagged_table_access",
+        "CONF-012.R1 table.tag_required",
+        "COST-010.R1 statement.containment",
+        "COST-020.R1 statement.containment"
+      ],
+      "enforcement": [
+        "advisory"
+      ],
+      "unknown_name_warnings": [],
+      "untagged_warnings": [
+        "CONF-010.R1: table_tags \"pii\" is on no table in this workspace, so no access to it is judged."
+      ],
+      "other_warnings": [],
+      "refused": false,
+      "must_refuse": false,
+      "has_reply": true,
+      "confidence": "low",
+      "cost_usd": 0.024137159999999998,
+      "wall_ms": 76806,
+      "num_turns": 16,
+      "timed_out": false,
+      "pulled_workspace": true,
+      "forbidden_commands": [],
+      "reads_outside_workdir": []
+    }
+  ]
+}

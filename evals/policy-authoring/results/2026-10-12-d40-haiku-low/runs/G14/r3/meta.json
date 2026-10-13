@@ -1,0 +1,43 @@
+{
+  "goal_id": "G14",
+  "repeat": 3,
+  "label": "2026-10-12-d40-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "live",
+  "started": "2026-10-13T03:45:41.343Z",
+  "wall_ms": 76096,
+  "duration_ms": 75047,
+  "cost_usd": 0.024996160000000007,
+  "num_turns": 17,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "AUDIT-001.xs",
+    "COST-001.xs",
+    "RET-001.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 1,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "cat .claude/skills/xano-policies/SKILL.md; echo ---; cat kit/policy-templates.md; echo ---; ls -R kit",
+    "cat kit/policy-templates.md; echo ---; ls -R kit; echo ---; head -c 3000 kit/catalogue.json",
+    "xano workspace pull -d ./workspace 2>&1 | tail -20; echo ---; find ./workspace -type f | head -200",
+    "cd ./workspace && grep -rn -i \"email\" table/ | head -40; echo ---TASKS; cat task/retry_failed_webhooks.xs task/nightly_ticket_summaries.xs; echo ---AUDIT; cat table/audit_log.xs function/record_audit_event.xs; echo ---AGENTS; cat ai/agent/*.xs; echo ---GREP AI; grep -rln \"ai.agent.run\\|ai.external\\|…",
+    "cd ./workspace && grep -rn \"tags\" table/ | head -30; echo ---; grep -rn \"email\" -i table/patients.xs table/support_tickets.xs | head; echo ---; grep -rln \"db.edit\\|db.patch\\|db.del\" . | head -40; echo ---; cat workspace/policy_authoring_eval.xs | head -40; echo ---; ls ../out; cd .. && xano policy l…",
+    "B=/private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-d40-haiku-low/G14-r3; cd $B/workspace && grep -rn \"tags\" table/ | head -30; echo ---; grep -rn -i \"email\" table/patients.xs table/support_tickets.xs table/customers.xs table/users.xs table/newsletter_sub…",
+    "B=/private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-d40-haiku-low/G14-r3; cd $B && xano policy catalogue -o json > /dev/null 2>&1; echo cat=$?; xano policy --help 2>&1 | head -30",
+    "B=/private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-d40-haiku-low/G14-r3; cd $B && for f in COST-001 RET-001 AUDIT-001; do echo \"== $f\"; xano policy parse out/$f.xs 2>&1; echo \"exit=$?\"; done"
+  ],
+  "final_message": "Wrote `COST-001.xs`, `RET-001.xs`, `AUDIT-001.xs`, `reply.md` and `notes.json` to `out/`; all three policies parse cleanly (confidence: medium, since the runaway-retry rule is only a proxy and spend caps aren't checkable)."
+}

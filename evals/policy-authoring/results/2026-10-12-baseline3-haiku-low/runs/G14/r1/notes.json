@@ -1,0 +1,43 @@
+{
+  "goal_id": "G14",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): not the ask; no auth question was made",
+    "audit_log_protected (RET-001): fits audit-trail integrity, not the ask (tracking changes to email tables); left out to keep scope to what was asked",
+    "retained_data_cleaned_up (RET-002): about cleanup tasks, not cost or retries; did not fit",
+    "tables_classified (CONV-023) / confidential_tables_tagged (CONF-012): tagging the email tables would be a tag decision for the owner; did not fit as a policy step",
+    "no_destructive_sql, requests_have_timeout, external_calls_handle_errors: adjacent reliability templates, none covers AI-in-loop or retry bounds; did not fit",
+    "triggers_write_elsewhere, writes_check_first: did not fit"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "COST-010", "check": "statement.containment", "params": {"statements": ["ai.agent.run"], "must_not_be_inside": ["foreach", "while"]}, "covers": "AI call inside a loop (the $900 incident)"},
+    {"policy_key": "COST-010", "check": "stack.statement_forbidden", "params": {"statements": ["while"], "object_kinds": ["task"]}, "covers": "background task retrying forever: proxy only, flags every while loop in a task, not only unbounded retries"},
+    {"policy_key": "AUDIT-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "object_kinds": ["query", "task", "tool", "message"], "when": {"fields": ["email", "requester_email"]}}, "covers": "every write of an email field must audit who changed what (who-changed-what part of the ask)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "AI cost ceiling / $900 spend cap", "why": "no check exists"},
+    {"part": "background task retries must terminate", "why": "no check exists; only a while-loop proxy, which is over-broad"},
+    {"part": "audit: actor and changed content are correct", "why": "couldn't tell how; checks only that the audit call is made"},
+    {"part": "audit: writes inside functions the endpoint calls", "why": "other: object.statement_required does not inspect function objects, and when only matches a statement in the object's own stack or called functions per the description, which I did not confirm"},
+    {"part": "audit: writes that change other customer fields (not email) and deletes", "why": "other: when.fields keys on assigned email fields only; a single when.statement cannot match several write statements"},
+    {"part": "tag the email tables as classified/PII", "why": "needs tag decision by owner; tags decide which policies apply, so not written into a policy"},
+    {"part": "AI calls inside functions called from a loop", "why": "other: statement.containment judges each stack separately; a call in a called function inside a loop is only partly followed"}
+  ],
+  "assumptions": [
+    "'customer emails' means the email and requester_email fields on customers, users, newsletter_subscribers, patients and support_tickets; users and patients were included because they use the same field name",
+    "record_audit_event is the audit function the customer means by 'who changed what', because it is the only writer of audit_log",
+    "when.fields matches statements that assign the named field (per the catalogue text 'assigned field names')",
+    "ai.agent.run and while/foreach are exact statement and block names (the parser did not reject them)",
+    "a while loop in a task is an acceptable proxy for an unbounded retry, with the owner exempting legitimate loops"
+  ],
+  "workspace_names_used": [
+    "customers", "users", "newsletter_subscribers", "patients", "support_tickets", "audit_log",
+    "record_audit_event", "nightly_ticket_summaries", "retry_failed_webhooks", "Ticket Summarizer",
+    "customers_POST", "customer_id_PATCH", "newsletter/subscribe_POST", "delete_user_account",
+    "email", "requester_email"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The AI-in-loop rule directly targets the incident and is likely to flag nightly_ticket_summaries. The retry rule is a coarse while-loop proxy that flags every task while loop, not only unbounded retries. The audit rule checks that a call exists, not what it records, and skips writes inside functions and other field changes. The spend cap has no check at all. Nothing was evaluated: evaluation and push are outside this session, so the predicted matches are unconfirmed."
+}

@@ -1,0 +1,48 @@
+{
+  "goal_id": "G02",
+  "templates_considered": [
+    "functions_snake_case (CONV-010): fits the snake_case part of the function rule; does not cover the client prefix, so it was not used as-is",
+    "endpoint_paths_versioned (CONV-012): did not fit; it requires kebab-case and a version segment, the opposite of the requested lowercase snake_case",
+    "fields_snake_case (CONV-011): not asked for",
+    "function_arguments_snake_case (CONV-013): not asked for",
+    "agreed_tag_vocabulary / tags_kebab_case (CONV-020/021): not asked for"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "suffixes": ["s"]}, "covers": "tables are plural"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are lowercase snake_case"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "case_style": "snake_case", "prefixes": ["acme_"]}, "covers": "functions start with the client prefix (acme_ assumed from this workspace)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "functions start with the client prefix, for all 12 clients", "why": "other: the prefix differs per workspace and one file cannot know which client it belongs to; needs the 12 prefixes and a decision on one file vs one per workspace"},
+    {"part": "endpoints lowercase snake_case also means no capitals or hyphens in query params or inputs", "why": "no check exists for endpoint inputs with a shared case rule in this file; not added, input naming was not asked explicitly"},
+    {"part": "flag, don't block", "why": "handled by enforcement = advisory, not a coverage gap"}
+  ],
+  "assumptions": [
+    "acme_ is the client prefix for this workspace (inferred from acme_* function names)",
+    "lowercase snake_case for endpoints maps to case_style snake_case on endpoint_path",
+    "tables plural means a suffix of s, as the catalogue example shows",
+    "severity low, matching the built-in convention policies; the customer did not name one",
+    "no key was specified; NAMING-001 chosen as a non-template key with a number no template uses"
+  ],
+  "workspace_names_used": [
+    "tables: payment_method, invoice_item, user_address, audit_log (singular, predicted to flag); appointments, orders, support_tickets, customer_notes, sessions, orgs, etc. (plural)",
+    "functions: acme_send_invoice_email, acme_get_tracking, acme_sync_shipping_rates, acme_calculate_tax, acme_notify_sms (prefixed); calculate_late_fee, check_admin_role, record_audit_event, summarize_ticket, delete_user_account, request_human_approval (unprefixed, predicted to flag)",
+    "endpoint paths read from file names: e.g. customers/customer_id, get_customer_profile, admin/tenants, bank_accounts/link"
+  ],
+  "confusions": [
+    "The skill says to scope naming rules by tag, API group or table, but there is no way to select functions by client; the prefix is the only per-client signal and it is a param, not a scope.",
+    "The brief's 'functions start with the client prefix' is per-client, but a policy is per workspace. The skill does not say how to handle a shared policy across many workspaces.",
+    "'Endpoints always lowercase snake_case' maps to object.naming endpoint_path, but the skill's use example for endpoint paths points at CONV-012 which is kebab-case; a user asking for snake_case has to be told to use the param directly, not the template.",
+    "The catalogue does not say whether case_style snake_case on endpoint_path also judges input names; I did not add an input rule."
+  ],
+  "wished_for": [
+    "A template or recipe for 'naming convention per client prefix' with the prefix as a parameter that a multi-workspace agency can fill in.",
+    "A note on whether endpoint_path snake_case covers query/path input names.",
+    "Guidance for a shared policy across several workspaces (copy per workspace vs one file)."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three rules parse and map directly onto object.naming params, so the structure is right. Coverage is partial: the function prefix is only right for acme_ in this workspace, and the other 11 clients need their own prefixes. Predictions of what gets flagged are from reading names; I did not run evaluate, which is forbidden in this brief."
+}

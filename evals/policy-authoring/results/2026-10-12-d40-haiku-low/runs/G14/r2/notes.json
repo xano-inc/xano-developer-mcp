@@ -1,0 +1,59 @@
+{
+  "goal_id": "G14",
+  "templates_considered": [
+    "RET-001: Only the audit function writes the audit log. Fits the who-changed-what part; used for audit_log existence and write restriction.",
+    "CONF-012: Tables holding confidential data are tagged. Fits the email-table part only if the workspace has a tag to require; it has no tags on tables and the customer did not name one. Not used; proposed in reply.",
+    "DATA-010 / CONF-011: personal-data fields. Not asked for (the ask is cost and change tracking). Not used.",
+    "RET-002: retention cleanup task. Not asked for. Not used.",
+    "VND-001: approved vendors. Related to AI spend but not asked for. Not used.",
+    "PERF-001: endpoints never return every row. Would cover the unbounded nightly db.query on support_tickets, but the ask was about cost of AI calls in loops. Not used; could be a follow-up."
+  ],
+  "templates_used": ["RET-001"],
+  "rules": [
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["ai.agent.run", "ai.external.mcp.tool.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI call inside a loop (the $900 incident). Recipe rule from ai_cost_and_agent_safety. Does not cap spend."},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "who changed what: audit_log table must exist (template rule)"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "who changed what: only the audit function writes the audit log (template rule)"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.add", "tables": ["customers", "support_tickets", "newsletter_subscribers", "users", "patients", "orgs"]}}, "covers": "who changed what: creates on email tables call the audit function. Added beyond the recipe, which lists only edit, patch and delete."},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "support_tickets", "newsletter_subscribers", "users", "patients", "orgs"]}}, "covers": "who changed what: edits on email tables call the audit function"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "support_tickets", "newsletter_subscribers", "users", "patients", "orgs"]}}, "covers": "who changed what: patches on email tables call the audit function"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "support_tickets", "newsletter_subscribers", "users", "patients", "orgs"]}}, "covers": "who changed what: deletes on email tables call the audit function"},
+    {"policy_key": "AUDIT-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "statements": ["db.edit", "db.patch", "db.add_or_edit", "db.del", "db.truncate", "db.bulk.update", "db.bulk.patch", "db.bulk.delete"]}, "covers": "audit entries are never edited or deleted"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "A background task that keeps retrying forever (task retries)", "why": "no check exists"},
+    {"part": "Spend cap: a budget on AI calls so one bad day cannot cost $900", "why": "no check exists"},
+    {"part": "Whether the AI call inside the loop is actually bounded in count (how many items)", "why": "no check exists"},
+    {"part": "Writes made inside functions (delete_user_account db.del on users, summarize_ticket db.edit on support_tickets) are not inspected by object.statement_required", "why": "other"},
+    {"part": "Creating records through a called function, and audit coverage of an API endpoint's own writes when the audit call is in another function", "why": "other"},
+    {"part": "Tracking every table that stores customer emails: the rule needs a tag or a list; the customer did not name a tag, and no table carries one", "why": "needs runtime/org process"},
+    {"part": "Confirming which tables count as holding customer emails (patients and users are judgement calls)", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "Customer email tables = every table with an email field: customers, support_tickets, newsletter_subscribers, users, patients, orgs (billing_email).",
+    "The customer wants audit on create, edit, patch and delete of those tables, not on reads.",
+    "record_audit_event is the audit function; audit_log is the audit table (both exist in the workspace).",
+    "Advisory is right for a new policy; the customer did not ask for blocking.",
+    "A loop is foreach, for or while as named in the statement.containment params.",
+    "Tags labels (cost, soc2) on policies are free-form; they are not required to exist as table tags."
+  ],
+  "workspace_names_used": [
+    "task/nightly_ticket_summaries", "task/retry_failed_webhooks", "function/record_audit_event", "function/delete_user_account", "function/summarize_ticket", "table/audit_log", "table/customers", "table/support_tickets", "table/newsletter_subscribers", "table/users", "table/patients", "table/orgs", "api/app/customers/customer_id_PATCH", "ai/agent/Ticket Summarizer"
+  ],
+  "confusions": [
+    "The catalogue and skill say a rule naming an object that does not exist is a warning that means the rule judges nothing. audit_log does exist, so I could not test that warning path.",
+    "object.statement_required's object kinds are not stated per check in the skill's catalogue section; the recipe says it covers 'functions' as the called object but does not say whether writes inside a function are inspected. I took it that they are not, from the statement scope list (query, tool, task, message).",
+    "The recipe for 'Record who changed what' says to use placement unconditional with when.statement and when.tables; it does not say whether a function call inside an if branch counts. Not relevant here, but unclear.",
+    "The ai cost recipe lists a containment rule but does not say whether ai calls inside a called function count when the loop is in the caller. The skill says containment is per stack, so a loop calling a function that runs an agent is not caught.",
+    "Retry loops: there is no template or check for a while-loop that never exits, and the recipe's 'Cannot see: task retries' entry does not say whether a statement.containment rule on api.request inside a while is an acceptable proxy. I did not write one because it would also flag legitimate loops."
+  ],
+  "wished_for": [
+    "A check or recipe for capping loop iterations or retries (a max-iterations or retry-count check), or a statement that counts while-loop bounds.",
+    "A worked example of a policy for 'every table with email gets audited', showing how to choose the table list when the workspace has no tag for it.",
+    "Confirmation whether object.statement_required inspects writes in called functions (it would help to state the object kinds per check in one place).",
+    "A template or recipe note that create (db.add) should be audited too, since the recipe lists only edit, patch and delete."
+  ],
+  "parse_attempts": 7,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The AI-in-loop part is covered by a check that parses cleanly; I predict it flags the nightly summary task but have not run evaluate. The change-tracking part is covered for the tables with emails, but writes in functions are not inspected and I chose the table list myself. The retry-forever part has no check, so it is not covered. I did not run evaluate or push, as the brief forbids, so all findings are predictions."
+}

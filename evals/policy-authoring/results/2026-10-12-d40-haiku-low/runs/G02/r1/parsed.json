@@ -1,0 +1,113 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "NAMING-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "NAMING-001.xs",
+      "ok": true,
+      "key": "NAMING-001",
+      "title": "Names follow the team naming convention",
+      "statement": "Table names are plural. Endpoint paths are lowercase snake_case. Function names start with the client prefix and are lowercase snake_case. Violations are flagged for review and do not block a change.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "NAMING-001.R1",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [
+              "s"
+            ],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "table"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "NAMING-001.R2",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "endpoint_path",
+            "case_style": "snake_case",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "NAMING-001.R3",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "snake_case",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [
+              "acme_"
+            ],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

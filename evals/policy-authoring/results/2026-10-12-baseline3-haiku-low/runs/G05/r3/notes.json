@@ -1,0 +1,74 @@
+{
+  "goal_id": "G05",
+  "templates_considered": [
+    "admin_endpoints_check_role (AUTH-002): fits the role-check half; used, but its tags:[\"admin\"] scope matches nothing in this workspace (no endpoint carries an admin tag), so I replaced it with api_groups:[\"admin\"]",
+    "own_records_only (AUTH-020): considered, does not fit; the ask is org-scoping of one table, not per-user ownership of records",
+    "no_pii_in_responses (DATA-010): considered, not in the ask",
+    "sensitive_tables_need_login (CONF-010): considered, tenants is not tagged and the ask is about filtering, not login"
+  ],
+  "templates_used": ["admin_endpoints_check_role"],
+  "rules": [
+    {
+      "policy_key": "AUTH-002",
+      "check": "object.statement_required",
+      "params": {
+        "functions": ["check_admin_role"],
+        "placement": "first",
+        "must_reference": ["$auth"],
+        "api_groups": ["admin"],
+        "object_kinds": ["query"]
+      },
+      "covers": "every endpoint under /admin must check the role before doing anything else (call is first statement; the role values are inside the function, not checked)"
+    },
+    {
+      "policy_key": "TENANT-010",
+      "check": "db.where_constraint_required",
+      "params": {
+        "table_selector": {"names": ["tenants"]},
+        "field": "org_id"
+      },
+      "covers": "never touches the tenants table without filtering by org_id (reads and writes on the tenants table must constrain org_id; compare_to left empty)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "check that the role is 'admin' or 'support_lead'", "why": "no check reads a function's body; object.statement_required only proves the call exists and is first"},
+    {"part": "endpoints under /admin outside the admin API group (api/app/admin/stats_GET)", "why": "couldn't tell how: path-based scope does not exist; api_groups needs a group name and the endpoint is in group app. Asked the customer"},
+    {"part": "tenant filter must be the caller's org", "why": "couldn't tell how: compare_to can require $auth.org_id, but cross-org staff access may be intended; left empty and asked"},
+    {"part": "db.direct_query touching tenants", "why": "no check; db.where_constraint_required lists db.direct_query as not checked"}
+  ],
+  "assumptions": [
+    "/admin means the endpoints in the api_group named admin (canonical admin, served at /api:admin)",
+    "check_admin_role is the role-check function the customer means",
+    "org_id on tenants is the field to filter on, which is the exact name in the schema",
+    "policy keys: AUTH-002 reused from the template; TENANT-010 is a new key (no template covers tenant org filtering)",
+    "new policies start active=true, enforcement=advisory, per the skill's authoring rule"
+  ],
+  "workspace_names_used": [
+    "api_group admin (canonical admin)",
+    "function check_admin_role",
+    "table tenants",
+    "field tenants.org_id",
+    "table users (field role, org_id)",
+    "endpoints: tenants (admin), orgs/{org_id}/tenants (admin), tenants/{tenant_id} PATCH (admin), users (admin), admin/stats (app)",
+    "auth table users"
+  ],
+  "confusions": [
+    "The AUTH-002 template's rule uses tags:[\"admin\"], but the workspace has no admin tag; the skill's guidance is to start from the template, so it was unclear whether to keep the template's tag scope or swap to api_groups. I swapped, because the tag matches nothing here",
+    "The template's needs list says functions is 'e.g. require_admin'. The workspace's function is check_admin_role; I used the real name, as the skill asks",
+    "The skill says never to make a policy 'a template prefix with a number no template has' but gives no guidance for a new key that is not a prefix (TENANT-010 vs something like a DATA- style key); I used TENANT-010, which is not a template prefix",
+    "Whether 'on an admin endpoint' means api_group or path: the catalogue scope list has api_groups by name only, so an /admin path scope is not expressible; the skill does not say so",
+    "placement:'first' with must_reference:['$auth'] reads as 'first statement references $auth'; the skill text does not say whether must_reference applies to the matched statement or the whole stack",
+    "The check's values for the role are not checkable, but the template summary says 'checks the caller's role' which implies more than the rule does; the limits note says it confirms the call is first, not what the function decides, which I followed"
+  ],
+  "wished_for": [
+    "A way to scope by URL path prefix (/admin) as well as API group, or a recipe for when the group does not match the path",
+    "A check or param that verifies a function's precondition values (role names), or at least a recipe to pin them",
+    "An example of db.where_constraint_required where compare_to is an org or user field of $auth, for multi-tenant rules",
+    "Guidance on when a template's tag scope must be replaced because the workspace lacks the tag, with a worked example",
+    "A way to see a check's predicted matches without running evaluate, so I can test the scope against the workspace before a push"
+  ],
+  "parse_attempts": 8,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both rules parse with no rule warnings, but I could not run evaluate (forbidden for this task), so the match predictions are from reading the code. The role-values half of the ask is not checkable by any catalogue check, and the /admin scope rests on an API-group assumption that the customer must confirm."
+}

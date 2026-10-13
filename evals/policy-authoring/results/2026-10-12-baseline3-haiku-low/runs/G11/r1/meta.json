@@ -1,0 +1,42 @@
+{
+  "goal_id": "G11",
+  "repeat": 1,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:55:09.126Z",
+  "wall_ms": 65235,
+  "duration_ms": 64146,
+  "cost_usd": 0.018746980000000003,
+  "num_turns": 13,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "LOG-010.xs",
+    "SEC-013.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 4,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit && wc -c kit/*",
+    "cat kit/policy-templates.md; echo ---; xano workspace pull -d ./workspace 2>&1 | tail -5; echo ---; ls -R workspace 2>/dev/null | head -100",
+    "python3 -I -c \"\nimport json\nc=json.load(open('kit/catalogue.json'))\nprint(list(c.keys()) if isinstance(c,dict) else type(c))\nt=c.get('templates',[]) if isinstance(c,dict) else []\nfor x in t:\n  if x.get('id') in ('requests_have_timeout','external_calls_handle_errors','tls_verification_on','approved_v…",
+    "python3 -I -c \"\nimport json\nc=json.load(open('kit/catalogue.json'))\nfor x in c['items']:\n  if x.get('id') in ('statement.param_bound','statement.containment','outbound.vendor_allowlist','statement.param_required'):\n    print(json.dumps(x,indent=1)[:2500]); print('====')\n\" ; echo ---; grep -rln \"api.…",
+    "xano policy list 2>&1 | head -40; echo ---; xano policy parse --help 2>&1 | head -30; echo ---; grep -rn \"try_catch\" workspace | wc -l; grep -rln \"try_catch\" workspace",
+    "cat > out/SEC-013.xs <<'EOF'\npolicy \"SEC-013\" {\n  title = \"External requests time out quickly\"\n  statement = \"Every external request must set a timeout, and that timeout must be 30 seconds or less, so one slow vendor cannot stall the app. A request that legitimately needs longer is exempted by the p…",
+    "xano policy parse out/SEC-013.xs -o json 2>&1 | head -60; echo; xano policy parse out/LOG-010.xs -o json 2>&1 | grep -i -E \"warn|severity|error\" | head",
+    "cat > out/reply.md <<'EOF'\nYes. Two policies cover the timeout and error-handling part of this. I have written them but not published them, so nothing is enforced yet.\n\n**1. `SEC-013`: External requests time out quickly** (medium, advisory)\n- Every `api.request` and `stream.from_request` must set `t…"
+  ],
+  "final_message": "Wrote `out/SEC-013.xs`, `out/LOG-010.xs`, `out/reply.md` and `out/notes.json`; both policies parse with no rule warnings. Confidence: medium, since the policies can't check that the catch branch handles failures, and I did not run an evaluation."
+}

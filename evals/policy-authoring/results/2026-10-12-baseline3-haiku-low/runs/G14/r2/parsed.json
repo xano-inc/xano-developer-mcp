@@ -1,0 +1,129 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "COST-010.xs",
+    "CUST-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "COST-010.xs",
+      "ok": true,
+      "key": "COST-010",
+      "title": "AI calls and retries stay out of unbounded loops",
+      "statement": "An AI agent call must not run inside a loop, and a background task must not retry with a while loop, because a repeated call or retry can run up an unbounded cloud and AI bill. Batch work with a bounded query, or move the AI call into a function that is called once per request. A task that must retry uses a bounded counter and stops after a fixed number of attempts.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "COST-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.agent.run"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "foreach",
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "COST-010.R2",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "while"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "task"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CUST-010.xs",
+      "ok": true,
+      "key": "CUST-010",
+      "title": "Tables holding customer emails are tagged and their changes are audited",
+      "statement": "Every table that stores an email address carries the pii tag, so the tracking rule can find it. Every object that reaches a pii table calls record_audit_event unconditionally, so each change to customer data has a row in audit_log saying who changed which record. The audit call also requires a login, so a public object that reaches a pii table is reported: the policy owner decides whether it is exempt, and the exemption is never added by a fix.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CUST-010.R1",
+          "title": "Email tables carry the pii tag",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "email",
+              "requester_email"
+            ],
+            "field_types": [
+              "email"
+            ],
+            "include_sensitive": false,
+            "tag": "pii",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CUST-010.R2",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "pii"
+            ],
+            "auth_tables": [],
+            "function": "record_audit_event",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CUST-010.R2",
+          "text": "table_tags \"pii\" is on no table in this workspace, so no access to it is judged."
+        }
+      ]
+    }
+  ]
+}

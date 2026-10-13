@@ -1,0 +1,56 @@
+{
+  "goal_id": "G07",
+  "templates_considered": [
+    "AUTH-002 admin_endpoints_check_role: fit, admin role check is the nearest access control; used",
+    "RET-001 audit_log_protected: fit for audit-trail integrity, not for all change logging; used",
+    "CHG-001 endpoints_have_tests: weak fit for change control (tests, not approvals); used",
+    "AUTH-010 endpoints_need_login: considered, not used; public-by-design endpoints make it broad and it is access authentication, not review",
+    "AUTH-020 own_records_only: considered, not used; needs a field name and is not what the auditor asked",
+    "CONV-050 no_leftover_code / other conventions: no fit to change control or access review",
+    "CONV-022 owner_team_tagged: considered as a possible ownership/accountability proxy; not used, tag set not agreed"
+  ],
+  "templates_used": ["AUTH-002", "RET-001", "CHG-001"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["check_admin_role"], "placement": "first", "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "access control: admin endpoints check role (evidence of access control, not of access review)"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "change record: audit table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "change record: only the audit function writes the audit log"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {}, "covers": "change control: changes are tested"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "change control: anonymous calls to login endpoints are tested for rejection"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "access reviews (periodic review of who holds which role)", "why": "no check exists"},
+    {"part": "change approval (who approved a change before it went live)", "why": "needs runtime/org process"},
+    {"part": "all customer-data changes are logged (not just the audit table is protected)", "why": "no check exists for 'every write is audited'; table.write_location_restricted only restricts writes to a named table"},
+    {"part": "evidence the controls actually operated over time", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The auditor's criteria are SOC 2 CC6.1, CC6.3, CC7.2, CC8.1; I used those numbers as tags without checking the auditor's list",
+    "The admin API group (canonical admin) is the back-office surface needing role checks",
+    "check_admin_role is the intended role gate (it accepts admin and support_lead)",
+    "record_audit_event is the intended single writer of audit_log",
+    "Advisory enforcement is wanted for a first policy"
+  ],
+  "workspace_names_used": [
+    "admin (api_group)", "check_admin_role (function)", "audit_log (table)", "record_audit_event (function)",
+    "users_GET, tenant_id_PATCH, orgs/org_id/tenants_GET, tenants_GET (admin endpoints)",
+    "customers_POST, payments/charge_POST, clinical_notes_POST, customer_id_PATCH (direct or audited writes)",
+    "invoices_require_login (workflow_test)"
+  ],
+  "confusions": [
+    "The skill says tags on policies and the template tag keys are not specified; no guidance on SOC 2 criterion tags beyond 'record the criterion as a tag'",
+    "object.statement_required with api_groups: the parse warning says api_groups only matches endpoints and asks for object_kinds to be set; the skill text on scope params does not say that api_groups restricts object_kinds implicitly, so I only found it from the warning",
+    "Catalogue has no check for 'access review' or 'change approval'; I was unsure whether a template could cover them and found none",
+    "RET-001 template title says 'Only the audit function writes the audit log' but the statement wording is about data changes; unclear whether audit coverage of all writes was intended by the template",
+    "The skill's 'Write only names the catalogue and the workspace have' vs. the template's fill example for workspace.object_required (names ['audit_log']); I checked audit_log exists in the workspace pull, but did not confirm object_kind value format beyond the parser accepting 'table'"
+  ],
+  "wished_for": [
+    "A mapping from common SOC 2 / ISO criteria to the templates that partly cover them, with a line saying what each does not prove",
+    "A check or template for 'every write to a named table is made by a named function or logged' (write coverage, not just restriction)",
+    "A recipe for access reviews and change approvals saying they are outside Xano and what evidence to keep",
+    "Documentation of how object_kinds interacts with api_groups/verbs scope (the parse warning, not the skill, told me to add it)"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": ["Rule warning AUTH-002.R1: api_groups only matches endpoints, so this rule inspects endpoints only; set object_kinds: [\"query\"] to say so (fixed; re-parse clean)"],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies check real code facts (admin role check on admin endpoints, single writer of audit_log, endpoint tests) that relate to change control and access control, but they do not prove an access review or change approval happened, and they do not show every customer-data change is logged. Parsing passed but I did not run xano policy evaluate (forbidden by the brief), so the predicted findings in the reply are unverified."
+}

@@ -1,0 +1,58 @@
+{
+  "goal_id": "G14",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: auth, not cost; not used",
+    "RET-002 retained_data_cleaned_up: cleanup task coverage, not runaway cost; didn't fit",
+    "RET-001 audit_log_protected: about who may write audit_log, not that customer changes are audited; partial at best, not used",
+    "CONF-010 sensitive_tables_need_login: closest to 'tracked' via tagged tables, but forces login on every reaching object and has no audit call; didn't fit as-is",
+    "CONF-012 confidential_tables_tagged: tag-on-field pattern; used the same check (table.tag_required) for the pii tag, with own key",
+    "CONV-023 tables_classified: tag_required on every table, unrelated to emails; didn't fit",
+    "LOG-010 external_calls_handle_errors / SEC-013 requests_have_timeout: retry-adjacent, but do not bound retries or cost; didn't fit",
+    "SEC-010, BIZ-001, others: no fit"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "COST-010", "check": "statement.containment", "params": {"statements": ["ai.agent.run"], "must_not_be_inside": ["foreach", "while"]}, "covers": "AI call inside a loop (direct calls only)"},
+    {"policy_key": "COST-010", "check": "stack.statement_forbidden", "params": {"statements": ["while"], "object_kinds": ["task"]}, "covers": "background task retrying forever (blunt: forbids all while loops in tasks)"},
+    {"policy_key": "CUST-010", "check": "table.tag_required", "params": {"field_names": ["email", "requester_email"], "field_types": ["email"], "tag": "pii"}, "covers": "every table that stores customer emails: identification via tag"},
+    {"policy_key": "CUST-010", "check": "object.tagged_table_access", "params": {"table_tags": ["pii"], "function": "record_audit_event"}, "covers": "tracking who changed what: each object reaching a pii table calls the audit function. Also forces login on such objects, which is a side effect the customer did not ask for"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "an AI call inside a loop costing $900 (dollar amount, runtime)", "why": "no check exists"},
+    {"part": "AI call made inside a function called from a loop", "why": "no check exists; containment is per-stack"},
+    {"part": "a background task retrying forever: no retry bound or counter check", "why": "no check exists; only the while-loop proxy is covered, and it forbids all while loops in tasks, which is blunt"},
+    {"part": "budget / spend cap", "why": "needs runtime/org process"},
+    {"part": "answering who changed what: proof that every write is audited, not just that the object calls the audit function", "why": "no check exists"},
+    {"part": "tables storing emails get tracked: tag must be added to the tables first", "why": "needs runtime/org process (workspace tag change, not mine to make)"},
+    {"part": "customer-email tables need an audit call from public objects (newsletter sign-up, login)", "why": "couldn't tell how: the check forces login, and exemptions are the owner's call"}
+  ],
+  "assumptions": [
+    "pii is an acceptable tag name; the workspace has no tag vocabulary (no tags on tables at all)",
+    "email tables are those with an email-typed field: customers.email, users.email, newsletter_subscribers.email, patients.email, support_tickets.requester_email",
+    "record_audit_event is the audit function the customer means (it writes audit_log)",
+    "foreach and while are the block names for loops in must_not_be_inside",
+    "a while loop in a task is always a retry loop (blunt proxy)",
+    "advisory enforcement is right for a first draft; the customer can switch to blocking"
+  ],
+  "workspace_names_used": [
+    "customers", "users", "newsletter_subscribers", "patients", "support_tickets", "requester_email", "audit_log", "record_audit_event", "nightly_ticket_summaries", "retry_failed_webhooks", "Ticket Summarizer", "login_POST", "newsletter/subscribe", "customers_POST", "customers/{customer_id} PATCH"
+  ],
+  "confusions": [
+    "The skill and kit say a check's catalogue is the whole vocabulary, but nothing says whether must_not_be_inside accepts loop block names like foreach or while. parse accepted them with no warning, so I could not confirm they match anything.",
+    "No check fits 'a runaway cost' or 'retries forever'. The only proxy I found is stack.statement_forbidden on while, and it is blunt. The skill does not say what to do when no check fits part of an ask beyond listing it as uncovered, which is what I did.",
+    "table.tag_required on a field of type email: field_types and field_names are both listed as required. I kept both and used field_types to exclude billing_email (a text field), but this combination is not explained anywhere.",
+    "tagged_table_access forces login on every reaching object with no way to scope it to writes only. The skill's 'tracked' wording suggests writes, but the check tests all reaching objects. The side effect is not stated in the catalogue, only in the implementation.",
+    "Whether a tag is 'proposed separately' or part of the policy: the skill says to propose new tags outside the policy, but the rule still needs the tag to exist to do anything. I left the rule in and noted the warning."
+  ],
+  "wished_for": [
+    "A check for a loop-level or call-count bound on an AI or outbound call, or on retries",
+    "A check that verifies a write is followed by an audit call on the same path (not just that the object calls the function)",
+    "A recipe for combining table.tag_required with object.tagged_table_access, showing the tag must exist first",
+    "A note in the catalogue saying which loop and block names are valid for containment params",
+    "Guidance for 'tracking' requests: whether it means audit on writes, or a tag"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Cost half: only proxies exist (AI-in-loop direct calls, while loops in tasks). It cannot cap spend, and it cannot tell a bounded retry from an unbounded one. Email half: rule 1 needs a pii tag that does not exist yet, and rule 2 only checks that an audit call is present, not that every write is audited, and it forces login on public objects. Both parse cleanly; neither has been evaluated against the workspace."
+}

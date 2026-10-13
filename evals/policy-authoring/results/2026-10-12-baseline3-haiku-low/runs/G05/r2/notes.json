@@ -1,0 +1,44 @@
+{
+  "goal_id": "G05",
+  "templates_considered": [
+    "AUTH-002 admin_endpoints_check_role: fits the role-check half directly; template fill is a function name, which I set to check_admin_role from the workspace",
+    "AUTH-020 own_records_only: title is about users reaching their own records, not tenants by org; did not fit the org_id filter, so I did not use it",
+    "AUTH-010 endpoints_need_login, AUTH-050 one_auth_table: not asked for; did not fit",
+    "CONF-010 sensitive_tables_need_login, CONF-011, CONF-012: tables are not tagged in this workspace; did not fit the org_id ask",
+    "SEC-010, API-010, LOG-011, LOG-010, DATA-010: nothing to do with the ask"
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"object_kinds": ["query"], "api_groups": ["admin"], "functions": ["check_admin_role"], "placement": "first"}, "covers": "every /admin endpoint must call the role-check function before anything else; checks the call is first, not the role logic inside it"},
+    {"policy_key": "TNT-010", "check": "db.where_constraint_required", "params": {"table_selector": {"names": ["tenants"]}, "field": "org_id"}, "covers": "every read and write of the tenants table must filter on org_id"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "role must be 'admin' or 'support_lead' (the value test itself)", "why": "couldn't tell how: object.statement_required only checks that a named function is called; it does not read the function's body, so the role values are not verified by any check"},
+    {"part": "org_id filter must match the caller's org (not just any org_id)", "why": "no check compares a filter to the caller; db.where_constraint_required with compare_to set would need $auth.org_id, and the users table has org_id but the admin staff are cross-org by design, so I left it unset"},
+    {"part": "'before doing anything else' beyond the first statement (e.g. no input-only logic first)", "why": "placement first is the closest check; it allows a comment but nothing else before the call, so this is covered, but a precondition-free request still reaches the function only after input validation"}
+  ],
+  "assumptions": [
+    "'/admin' means the endpoints in the api_group named admin (canonical admin), served at /api:admin; the app-group endpoint admin/stats is not in scope for AUTH-002",
+    "'never touches the tenants table' applies workspace-wide, not only to /admin endpoints",
+    "check_admin_role is the role-check function the customer means; its body has the admin/support_lead test",
+    "policy keys AUTH-002 (template key) and TNT-010 (own key; no template covers tenant org isolation)",
+    "policies are added as active advisory, following the guidance for new policies"
+  ],
+  "workspace_names_used": ["admin", "check_admin_role", "tenants", "org_id", "users", "orgs", "app", "tenants_GET", "tenant_id_PATCH", "stats_GET", "api/admin/orgs/org_id/tenants_GET"],
+  "confusions": [
+    "Skill says every rule must name a scope and api_groups only matches endpoints; the parse warning said to add object_kinds: [\"query\"] to say so. That was not stated in the scope section I read, I found it only from the warning",
+    "The skill says a template fill uses example names like require_admin; it was unclear whether the template's example should be replaced entirely or whether the rule's function list should match the workspace function. I used the workspace function name",
+    "Two templates overlap with the ask (AUTH-002 and AUTH-020); the skill says to start from a template when its title covers the request, but AUTH-020's title covers only part of it, and the skill does not say what to do when a template covers one half and a custom key is needed for the other",
+    "object.statement_required 'first' placement: the skill does not say whether a comment or a non-statement counts; the catalogue says a comment is skipped, which I relied on",
+    "No catalogue or template entry explains how to express 'filter by a value that is not the caller' for db.where_constraint_required beyond leaving compare_to empty; the trade-off was left to my judgement"
+  ],
+  "wished_for": [
+    "An example of a staff/admin-role policy: role-check function first, scoped by api_group, with the admin group named in the example",
+    "A worked example of db.where_constraint_required with and without compare_to, for a cross-tenant staff endpoint versus a per-user endpoint",
+    "A note on whether the parse warning about api_groups matching only endpoints is required in the rule (add object_kinds) or only a warning, since the template fill does not include it"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": ["Rule warning: AUTH-002.R1: api_groups only matches endpoints; set object_kinds to say so (fixed)"],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The org_id part is covered directly by a catalogue check, and the first-statement part is covered by object.statement_required. But the role-value test lives inside check_admin_role and no check reads it, so the policy confirms the function is called first, not that it checks admin/support_lead. Neither policy has been evaluated: the brief forbids evaluate, so the findings are predictions from reading the code."
+}

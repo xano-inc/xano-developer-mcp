@@ -1,0 +1,94 @@
+{
+  "goal_id": "G04",
+  "templates_considered": [
+    "endpoints_need_login: used, AUTH-010 fits the access-control part of HIPAA; login's public tag already exists so the template's except_tags works as written",
+    "own_records_only: didn't fit, clinicians legitimately read many patients; a per-user where-constraint would be wrong and I couldn't express minimum necessary another way",
+    "no_self_promotion: didn't fit, users table has a role enum but the ask doesn't mention admin roles; I did not check whether admin endpoints exist",
+    "public_endpoints_harmless: didn't fit, I wasn't sure what a read-only public endpoint must do without a clear statement; skipped",
+    "admin_endpoints_check_role: not used; a role check would fit but needs a function name, and I didn't verify check_admin_role's exact contract",
+    "tokens_expire: used, SEC-014 fits automatic logoff; template rule 2 needed max, filled with the template example 3600",
+    "writes_check_first: didn't fit, it orders statements, and nothing in the ask names a permission check to order",
+    "protected_endpoints_run_middleware: didn't fit, no middleware named in the workspace that I checked",
+    "one_auth_table: didn't fit as a required HIPAA control; users is the only auth table so it would pass anyway; skipped",
+    "no_pii_in_responses: used as DATA-010, with fields narrowed to patients.ssn and patients.insurance_member_id; template example listed fields I didn't have",
+    "sensitive_tables_need_login: used as CONF-010, with table_tags set to confidential; no table has that tag yet, so the rule matches nothing until tagged",
+    "sensitive_fields_marked: used as CONF-011, field_names drawn from patients, appointments and clinical_notes, scoped with tables",
+    "confidential_tables_tagged: used as CONF-012, tag confidential as the template's fixed param; scoped with tables",
+    "views_hide_sensitive: used as CONF-013, no params; checks nothing until fields are marked sensitive",
+    "no_sensitive_data_in_logs: used as LOG-001; the template rule params are in the catalogue JSON, not in the markdown",
+    "audit_log_protected: used as RET-001 with two rules, names audit_log and record_audit_event, both verified in the workspace",
+    "no_secrets_in_code: used as SEC-012, no params",
+    "approved_vendors_only: didn't fit, needs the owner's approved vendor list; empty lists would flag every outbound call",
+    "tls_verification_on, external_calls_handle_errors, requests_have_timeout: not used; relevant to transmission security under HIPAA, but I didn't evaluate them against the workspace's api.request calls",
+    "retained_data_cleaned_up: didn't fit as-is, needs a retention period the owner hasn't given and a retained tag that doesn't exist",
+    "endpoints_have_tests, naming, tag-vocabulary, size and description templates: not HIPAA-relevant to the ask; skipped"
+  ],
+  "templates_used": [
+    "endpoints_need_login",
+    "tokens_expire",
+    "sensitive_tables_need_login",
+    "sensitive_fields_marked",
+    "confidential_tables_tagged",
+    "no_pii_in_responses",
+    "no_sensitive_data_in_logs",
+    "audit_log_protected",
+    "no_secrets_in_code",
+    "views_hide_sensitive"
+  ],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "every endpoint needs login (access control)"},
+    {"policy_key": "SEC-014", "check": "statement.param_bound", "params": {"statements": ["security.create_auth_token"], "param_names": ["expiration"], "min": 1, "max": 3600, "unit": "seconds"}, "covers": "automatic logoff: login token lifetime"},
+    {"policy_key": "SEC-014", "check": "statement.param_bound", "params": {"statements": ["security.jws_encode", "security.jwe_encode", "security.jwe_encode_legacy", "mvp:crypto_jws_encode", "mvp:crypto_jwe_encode2"], "param_names": ["ttl"], "min": 1, "max": 3600, "unit": "seconds"}, "covers": "automatic logoff: signed token lifetime (max 3600 is my choice from template example)"},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["confidential"]}, "covers": "endpoints touching PHI tables require login; matches nothing until tables are tagged"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["ssn", "dob", "insurance_member_id", "first_name", "last_name", "email", "phone", "address", "reason", "diagnosis", "note"], "attribute": "sensitive", "tables": ["patients", "appointments", "clinical_notes"]}, "covers": "PHI and identifiers marked sensitive in schema"},
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["ssn", "insurance_member_id", "reason", "diagnosis", "note"], "tag": "confidential", "tables": ["patients", "appointments", "clinical_notes"]}, "covers": "PHI tables carry the confidential tag (data classification)"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["patients.ssn", "patients.insurance_member_id"], "object_kinds": ["query"]}, "covers": "minimum necessary: endpoints do not fetch SSN or insurance ID"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "no patient data or secrets in debug logs (audit controls)"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit trail exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "audit trail written only by the audit function"},
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "no hardcoded secrets (safeguards)"},
+    {"policy_key": "CONF-013", "check": "table.view_hide_required", "params": {}, "covers": "saved views hide sensitive fields (minimum necessary); inert until fields are marked sensitive"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "minimum necessary: clinicians only see patients they treat", "why": "no check exists"},
+    {"part": "vendors that sign a BAA may receive PHI", "why": "needs runtime/org process (owner's approved-vendor list)"},
+    {"part": "retention and disposal periods for clinical records", "why": "needs runtime/org process (owner must set the period; cleanup task and retained tag don't exist)"},
+    {"part": "who viewed a patient record (read access log)", "why": "no check exists; audit check covers writes only"},
+    {"part": "encryption and TLS for outbound calls", "why": "other: I did not evaluate the TLS and timeout checks against the workspace's api.request calls; they fit and could be added"},
+    {"part": "risk analysis, workforce training, breach response, BAA signing", "why": "needs runtime/org process"},
+    {"part": "admin role checks on admin endpoints", "why": "other: not evaluated; admin_endpoints_check_role would fit but I didn't verify the function contract"}
+  ],
+  "assumptions": [
+    "The tag confidential is the PHI classification tag; I used it because the template fixes it, and no table has any PHI tag now",
+    "Patients, appointments and clinical notes are the PHI tables; users, customers and customer_notes are not in scope",
+    "Login is public by design, as its own comment and public tag say",
+    "A max of 3600 seconds for signed tokens is acceptable; the template example, the owner may choose differently",
+    "Endpoints fetching a patient for the clinician view should not return SSN or insurance member ID"
+  ],
+  "workspace_names_used": [
+    "patients", "appointments", "clinical_notes", "audit_log", "record_audit_event", "users", "orgs",
+    "patients.ssn", "patients.insurance_member_id", "patients.dob", "patients.first_name", "patients.last_name", "patients.email", "patients.phone", "patients.address",
+    "appointments.reason", "clinical_notes.diagnosis", "clinical_notes.note",
+    "public", "security.create_auth_token", "debug.log", "login_POST (auth/login, tag public, expiration 86400)",
+    "appointments_GET (no auth)", "patient_id_GET (db.get patients, returns whole record)", "clinical_notes_POST (debug.log references $input)"
+  ],
+  "confusions": [
+    "The skill says scope params are 'top-level' params but also says there is no scope object; I first put tables beside params and only got it right after reading the parse output and re-reading. Worth stating plainly that scope keys go inside params.",
+    "The template markdown lists rule params only as Fill notes; for LOG-001, RET-001, tokens_expire and others the real rule params are in catalogue.json, and I had to read JSON to get them. The markdown should show full rule params.",
+    "The skill's catalogue table lists params per check, but for table.field_attribute_required it is unclear whether the + on field_names means at least one of field_names or field_types, so I set field_names only.",
+    "I could not tell whether severity medium is the default and dropped on print: the parser output omitted severity for the medium policies, though the file has it. Unclear whether that is a normalisation or a bug.",
+    "The tokens_expire template second rule has needs max with no example value in the markdown; I took the 3600 from the first rule's example.",
+    "The skill says a template's tags are a free choice, but nothing says what a tag like hipaa does to policy selection; I added tags = [hipaa] to every policy as a criterion record, not a grouping, and am not sure that is the convention.",
+    "Nothing in the skill says whether a policy whose checks match nothing (CONF-010 without tags, CONF-013 without sensitive fields) should be published as active advisory or held inactive; the honesty rules say to say so but not what to do."
+  ],
+  "wished_for": [
+    "A HIPAA framework page: which checks map to which HIPAA safeguard, and what the platform cannot check, so the gaps section can be written from it rather than from memory.",
+    "Full rule params in the templates markdown, not only Fill notes.",
+    "A way to list which tags, sensitive attributes and saved views already exist, for scoping rules that depend on them (the CLI showed none for tags on tables).",
+    "A worked example of a scoped rule using tables inside params, and of combining a template with a tag the workspace does not have yet."
+  ],
+  "parse_attempts": 10,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The ask was to make the app HIPAA-safe, which policies cannot establish. I wrote 10 files that parse and cover parts of access control, logoff, PHI classification, minimum necessary in responses, logs, audit trail and secrets. Two rules (CONF-010, CONF-013) check nothing until the workspace gains tags or sensitive fields. Several HIPAA parts have no check (BAAs, retention, read-access logging). I did not run policy evaluate (forbidden here), so every expected finding is a prediction, and some rules may match in ways I did not predict."
+}

@@ -1,0 +1,64 @@
+{
+  "goal_id": "G11",
+  "templates_considered": [
+    "requests_have_timeout (SEC-013): fits the timeout part; used as the base, but its statement.param_bound rule passes an omitted timeout, so a param_required rule was added",
+    "external_calls_handle_errors (LOG-010): fits the error-handling part; used as base; containment only checks try presence, not catch handling",
+    "tls_verification_on (SEC-011): does not fit; not in the ask",
+    "no_pii_in_responses, no_sensitive_data_in_logs, others: do not fit the ask"
+  ],
+  "templates_used": ["requests_have_timeout", "external_calls_handle_errors"],
+  "rules": [
+    {
+      "policy_key": "SEC-013",
+      "check": "statement.param_bound",
+      "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"], "max": 30, "unit": "seconds"},
+      "covers": "timeout is at most 30 seconds (from template)"
+    },
+    {
+      "policy_key": "SEC-013",
+      "check": "statement.param_required",
+      "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"]},
+      "covers": "timeout must be set explicitly ('a timeout set'); added beyond template"
+    },
+    {
+      "policy_key": "LOG-010",
+      "check": "statement.containment",
+      "params": {"statements": ["api.request", "stream.from_request"], "must_be_inside": ["try_catch"]},
+      "covers": "external call sits inside a try block (some error handling); catch contents not covered"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "what the catch branch does with the failure (error handling beyond a try block)", "why": "no check exists"},
+    {"part": "external calls via ai.external.mcp.* and db.external.*.direct_query", "why": "no check exists; these statements take no timeout and the containment rule was not extended to them because I did not confirm the exact names to list"},
+    {"part": "whether 30 seconds is the right timeout per vendor and whether a vendor outage falls back cleanly", "why": "needs runtime/org process"},
+    {"part": "the actual hang at runtime", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The hang came from outbound api.request calls with no timeout, so api.request is the main target; stream.from_request and webflow.request were included because the template lists them",
+    "A 30-second ceiling is acceptable; the template's limit was kept rather than a customer-specific number",
+    "Template severity (medium) and advisory enforcement are acceptable for a first version",
+    "No tags were added; the template has none and the ask did not name any"
+  ],
+  "workspace_names_used": [
+    "api.request statements in function acme_get_tracking, acme_sync_shipping_rates, acme_notify_sms, task retry_failed_webhooks, ai tool issue_refund, queries shipments/quote, payments/fraud_check, payments/charge, bank-accounts/link",
+    "env vars SHIPFAST_API_KEY, STRIPE_SECRET_KEY, PLAID_CLIENT_ID, PLAID_SECRET (seen only in the workspace, not in policy text)"
+  ],
+  "confusions": [
+    "The SEC-013 template's fill is '_nothing_', but its param_bound rule accepts an omitted timeout (judged at the 10s default). For a 'timeout must be set' ask the template alone does not satisfy it, and the skill does not say so. I had to find param_required in the catalogue myself.",
+    "param_required treats timeout = 10 as not set (per the catalogue description), which is surprising and only documented in the check description, not in the skill or template.",
+    "LOG-010's template summary says 'handle their own failures', but statement.containment only checks the try block exists. The summary oversells the check; the skill's Honesty guidance on this is not reflected in the template text.",
+    "LOG-010's limits say to add db.external.*.direct_query and ai.external.mcp.* statements to cover every outbound call, but the skill says statement names must be exact and gives no list of exact names for those, so I could not write them confidently.",
+    "The rule for 'no timeout' in an api.request is set via the `timeout` param, but the skill does not mention that a default-valued timeout is dropped on pull; I found this only in the param_required description.",
+    "Whether a single policy or two policies is right for 'timeout and error handling' was not addressed; each template has its own key, so I used two files.",
+    "The skill says 'Write a new policy active = true + advisory', which I followed; it also says never to run xano policy evaluate unless the user asks, which I did not run, so there are no real findings to report."
+  ],
+  "wished_for": [
+    "A template or recipe for 'every outbound call has a timeout and a try block' that combines both rules, with the exact list of outbound statement names including db.external and ai.external variants",
+    "A note in the template or skill that the timeout template's rule accepts an omitted timeout, and that param_required is needed for a 'set' requirement",
+    "An example of a timeout value that is not 10 for the explicit-set rule"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both files parse with exit 0 and no warnings, and the checks match the timeout and try-block parts of the ask. Confidence is not high because the catch contents and the MCP/db.external calls are not covered, and no evaluate run was done to confirm which workspace objects are flagged; the object list is a prediction from reading the files."
+}

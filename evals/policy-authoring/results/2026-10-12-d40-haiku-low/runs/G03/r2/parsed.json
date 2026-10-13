@@ -1,0 +1,135 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "PCI-001.xs",
+    "PCI-002.xs",
+    "PCI-003.xs"
+  ],
+  "policies": [
+    {
+      "file": "PCI-001.xs",
+      "ok": true,
+      "key": "PCI-001",
+      "title": "Card numbers and security codes are never stored",
+      "statement": "No table may declare a field for a full card number (PAN), a card security code (CVV/CVC) or track data. Card details go straight to the payment processor, and only its token or the last four digits are kept. A field that must exist for a legitimate reason needs a named exemption and sign-off from the platform owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "PCI-001.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "cvv",
+              "cvc",
+              "pan",
+              "track_data"
+            ],
+            "field_types": [],
+            "attribute": "",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": true,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "PCI-002.xs",
+      "ok": true,
+      "key": "PCI-002",
+      "title": "Logs never contain request, user or secret data",
+      "statement": "Debug and Datadog logs must not reference request input, the logged-in user or environment values. Card numbers, security codes, cardholder names and similar data must never reach a log. Log the event (for example, that a charge was attempted for an invoice) and not the payload.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "PCI-002.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log",
+              "datadog.log"
+            ],
+            "param_names": [
+              "value",
+              "message",
+              "attributes"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "PCI-003.xs",
+      "ok": true,
+      "key": "PCI-003",
+      "title": "Data only goes to approved vendors (Stripe and Plaid)",
+      "statement": "Outbound requests and cloud, email and AI model providers may only go to the vendors on the approved list: Stripe (api.stripe.com) and Plaid (production.plaid.com). Any other vendor needs a security review and an update to this policy before it receives any data, including cardholder data. Destinations outside this list are reported as not yet reviewed.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "PCI-003.R1",
+          "title": "",
+          "check": "outbound.vendor_allowlist",
+          "params": {
+            "kinds": [],
+            "hosts": [
+              "api.stripe.com",
+              "production.plaid.com"
+            ],
+            "providers": [],
+            "env_hosts": [],
+            "literal_urls_forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

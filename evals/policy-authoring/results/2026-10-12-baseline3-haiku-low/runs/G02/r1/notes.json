@@ -1,0 +1,47 @@
+{
+  "goal_id": "G02",
+  "templates_considered": [
+    "functions_snake_case (CONV-010): fits the function half of the ask; used as the starting point for CONV-010 and extended with the acme_ prefix",
+    "endpoint_paths_versioned (CONV-012): did not fit; it requires kebab-case paths, which contradicts the customer's snake_case ask, and it requires a version segment the customer did not ask for",
+    "fields_snake_case (CONV-011): did not fit; the customer asked about endpoints, functions and tables, not fields",
+    "function_arguments_snake_case (CONV-013): did not fit; the customer asked about function names, not inputs",
+    "tables_classified (CONV-023) and agreed_tag_vocabulary (CONV-020): did not fit; they check tags, not table names",
+    "no template covers table plurality: nothing to use"
+  ],
+  "templates_used": ["functions_snake_case"],
+  "rules": [
+    {"policy_key": "CONV-010", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "case_style": "snake_case", "prefixes": ["acme_"]}, "covers": "functions are snake_case and start with the client prefix"},
+    {"policy_key": "CONV-NAMING-ENDPOINTS", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are lowercase snake_case"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "tables are plural", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "client prefix is acme_, taken from the workspace's existing acme_ functions; the customer's real prefix for this client was not stated",
+    "'lowercase snake_case' for endpoints means the object.naming case_style snake_case applied to endpoint_path segments",
+    "path parameters like {customer_id} are exempt from the naming rule, per the check description",
+    "advisory and active per the customer's 'flag it, don't block it'",
+    "one policy per naming kind (functions, endpoint paths) since no single template covers both and the template key would be misleading for a mixed policy"
+  ],
+  "workspace_names_used": [
+    "acme_calculate_tax", "acme_get_tracking", "acme_notify_sms", "acme_send_invoice_email", "acme_sync_shipping_rates",
+    "calculateLateFee", "check_admin_role", "delete_user_account", "record_audit_event", "request_human_approval", "summarize_ticket",
+    "getCustomerProfile", "bank-accounts/link", "customers/{customer_id}", "shipments/{shipment_id}/track",
+    "invoice_item", "payment_method", "user_address", "audit_log", "sessions"
+  ],
+  "confusions": [
+    "The template CONV-012 'Endpoint paths are versioned kebab-case' directly conflicts with the customer's snake_case ask. The skill says to start from a template when one fits, but the template's case style is the opposite of what was asked, so I did not use it. It is not clear how to handle a template whose title overlaps the request but whose settings contradict it.",
+    "The skill says a template's key should be kept when starting from it, but CONV-010 now covers functions with a prefix the template does not have. I kept the key, which keeps the rule's identity with the template. Unclear whether that is the right call when rules change substantively.",
+    "The catalogue's object.naming 'requires_one_of' includes prefixes, but the required-param marking is '+' on several params and 'at least one of' on others. For a rule with only case_style, it was clear enough, but the mixed marking on min_length/max_length is easy to misread.",
+    "Whether a multi-kind rule (functions plus endpoints) should be one policy or two was not stated. I chose two."
+  ],
+  "wished_for": [
+    "A check or param for name plurality (for example, a 'plural' case option on object.naming for table names), since 'tables are plural' is a common convention request and currently nothing covers it",
+    "An example of a naming-convention policy scoped to a client prefix, with the prefix kept in one place across several workspaces (the customer has 12 client workspaces)",
+    "Guidance on whether one policy per naming kind or one policy with several rules is preferred for naming conventions"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Endpoint and function naming are covered directly by object.naming and both policies parse with no rule warnings. Confidence is only medium because the client prefix is assumed to be acme_, table plurality is not covered at all, and I could not run policy evaluate to confirm the predicted findings."
+}

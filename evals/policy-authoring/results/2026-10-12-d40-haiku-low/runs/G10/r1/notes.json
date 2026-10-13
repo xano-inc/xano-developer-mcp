@@ -1,0 +1,64 @@
+{
+  "goal_id": "G10",
+  "templates_considered": [
+    "ai_cost_and_agent_safety (AI safety recipe): covers the approval part, but its 'AI tools cannot delete records' rule forbids deletes outright, which conflicts with the customer's approve-first ask, so not used as-is",
+    "approved_vendors_only (VND-001): email vendor allowlist, not asked for; not used",
+    "ai_tools_described (CONV-030): description quality, not asked for; not used",
+    "no_destructive_sql (SEC-010): raw SQL / truncate, not asked for; not used",
+    "endpoints_need_login (AUTH-010): endpoints, not agent tools; not used",
+    "writes_check_first (BIZ-001): endpoint write ordering, not agent tools; not used"
+  ],
+  "templates_used": [],
+  "rules": [
+    {
+      "policy_key": "AGENT-010",
+      "check": "stack.statement_order",
+      "params": {
+        "before": {"functions": ["request_human_approval"]},
+        "after": ["db.del", "db.bulk.delete", "util.send_email"],
+        "object_kinds": ["tool"]
+      },
+      "covers": "Deletes and emails by AI agent tools wait for a person's approval (approve-first, not ban)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "AI agents must not be able to call tools the customer hasn't explicitly given them", "why": "no check exists"},
+    {"part": "AI agents must not be able to delete anything (absolute ban, as distinct from approval)", "why": "other: the customer's wording ('without a human approving it first') implies approval, so I did not write a ban; flagged for the customer to confirm"},
+    {"part": "Deletes and emails outside AI agent tools (delete_user_account, acme_send_invoice_email)", "why": "other: scope narrowed to the object kind tool because the ask is about AI agents; the customer may want the whole workspace"}
+  ],
+  "assumptions": [
+    "'AI agents' means the workspace's agent tools (object kind tool); agents only act through tools",
+    "request_human_approval is the approval check the customer means; it throws until a person approves, so calling it first is the gate",
+    "'Email customers' means util.send_email; no other email statement appears in the workspace's tools",
+    "'Delete anything' is covered by db.del, db.bulk.delete (db.truncate not listed; the customer asked about delete, and truncate is excluded from this rule)",
+    "A prediction only: delete_customer_note and send_customer_email should fail the rule; issue_refund should pass. Not verified by xano policy evaluate, which I was not allowed to run"
+  ],
+  "workspace_names_used": [
+    "request_human_approval",
+    "delete_customer_note",
+    "send_customer_email",
+    "issue_refund",
+    "lookup_order",
+    "support_agent",
+    "delete_user_account",
+    "acme_send_invoice_email",
+    "approval_requests",
+    "customer_notes"
+  ],
+  "confusions": [
+    "The ai_cost_and_agent_safety recipe says 'AI tools cannot delete records' via stack.statement_forbidden, and also 'deletes wait for an approval check' via stack.statement_order. These two are contradictory for an approve-first ask; the recipe does not say which to use, and nothing says how to combine them",
+    "The skill says a check's Fix note 'adds detail' but the recipe's prerequisites say to 'write one function that checks a person approved'. The workspace already has request_human_approval, so it is unclear whether an existing function can be named without adding anything",
+    "stack.statement_order 'before' must 'always run ahead'; a function that throws when approval_id is missing still counts, but the catalogue does not say a call that can throw counts as a before. I assumed it does, from the description of synchronous calls",
+    "The object_kinds param sits on stack.statement_order as a scope filter; the catalogue lists 'Scope' params as tags/except_tags/api_groups/verbs/endpoint_auth/tables/object_kinds, but I could not confirm from the catalogue whether object_kinds is accepted by every check. Parse accepted it with no warning"
+  ],
+  "wished_for": [
+    "A way to restrict which tools an agent may expose, or at least a check on agent tool lists (the not_checkable topic says it is not yet available)",
+    "A recipe or template with approve-first (require approval before delete/email) as its own rule, separate from the ban-deletes template",
+    "A worked example of object_kinds on stack.statement_order scoped to tools, to confirm the pattern",
+    "Guidance on whether a function that throws until approval counts as a before in stack.statement_order"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The approval-before-delete-and-email part is checkable and the policy parses with no rule warnings, so the rule should judge what it is meant to. Confidence is only medium because I could not run xano policy evaluate, so the expected findings are a prediction; the tool-allowlist part is not checkable at all; and the policy covers agent tools only, which may be narrower than the customer wants."
+}

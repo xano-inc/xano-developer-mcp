@@ -1,0 +1,41 @@
+{
+  "goal_id": "G02",
+  "repeat": 2,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:47:47.702Z",
+  "wall_ms": 54232,
+  "duration_ms": 53141,
+  "cost_usd": 0.01747695,
+  "num_turns": 10,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "CONV-010.xs",
+    "ENDPOINT-NAMING-010.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 2,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "cat .claude/skills/xano-policies/SKILL.md; echo ---; cat kit/policy-templates.md; echo ---; ls -R kit | head -50",
+    "cat kit/catalogue.json | head -c 60000",
+    "cd kit && python3 -I -c \"\nimport json\nd=json.load(open('catalogue.json'))\nprint(d.keys() if isinstance(d,dict) else type(d))\nfor i in d['items']:\n    print(i['id'], '|', i.get('label'), '|', list(i.keys()))\n\" ; wc -c policy-templates.md; ls -la /Users/robert-xano/.claude 2>/dev/null | head -2",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G02-r2 && xano workspace pull -d ./workspace 2>&1 | tail -20; echo ---; xano policy list 2>&1 | head -40; echo ---; find ./workspace -type f | sed 's|^./workspace/||' | head -200",
+    "cat workspace/policy_authoring_eval.xs; echo ---; cat workspace/function/acme_calculate_tax.xs; echo ---; cat workspace/api/app/customers_POST.xs | head -30; echo ---; grep -rh -E '^(table|function|query|api_group) |^\\s*(route|tags)' workspace | head -120; echo ---; python3 -I -c \"\nimport json\nd=jso…",
+    "mkdir -p out && cat > out/CONV-010.xs <<'EOF'\npolicy \"CONV-010\" {\n  title = \"Functions are snake_case and start with the client prefix\"\n  statement = \"Every function name is lowercase words joined by underscores and starts with the client prefix acme_, such as acme_calculate_tax. A function that doe…",
+    "cat > out/reply.md <<'EOF'\nI can cover two of your three rules with checks. Table plurality has no check, so it isn't covered. I drafted both policies as advisory and active, so they flag but never block.\n\n**1. Functions are snake_case and start with the client prefix** (`out/CONV-010.xs`)\n- Uses th…"
+  ],
+  "final_message": "Wrote `CONV-010.xs`, `ENDPOINT-NAMING-010.xs`, `reply.md` and `notes.json` to `./out/`; both policies parse, confidence medium (table plurality is not coverable and the function prefix `acme_` is assumed)."
+}

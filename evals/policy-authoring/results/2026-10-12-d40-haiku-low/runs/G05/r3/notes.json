@@ -1,0 +1,56 @@
+{
+  "goal_id": "G05",
+  "templates_considered": [
+    "AUTH-002 admin_endpoints_check_role: fit; the 'admin endpoints call role check first' ask. Used as the base, but its tags:[admin] scope matched nothing, because the admin api_group carries no tags. Switched to api_groups.",
+    "AUTH-020 own_records_only: partial fit at best. Its where-constraint rule pins compare_to to $auth.id, which the ask does not want (org isolation, not owner isolation). Title 'own records' would be misleading. Not used.",
+    "AUTH-010 endpoints_need_login: did not fit; the ask does not require login, it requires a role.",
+    "AUTH-030 no_self_promotion: did not fit; not about role writes.",
+    "CONF-010 sensitive_tables_need_login: did not fit; no table_tags for tenants and it is about login, not org filtering.",
+    "RET-001 audit_log_protected and CHG-001 endpoints_have_tests: not in the ask."
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {
+      "policy_key": "AUTH-002",
+      "check": "object.statement_required",
+      "params": {"functions": ["check_admin_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]},
+      "covers": "Admin endpoints check the role first, before doing anything else (placement first, not just any position)."
+    },
+    {
+      "policy_key": "TEN-010",
+      "check": "db.where_constraint_required",
+      "params": {"field": "org_id", "table_selector": {"names": ["tenants"]}},
+      "covers": "Never touches tenants without filtering by org_id. No compare_to, because the ask gives no value and admins are cross-org."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "'every endpoint under /admin': api/app/admin/stats_GET.xs is at /api:app/admin/stats, in the app group, and api_groups cannot select it by path. Not scoped in.", "why": "couldn't tell how"},
+    {"part": "Whether the role check's result is 'admin' or 'support_lead' (what the check decides)", "why": "no check exists"},
+    {"part": "Org isolation for admins: should a support lead only reach tenants in their own org?", "why": "needs runtime/org process"},
+    {"part": "Tenant writes hidden inside called functions", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "'/admin' means the admin api_group (served at /api:admin), not any path containing admin.",
+    "The role check is check_admin_role (function) and it already tests admin or support_lead.",
+    "'Filtering by org_id' means a predicate on the statement's own tenants table, with any value (no compare_to).",
+    "tenants.org_id is the field that holds the org (it is an int field linked to orgs)."
+  ],
+  "workspace_names_used": ["api_group admin", "check_admin_role", "tenants", "org_id", "$auth", "api/admin/tenants_GET.xs", "api/admin/tenants/tenant_id_PATCH.xs", "api/admin/orgs/org_id/tenants_GET.xs", "api/admin/users_GET.xs", "api/app/admin/stats_GET.xs"],
+  "confusions": [
+    "AUTH-002 template fill says tags:[admin], but the workspace's admin api_group has no tags. The template's scope doesn't say whether api_groups is an allowed alternative for that check. I used it, and parse accepted it with no rule warning, but the guidance should say so.",
+    "The 'before anything else' wording maps to placement first. Ambiguous whether a precondition or a db.get before the check is a violation of 'first'. The check doc says first means the object's own first statement, a comment skipped, so it's clear, but the template summary says 'as its first statement' only.",
+    "Template AUTH-002 is keyed on the admin tag, so an endpoint that is under /admin but not tagged admin is silently not examined. The catalogue limits note says this, but a path-based scope would be a much better fit for 'every endpoint under /admin'. There is no path scope param.",
+    "The where_constraint check says db.edit passes only when picked by field against compare_to. A PATCH by id with no compare_to is therefore always a finding. That's correct for this ask but the reason is not obvious from the template for AUTH-020.",
+    "No template covers 'tenant isolation by org' directly. AUTH-020 is about owner/user, and its rule titles would mislead, so I wrote a custom key TEN-010 instead of a template key."
+  ],
+  "wished_for": [
+    "A path or endpoint-name scope param (for example path_prefix: '/admin'), since the customer's words are about URLs.",
+    "A template or recipe for tenant/org isolation (multi-tenant row scoping) with an example that leaves compare_to empty for cross-org staff and sets it for normal users.",
+    "A note on whether api_groups counts as a substitute for tags in templates whose fill is tags.",
+    "A check that can see what a role check decides (or an example of pairing object.statement_required with a role-value check)."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both policies parse with no rule warnings, and the check semantics fit the ask for 'first' and 'org_id on tenants'. The gap is scope: 'under /admin' is matched by api_group, which may miss endpoints a customer thinks of as admin (app/admin/stats). And the role check verifies that the function is called first, not what it decides. Nothing was evaluated against the live workspace."
+}

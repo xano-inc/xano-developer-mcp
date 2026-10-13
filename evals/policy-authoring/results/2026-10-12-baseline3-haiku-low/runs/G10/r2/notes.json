@@ -1,0 +1,91 @@
+{
+  "goal_id": "G10",
+  "templates_considered": [
+    "no_destructive_sql (SEC-010): covers truncate and raw SQL, not db.del; does not fit delete ask",
+    "writes_check_first (BIZ-001): stack.statement_order for precondition before writes, but scoped to queries; does not fit tool approval gate",
+    "endpoints_need_login (AUTH-010), object.auth_required: agent tools are not endpoints; does not fit",
+    "tokens_expire, admin_endpoints_check_role, protected_endpoints_run_middleware, etc.: no overlap with ask"
+  ],
+  "templates_used": [],
+  "rules": [
+    {
+      "policy_key": "AGENT-001",
+      "check": "stack.statement_forbidden",
+      "params": {
+        "statements": [
+          "db.del",
+          "db.bulk.delete"
+        ],
+        "object_kinds": [
+          "tool"
+        ]
+      },
+      "covers": "agents can't delete anything"
+    },
+    {
+      "policy_key": "AGENT-002",
+      "check": "stack.statement_order",
+      "params": {
+        "before": {
+          "functions": [
+            "request_human_approval"
+          ]
+        },
+        "after": [
+          "util.send_email"
+        ],
+        "object_kinds": [
+          "tool"
+        ]
+      },
+      "covers": "agents can't email customers without human approval"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "agents shouldn't be able to call tools not explicitly given to them",
+      "why": "no check exists"
+    },
+    {
+      "part": "delete ask scoped to only deletes via agent tools; deletes elsewhere (functions, endpoints) are not the agent's concern and were not scoped in",
+      "why": "other"
+    }
+  ],
+  "assumptions": [
+    "'Delete anything' means db.del / db.bulk.delete reached from agent tools; other destructive statements (db.truncate, raw SQL) are covered by existing template SEC-010, not added here",
+    "'Email customers' means util.send_email; api.request to an email vendor was not in scope",
+    "request_human_approval throws unless approval_id is approved, so a before-call that precedes the send is a real gate only if the tool passes approval_id",
+    "Agent tool scope = object_kinds tool; agent objects have no stack and are not inspected by these checks",
+    "New policies start active and advisory per skill guidance"
+  ],
+  "workspace_names_used": [
+    "db.del",
+    "db.bulk.delete",
+    "util.send_email",
+    "request_human_approval",
+    "delete_customer_note",
+    "send_customer_email",
+    "issue_refund",
+    "lookup_order",
+    "support_agent",
+    "approval_requests",
+    "customer_notes"
+  ],
+  "confusions": [
+    "Skill says a policy file 'carries no comments' but the workspace .xs files use // comments; unclear whether any policy header comments are allowed (I wrote none)",
+    "No check for 'agent may only call explicitly listed tools'; had to decide the ask is uncoverable rather than approximate it",
+    "stack.statement_order for approval gating checks that a call precedes the send, not that the approval is valid; the skill does not say whether the target function's own throw counts as a guarantee",
+    "Unclear whether object_kinds 'tool' with statement_forbidden follows called functions the same way as tool stacks (the check says called functions are followed, but tool-to-tool or middleware is not)",
+    "The catalogue's statements list is not enumerated anywhere I could find, so I took db.del and db.bulk.delete from workspace code, not from a documented list"
+  ],
+  "wished_for": [
+    "A check for an agent's tool allowlist (only tools listed on the agent may be used), or a documented agent-level tools check",
+    "A recipe for approval gating: how to express 'human approves before a side effect' using stack.statement_order with a function call",
+    "A list of statement names (db.del, db.bulk.delete, util.send_email, etc.) to avoid guessing from code",
+    "An example of agent-kind scoping, e.g. how to scope a rule to tools reached by a given agent"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Delete and email-approval asks map to real checks and parse cleanly, but the approval gate only proves a call precedes the send, not that approval was granted; the tool-allowlist ask has no check; nothing evaluated against the workspace yet"
+}

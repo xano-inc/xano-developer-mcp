@@ -1,0 +1,31 @@
+{
+  "goal_id": "G13",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): covers login for endpoints, not training; does not fit the ask",
+    "sensitive_tables_need_login (CONF-010): closest checkable part (customer-data access is limited to logged-in endpoints), but it checks auth, not training; would be an approximation, so not used",
+    "confidential_tables_tagged (CONF-012): would tag customer tables, a prerequisite for scoping, but it is not what was asked; proposed in reply, not used",
+    "no_pii_in_responses, own_records_only, no_sensitive_data_in_logs: relate to data handling, not training; did not fit"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "everyone on the team has completed security awareness training", "why": "needs runtime/org process"},
+    {"part": "only trained people are allowed to touch customer data (access gate tied to training)", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Customer data corresponds to tables named customers, customer_notes, payment_method, invoices, orders and support_tickets; I did not confirm their sensitivity"
+  ],
+  "workspace_names_used": ["customers", "customer_notes", "payment_method", "invoices", "orders", "support_tickets", "audit_log", "orgs"],
+  "confusions": [
+    "The skill says to write no policy only when no part is checkable, but the customer-data-access part is checkable only as an approximation (login requirement), which the skill says checks something else. I could not tell whether a partial policy would be wanted here, so I wrote none and offered options.",
+    "No guidance on how a policy should respond when the ask depends on an external system (HR/LMS). The skill covers what checks exist but not how to hand off a non-Xano requirement."
+  ],
+  "wished_for": [
+    "A recipe for asks that combine a checkable part (access) with a non-checkable part (training), showing how to split them in the reply",
+    "A way to tell from the workspace which tables hold customer data without relying on names"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "High confidence that no check can verify training completion, so no policy achieves the goal. I did not run xano policy parse since no file was written. I used only read-only commands (policy list, workspace pull, catalogue reads) and did not evaluate or push anything."
+}

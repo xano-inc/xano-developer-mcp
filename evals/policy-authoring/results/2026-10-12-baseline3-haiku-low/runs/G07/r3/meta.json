@@ -1,0 +1,41 @@
+{
+  "goal_id": "G07",
+  "repeat": 3,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:52:27.463Z",
+  "wall_ms": 50275,
+  "duration_ms": 49289,
+  "cost_usd": 0.01501064,
+  "num_turns": 12,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "AUTH-002.xs",
+    "CHG-001.xs",
+    "RET-001.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 2,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit && cat kit/policy-templates.md && echo ---- && xano policy list 2>&1 | head -50",
+    "xano workspace pull -d ./workspace 2>&1 | tail -5; echo ---; find ./workspace -type f | head -200; echo ---; xano policy catalogue 2>&1 | head -5",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G07-r3/workspace && cat workspace/policy_authoring_eval.xs; echo ----; cat function/record_audit_event.xs; echo ----; cat table/audit_log.xs; echo ----; cat function/check_admin_role…",
+    "grep -rln \"check_admin_role\" . ; echo ---; grep -rl \"record_audit_event\" .; echo ---; grep -rn \"db.\\(add\\|edit\\|patch\\|delete\\) \" . | awk -F: '{print $1}' | sort | uniq -c; echo ---; ls workspace; head -12 workflow_test/invoices_require_login.xs; echo; grep -rl \"\" ../workspace/unit_test 2>/dev/null …",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G07-r3 && mkdir -p out/parse && cat > out/AUTH-002.xs <<'EOF'\npolicy \"AUTH-002\" {\n  title = \"Admin endpoints check the caller's role\"\n  statement = \"Every endpoint in the admin API g…",
+    "xano policy parse ./AUTH-002.xs 2>&1; echo \"exit $?\"; rm -rf parse; ls"
+  ],
+  "final_message": "Wrote `out/AUTH-002.xs`, `out/RET-001.xs`, `out/CHG-001.xs` (all parse clean after one fix), `out/reply.md` and `out/notes.json`. Confidence: low. The policies cover admin role checks, audit-table integrity and endpoint tests, but no check covers access reviews or change approval, and I did not run `xano policy evaluate` because the brief forbids it."
+}

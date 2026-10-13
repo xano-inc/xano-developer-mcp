@@ -1,0 +1,81 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AGENT-001.xs",
+    "AGENT-002.xs"
+  ],
+  "policies": [
+    {
+      "file": "AGENT-001.xs",
+      "ok": true,
+      "key": "AGENT-001",
+      "title": "AI agent tools don't delete data",
+      "statement": "No AI agent tool may delete records. A tool that deletes data, directly or through a function it calls, must be removed or changed to archive or flag the record instead.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AGENT-001.R1",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.del",
+              "db.bulk.delete"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "AGENT-002.xs",
+      "ok": true,
+      "key": "AGENT-002",
+      "title": "AI agent tools email customers only after human approval",
+      "statement": "An AI agent tool may send email to a customer only after a person has approved the send. The tool must call request_human_approval before it sends any email.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AGENT-002.R1",
+          "title": "",
+          "check": "stack.statement_order",
+          "params": {
+            "before": {
+              "functions": [
+                "request_human_approval"
+              ]
+            },
+            "after": [
+              "util.send_email"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "goal_id": "G06",
+  "repeat": 2,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:51:36.514Z",
+  "wall_ms": 50945,
+  "duration_ms": 49995,
+  "cost_usd": 0.01541877,
+  "num_turns": 11,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "CHG-001.xs",
+    "CONV-040.xs",
+    "LOG-010.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 3,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit && wc -c kit/*",
+    "cat kit/policy-templates.md && which xano && xano policy list 2>&1 | head -50; xano workspace pull -d ./workspace 2>&1 | tail -5; ls -R workspace | head -80",
+    "python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nprint(list(d.keys()) if isinstance(d,dict) else type(d))\nt=d.get('templates',[])\nfor x in t:\n  if x.get('id') in ('endpoints_have_tests','endpoints_stay_short','shallow_nesting','external_calls_handle_errors','no_leftover_code'):\n  …",
+    "wc -l workspace/function/*.xs | sort -n | tail -4; grep -rl \"api.request\" workspace | head; grep -rho \"try_catch\" workspace | wc -l; xano policy catalogue 2>&1 | head -5",
+    "mkdir -p out/policies && cat > out/CHG-001.xs <<'EOF'\npolicy \"CHG-001\" {\n  title = \"Endpoints, functions and tasks are tested\"\n  statement = \"Every endpoint, function and task is exercised by a workflow test or unit test that asserts something, and every protected endpoint has a test asserting that …",
+    "cat out/LOG-010.xs | head -6; xano policy parse out/LOG-010.xs -o json 2>&1 | head -40",
+    "cat > out/reply.md <<'EOF'\n# Policies for your review: missing error handling, no tests, giant functions\n\nI have drafted three policies for your project. None is published or evaluated yet; they are files in `out/` for you to review first.\n\n## What each policy covers\n\n- **`CHG-001`: Endpoints, funct…",
+    "rmdir out/policies && python3 -I -c \"\np='out/reply.md'\ns=open(p).read()\ns=s.replace('The largest function in your workspace is about 82 lines, so it will not trip at 30 statements unless it is long in statements, not lines. Check the findings after evaluating.','The largest file in your workspace is…"
+  ],
+  "final_message": "Wrote `CHG-001.xs`, `CONV-040.xs` and `LOG-010.xs` (all parse), `reply.md` and `notes.json` to `./out/`. Confidence: medium. Error handling is only checked for `api.request`, and the \"juniors breaking prod\" part can't be checked by a policy. Nothing was published or evaluated."
+}

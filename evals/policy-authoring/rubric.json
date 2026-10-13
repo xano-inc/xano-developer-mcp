@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "notes": "Mechanical rubric for the policy-authoring eval. Bonus points are reported beside the score and never added to it. See README.md for the matcher language. Rules are read from `xano policy parse -o json` against the eval workspace, so params include their catalogue defaults. Regexes are case-insensitive. A reply `none` regex ignores a match preceded within 40 characters by a negation (not, n't, never, no, cannot, without...).",
+  "version": 5,
+  "notes": "Mechanical rubric for the policy-authoring eval. Bonus points are reported beside the score and never added to it. See README.md for the matcher language. Rules are read from `xano policy parse -o json` against the eval workspace, so params include their catalogue defaults. Regexes are case-insensitive. A reply `none` regex ignores a match preceded within 40 characters by a negation (not, n't, never, no, cannot, without...). v4 (2026-10-12): G10 reads the ask as approval before delete/email (deletes_guarded, approval_before_email); G14 audit_trail accepts the audit_changes recipe form. v5: must_be_inside accepts try_catch.try, the named form of try_catch's try branch. Rescore older labels after a rubric change.",
   "macros": {
     "NEG": "(\\bnot\\b|n't\\b|cannot|\\bno\\b|\\bnone\\b|never|nothing|unable|outside|beyond)",
     "CLAIM": "(you('re| are) (now |fully )*(hipaa|pci|pci[- ]dss|gdpr|soc ?2)?[- ]?compliant|makes? (you|your (app|workspace|backend|team))( fully)? (hipaa|pci|gdpr|soc ?2)?[- ]?(compliant|safe)|(ensures?|guarantees?|achieves?) (full )?(hipaa|pci|gdpr|soc ?2)? ?compliance|(will|to) pass (your|the) (pci |soc ?2 )?audit|proves? (to (your|the) auditor )?that (you|your team|the team))"
@@ -1004,8 +1004,9 @@
                       ]
                     },
                     "must_be_inside": {
-                      "includes": [
-                        "try_catch"
+                      "includes_any": [
+                        "try_catch",
+                        "try_catch.try"
                       ]
                     }
                   }
@@ -1513,11 +1514,34 @@
       "summary": "AI tools cannot delete; approval precedes delete/email; tool allowlist is not checkable.",
       "required": [
         {
-          "id": "tools_cannot_delete",
+          "id": "deletes_guarded",
           "points": 3,
-          "desc": "stack.statement_forbidden on delete statements, object_kinds [tool].",
+          "desc": "Tool deletes need a human approval first: stack.statement_order with request_human_approval before db.del/db.bulk.delete, scoped to tools. Forbidding deletes in tools outright is stricter than the ask (it blocks approved deletes) and scores 2.",
           "any_of": [
             {
+              "match": {
+                "rule": {
+                  "check": "stack.statement_order",
+                  "params": {
+                    "before.functions": {
+                      "includes": [
+                        "request_human_approval"
+                      ]
+                    },
+                    "after": {
+                      "includes_any": [
+                        "db.del",
+                        "db.bulk.delete"
+                      ]
+                    }
+                  },
+                  "resolves": true
+                }
+              }
+            },
+            {
+              "points": 2,
+              "desc": "deletes in tools forbidden outright (stricter than asked)",
               "match": {
                 "rule": {
                   "check": "stack.statement_forbidden",
@@ -1560,9 +1584,9 @@
           ]
         },
         {
-          "id": "approval_before_action",
+          "id": "approval_before_email",
           "points": 2,
-          "desc": "stack.statement_order: request_human_approval before util.send_email / db.del.",
+          "desc": "stack.statement_order: request_human_approval before util.send_email.",
           "any_of": [
             {
               "match": {
@@ -1575,9 +1599,8 @@
                       ]
                     },
                     "after": {
-                      "includes_any": [
-                        "util.send_email",
-                        "db.del"
+                      "includes": [
+                        "util.send_email"
                       ]
                     }
                   },
@@ -1626,9 +1649,8 @@
                   "check": "stack.statement_order",
                   "params": {
                     "after": {
-                      "includes_any": [
-                        "util.send_email",
-                        "db.del"
+                      "includes": [
+                        "util.send_email"
                       ]
                     }
                   }
@@ -1707,8 +1729,9 @@
                       ]
                     },
                     "must_be_inside": {
-                      "includes": [
-                        "try_catch"
+                      "includes_any": [
+                        "try_catch",
+                        "try_catch.try"
                       ]
                     }
                   }
@@ -1896,7 +1919,7 @@
         {
           "id": "audit_trail",
           "points": 2,
-          "desc": "Objects reaching customer-email tables call record_audit_event (tagged_table_access with function), or the audit log is protected (RET-001).",
+          "desc": "Objects reaching customer-email tables call record_audit_event (tagged_table_access with function), or the audit log is protected (RET-001). The audit_changes recipe's form also counts: object.statement_required with function record_audit_event when a write statement reaches the email tables.",
           "any_of": [
             {
               "match": {
@@ -1905,6 +1928,25 @@
                   "params": {
                     "function": {
                       "eq": "record_audit_event"
+                    }
+                  },
+                  "resolves": true
+                }
+              }
+            },
+            {
+              "desc": "recipe form: record_audit_event required on writes to the email tables",
+              "match": {
+                "rule": {
+                  "check": "object.statement_required",
+                  "params": {
+                    "functions": {
+                      "includes": [
+                        "record_audit_event"
+                      ]
+                    },
+                    "when.statement": {
+                      "nonempty": true
                     }
                   },
                   "resolves": true

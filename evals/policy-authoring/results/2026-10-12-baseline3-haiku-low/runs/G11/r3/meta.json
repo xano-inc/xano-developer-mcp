@@ -1,0 +1,43 @@
+{
+  "goal_id": "G11",
+  "repeat": 3,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:55:17.810Z",
+  "wall_ms": 63288,
+  "duration_ms": 62260,
+  "cost_usd": 0.01955576,
+  "num_turns": 17,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "LOG-010.xs",
+    "SEC-013.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 3,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "cat .claude/skills/xano-policies/SKILL.md; echo ---; cat kit/policy-templates.md; echo ---; ls -la kit out",
+    "cd . && xano policy catalogue -o json > /tmp/cat_check.json 2>&1; head -c 300 /tmp/cat_check.json; echo; ls kit; xano policy list 2>&1 | head -50",
+    "cd . && python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nprint(d.keys())\nfor t in d.get('templates',[]):\n    if t.get('id') in ('requests_have_timeout','external_calls_handle_errors','tls_verification_on'):\n        print(json.dumps(t,indent=1))\nfor c in d.get('items',[]):\n    if c…",
+    "cd . && python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nfor t in d.get('templates',[]):\n    if t.get('id') in ('requests_have_timeout','external_calls_handle_errors'):\n        print(json.dumps(t,indent=1))\nfor c in d.get('items',[]):\n    if c['id'] in ('statement.param_bound','st…",
+    "cd . && xano workspace pull -d ./workspace 2>&1 | tail -5; echo ---; grep -rln \"api.request\\|stream.from_request\\|webflow.request\\|db.external\\|ai.external\" workspace 2>/dev/null | head -50",
+    "cd . && python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nfor c in d.get('items',[]):\n    if c['id'] in ('statement.param_required',):\n        print(c['description']); print(c.get('requires_one_of')); print(c.get('fix_hint'))\nfor t in d.get('templates',[]):\n    if t.get('id')=='req…",
+    "cd ./workspace && for f in function/acme_get_tracking.xs function/acme_sync_shipping_rates.xs function/acme_notify_sms.xs ai/tool/issue_refund.xs task/retry_failed_webhooks.xs api/app/shipments/quote_POST.xs api/app/payments/fraud_check_POST.xs api/app/payments/charge_POST.xs api/app/bank_accounts/l…",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G11-r3 && xano policy parse out/SEC-013.xs 2>&1; echo \"exit=$?\"; echo ---; xano policy parse out/LOG-010.xs 2>&1; echo \"exit=$?\"",
+    "python3 -I -c \"import json;json.load(open('out/notes.json'));print('ok')\" && ls out"
+  ],
+  "final_message": "Wrote `out/SEC-013.xs` (timeout), `out/LOG-010.xs` (try block around external calls), `out/reply.md`, and `out/notes.json`; both policies parse with exit 0 and no warnings, and confidence is medium because the catch-branch contents and MCP/db.external calls are not covered."
+}

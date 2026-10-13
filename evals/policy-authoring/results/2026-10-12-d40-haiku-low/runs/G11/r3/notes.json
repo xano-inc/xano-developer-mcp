@@ -1,0 +1,50 @@
+{
+  "goal_id": "G11",
+  "templates_considered": [
+    "external_calls_handle_errors (LOG-010): fits; the ask's error-handling half. Used.",
+    "requests_have_timeout (SEC-013): fits; the ask's timeout half. Used.",
+    "tls_verification_on (SEC-011): not asked for",
+    "approved_vendors_only (VND-001): not asked for; needs hosts/providers the ask does not name",
+    "middleware_surfaces_errors (LOG-011): about middleware swallowing errors, not outbound calls; did not fit",
+    "no_secrets_in_code (SEC-012): not asked for; noticed a Twilio credential in acme_notify_sms, flagged in reply only"
+  ],
+  "templates_used": ["external_calls_handle_errors", "requests_have_timeout"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request", "api.microservice", "api.lambda"], "must_be_inside": ["try_catch"]}, "covers": "error handling: every outbound request sits in a try block (template rule, statement list widened from api.request to the other outbound statements named in the skill)"},
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "timeout: every outbound request has a timeout of at most 30 seconds (template rule, statement list widened)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling must actually do something (fallback, alert) rather than just exist", "why": "no check exists: containment only confirms a try_catch wraps the call; an empty catch passes"},
+    {"part": "app should not hang as a whole when a vendor is down (concurrency, retry loops)", "why": "needs runtime/org process: a per-call cap does not bound retry loops such as the retry_failed_webhooks task's while loop"},
+    {"part": "calls via db.external.* and ai.external.mcp.* cannot time out", "why": "no check exists: those statements take no timeout param, so no rule can bound them"}
+  ],
+  "assumptions": [
+    "The ask 'any external API call' maps to outbound statements api.request, stream.from_request, webflow.request, api.microservice and api.lambda, from the skill's statement names list.",
+    "A 30-second maximum is an acceptable reading of the template's 'time out quickly' summary; the customer did not give a number.",
+    "Omitted timeouts are judged at the 10-second default per the check's limits note, so they pass SEC-013. I did not add a min or require-explicit rule.",
+    "Two policies, one per template, because the skill says one policy per template when starting from templates. The ask is one goal, so this is a judgement call.",
+    "api.microservice and api.lambda exist as statement names in this platform version (taken from the skill text); neither appears in the workspace.",
+    "Advisory enforcement, as the template prescribes, since the customer did not ask for blocking."
+  ],
+  "workspace_names_used": [
+    "acme_get_tracking", "acme_sync_shipping_rates", "acme_notify_sms", "issue_refund", "retry_failed_webhooks",
+    "shipments/quote (POST)", "payments/fraud_check (POST)", "payments/charge (POST)", "bank-accounts/link (POST)"
+  ],
+  "confusions": [
+    "The template SEC-013 description says 'times out within 30 seconds' but the check's limits say an omitted timeout is judged at 10 seconds. The product should say plainly whether a call with no timeout counts as having one. As written, a call with no timeout passes, which may not be what a customer asking for timeouts expects.",
+    "The template's 'Fill' column says nothing for both templates, but the check's statement list is a fixed set in the template. The skill does not say whether widening a template's statement list is an allowed change or counts as changing the template. I widened it because the ask says 'any external API call'.",
+    "The skill says one policy per template, but the customer asked for one goal (external calls are safe). Combining the two templates into one policy would need a new key, which the skill only allows when no template covers the request. Unclear which to prefer.",
+    "xano policy parse's summary output drops the severity line, while -o json keeps it. Easy to misread as severity being lost.",
+    "The skill's external-statement list includes api.microservice and api.lambda with timeout params, but the SEC-013 and LOG-010 templates do not name them. I could not verify these statement names against the workspace or the catalogue's check parameters beyond the skill text."
+  ],
+  "wished_for": [
+    "A template or check that verifies the catch block does something (not empty, calls a function or throws).",
+    "A policy recipe for 'every outbound call', listing the full outbound statement set once, so the set is not rebuilt from prose.",
+    "Whether a missing timeout should fail the rule, or a documented example of requiring an explicit timeout (min bound on a param that may be absent).",
+    "Confirmation that api.microservice and api.lambda are accepted statement names, e.g. an example in the catalogue."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both rules parse with no rule warnings, and the timeout and try-wrapper parts are directly checkable. The policies do not prove the error handling is meaningful or that the app will not hang as a whole, and I have not run xano policy evaluate (forbidden here), so the findings predicted in the reply are from reading the code, not from the platform."
+}

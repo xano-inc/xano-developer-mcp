@@ -1,0 +1,72 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "LOG-010: used. Missing error handling on external calls; matches 'handle errors' / 'breaking prod' words and the code_review_basics recipe.",
+    "CHG-001: used. 'no tests'; matches the recipe.",
+    "CONV-040: used. 'giant functions'; stack.size_limit counts statements, not lines, so the customer's 200 lines is an approximation.",
+    "CONV-050: used. Recipe member; the customer did not name leftover code, but the recipe includes it and it is cheap for a dev lead.",
+    "PERF-001: used. Recipe member (reads are paged); not named by the customer, included because the recipe makes it part of 'code review basics'.",
+    "REVIEW-010 (own policy, not a template key): object.description_required on functions, from the code_review_basics recipe's extra rules.",
+    "CONV-030: not used. AI tools are not part of the ask.",
+    "CONV-022 / CONV-023 (owner tags, table classification): not used. They need a tag_set the customer has not given, and the workspace has no owner-team tags.",
+    "AUTH-010 / SEC-012 / SEC-013 / VAL-001 / LOG-011: not used. Not in the ask; the customer's words do not point to them.",
+    "Recipe 'Keep code easy to review': followed. Its 'First' step (tag legacy objects as legacy and list in CONV-040 except_tags) not applied: the workspace has no legacy tag and I was told not to change the workspace; proposed instead."
+  ],
+  "templates_used": ["LOG-010", "CHG-001", "CONV-040", "CONV-050", "PERF-001"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling on external calls"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "no tests: every endpoint is called by a test"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests: anonymous calls to protected endpoints must be asserted rejected"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant functions / deep nesting (approximates 'lines' with statements)"},
+    {"policy_key": "CONV-050", "check": "stack.disabled_statement_forbidden", "params": {}, "covers": "leftover code (recipe member, not named by customer)"},
+    {"policy_key": "CONV-050", "check": "object.unused_input_forbidden", "params": {}, "covers": "leftover code (recipe member, not named by customer)"},
+    {"policy_key": "CONV-050", "check": "stack.unused_variable_forbidden", "params": {}, "covers": "leftover code (recipe member, not named by customer)"},
+    {"policy_key": "PERF-001", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 1000, "unit": "rows", "object_kinds": ["query", "tool"]}, "covers": "unbounded list reads (recipe member, not named by customer)"},
+    {"policy_key": "REVIEW-010", "check": "object.description_required", "params": {"object_kinds": ["function"], "min_length": 20}, "covers": "code review basics from the recipe: functions say what they do"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "'stop the juniors from breaking prod': the policies stop nothing by themselves. They are advisory, so a finding does not block a merge, save or push. Blocking is the policy owner's choice.", "why": "needs runtime/org process"},
+    {"part": "'I'm sick of reviewing the same stuff': the review itself, who approved a change, and four-eyes sign-off", "why": "needs runtime/org process"},
+    {"part": "error handling quality: LOG-010 confirms a try_catch around api.request, not that the catch does anything useful", "why": "no check exists"},
+    {"part": "error handling on other outbound calls: stream.from_request, ai.external.mcp.* and db.external.*.direct_query are not in LOG-010's rule (the limits note says to add them)", "why": "other"},
+    {"part": "'no tests': CHG-001 confirms a test exists and asserts, not that it passes or tests the right thing", "why": "no check exists"},
+    {"part": "'200 line functions': stack.size_limit counts statements and nesting, not lines or characters", "why": "couldn't tell how"},
+    {"part": "legacy objects that already break the limit: the recipe's step to tag them legacy and except them", "why": "other"}
+  ],
+  "assumptions": [
+    "The customer's 'giant function' means more than 30 statements or 3 levels of nesting, the template defaults.",
+    "'No tests' means workflow tests or unit tests on endpoints; functions are not required to have tests (CHG-001 rule covers query only, as the template does).",
+    "Advisory is the right starting enforcement because the skill says to write a new policy advisory and let the owner decide blocking.",
+    "PERF-001 and CONV-050 are in scope because the code_review_basics recipe includes them; the customer did not name them.",
+    "Policy keys: templates keep their keys; REVIEW-010 is my own key, not a template prefix with a new number.",
+    "The description rule (REVIEW-010) uses min_length 20 from the recipe; the customer did not ask for it specifically."
+  ],
+  "workspace_names_used": [
+    "charge_POST (endpoint api/app/payments/charge_POST.xs, has api.request with no try_catch: LOG-010 should flag it)",
+    "acme_sync_shipping_rates (function, long stack with nested foreach/conditional: CONV-040 should flag it)",
+    "acme_get_tracking (function, has try_catch around api.request: LOG-010 should pass it)",
+    "invoices_require_login (the only workflow test about auth; CHG-001 coverage is thin)",
+    "public (existing object tag, not used by my rules)",
+    "smoke (existing test tag, not used)",
+    "legacy: not in the workspace; proposed, not used"
+  ],
+  "confusions": [
+    "The 'Keep code easy to review' recipe says to tag legacy objects and put the tag in CONV-040 except_tags. The workspace has no such tag, and the skill says to propose a missing tag rather than write it. The rule is therefore written without an exemption; the recipe's first step has to be done by the owner first, and the skill does not say how to phrase that to a customer.",
+    "The recipe puts CONV-040 in its own policy, but CONV-040 and the 'Endpoints and functions stay short' template share one check (stack.size_limit) with CONV-041. I did not know whether two policies with the same check would conflict; I kept only CONV-040.",
+    "The policy 'Keep code easy to review' recipe lists 'functions say what they do' as an extra rule, but the template catalogue does not have a template for it. Fine as a custom policy, but the key I chose (REVIEW-010) is my own invention.",
+    "xano policy parse output omitted 'severity = \"medium\"' from LOG-010 and PERF-001 when printing back, while it kept 'severity = \"low\"' on the others. It parsed without error; I could not tell whether medium is the default and dropped silently.",
+    "The skill says 'Build rules only from the catalogue', and the templates' examples are empty ({}). For PERF-001, 'max: 1000' came from the template summary, not an example; that was fine but had to be read from the summary text.",
+    "The skill says 'Never say a policy will stop merges' and that a blocking policy blocks a merge or push. The customer's words, 'stop juniors breaking prod', pull towards blocking. The skill says advisory for new policies and not to decide blocking myself; I followed that and explain in reply.md."
+  ],
+  "wished_for": [
+    "A short 'customer words to policy' table for code review: 'breaking prod' should point to advisory-vs-blocking guidance, not only to the templates.",
+    "A note in the templates that CONV-040 counts statements, not lines, with a rough conversion from lines to statements.",
+    "A recipe step saying how to propose tags to a customer in plain words ('add a legacy tag to these objects') instead of only 'propose it separately'.",
+    "Clarity on whether two policies that share a check (CONV-040 and CONV-041) conflict or are checked separately.",
+    "Clarity on whether xano policy evaluate is needed to produce predicted object matches, since my run was forbidden and my predictions are unverified."
+  ],
+  "parse_attempts": 6,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The five template policies and the description rule match the recipe and each parses clean (6 of 6 on the first try). But the ask is about stopping breakage and review load in general: the policies check error handling around api.request only, test existence rather than test quality, and statements rather than lines, and they are advisory so they do not stop anything on their own. I could not run xano policy evaluate (forbidden here), so the object matches in reply.md are predictions from reading the workspace, not evaluated findings."
+}

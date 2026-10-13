@@ -1,0 +1,53 @@
+{
+  "goal_id": "G09",
+  "templates_considered": [
+    "retained_data_cleaned_up (RET-002): fits the retention half of the ask. Its title and summary match, and its single rule is table.coverage_required with tags. Used.",
+    "no_pii_in_responses (DATA-010): covers what endpoints return, not deletion or retention. Didn't fit.",
+    "own_records_only (AUTH-020): covers access by owner, not deletion. Didn't fit.",
+    "audit_log_protected (RET-001): about who writes the audit log. Didn't fit.",
+    "views_hide_sensitive (CONF-013): about saved views. Didn't fit."
+  ],
+  "templates_used": ["retained_data_cleaned_up"],
+  "rules": [
+    {
+      "policy_key": "RET-002",
+      "check": "table.coverage_required",
+      "params": {
+        "tags": ["retained"],
+        "referenced_by": {"object_kinds": ["task"], "statements": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"]}
+      },
+      "covers": "Retention: personal data tables have a scheduled deletion task. Does not verify the 2-year period, and selects nothing until a table carries the retained tag."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Delete user's data everywhere when the account is deleted", "why": "no check exists"},
+    {"part": "No personal data kept longer than 2 years (the period itself)", "why": "no check exists"},
+    {"part": "Deciding which tables are retained and which records to delete or anonymise", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The 'retained' tag is the one the RET-002 template example uses. I did not invent a tag set.",
+    "Personal-data tables are those with user or customer identifiers or personal fields, judged from the schema files.",
+    "The retention scope applies to tables; no check reads a record's age."
+  ],
+  "workspace_names_used": [
+    "delete_user_account", "account_DELETE", "purge_expired_sessions", "users", "sessions", "user_address", "support_tickets", "orders", "customers", "record_audit_event", "audit_log"
+  ],
+  "confusions": [
+    "The skill says a policy's rules must match catalogue names, but table.coverage_required's scope param 'tags' sits next to referenced_by in the template. I put it at the same level in params; it parsed, but I could not confirm from docs that a top-level tags param is a scope param for this check.",
+    "The parse output dropped the severity line when printing the normalized policy, though the file has it. Not clear whether that is a display issue or the parser ignored it.",
+    "Nothing in the catalogue covers a deletion cascade (data removed across all tables referencing a user). The closest is table.coverage_required, which only checks that some task deletes from a tagged table.",
+    "Retention age (2 years) is a runtime value; statement.param_bound bounds literal numbers only, so I found no check for it.",
+    "The skill's 'Never write a policy the workspace cannot support' guidance is clear for the tag case, but I had to decide whether to ship a policy that checks nothing today. I shipped it as advisory with a note in the reply."
+  ],
+  "wished_for": [
+    "A check that verifies a delete function reaches every table with a reference to the deleted entity (a deletion-cascade check).",
+    "A check or param that reads a retention age from a timestamp field (e.g. created_at older than N days).",
+    "A recipe showing how to tag tables for a template's scope, and how the tag set is agreed with the team."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [
+    "RET-002.R1: tags \"retained\" is on no table on this branch, so it selects nothing. (warning, not an error)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The retention rule parses but checks nothing until a table is tagged, and it verifies only that a cleanup task exists, not the 2-year period. The erasure half has no matching check. I did not run policy evaluate, which the brief forbids."
+}

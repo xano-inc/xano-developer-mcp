@@ -1,0 +1,58 @@
+{
+  "goal_id": "G08",
+  "templates_considered": [
+    "SEC-012 no_secrets_in_code: fits directly, the ask is hardcoded API keys and passwords; template has no fill and uses literal.credential_shape",
+    "VND-001 approved_vendors_only: did not fit, the ask is about credentials, not destinations",
+    "DATA-010 / LOG-001: did not fit, the ask is about where secrets are written, not what is returned or logged",
+    "AUTH-010 and other access templates: did not fit"
+  ],
+  "templates_used": ["SEC-012"],
+  "rules": [
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {"object_kinds": ["function", "query"]},
+      "covers": "API keys, tokens and credentialed URLs written as literals in endpoints and functions; the Twilio token in acme_notify_sms is the case the customer described"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "passwords hardcoded in a function or endpoint", "why": "no check exists"},
+    {"part": "secrets in tasks, AI tools, middleware, messages (customer said function or endpoint only)", "why": "other"},
+    {"part": "that the secret values are actually rotated and that env vars are set per environment", "why": "needs runtime/org process"},
+    {"part": "secrets written in environment values or agent settings", "why": "other"}
+  ],
+  "assumptions": [
+    "The customer's 'endpoint' is object kind query (API endpoints) and 'function' is object kind function",
+    "Tags soc2 and pci-dss are acceptable policy tags; the workspace may not have them, but policy tags are not object tags so no workspace check applies",
+    "Default locations (definition, agent_settings) and default patterns (all) are right for this ask",
+    "The contractor's Twilio secret is the acme_notify_sms function literal"
+  ],
+  "workspace_names_used": [
+    "function acme_notify_sms",
+    "function acme_send_invoice_email",
+    "function acme_get_tracking",
+    "function acme_sync_shipping_rates",
+    "ai/tool/send_customer_email",
+    "ai/tool/issue_refund",
+    "api/app/payments/charge_POST",
+    "api/app/shipments/quote_POST",
+    "api/app/bank_accounts/link_POST",
+    "env RESEND_API_KEY, STRIPE_SECRET_KEY, SHIPFAST_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, PLAID_CLIENT_ID, PLAID_SECRET"
+  ],
+  "confusions": [
+    "The skill and template say 'Words: password' for SEC-012, but the literal.credential_shape check has no password pattern; the template's keywords overstate what it matches. The customer's password half is not covered and the template does not say so.",
+    "The check's description says the pattern list is for credential shapes, and literal_keys covers literal keys passed to specific statements, not a generic password assignment. It is not clear whether a plain password assignment in a stack is a literal_keys match or nothing.",
+    "The brief said to write a policy only where a check can help; SEC-012 fits, but the template's 'Fill: nothing' with no examples meant I had to choose object_kinds myself, and the skill does not say whether to scope a secret rule by object kind or leave it everywhere.",
+    "The skill says to name only workspace names; for the literal check there is no name to match, so the scope choice was mine. Guidance on when to scope a secret rule to endpoints/functions versus every object kind would help.",
+    "I could not run xano policy evaluate (forbidden in this run), so the predicted finding on acme_notify_sms is unverified. Note the skill is written for a live evaluation step I was not allowed to take."
+  ],
+  "wished_for": [
+    "A recipe or template variant for 'no hardcoded passwords', or a documented statement that generic password assignments are out of scope for literal.credential_shape",
+    "Guidance on the 'secret rotation' part of a secret-in-code ask: that the rule finds the literal but cannot make the old value dead",
+    "An example of object_kinds scoping for literal.credential_shape in the catalogue (the example list only shows locations and patterns)"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The check matches the credential shapes the customer's Twilio key is in and the rule parses with no warnings, so the key case should be caught. Confidence is medium, not high, because the ask also names passwords, which the check does not match, and because I could not run evaluate to confirm the finding on acme_notify_sms."
+}

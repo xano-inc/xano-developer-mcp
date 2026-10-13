@@ -1,0 +1,43 @@
+{
+  "goal_id": "G03",
+  "repeat": 2,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:48:06.373Z",
+  "wall_ms": 76210,
+  "duration_ms": 75195,
+  "cost_usd": 0.020569030000000002,
+  "num_turns": 12,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "LOG-001.xs",
+    "PCI-010.xs",
+    "VND-001.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 1,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -la kit out && wc -c kit/catalogue.json",
+    "xano workspace pull -d ./workspace 2>&1 | tail -20; echo ---; xano policy list 2>&1 | head -50; echo ---; ls -R workspace 2>/dev/null | head -150",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G03-r2/workspace && cat table/payment_method.xs table/payments.xs table/customers.xs table/invoices.xs; echo ----; cat table/users.xs table/audit_log.xs table/webhook_deliveries.xs; …",
+    "cat api/app/payments/charge_POST.xs api/app/payments/fraud_check_POST.xs api/app/bank_accounts/link_POST.xs; echo ----; cat function/acme_notify_sms.xs function/acme_calculate_tax.xs function/acme_send_invoice_email.xs",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G03-r2 && python3 -I -c \"\nimport json\nc=json.load(open('kit/catalogue.json'))\nprint(type(c), list(c.keys())[:10] if isinstance(c,dict) else len(c))\n\" ; python3 -I -c \"\nimport json\nc=…",
+    "python3 -I -c \"\nimport json\nc=json.load(open('kit/catalogue.json'))\nfor t in c['templates']:\n    if t.get('id') in ('no_sensitive_data_in_logs','approved_vendors_only','sensitive_fields_marked'):\n        print(json.dumps(t, indent=1)[:3000]); print('=====')\nfor it in c['items']:\n    if it.get('id') …",
+    "mkdir -p out && cat > out/LOG-001.xs <<'EOF'\npolicy \"LOG-001\" {\n  title = \"Logs don't contain request, user or secret data\"\n  statement = \"Debug and Datadog logs never reference request input, the logged-in user or environment variables. Cardholder data (card number, CVV, expiry, cardholder name) an…",
+    "cat > out/reply.md <<'EOF'\n# Cardholder data policies: draft, not published\n\nI've drafted three policies in `out/`. Nothing is saved or pushed to your workspace, and I haven't run `xano policy evaluate`, so the results below are predictions from reading your code, not findings.\n\n## What the drafts d…"
+  ],
+  "final_message": "Wrote `out/LOG-001.xs`, `out/VND-001.xs`, `out/PCI-010.xs` (all three parse), `out/reply.md` and `out/notes.json`. Confidence: low. The policies cover logging and vendor destinations, but raw storage is only checked by field name and nothing checks what data reaches Stripe or Plaid. I ran only read-only commands and did not evaluate or publish anything, so the findings are predictions."
+}

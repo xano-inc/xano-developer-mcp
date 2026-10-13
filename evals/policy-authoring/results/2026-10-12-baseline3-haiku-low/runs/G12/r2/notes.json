@@ -1,0 +1,50 @@
+{
+  "goal_id": "G12",
+  "templates_considered": [
+    "no_pii_in_responses (DATA-010): only covers what endpoints return, not data copied between environments; did not fit",
+    "sensitive_tables_need_login (CONF-010): restricts access to tables by login, not by environment or on-call approval; did not fit",
+    "audit_log_protected (RET-001): restricts writes to an audit log, unrelated to environments; did not fit",
+    "no_secrets_in_code (SEC-012): covers hard-coded credentials, which is adjacent to prod connection strings but not the ask; did not fit",
+    "approved_vendors_only (VND-001): covers outbound destinations, not data copies; did not fit",
+    "endpoints_need_login (AUTH-010) and admin_endpoints_check_role (AUTH-002): cover login and role checks, not on-call approval; did not fit",
+    "admin_endpoints_check_role via object.statement_required with functions=[request_human_approval]: considered as a proxy for on-call approval; rejected because it checks that code calls a function, not that a person approved access"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {
+      "part": "production data never ends up in staging",
+      "why": "no check exists"
+    },
+    {
+      "part": "devs can only get into prod through the on-call process",
+      "why": "needs runtime/org process"
+    }
+  ],
+  "assumptions": [
+    "Production and staging are environments or branches outside what policies evaluate; I could not confirm how the workspace separates them",
+    "request_human_approval plus approval_requests is the closest thing the workspace has to an approval process; I did not confirm it is the on-call process",
+    "The customer wants a policy file only if some part is checkable; I judged none was"
+  ],
+  "workspace_names_used": [
+    "request_human_approval",
+    "approval_requests",
+    "tenants",
+    "db_connection_string",
+    "audit_log",
+    "record_audit_event"
+  ],
+  "confusions": [
+    "The catalogue has no check for environment or branch separation, or for data copied between them. The skill's honesty rule says to write no policy only when no part is checkable, but it does not say what to do when the whole ask falls outside the catalogue; I had to infer that from the rule",
+    "Nothing in the skill or catalogue explains how to express an approval or on-call gate. object.statement_required can require a call to a function, but no check tests that a human approved something, so the mapping is a guess",
+    "The skill's templates list covers access control and data protection, but has no entry for environment separation or data copying, and the template list does not say that gap is expected"
+  ],
+  "wished_for": [
+    "A check, or a documented statement, that policies cannot assess environment separation, data copies or access-process requirements, so a customer gets a clear no-fit answer faster",
+    "A recipe showing how to express an approval gate (for example, endpoints that must call an approval function before a write) and what it does and does not prove"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No policy file was written, so no policy can achieve the goal: neither part of the ask is checkable. I am highly confident in that finding: I read the full check list and template list, and searched the catalogue and workspace for environment, branch, staging, on-call and copy terms with no relevant hits. Nothing was parsed or evaluated because there is no file."
+}

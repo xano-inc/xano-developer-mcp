@@ -1,0 +1,40 @@
+{
+  "goal_id": "G01",
+  "repeat": 3,
+  "label": "2026-10-12-baseline3-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:47:06.435Z",
+  "wall_ms": 41528,
+  "duration_ms": 40457,
+  "cost_usd": 0.01565426,
+  "num_turns": 14,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "AUTH-010.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 2,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit; cat kit/policy-templates.md; echo ---; cat kit/catalogue.json | head -c 20000",
+    "xano workspace pull -d ./workspace 2>&1 | tail -5; echo ---; xano policy list 2>&1 | head -40; echo ---; ls -R workspace | head -100",
+    "cd workspace; cat api/app/invoices_GET.xs; echo ---; cat api/app/invoices/export_GET.xs; echo ---; cat api/app/invoices/invoice_id_GET.xs; echo ---; ls table; echo ---; grep -ril invoice . | head -30",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G01-r3; cat workspace/table/invoices.xs; echo ---; cat workspace/api/app/app.xs; echo ---; python3 -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nfor i in d['items']:\n  if …",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G01-r3; python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nfor t in d['templates']:\n  if t.get('id') in ('endpoints_need_login','no_pii_in_responses','inputs_validat…",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G01-r3; xano policy parse out/AUTH-010.xs 2>&1; echo \"exit=$?\"; xano policy parse out/AUTH-010.xs -o json 2>&1 | head -c 1500",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline3-haiku-low/G01-r3; python3 -I -m json.tool out/notes.json >/dev/null && echo json-ok; ls out"
+  ],
+  "final_message": "Wrote `out/AUTH-010.xs`, `out/reply.md` and `out/notes.json`; the policy parses cleanly and I have not run `xano policy evaluate`, so confidence is medium (the leak is caught, but the \"full table\" half is not covered)."
+}
