@@ -116,6 +116,16 @@ describe("policy documentation", () => {
     expect(text).toContain("`gdpr` GDPR, `pci_dss` PCI DSS)");
   });
 
+  it("says policy catalogue prints uses, recipes and what no check can see, and policy create refuses a recipe id", () => {
+    const cli = handleCliDocs({ topic: "policy" });
+    expect(cli).toContain("each followed by its uses");
+    expect(cli).toContain("The catalogue ends with what no check can see");
+    expect(cli).toContain("--recipe to one recipe id");
+    expect(cli).toContain("the two flags cannot be combined");
+    expect(cli).toContain("xano policy catalogue --recipe protect_card_data");
+    expect(cli).toContain("a recipe id given to --template is refused with the recipe's templates");
+  });
+
   it("says an indexed reference is read as the part before its first [, with a rule warning on a rule entry", () => {
     const prose = policies().replace(/\s+/g, " ");
     expect(prose).toContain("a read is matched by the part before its first `[`, so `$input.rows[0].sku` in code is a read of `$input.rows`.");
