@@ -57,6 +57,7 @@ The platform's starting points for a new policy, from the check catalogue this d
 | --- | --- | --- | --- | --- | --- |
 | `no_destructive_sql` | `SEC-010` | high | No table truncation or raw SQL | `stack.statement_forbidden` | _nothing_ |
 | `middleware_surfaces_errors` | `LOG-011` | medium | Middleware doesn't swallow errors | `object.settings_forbidden` | _nothing_ |
+| `reads_are_paged` | `PERF-001` | medium | Endpoints never return every row | `statement.param_bound` | _nothing_ |
 | `get_endpoints_only_read` | `API-010` | medium | GET endpoints only read | `stack.statement_forbidden` | _nothing_ |
 | `inputs_validated` | `VAL-001` | medium | Endpoint inputs are typed and bounded | `object.input_rules`, `object.unused_input_forbidden` | _nothing_ |
 | `triggers_write_elsewhere` | `RET-010` | medium | Trigger writes don't silently skip other triggers or re-fire themselves | `trigger.write_trigger_effects` | _nothing_ |
@@ -80,7 +81,7 @@ The platform's starting points for a new policy, from the check catalogue this d
 | `owner_team_tagged` | `CONV-022` | low | APIs, functions and tasks name an owner team | `object.tag_required` | `tag_set` (e.g. `["team-billing","team-growth","team-platform"]`) |
 | `tables_classified` | `CONV-023` | low | Every table is classified | `object.tag_required` | `tag_set` (e.g. `["public","internal","confidential","restricted"]`) |
 | `ai_tools_described` | `CONV-030` | low | AI tools and their inputs are described | `object.description_required` | _nothing_ |
-| `endpoints_stay_short` | `CONV-040` | low | Endpoints stay short | `stack.size_limit` | _nothing_ |
+| `endpoints_stay_short` | `CONV-040` | low | Endpoints and functions stay short | `stack.size_limit` | _nothing_ |
 | `shallow_nesting` | `CONV-041` | low | Stacks nest at most 3 levels deep | `stack.size_limit` | _nothing_ |
 | `no_leftover_code` | `CONV-050` | low | No leftover code | `stack.disabled_statement_forbidden`, `object.unused_input_forbidden`, `stack.unused_variable_forbidden` | _nothing_ |
 | `tables_have_listed_fields` | `CONV-060` | low | Every table has the listed fields | `table.field_attribute_required` | `field_names` (e.g. `["updated_at","tenant_id"]`) |
