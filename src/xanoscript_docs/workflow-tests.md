@@ -32,7 +32,7 @@ Call functions invoke Xano constructs and capture their results. Each returns a 
 
 | Call Function     | Description                    | Required Properties                  |
 | ----------------- | ------------------------------ | ------------------------------------ |
-| `api.call`        | Call an API endpoint           | `api_group`, `verb` (on call), optional `headers` |
+| `api.call`        | Call an API endpoint           | `api_group`, `verb` (on call), optional `headers`, `auth` |
 | `addon.call`      | Call an addon                  | —                                    |
 | `function.call`   | Call a function                | optional `input`                     |
 | `middleware.call`  | Call a middleware               | `input` with `vars` and `type`       |
@@ -47,6 +47,54 @@ api.call "<endpoint_name>" verb=GET {
   api_group = "<group_name>"
   headers = '["Content-Type: application/json"]'
 } as $result
+```
+
+The endpoint's authentication applies as it does over HTTP. To call an endpoint that requires authentication as a user, pass a token:
+
+- `auth = {token: "<token>", ignore_expiration: true}`: a literal token, such as one picked in the Studio's Auth Token field. `ignore_expiration` is optional.
+- An `Authorization` header, which may be computed: `headers = ["Authorization: Bearer " ~ $token]`.
+
+A call with no token, an invalid or expired one, or one for another auth table is refused, and the endpoint does not run. The result is `{code: "ERROR_CODE_UNAUTHORIZED", message: "..."}` (for no token, the message is `Unauthorized - Authentication Required`). Inside `expect.to_throw`, the call throws that message instead. An endpoint that does not require authentication ignores the token and the header.
+
+```xs
+// An anonymous caller is refused; a logged-in one gets their own record.
+api.call "me" verb=GET {
+  api_group = "account"
+} as $anonymous
+
+expect.to_equal ($anonymous.code) {
+  value = "ERROR_CODE_UNAUTHORIZED"
+}
+
+expect.to_throw {
+  stack {
+    api.call "me" verb=GET {
+      api_group = "account"
+    } as $refused
+  }
+
+  exception = "Unauthorized"
+}
+
+db.add user {
+  data = {name: "Test User", email: "test@example.com"}
+} as $user
+
+security.create_auth_token {
+  table = "user"
+  extras = {}
+  expiration = 3600
+  id = $user.id
+} as $token
+
+api.call "me" verb=GET {
+  api_group = "account"
+  headers = ["Authorization: Bearer " ~ $token]
+} as $me
+
+expect.to_equal ($me.id) {
+  value = $user.id
+}
 ```
 
 ### addon.call

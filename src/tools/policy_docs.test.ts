@@ -70,12 +70,60 @@ describe("policy documentation", () => {
     expect(xanoscriptDocs({ topic: "readme" }).documentation).toMatch(/^\| `policy-templates` /m);
     expect(templates).toContain("**Prefer a template.**");
     // A template's own example wins; a need it gives none for shows its check's catalogue example.
-    expect(templates).toMatch(/^\| `tables_classified` \| `CONV-023` \| low \| Every table is classified \| `object.tag_required` \| `tag_set` \(e.g. `\["public","internal","confidential","restricted"\]`\) \|$/m);
+    expect(templates).toMatch(/^\| `tables_classified` \| `CONV-023` \| low \| Every table is classified \| `object.tag_required` \| `tag_set` \(e.g. `\["public","internal","confidential","restricted"\]`\) \|  \|$/m);
+    // Framework tags by label, with the platform's note beside them.
+    expect(templates).toMatch(/^\| `endpoints_need_login` \| `AUTH-010` \| .* \| SOC 2, HIPAA \|$/m);
+    expect(templates).toMatch(/^\| `no_secrets_in_code` \| `SEC-012` \| .*PCI DSS \|$/m);
+    expect(templates).toContain("They don't make a workspace compliant, and Xano doesn't track changes to these frameworks.");
+    expect(templates).toMatch(/^\| `reads_are_paged` \| `PERF-001` \| medium \| Endpoints never return every row \| `statement.param_bound` \| _nothing_ \|/m);
     expect(templates).toMatch(/^\| `owner_team_tagged` \| `CONV-022` \| .* \| `tag_set` \(e.g. `\["team-billing"/m);
     expect(templates).toMatch(/^\| `agreed_tag_vocabulary` \| `CONV-020` \| .* \| `allowed_tags` \(e.g. `\[/m);
     expect(templates).toContain("## Conventions");
+    // "Prefer a template" also sends a goal a recipe covers to the recipe.
+    expect(templates).toContain("When a recipe covers the goal, follow it (see Recipes)");
+    expect(policies()).toContain("and when a recipe covers the goal, follow it.");
     expect(policies()).toContain("Topic `policy-templates` lists the templates");
     expect(read("../../skills/xano-policies/SKILL.md")).toContain('`topic: "policy-templates"`');
+  });
+
+  it("gives each recipe goal-first, with what to do first, its templates in order, its own rules and what no rule there can see", () => {
+    const templates = xanoscriptDocs({ topic: "policy-templates" }).documentation;
+    const recipes = templates.slice(templates.indexOf("## Recipes"), templates.indexOf("## What no check can see"));
+    expect(recipes).toContain("Nothing creates a recipe");
+    expect(recipes).toContain("### Protect payment card data\n\n`protect_card_data` · PCI DSS.");
+    expect(recipes).toContain("First:\n\n- Send card details straight to your payment processor");
+    expect(recipes).toContain("1. `no_secrets_in_code` (`SEC-012`): No secrets are hardcoded\n2. `approved_vendors_only` (`VND-001`)");
+    expect(recipes).toContain('- Card numbers and security codes are never stored: `table.field_attribute_required` with `{"field_names":["card_number","cvv","cvc","pan"],"forbidden":true}`.');
+    expect(recipes).toContain("Fill `functions`, `when.tables`.");
+    expect(recipes).toContain("No rule here can see: Spend caps; Agent tool allowlists; Task retries; Runtime data and copies between environments (see What no check can see).");
+    // A recipe is named for its goal, never a framework.
+    expect(recipes).not.toMatch(/^### .*(HIPAA|PCI|GDPR|SOC 2)/m);
+    expect(templates).toMatch(/^- \*\*Scope by endpoint path prefix\*\* \(`path_prefix_scope`\): .*not yet by a path prefix/m);
+    // Only the platform's own note speaks of compliance, to say the tags confer none.
+    expect(templates).not.toMatch(/(?<!don't )makes? (a|the|your) workspace compliant/);
+  });
+
+  it("serves each check's uses, the statement names and object.settings_forbidden's settings in the policies topic", () => {
+    const text = policies();
+    expect(text).toContain('- `object.auth_required`: Endpoints that touch invoices require login. → `{"tables":["invoices"]}`');
+    expect(text).toContain('- `stack.size_limit`: Functions hold at most 80 statements. → `{"max_statements":80,"object_kinds":["function"]}` — One rule per kind gives each kind its own limit.');
+    expect(text).toContain("<!-- BEGIN GENERATED: statements -->");
+    expect(text).toMatch(/^\| AI and LLM calls \| `ai.agent.run` \(args, allow_tool_execution\), .* \| There is no prompt statement/m);
+    expect(text).toMatch(/^\| Email and messaging \| `util.send_email` /m);
+    expect(text).toContain("Take the name from Statement names below");
+    expect(text).toContain("- `agent`: `model_provider` (`amazon-bedrock`, `anthropic`");
+    expect(text).toContain("`swagger.token` (string, secret)");
+    expect(text).toContain("`gdpr` GDPR, `pci_dss` PCI DSS)");
+  });
+
+  it("says policy catalogue prints uses, recipes and what no check can see, and policy create refuses a recipe id", () => {
+    const cli = handleCliDocs({ topic: "policy" });
+    expect(cli).toContain("each followed by its uses");
+    expect(cli).toContain("The catalogue ends with what no check can see");
+    expect(cli).toContain("--recipe to one recipe id");
+    expect(cli).toContain("the two flags cannot be combined");
+    expect(cli).toContain("xano policy catalogue --recipe protect_card_data");
+    expect(cli).toContain("a recipe id given to --template is refused with the recipe's templates");
   });
 
   it("says an indexed reference is read as the part before its first [, with a rule warning on a rule entry", () => {
