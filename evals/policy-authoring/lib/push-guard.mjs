@@ -6,10 +6,23 @@
 import { readFileSync } from "node:fs";
 
 export function pushViolations(command) {
+  // Heredoc bodies are data (a reply or notes that mention the command), not commands.
+  const lines = [];
+  let tag = null;
+  for (const line of String(command).split("\n")) {
+    if (tag) {
+      if (line.trim() === tag) tag = null;
+      continue;
+    }
+    lines.push(line);
+    const h = line.match(/<<-?\s*['"]?(\w+)['"]?/);
+    if (h) tag = h[1];
+  }
   const out = [];
-  for (const part of String(command).split(/&&|\|\||;|\||\n|\$\(|`/)) {
+  for (const part of lines.join("\n").split(/&&|\|\||;|\||\n|\$\(/)) {
     const p = part.trim();
-    if (!/(^|\s|\/)xano\s+(workspace\s+push|workspace:push)\b/.test(p)) continue;
+    // Only a command that runs xano: at the start of a segment, after env assignments or a path.
+    if (!/^(?:\w+=\S*\s+)*(?:(?:npx|exec|command)\s+)?(?:\S*\/)?xano\s+(workspace\s+push|workspace:push)\b/.test(p)) continue;
     if (!/(^|\s)--dry-run\b/.test(p) || /(^|\s)--force\b/.test(p)) out.push(p.slice(0, 200));
   }
   return out;

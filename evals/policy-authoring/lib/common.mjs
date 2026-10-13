@@ -84,7 +84,7 @@ export function run(cmd, args, { cwd, env, input, timeoutMs } = {}) {
   });
 }
 
-const CONNECTION_ERROR = /ECONNREFUSED|ECONNRESET|socket hang up|fetch failed|status (502|503|504)|Bad Gateway|Service Unavailable|Gateway Time-?out|EPIPE|network error/i;
+const CONNECTION_ERROR = /\((502|503|504)\)|\(50\d\):\s*<|ECONNREFUSED|ECONNRESET|socket hang up|fetch failed|status (502|503|504)|Bad Gateway|Service Unavailable|Gateway Time-?out|EPIPE|network error/i;
 
 // Runs the xano CLI against the eval workspace, retrying while the local instance restarts.
 export async function xano(args, { cwd, input, retries = 8, env } = {}) {

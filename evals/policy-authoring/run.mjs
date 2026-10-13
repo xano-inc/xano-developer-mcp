@@ -118,9 +118,27 @@ const HOOKS = {
   },
 };
 
-// Files a Bash command writes into the project or the reply (heuristic: redirects, tee, cp, mv,
-// sed -i); a pull is reading, not building.
-const BASH_WRITE = /(>>?|\btee\b|\bcp\b|\bmv\b|\bsed\s+-i|\bmkdir\b)[^|;&]*\b(workspace\/|out\/reply\.md)/;
+// Files a Bash command writes (redirects, tee, sed -i, cp/mv destinations), heredoc bodies
+// skipped; a pull is reading, not building.
+function bashWrites(cmd) {
+  const head = [];
+  let tag = null;
+  for (const line of cmd.split("\n")) {
+    if (tag) {
+      if (line.trim() === tag) tag = null;
+      continue;
+    }
+    head.push(line);
+    const h = line.match(/<<-?\s*['"]?(\w+)['"]?/);
+    if (h) tag = h[1];
+  }
+  const text = head.join("\n");
+  const out = [];
+  for (const m of text.matchAll(/(?:\d?>>?|\btee\s+(?:-a\s+)?)\s*([^\s;&|<>()]+)/g)) out.push(m[1]);
+  for (const m of text.matchAll(/\bsed\s+-i\S*\s+(?:''\s+)?(?:'[^']*'|"[^"]*"|\S+)\s+([^\s;&|]+)/g)) out.push(m[1]);
+  for (const m of text.matchAll(/\b(?:cp|mv)\s+(?:-\S+\s+)*\S+\s+([^\s;&|]+)/g)) out.push(m[1]);
+  return out.filter((p) => !/^(&\d|\/dev\/)/.test(p));
+}
 
 function claudeArgs(prompt) {
   const a = [
@@ -186,8 +204,16 @@ function digestTranscript(text, workdir) {
         if (/xano\s+workspace\s+pull/.test(cmd)) out.pulled = true;
         if (/xano\s+workspace\s+push\b[^|;&]*--dry-run/.test(cmd)) out.dry_run_calls++;
         out.push_violations.push(...pushViolations(cmd));
-        const w = cmd.match(BASH_WRITE);
-        if (w && !/^\s*xano\s+workspace\s+pull/.test(cmd)) out.writes.push({ step, via: "Bash", path: w[2] === "out/reply.md" ? "out/reply.md" : "workspace/" });
+        if (!/^\s*xano\s+workspace\s+pull/.test(cmd)) {
+          // A `cd` into the project makes relative targets project files.
+          const cd = cmd.match(/(?:^|[;&|]\s*)cd\s+("?)([^\s;&|"]+)\1/)?.[2];
+          const cdRel = cd ? relPath(cd.replace(/\/$/, "")) : null;
+          for (const target of bashWrites(cmd)) {
+            let rel = relPath(target);
+            if (rel && cdRel && !target.startsWith("/") && cdRel !== "." && cdRel !== "") rel = `${cdRel}/${rel}`;
+            if (rel) out.writes.push({ step, via: "Bash", path: rel });
+          }
+        }
         if (/xano\s+policy\s+parse/.test(cmd)) out.parse_calls += (cmd.match(/xano\s+policy\s+parse/g) ?? []).length;
         out.bash.push(cmd.length > 300 ? cmd.slice(0, 300) + "…" : cmd);
         for (const part of cmd.split(/&&|\|\||;|\||\n/).map((s) => s.trim().replace(/^(cd\s+\S+\s*)$/, ""))) {

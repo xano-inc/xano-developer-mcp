@@ -3536,7 +3536,7 @@
           "id": "self_promotion_closed",
           "points": 2,
           "kind": "enforcement",
-          "desc": "PATCH /me no longer writes the role from input (no whole-input write, no role field), or the reply names that endpoint as the way users can make themselves manager.",
+          "desc": "PATCH /me no longer writes the role from input (no whole-input write, no filter chain that does not end in a pick without role, no role field), or the reply names that endpoint as the way users can make themselves manager.",
           "any_of": [
             {
               "match": {
@@ -3545,7 +3545,8 @@
                   "changed": true,
                   "none": [
                     "data\\s*=\\s*\\$input(\\[\"\"\\])?\\s*$",
-                    "data\\s*=\\s*\\$input\\s*\\|",
+                    "data\\s*=\\s*\\$input\\s*\\|(?!.*\\|?\\s*pick:\\s*\\[[^\\]]*\\]\\s*$)",
+                    "pick:\\s*\\[[^\\]]*\"role\"",
                     "\\brole\\s*:\\s*\\$input"
                   ]
                 }
