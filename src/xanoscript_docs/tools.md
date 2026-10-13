@@ -202,7 +202,7 @@ tool delete_order {
 > **Where these belong:** `api.call`, `task.call`, and `tool.call` are for **tools**. Use them to compose a tool from other Xano constructs. Don't reach for them in API endpoints, functions, or tasks. (To call a function from a regular stack, use `function.run`.)
 
 ### api.call
-Call an API endpoint:
+Call an API endpoint. In a tool, the endpoint runs with the identity the tool was called with; the endpoint's own `auth` setting is not checked. (In a workflow test it is, as over HTTP: see the workflow-tests topic.)
 
 ```xs
 stack {
