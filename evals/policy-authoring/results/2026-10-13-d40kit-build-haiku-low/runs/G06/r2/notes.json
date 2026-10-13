@@ -1,0 +1,51 @@
+{
+  "goal_id": "G06",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "endpoints_stay_short (CONV-040): fits the 80-statement limit idea, but it is for endpoints and functions at 30/3; used the size check directly for functions only at the catalogue's 80 example",
+    "shallow_nesting (CONV-041): nesting not in the ask; not used",
+    "external_calls_handle_errors (LOG-010): fits the missing error handling for outbound calls; its rule is reused, widened to stream.from_request",
+    "endpoints_have_tests (CHG-001): fits no tests; not used as-is because it is queries only and has a workflow-test caveat; its two checks were taken and widened to functions",
+    "no_leftover_code (CONV-050): not in the ask; not used",
+    "reads_are_paged, tls_verification_on, requests_have_timeout: not in the ask; not used"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "DEV-REVIEW-001", "check": "stack.size_limit", "params": {"max_statements": 80, "object_kinds": ["function"]}, "covers": "giant functions (200-line complaint)"},
+    {"policy_key": "DEV-REVIEW-001", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling on outbound calls"},
+    {"policy_key": "DEV-REVIEW-001", "check": "object.test_coverage", "params": {"object_kinds": ["query", "function"]}, "covers": "no tests"},
+    {"policy_key": "DEV-REVIEW-001", "check": "test.assertion_required", "params": {}, "covers": "tests that exist but check nothing"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "missing error handling outside external calls (db writes, unchecked nulls)", "why": "no check exists"},
+    {"part": "test quality: whether tests pass or assert the right thing", "why": "no check exists"},
+    {"part": "direct SQL and external database calls", "why": "no check exists in this rule set; db.direct_query not in statements"},
+    {"part": "stop juniors from breaking prod (holding merges/pushes)", "why": "needs runtime/org process: policy is advisory; blocking is owner's choice"},
+    {"part": "code review quality and sign-off", "why": "needs runtime/org process"},
+    {"part": "functions over 80 statements is a statement count, not a line count", "why": "couldn't tell how: the ask says lines"}
+  ],
+  "assumptions": [
+    "the customer's '200 line functions' maps to stack.size_limit with 80 statements (catalogue example), not 200",
+    "advisory enforcement is right for a new policy; the customer can switch to blocking",
+    "stream.from_request counts as an outbound call alongside api.request",
+    "test coverage applies to both queries and functions"
+  ],
+  "workspace_names_used": ["policy_authoring_eval", "acme_sync_shipping_rates", "calculate_late_fee", "acme_get_tracking"],
+  "confusions": [
+    "The skill says 'the full catalogue' is in the file, but kit/catalogue.json is large and mixes templates, recipes and items; finding a check's exact param names needed several passes",
+    "The 'lines' vs 'statements' wording: the skill says a user's lines are roughly statements, but no exact mapping was given, so I took the catalogue's 80 example",
+    "xano policy parse -o json output omitted nothing I could see, but it is unclear whether 'rule_warnings' empty means the param names were fully validated against the check's schema",
+    "The brief says 'xano workspace push --dry-run' reports blocked objects; the dry run printed only the create line, so I could not tell whether a blocked-object report would have appeared"
+  ],
+  "wished_for": [
+    "A recipe for 'junior-proof review' that bundles size, error handling and tests, with the line-to-statement conversion stated",
+    "A check or template for general error handling outside external calls",
+    "A dry-run line stating the policy_check status, so the predicted enforcement effect is visible before evaluate"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The four rules use real checks with matching param names, and the file parses and passes the dry run. Medium because the 80-statement limit is a guess at '200 lines', the test rules only prove a test exists and asserts something, and general error handling and test quality are not checkable. I did not run policy evaluate, so no finding has been observed."
+}

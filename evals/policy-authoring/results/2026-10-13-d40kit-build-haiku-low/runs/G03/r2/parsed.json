@@ -1,0 +1,259 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/CONF-011.xs",
+    "build/policies/LOG-001.xs",
+    "build/policies/PCI-CHD-001.xs",
+    "build/policies/SEC-011.xs",
+    "build/policies/SEC-012.xs",
+    "build/policies/VND-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/CONF-011.xs",
+      "ok": true,
+      "key": "CONF-011",
+      "title": "Sensitive fields are marked sensitive",
+      "statement": "Card-adjacent fields that are still stored, such as card_last4, are marked sensitive wherever a table declares them, so they stay out of saved views and logs.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CONF-011.R1",
+          "title": "Listed fields are marked sensitive",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_last4"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Logs don't contain request, user or secret data",
+      "statement": "Debug logs never reference request input, the logged-in user or environment variables. Cardholder data is request input, so it never reaches a log. Log the event, not the payload.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "Logs name events, not input, auth or env",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/PCI-CHD-001.xs",
+      "ok": true,
+      "key": "PCI-CHD-001",
+      "title": "Cardholder data is never stored raw",
+      "statement": "No table stores a card number, security code, expiry date or cardholder name. Card details go only to the payment processor, which returns a token that is kept instead. A table that declares one of these fields is reported until the field is removed by its owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "PCI-CHD-001.R1",
+          "title": "Card number, security code, expiry and cardholder name are never stored",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "card_cvc",
+              "cvv",
+              "cvc",
+              "pan",
+              "card_expiry",
+              "cardholder_name"
+            ],
+            "field_types": [],
+            "attribute": "",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": true,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/SEC-011.xs",
+      "ok": true,
+      "key": "SEC-011",
+      "title": "External requests verify TLS certificates",
+      "statement": "Every external request verifies the TLS certificate and host name of the server it talks to. Turning verification off is never acceptable, including for the card processor and bank-data calls.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SEC-011.R1",
+          "title": "Requests verify TLS certificates and hosts",
+          "check": "statement.param_forbidden",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "verify_peer",
+              "verify_host"
+            ],
+            "values": [
+              false
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/SEC-012.xs",
+      "ok": true,
+      "key": "SEC-012",
+      "title": "No secrets are hardcoded",
+      "statement": "API keys, tokens, private keys, encryption keys and credentialed URLs are never written as literals in an object's definition or agent settings; they belong in environment variables. A value already held in an environment variable is compliant.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "SEC-012.R1",
+          "title": "",
+          "check": "literal.credential_shape",
+          "params": {
+            "patterns": [],
+            "locations": [
+              "definition",
+              "agent_settings"
+            ],
+            "allowed_secrets": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/VND-001.xs",
+      "ok": true,
+      "key": "VND-001",
+      "title": "Data only goes to approved vendors",
+      "statement": "Outbound requests, cloud and email providers and AI model providers are limited to the approved vendors: Stripe (api.stripe.com) and Plaid (production.plaid.com). Adding a vendor is the policy owner's decision; a vendor outside this list is reported, not exempted.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "VND-001.R1",
+          "title": "",
+          "check": "outbound.vendor_allowlist",
+          "params": {
+            "kinds": [],
+            "hosts": [
+              "api.stripe.com",
+              "production.plaid.com"
+            ],
+            "providers": [],
+            "env_hosts": [],
+            "literal_urls_forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

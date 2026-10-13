@@ -1,0 +1,35 @@
+{
+  "goal_id": "G12",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "no_pii_in_responses: no fit, governs response fields, not environment copies",
+    "sensitive_tables_need_login: partial, covers login and access record on tagged tables only; does not stop prod data copies or dev prod access",
+    "audit_log_protected: partial, covers writes to one named table only; not relevant to environment or on-call access"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "no check exists"},
+    {"part": "devs can only get into prod through the on-call process", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Staging and prod are distinguished by Xano branch or environment, which the policy checks cannot read",
+    "The customer wants a policy file, not a process document"
+  ],
+  "workspace_names_used": ["policy_authoring_eval", "policies not present"],
+  "confusions": [
+    "The brief says to plan and build, but also says build nothing if no policy can do the ask; the two instructions only reconcile when the plan itself is 'no build', which I followed",
+    "The skill's recipe list has no environment or branch recipe, so the not_checkable list was the only guide"
+  ],
+  "wished_for": [
+    "A check that reads branch or environment membership of a table or object, so environment separation could be written as a rule",
+    "A check or attribute for who may access a branch, with on-call or approval status",
+    "Guidance in the skill telling the assistant to refuse rather than partially build when a request maps only to not_checkable topics"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Neither half of the ask maps to any check. Both halves appear in the catalogue's not_checkable list (runtime_data and access_reviews_and_approvals). I built nothing because a partial policy would give false assurance."
+}

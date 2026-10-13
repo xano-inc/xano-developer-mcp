@@ -1,0 +1,61 @@
+{
+  "goal_id": "G07",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "append-only record of who changed what, written only by record_audit_event"},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "the single writer of audit_log; adds one row per call"}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "refunds/{refund_id}/approve POST", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "calls record_audit_event after the db.edit that approves the refund (action refund.approve)"}
+  ],
+  "templates_considered": [
+    "audit_log_protected (RET-001): fit, used as-is for audit_log",
+    "endpoints_have_tests (CHG-001): fit as change-control testing evidence, used as-is",
+    "endpoints_need_login (AUTH-010): fit as access-control evidence, used as-is",
+    "recipe record_audit_changes (audit_changes): fit the goal, but its first step is the audit log table and function, and its custom rules are the three db.edit/db.patch/db.del rules; I wrote those in AUDIT-001 but did not follow the recipe's tagging step, because I did not tag tables",
+    "protect_health_data, protect_card_data, personal_data_erasure, code_review_basics, ai_cost_and_agent_safety: did not fit this ask",
+    "owner_team_tagged, tables_classified (CONV-022/023): not used; the ask does not mention owners or classification",
+    "no_destructive_sql, no_pii_in_responses and others: not relevant to change control or access review"
+  ],
+  "templates_used": ["audit_log_protected (RET-001)", "endpoints_have_tests (CHG-001)", "endpoints_need_login (AUTH-010)"],
+  "rules": [
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit log exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "only the audit function writes the log"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["refunds", "users"]}}, "covers": "edits of refunds and users are recorded"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["refunds", "users"]}}, "covers": "patches of refunds and users are recorded"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["refunds", "users"]}}, "covers": "deletes from refunds and users are recorded"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "change control: endpoints are tested before they ship"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "change control: tests assert something"},
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "access control: endpoints require login"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "access reviews (periodic review of who has access, with sign-off)", "why": "needs runtime/org process"},
+    {"part": "change approvals beyond refund approval (who signed off a change)", "why": "needs runtime/org process"},
+    {"part": "audit coverage of every sensitive table (only refunds and users are audited)", "why": "couldn't tell how; the customer did not name the tables, so I picked the two most sensitive I saw"},
+    {"part": "what users did at runtime, and whether records were changed outside the audit path", "why": "no check can read runtime data"},
+    {"part": "retention of audit rows", "why": "retention age not checkable"},
+    {"part": "backups, encryption and infrastructure", "why": "no check; infrastructure controls"}
+  ],
+  "assumptions": [
+    "refunds and users are the sensitive tables to audit; the customer did not name tables",
+    "the refund approval endpoint is the approval control to record",
+    "policies stay advisory; making them blocking is the owner's choice",
+    "new objects need no guid line; the dry run did not complain"
+  ],
+  "workspace_names_used": ["refunds", "users", "payments", "orgs", "approve (refunds/{refund_id}/approve POST)", "delete_user_account", "policy_authoring_eval"],
+  "confusions": [
+    "the recipe audit_changes says to tag the audited tables and name them by exact name in each rule, but the tag step is not spelled out in the template (which tag, and whether the table needs it), so I used exact table names in when.tables and skipped tagging",
+    "the skill says an active policy that cannot run makes the branch gates unavailable, but a policy whose rule names a function not yet on the branch does not say whether it will run after push; the dry run did not show it",
+    "object.statement_required's when.tables for db.del: the catalogue does not say whether db.bulk.delete is covered by db.del, so my AUDIT-001 delete rule may miss bulk deletes",
+    "XanoScript for a policy file: whether a rule with no params needs an empty params line or may omit params was not shown in the skill; I omitted it for test.assertion_required and parse accepted it"
+  ],
+  "wished_for": [
+    "a recipe or template for audit of a named set of tables, as a single policy, rather than three statement-specific rules",
+    "a template for access reviews that is honest about being process-only, with the evidence it can give (login required, audit trail present)",
+    "a statement that the dry run checks whether each rule has an object to judge, not only whether names exist"
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The audit trail, login requirement and test coverage are real and checkable, and the dry run is clean. But access reviews and change approvals are process controls no check can see, and the audit covers only refunds and users, so the auditor will still need evidence outside the workspace. I did not evaluate the policies, so I do not know what they will flag."
+}

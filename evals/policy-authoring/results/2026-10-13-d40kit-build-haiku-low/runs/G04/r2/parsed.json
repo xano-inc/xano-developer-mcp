@@ -1,0 +1,379 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/CONF-010.xs",
+    "build/policies/CONF-011.xs",
+    "build/policies/CONF-012.xs",
+    "build/policies/CONF-013.xs",
+    "build/policies/DATA-010.xs",
+    "build/policies/LOG-001.xs",
+    "build/policies/PHI-ACCESS-RECORD.xs",
+    "build/policies/SEC-011.xs",
+    "build/policies/SEC-012.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/CONF-010.xs",
+      "ok": true,
+      "key": "CONF-010",
+      "title": "Health data tables are only reached by logged-in endpoints",
+      "statement": "Every endpoint or function that reaches a table tagged phi, directly or through a function it calls, requires login. A deliberately public endpoint that touches these tables is a HIPAA exception for the policy owner to approve, not a tag to add.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "CONF-010.R1",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "phi"
+            ],
+            "auth_tables": [],
+            "function": "",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CONF-010.R1",
+          "text": "table_tags \"phi\" is on no table in this workspace, so no access to it is judged."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/CONF-011.xs",
+      "ok": true,
+      "key": "CONF-011",
+      "title": "Health data fields are marked sensitive",
+      "statement": "The fields that hold health data, such as a diagnosis, date of birth, SSN or insurance member ID, are marked sensitive wherever a table declares them. A field that is removed or retyped loses data, so ask first.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CONF-011.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "ssn",
+              "dob",
+              "diagnosis",
+              "insurance_member_id"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/CONF-012.xs",
+      "ok": true,
+      "key": "CONF-012",
+      "title": "Tables holding health data are tagged",
+      "statement": "A table with a field that holds health data, such as a diagnosis, date of birth, SSN or insurance member ID, carries the phi tag. Tag a table yourself only when it really holds that data.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-012.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "ssn",
+              "dob",
+              "diagnosis",
+              "insurance_member_id"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "phi",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/CONF-013.xs",
+      "ok": true,
+      "key": "CONF-013",
+      "title": "Saved views hide health data fields",
+      "statement": "Every saved view of a table hides the fields marked sensitive in its schema, and password fields, so health data is not shown by default in table views.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-013.R1",
+          "title": "",
+          "check": "table.view_hide_required",
+          "params": {
+            "fields": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/DATA-010.xs",
+      "ok": true,
+      "key": "DATA-010",
+      "title": "Endpoints don't return health data fields",
+      "statement": "Endpoints never fetch the health data fields ssn, dob, insurance_member_id or diagnosis, nor any field marked sensitive. An endpoint that needs one of them is a HIPAA exception for the policy owner to approve.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "DATA-010.R1",
+          "title": "",
+          "check": "db.output_fields_forbidden",
+          "params": {
+            "fields": [
+              "ssn",
+              "dob",
+              "insurance_member_id",
+              "diagnosis"
+            ],
+            "include_sensitive": true,
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Debug logs don't contain request, user or secret data",
+      "statement": "Debug logs name events, not request input, the logged-in user or environment values. Health data in a log is a HIPAA leak, so log an identifier and the event instead.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/PHI-ACCESS-RECORD.xs",
+      "ok": true,
+      "key": "PHI-ACCESS-RECORD",
+      "title": "Objects reaching health data record the access",
+      "statement": "Every endpoint, function or task that reaches a phi-tagged table calls log_phi_access on every path, so each read or write of health data leaves a row in phi_access_log. Name the logged-in user as the actor.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "PHI-ACCESS-RECORD.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "log_phi_access"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": [
+              "phi"
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "PHI-ACCESS-RECORD.R1",
+          "text": "reaching_table_tags \"phi\" is on no table in this workspace, so it selects nothing."
+        },
+        {
+          "rule_id": "PHI-ACCESS-RECORD.R1",
+          "text": "Function \"log_phi_access\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/SEC-011.xs",
+      "ok": true,
+      "key": "SEC-011",
+      "title": "External requests verify TLS certificates",
+      "statement": "Every external request verifies the TLS certificate and host name of the server it talks to. Health data sent over an unverified connection is a HIPAA transmission-security gap.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SEC-011.R1",
+          "title": "",
+          "check": "statement.param_forbidden",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "verify_peer",
+              "verify_host"
+            ],
+            "values": [
+              false
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/SEC-012.xs",
+      "ok": true,
+      "key": "SEC-012",
+      "title": "No secrets are hardcoded",
+      "statement": "API keys, tokens, private keys and encryption keys are never written as literals in an object's definition. They belong in environment variables, set by the workspace owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "SEC-012.R1",
+          "title": "",
+          "check": "literal.credential_shape",
+          "params": {
+            "patterns": [],
+            "locations": [
+              "definition",
+              "agent_settings"
+            ],
+            "allowed_secrets": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

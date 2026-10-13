@@ -1,0 +1,68 @@
+--- a/middleware/rate_limit.xs
++++ b/middleware/rate_limit.xs
+@@ -0,0 +1,24 @@
++// Rejects a client that makes more than 60 requests in a minute, before the endpoint's stack runs.
++middleware rate_limit {
++  stack {
++    var $client_key {
++      value = $request.headers."x-forwarded-for"
++    }
++
++    db.query rate_limit_hits {
++      where = $db.rate_limit_hits.client_key == $client_key && $db.rate_limit_hits.created_at > (now|subtract_seconds:60)
++      return = {type: "count"}
++    } as $recent_hits
++
++    precondition ($recent_hits < 60) {
++      error_type = "accessdenied"
++      error = "Too many requests. Try again in a minute."
++    }
++
++    db.add rate_limit_hits {
++      data = {client_key: $client_key}
++    } as $hit
++  }
++
++  exception_policy = "rethrow"
++}
+--- a/policies/RATE-010.xs
++++ b/policies/RATE-010.xs
+@@ -0,0 +1,20 @@
++policy "RATE-010" {
++  title = "Public endpoints are rate limited"
++  statement = "Every endpoint, public or logged-in, runs the rate_limit middleware before its stack, so one client cannot flood login, signup or any other endpoint. An endpoint that cannot run it must be raised with the policy owner before it ships; exempting one is the owner's decision, not the author's."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["bot-protection"]
++
++  rule {
++    title = "Public endpoints attach the rate limiter"
++    check = "object.middleware_required"
++    params = { middleware: ["rate_limit"], phase: "pre", endpoint_auth: "none", object_kinds: ["query"] }
++  }
++
++  rule {
++    title = "Logged-in endpoints attach the rate limiter"
++    check = "object.middleware_required"
++    params = { middleware: ["rate_limit"], phase: "pre", endpoint_auth: "required", object_kinds: ["query"] }
++  }
++}
+--- a/table/rate_limit_hits.xs
++++ b/table/rate_limit_hits.xs
+@@ -0,0 +1,15 @@
++// One row per request seen by the rate limiter; read to count recent requests per client.
++table rate_limit_hits {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    text client_key filters=trim
++  }
++
++  index = [
++    {type: "primary", field: [{name: "id"}]}
++    {type: "btree", field: [{name: "client_key", op: "asc"}, {name: "created_at", op: "desc"}]}
++  ]
++}

@@ -1,0 +1,71 @@
+{
+  "goal_id": "G14",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "append-only record of who changed customer email data"},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "the only writer of audit_log; called before/after each edit, patch, delete of customer-email tables"}
+  ],
+  "objects_changed": [
+    {"kind": "table", "name": "customers", "file": "workspace/table/customers.xs", "change": "added tags = [\"customer-email\"]"},
+    {"kind": "table", "name": "newsletter_subscribers", "file": "workspace/table/newsletter_subscribers.xs", "change": "added tags = [\"customer-email\"]"},
+    {"kind": "table", "name": "support_tickets", "file": "workspace/table/support_tickets.xs", "change": "added tags = [\"customer-email\"]"},
+    {"kind": "table", "name": "users", "file": "workspace/table/users.xs", "change": "added tags = [\"customer-email\"]"},
+    {"kind": "table", "name": "patients", "file": "workspace/table/patients.xs", "change": "added tags = [\"customer-email\"]"},
+    {"kind": "task", "name": "retry_failed_webhooks", "file": "workspace/task/retry_failed_webhooks.xs", "change": "replaced unbounded while retry loop with for(5); failed-after-retries rows set to retry_exhausted instead of being reselected forever"}
+  ],
+  "templates_considered": [
+    "audit_log_protected (RET-001): fit, used as-is with object_kind added to workspace.object_required",
+    "ai_cost_and_agent_safety (recipe): partly fit; only the AI-in-loop rule was needed, so I wrote a single containment rule rather than the whole recipe (VND-001, PERF-001, SEC-013, CONV-030, approval and tool rules were outside the ask)",
+    "audit_changes (recipe): fit for the edit/patch/delete rules, but its rules name tables and do not reach tables by tag; I used a tag-based tagged_table_access + table.tag_required rule plus the recipe's three statement rules",
+    "protect_health_data / personal_data_erasure / protect_card_data: did not fit the ask (no health, card or erasure request)",
+    "retained_data_cleaned_up / erasure: did not fit; no retention or erasure ask",
+    "endpoints_need_login, sensitive_tables_need_login: considered; tagged_table_access covers the customer-email tables and the ask did not name all endpoints",
+    "no_secrets_in_code, tls_verification_on, reads_are_paged, requests_have_timeout: not asked for"
+  ],
+  "templates_used": ["audit_log_protected"],
+  "rules": [
+    {"policy_key": "AI-COST-001", "check": "statement.containment", "params": {"statements": ["ai.agent.run", "ai.external.mcp.tool.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI call inside a loop cost $900"},
+    {"policy_key": "TASK-001", "check": "stack.statement_forbidden", "params": {"statements": ["while"], "object_kinds": ["task"]}, "covers": "background task retrying forever (proxy only: bans the unbounded loop shape, not retry settings)"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit log exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"], "statements": ["db.edit", "db.patch", "db.add_or_edit", "db.del", "db.truncate", "db.bulk.update", "db.bulk.patch", "db.bulk.delete"]}, "covers": "audit entries written only by the audit function and never edited or deleted"},
+    {"policy_key": "AUDIT-001", "check": "table.tag_required", "params": {"field_names": ["email", "requester_email"], "field_types": ["email"], "include_sensitive": false, "tag": "customer-email"}, "covers": "every table with customer email is tagged, including future ones"},
+    {"policy_key": "AUDIT-001", "check": "object.tagged_table_access", "params": {"table_tags": ["customer-email"], "function": "record_audit_event"}, "covers": "anything reaching customer-email tables requires login and calls the audit function"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "newsletter_subscribers", "support_tickets", "users", "patients"]}}, "covers": "edits of customer email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "newsletter_subscribers", "support_tickets", "users", "patients"]}}, "covers": "patches of customer email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "newsletter_subscribers", "support_tickets", "users", "patients"]}}, "covers": "deletes from customer email tables are audited"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cost of AI calls / spend cap", "why": "no check exists"},
+    {"part": "background task retries forever (retry count, backoff)", "why": "no check exists; task retry settings are not readable by a check; TASK-001 is a proxy on the loop shape only"},
+    {"part": "who changed what is complete across all write paths", "why": "needs runtime/org process: the write sites in existing endpoints/functions do not call record_audit_event yet; I did not wire them (scope), so AUDIT-001 reports them"},
+    {"part": "audit log integrity beyond writes (backup, retention, actor truth)", "why": "needs runtime/org process"},
+    {"part": "AI call in nightly_ticket_summaries loop", "why": "other: the rule reports it; I did not rewrite the task because that changes what it does, which is the customer's decision"}
+  ],
+  "assumptions": [
+    "customer email tables are customers, newsletter_subscribers, support_tickets (requester_email), users (email), patients (email)",
+    "users holds app end-users, so it counts as customer data",
+    "the loop-cost incident is the nightly_ticket_summaries ai.agent.run inside foreach",
+    "bounded 5-attempt for loop in one run, then retry_exhausted, is an acceptable retry limit",
+    "record_audit_event takes actor_user_id as an input; callers pass $auth.id"
+  ],
+  "workspace_names_used": ["customers", "newsletter_subscribers", "support_tickets", "users", "patients", "webhook_deliveries", "retry_failed_webhooks", "nightly_ticket_summaries", "Ticket Summarizer", "delete_user_account", "customer_id_PATCH", "me_PATCH", "summarize_ticket", "customers_POST", "signup_POST", "subscribe_POST", "policy_authoring_eval"],
+  "confusions": [
+    "statement.containment: unclear whether ai.agent.run inside a task's foreach counts when the loop is inside a called function (judged per call path); I took the stated semantics",
+    "audit_changes recipe: its rules use when.tables by exact name, but the ask is about any table with customer email, so the tag-based rules are needed too; the recipe does not say to combine them",
+    "workspace.object_required: the recipe's fill example omits object_kind, but the parser requires it (400 error); I added object_kind: table",
+    "table.tag_required: field_names is required and include_sensitive is also marked '+' (required); I set include_sensitive: false explicitly with no guidance on whether the default is accepted",
+    "XanoScript count loop syntax (for (5) { each as $x {...} }) is not shown in the skill; I guessed it and the dry run is the first check",
+    "unclear whether tags on tables go in the table body before guid (I used that form, matching the workspace's existing endpoint tags)"
+  ],
+  "wished_for": [
+    "a recipe for 'bounded retries' or a check that reads task retry/backoff settings",
+    "a worked example of the XanoScript for(n) loop and conditional-else syntax",
+    "a template or recipe for 'every table with X type field is tagged Y' using field_types",
+    "guidance that the audit recipe's table-named rules should be paired with a tag-based rule",
+    "a way to see policy findings from the dry run, not only from evaluate (which I was not allowed to run)"
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": ["RET-001.R1: workspace.object_required requires param object_kind"],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The AI-in-loop and audit-coverage rules are real checks, and the dry run was clean. But no findings were evaluated (evaluate was forbidden), so I cannot confirm the rules flag what I expect. The retry problem is only partly addressed: the task is bounded per run, and the only policy is a proxy. The audit trail is incomplete until the write sites call record_audit_event, and the AI loop finding in nightly_ticket_summaries is left for the customer to decide."
+}

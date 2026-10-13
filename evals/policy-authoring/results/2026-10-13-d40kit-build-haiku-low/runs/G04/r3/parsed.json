@@ -1,0 +1,348 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/CONF-010.xs",
+    "build/policies/CONF-011.xs",
+    "build/policies/CONF-012.xs",
+    "build/policies/CONF-013.xs",
+    "build/policies/DATA-010.xs",
+    "build/policies/LOG-001.xs",
+    "build/policies/PHI-ACCESS-010.xs",
+    "build/policies/SEC-011.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/CONF-010.xs",
+      "ok": true,
+      "key": "CONF-010",
+      "title": "Endpoints reaching PHI tables require login",
+      "statement": "Every endpoint that reaches a table tagged phi, directly or through a function, requires authentication. An endpoint that must stay public needs its owner's sign-off. Related to HIPAA access control.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "CONF-010.R1",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "phi"
+            ],
+            "auth_tables": [],
+            "function": "",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CONF-010.R1",
+          "text": "table_tags \"phi\" is on no table in this workspace, so no access to it is judged."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/CONF-011.xs",
+      "ok": true,
+      "key": "CONF-011",
+      "title": "Sensitive health fields are marked sensitive",
+      "statement": "The health-data fields (dob, ssn, insurance_member_id, reason, diagnosis, note) are marked sensitive wherever a table declares them. Related to HIPAA protected health information; a pass means only the stored definitions matched when it ran.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CONF-011.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "dob",
+              "ssn",
+              "insurance_member_id",
+              "reason",
+              "diagnosis",
+              "note"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/CONF-012.xs",
+      "ok": true,
+      "key": "CONF-012",
+      "title": "Tables holding health data are tagged",
+      "statement": "Every table with a field that holds health data (diagnosis, note, ssn, dob, insurance_member_id, reason) carries the phi tag, so the access and sensitivity rules can see it. Related to HIPAA safeguards for protected health information; a pass means only the stored definitions matched when it ran.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-012.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "dob",
+              "ssn",
+              "insurance_member_id",
+              "reason",
+              "diagnosis",
+              "note"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "phi",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/CONF-013.xs",
+      "ok": true,
+      "key": "CONF-013",
+      "title": "Saved views hide sensitive fields",
+      "statement": "Every saved table view hides the fields marked sensitive, so health data is not shown by default in shared views. Related to HIPAA minimum necessary; a share link made with the default view shares every field and is outside this check.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-013.R1",
+          "title": "",
+          "check": "table.view_hide_required",
+          "params": {
+            "fields": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/DATA-010.xs",
+      "ok": true,
+      "key": "DATA-010",
+      "title": "Endpoints don't return health data fields",
+      "statement": "Endpoints do not fetch the health-data fields (patients.ssn, patients.dob, patients.insurance_member_id, appointments.reason, clinical_notes.diagnosis, clinical_notes.note) out of their tables. Related to HIPAA minimum necessary; this checks what statements fetch, not the final response.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "DATA-010.R1",
+          "title": "",
+          "check": "db.output_fields_forbidden",
+          "params": {
+            "fields": [
+              "patients.ssn",
+              "patients.dob",
+              "patients.insurance_member_id",
+              "appointments.reason",
+              "clinical_notes.diagnosis",
+              "clinical_notes.note"
+            ],
+            "include_sensitive": true,
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Debug logs never hold request, user or secret data",
+      "statement": "Debug logs never reference request input, the logged-in user or environment variables, so health data cannot leak into logs. Related to HIPAA audit and safeguards; a pass means only the stored definitions matched when it ran.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/PHI-ACCESS-010.xs",
+      "ok": true,
+      "key": "PHI-ACCESS-010",
+      "title": "Health data access is recorded",
+      "statement": "Every object that reaches a table tagged phi calls the log_phi_access function unconditionally, so each read and write of health data leaves a phi_access_log row. Related to HIPAA audit controls; this records calls, it does not check what the log later shows.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "PHI-ACCESS-010.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "log_phi_access"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": [
+              "phi"
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "PHI-ACCESS-010.R1",
+          "text": "reaching_table_tags \"phi\" is on no table in this workspace, so it selects nothing."
+        },
+        {
+          "rule_id": "PHI-ACCESS-010.R1",
+          "text": "Function \"log_phi_access\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/SEC-011.xs",
+      "ok": true,
+      "key": "SEC-011",
+      "title": "External requests verify TLS certificates",
+      "statement": "Every external request verifies the TLS certificate and host name of the server it talks to, so health data is not sent over unverified connections. Related to HIPAA transmission security; a pass means only the stored definitions matched when it ran.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SEC-011.R1",
+          "title": "",
+          "check": "statement.param_forbidden",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "verify_peer",
+              "verify_host"
+            ],
+            "values": [
+              false
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,288 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AI-COST-001.xs",
+    "build/policies/AUDIT-001.xs",
+    "build/policies/RET-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AI-COST-001.xs",
+      "ok": true,
+      "key": "AI-COST-001",
+      "title": "AI calls stay out of loops",
+      "statement": "An AI agent run or external MCP tool call must not sit inside a loop. A loop multiplies each call by its iteration count, which runs up model spend. An AI call that truly must repeat must be moved out of the loop or reviewed and exempted by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AI-COST-001.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.agent.run",
+              "ai.external.mcp.tool.run"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "foreach",
+              "for",
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/AUDIT-001.xs",
+      "ok": true,
+      "key": "AUDIT-001",
+      "title": "Changes to customer-email tables are audited",
+      "statement": "Every add, edit, patch and delete on a table that stores customer emails must call the record_audit_event function unconditionally, so each change is recorded with who made it. Tables covered: customers, users, newsletter_subscribers, patients, orgs and support_tickets. A table added later that stores emails must be added to these rules. An object that cannot audit its write must be fixed, not exempted, unless the policy owner decides otherwise.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AUDIT-001.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.add",
+              "tables": [
+                "customers",
+                "users",
+                "newsletter_subscribers",
+                "patients",
+                "orgs",
+                "support_tickets"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUDIT-001.R2",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.edit",
+              "tables": [
+                "customers",
+                "users",
+                "newsletter_subscribers",
+                "patients",
+                "orgs",
+                "support_tickets"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUDIT-001.R3",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.patch",
+              "tables": [
+                "customers",
+                "users",
+                "newsletter_subscribers",
+                "patients",
+                "orgs",
+                "support_tickets"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUDIT-001.R4",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.del",
+              "tables": [
+                "customers",
+                "users",
+                "newsletter_subscribers",
+                "patients",
+                "orgs",
+                "support_tickets"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AUDIT-001.R1",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "AUDIT-001.R2",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "AUDIT-001.R3",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "AUDIT-001.R4",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "The audit log table exists, and only the record_audit_event function writes to it. Nothing else may edit, delete or insert audit entries, so the record of who changed what stays trustworthy. A caller can still pass whatever it likes to the audit function.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Table \"audit_log\" is not in this workspace, so it restricts nothing."
+        },
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Function \"record_audit_event\" is not on this branch, so it approves nothing."
+        }
+      ]
+    }
+  ]
+}

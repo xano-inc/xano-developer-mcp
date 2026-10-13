@@ -1,0 +1,151 @@
+--- a/api/app/refunds/refund_id/approve_POST.xs
++++ b/api/app/refunds/refund_id/approve_POST.xs
+@@ -13,6 +13,10 @@
+       field_value = $input.refund_id
+       data = {status: "approved", approved_by: $auth.id}
+     } as $refund
++
++    function.run record_audit_event {
++      input = {actor_id: $auth.id, action: "refund.approve", target_table: "refunds", target_id: $input.refund_id}
++    } as $audit
+   }
+ 
+   response = $refund
+--- a/function/record_audit_event.xs
++++ b/function/record_audit_event.xs
+@@ -0,0 +1,26 @@
++// Writes one row to the audit log. The only function allowed to write to it.
++function record_audit_event {
++  input {
++    int actor_id?
++
++    // The action taken, such as refund.approve.
++    text action
++
++    // The table whose row changed, and that row's id.
++    text target_table
++    int target_id?
++  }
++
++  stack {
++    db.add audit_log {
++      data = {
++        actor_id    : $input.actor_id
++        action      : $input.action
++        target_table: $input.target_table
++        target_id   : $input.target_id
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/policies/AUDIT-001.xs
++++ b/policies/AUDIT-001.xs
+@@ -0,0 +1,23 @@
++policy "AUDIT-001" {
++  title = "Changes to refunds and users are recorded"
++  statement = "Every edit, patch and delete of the refunds and users tables calls the record_audit_event function unconditionally, so each change lands in the audit log. A change that cannot call it must be raised with the policy owner, not exempted."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc8.1"]
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.edit", tables: ["refunds", "users"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.patch", tables: ["refunds", "users"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.del", tables: ["refunds", "users"] } }
++  }
++}
+--- a/policies/AUTH-010.xs
++++ b/policies/AUTH-010.xs
+@@ -0,0 +1,13 @@
++policy "AUTH-010" {
++  title = "Endpoints require login"
++  statement = "Every endpoint requires a logged-in caller, unless it or its API group is tagged public. A deliberately public endpoint carries the public tag, signed off by the policy owner. This is the access-control evidence for the access review."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc6.1"]
++
++  rule {
++    check = "object.auth_required"
++    params = { except_tags: ["public"] }
++  }
++}
+--- a/policies/CHG-001.xs
++++ b/policies/CHG-001.xs
+@@ -0,0 +1,17 @@
++policy "CHG-001" {
++  title = "Endpoints are tested"
++  statement = "Every endpoint is exercised by a test that asserts something, so a change to an endpoint is checked before it ships. An endpoint that cannot be tested yet is raised with the policy owner, not exempted."
++  severity = "low"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc8.1"]
++
++  rule {
++    check = "object.test_coverage"
++    params = { object_kinds: ["query"] }
++  }
++
++  rule {
++    check = "test.assertion_required"
++  }
++}
+--- a/policies/RET-001.xs
++++ b/policies/RET-001.xs
+@@ -0,0 +1,18 @@
++policy "RET-001" {
++  title = "Only the audit function writes the audit log"
++  statement = "The audit log table exists, and only the record_audit_event function writes to it. This keeps the change history trustworthy for auditors. Nothing else may be exempted without the policy owner's approval."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc7.2"]
++
++  rule {
++    check = "workspace.object_required"
++    params = { object_kind: "table", names: ["audit_log"] }
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = { restricted_tables: ["audit_log"], allowed_functions: ["record_audit_event"] }
++  }
++}
+--- a/table/audit_log.xs
++++ b/table/audit_log.xs
+@@ -0,0 +1,23 @@
++// Append-only record of changes to sensitive data. Written only by record_audit_event.
++table audit_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++
++    // The logged-in user who made the change.
++    int actor_id? {
++      table = "users"
++    }
++
++    // What happened, such as refund.approve.
++    text action
++
++    // The table whose row changed, and that row's id.
++    text target_table
++    int target_id?
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

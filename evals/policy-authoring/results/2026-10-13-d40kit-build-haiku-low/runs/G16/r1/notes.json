@@ -1,0 +1,157 @@
+{
+  "goal_id": "G16",
+  "objects_built": [
+    {
+      "kind": "function",
+      "name": "require_manager",
+      "file": "workspace/function/require_manager.xs",
+      "role": "Loads the user by id and throws accessdenied unless role is manager or admin. Called first by the refund approval and price endpoints."
+    }
+  ],
+  "objects_changed": [
+    {
+      "kind": "query",
+      "name": "refunds/{refund_id}/approve POST",
+      "file": "workspace/api/app/refunds/refund_id/approve_POST.xs",
+      "change": "Added function.run require_manager as the first statement, input user_id = $auth.id."
+    },
+    {
+      "kind": "query",
+      "name": "products/{product_id}/price PATCH",
+      "file": "workspace/api/app/products/product_id/price_PATCH.xs",
+      "change": "Added function.run require_manager as the first statement, input user_id = $auth.id."
+    },
+    {
+      "kind": "query",
+      "name": "me PATCH",
+      "file": "workspace/api/app/me_PATCH.xs",
+      "change": "Removed the role input. Replaced data = $input[\"\"] (whole body) with $input|pick:[\"name\",\"phone\",\"marketing_opt_in\"]."
+    }
+  ],
+  "templates_considered": [
+    "AUTH-002: fits. Admin endpoints check the caller's role; used for the role check on the two protected endpoints.",
+    "AUTH-030: fits. Users can't make themselves admin; covers the role field in me PATCH.",
+    "AUTH-010: considered for login; already true for every endpoint in scope, not needed.",
+    "AUTH-040: middleware-based; no middleware exists and the ask is per-endpoint, so not used.",
+    "RET-001 / audit recipe: not in the ask; not used."
+  ],
+  "templates_used": [
+    "AUTH-002",
+    "AUTH-030"
+  ],
+  "rules": [
+    {
+      "policy_key": "AUTH-002",
+      "check": "object.statement_required",
+      "params": {
+        "functions": [
+          "require_manager"
+        ],
+        "placement": "first",
+        "must_reference": [
+          "$auth"
+        ],
+        "paths": [
+          "refunds/{refund_id}/approve"
+        ],
+        "object_kinds": [
+          "query"
+        ]
+      },
+      "covers": "Refund approval only by managers (first statement role check)"
+    },
+    {
+      "policy_key": "AUTH-002",
+      "check": "object.statement_required",
+      "params": {
+        "functions": [
+          "require_manager"
+        ],
+        "placement": "first",
+        "must_reference": [
+          "$auth"
+        ],
+        "paths": [
+          "products/{product_id}/price"
+        ],
+        "object_kinds": [
+          "query"
+        ]
+      },
+      "covers": "Price changes only by managers (first statement role check)"
+    },
+    {
+      "policy_key": "AUTH-030",
+      "check": "db.write_from_input_forbidden",
+      "params": {
+        "fields": [
+          "role"
+        ]
+      },
+      "covers": "Nobody can set role from request input, so no one can make themselves manager via me PATCH"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "Staff can view but not change, across the whole app",
+      "why": "other"
+    },
+    {
+      "part": "Only managers may approve refunds: that the role check itself is correct",
+      "why": "no check reads what a function decides; object.statement_required only confirms the call is first"
+    },
+    {
+      "part": "Nobody can get manager by any other route (admin endpoints, direct DB edits, data copies)",
+      "why": "other"
+    },
+    {
+      "part": "Who is allowed to be given the manager role",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Manager-only means manager, not admin",
+      "why": "couldn't tell: the ask says managers; I let admin pass too. Left as an assumption to confirm."
+    }
+  ],
+  "assumptions": [
+    "Admin counts as manager for approvals and price changes.",
+    "Only the refund approval endpoint and the price endpoint are the 'approve refunds' and 'change prices' actions.",
+    "Dropping role from me PATCH and picking the three remaining fields is acceptable; the customer did not name it but it is required to close the self-promotion route.",
+    "function.run syntax with input = {...} and as $name is the right shape for this workspace."
+  ],
+  "workspace_names_used": [
+    "users",
+    "role",
+    "refunds",
+    "products",
+    "app",
+    "refunds/{refund_id}/approve",
+    "products/{product_id}/price",
+    "me",
+    "$auth.id",
+    "payments",
+    "orgs"
+  ],
+  "confusions": [
+    "The skill's policy file example shows params on one line with commas; I wrote a multi-line params block without commas and parse accepted it. Unclear whether that is the canonical style.",
+    "The paths param for object.statement_required uses {refund_id} as a path segment; the description says a {param} segment of the endpoint matches any segment, but it was not clear whether the literal braces must match the endpoint's own declared path. Parse did not warn, so I used the path as written in the endpoint.",
+    "Two rules in one policy under the AUTH-002 template key: the skill says extra rules go in a policy with a key of your own, but also says one policy per template. Chose AUTH-002 with two rules; unclear which the product wants.",
+    "function.run call shape: no example in the skill or catalogue of calling a custom function in an endpoint; I guessed function.run <name> { input = {...} } as $var.",
+    "$input|pick:[...] as a whole-body filter: the check text mentions pick as the last filter for mass assignment, but the endpoint change itself was a guess at the right data-filter syntax and at how db.patch treats omitted keys at runtime.",
+    "Whether a precondition with || in its expression is accepted: not verified by the dry run beyond push validation."
+  ],
+  "wished_for": [
+    "A recipe or example for role-gated endpoints: a function.run role check as first statement, and the matching object.statement_required rule scoped by path.",
+    "A template for 'only role X may call these endpoints' that covers both the check and the self-promotion route (AUTH-002 plus AUTH-030 together) in one place.",
+    "Documentation of how db.patch treats omitted keys versus null, so a pick-based partial update is known to be safe.",
+    "A scope param for objects that read or write a named table with a given statement, e.g. all endpoints that db.patch products, to avoid hardcoding paths."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "AUTH-002.R1: Function \"require_manager\" is not on this branch (expected, function is new in this change)",
+    "AUTH-002.R2: Function \"require_manager\" is not on this branch (expected, function is new in this change)"
+  ],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The enforcement is a real function check on the two named endpoints and the self-promotion route is closed, so the stated rules match the ask. Confidence is not high because: the role check's logic is not verified by any check; function.run and pick syntax were not checked against a live parse of the workspace beyond the dry run; policy evaluate was not run; and staff-cannot-change is only covered for refunds and prices, not the whole app."
+}

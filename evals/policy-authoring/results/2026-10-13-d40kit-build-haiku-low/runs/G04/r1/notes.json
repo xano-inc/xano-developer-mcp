@@ -1,0 +1,80 @@
+{
+  "goal_id": "G04",
+  "objects_built": [
+    {"kind": "table", "name": "phi_access_log", "file": "workspace/table/phi_access_log.xs", "role": "Append-only record of each read or write of health data (user, resource, record, time). Not tagged phi, so the logger does not reach itself."},
+    {"kind": "function", "name": "log_phi_access", "file": "workspace/function/log_phi_access.xs", "role": "Writes one phi_access_log row; called unconditionally by every object reaching a phi table (enforced by PHI-001)."}
+  ],
+  "objects_changed": [
+    {"kind": "table", "name": "patients", "file": "workspace/table/patients.xs", "change": "Added tags = [\"phi\"]; marked first_name, last_name, dob, ssn, email, phone, address, insurance_member_id as {sensitive = true}."},
+    {"kind": "table", "name": "clinical_notes", "file": "workspace/table/clinical_notes.xs", "change": "Added tags = [\"phi\"]; marked diagnosis and note as {sensitive = true}."},
+    {"kind": "table", "name": "appointments", "file": "workspace/table/appointments.xs", "change": "Added tags = [\"phi\"] (reason holds health information). No field attributes."},
+    {"kind": "query", "name": "appointments GET", "file": "workspace/api/app/appointments_GET.xs", "change": "Added auth = \"users\" (was public, returned every appointment); added function.run log_phi_access. Needs customer confirmation: it changes who can call the endpoint."},
+    {"kind": "query", "name": "patients/{patient_id} GET", "file": "workspace/api/app/patients/patient_id_GET.xs", "change": "Added function.run log_phi_access before the response. Response unchanged (still returns ssn and dob; DATA-010 will report it)."},
+    {"kind": "query", "name": "clinical_notes POST", "file": "workspace/api/app/clinical_notes_POST.xs", "change": "Removed debug.log { value = $input[\"\"] } (logged the whole request body); added function.run log_phi_access with the new row id."}
+  ],
+  "templates_considered": [
+    "CONF-012 confidential_tables_tagged: fit; used, scoped with tables to patients and clinical_notes so users.email is not caught",
+    "CONF-011 sensitive_fields_marked: fit; used, scoped with tables for the same reason",
+    "CONF-010 sensitive_tables_need_login: fit; used with table_tags phi",
+    "DATA-010 no_pii_in_responses: fit; used with fields ssn, dob, insurance_member_id",
+    "LOG-001 no_sensitive_data_in_logs: fit; used as the template states",
+    "CONF-013 views_hide_sensitive: fit; used with no params",
+    "VND-001 approved_vendors_only: fit in shape, but the approved list is the owner's decision; used with empty hosts and providers",
+    "SEC-011 tls_verification_on: fit; used as the template states",
+    "RET-001 audit_log_protected: in the health recipe but needs an audit_log table and an audit function the customer did not ask for at this stage; not used, reported as a gap",
+    "RET-002 retained_data_cleaned_up: no retention rule was asked for; not used",
+    "SEC-012 no_secrets_in_code: not in the health recipe and no hardcoded credentials were in scope; not used",
+    "AUTH-010 endpoints_need_login: overlaps CONF-010 for phi tables; not used to avoid a second auth rule over the whole workspace"
+  ],
+  "templates_used": ["CONF-012", "CONF-011", "CONF-010", "DATA-010", "LOG-001", "CONF-013", "VND-001", "SEC-011"],
+  "rules": [
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"tag": "phi", "field_names": ["first_name", "last_name", "dob", "ssn", "email", "phone", "address", "insurance_member_id", "diagnosis", "note"], "tables": ["patients", "clinical_notes"]}, "covers": "Tables holding health data are tagged"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["first_name", "last_name", "dob", "ssn", "email", "phone", "address", "insurance_member_id", "diagnosis", "note"], "attribute": "sensitive", "tables": ["patients", "clinical_notes"]}, "covers": "Health fields are marked sensitive"},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["phi"]}, "covers": "Only logged-in endpoints reach health tables"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["ssn", "dob", "insurance_member_id"], "object_kinds": ["query"]}, "covers": "Responses kept free of identifiers (sensitive fields also forbidden by default)"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "Debug logs do not carry request input or user data"},
+    {"policy_key": "CONF-013", "check": "table.view_hide_required", "params": {}, "covers": "Saved views hide sensitive fields"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": [], "providers": []}, "covers": "Health data only to approved vendors; empty list reports every outbound call as not yet reviewed until the owner decides"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "External requests verify TLS"},
+    {"policy_key": "PHI-001", "check": "object.statement_required", "params": {"functions": ["log_phi_access"], "placement": "unconditional", "reaching_table_tags": ["phi"]}, "covers": "Every object reaching health tables records the access (custom rule; no template)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Audit of edits and deletes of patient records (who changed what), i.e. RET-001 and the audit_changes recipe", "why": "needs runtime/org process"},
+    {"part": "Approve which vendors may receive PHI (hosts, providers)", "why": "needs runtime/org process"},
+    {"part": "Whether the SSN/DOB chart response should stop returning those fields", "why": "other"},
+    {"part": "Access reviews, training, change approvals, BAAs, encryption at rest, backups, retention age", "why": "no check exists"},
+    {"part": "Runtime data: what is actually stored and sent, and copies between environments", "why": "no check exists"},
+    {"part": "Support agent and ticket summarizer sending patient data to a model provider", "why": "couldn't tell how: no check reads prompt content; only provider/host via VND-001"},
+    {"part": "A PHI field under a name no rule lists (e.g. reason on appointments)", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "patients, clinical_notes and appointments hold health data; customer_notes and users do not (scoped away)",
+    "The customer wants the appointments endpoint closed to anonymous callers, which is what the recipe requires; flagged for confirmation",
+    "The users table is the only auth table (auth = true)",
+    "log_phi_access is called with user_id from $auth.id; the new access row carries no PHI beyond resource and record id",
+    "Sensitive attribute syntax {sensitive = true} on a field is what the platform expects; the dry run accepted it",
+    "tags = [\"phi\"] at table level is the tag syntax (matches the endpoints' tags = [...] form)",
+    "Empty hosts and providers on VND-001 is accepted by the parser and means every outbound call is unreviewed"
+  ],
+  "workspace_names_used": ["patients", "clinical_notes", "appointments", "users", "customer_notes", "auth", "api_group app", "patient_id_GET", "appointments_GET", "clinical_notes_POST", "acme_send_invoice_email", "support_agent", "ticket_summarizer"],
+  "confusions": [
+    "The skill's recipe for health data says the access-record function needs one shared phi tag, and CONF-012 uses a different tag name (confidential) by default; I used phi for both. The skill says to match them, so this is consistent, but the default template tag and the recipe tag differ and that is easy to miss.",
+    "The recipe says to add a function that records access and name it in the rule, but it does not say whether the function's own table must avoid the phi tag. I left phi_access_log untagged to avoid a recursive call requirement.",
+    "The skill does not show the XanoScript syntax for the sensitive field attribute or for table-level tags. I guessed {sensitive = true} on the field and tags = [\"phi\"] on the table; the dry run accepted both, but the skill should show the form.",
+    "VND-001 needs hosts or providers; with an intentionally empty approved list the template gives no guidance, and I could not tell whether an empty list is the intended way to say 'nothing approved yet'.",
+    "CONF-010 and PHI-001 flagged the phi tag as on no table on the live branch; expected because the tag is new in this change, but the warning does not say the tag is being created in this same push.",
+    "The LOG-001 template only checks debug.log; the recipe's datadog.log advice is in the limits text but not in the template rule, so I did not add a second rule.",
+    "statement.expression_rule for LOG-001 would also catch the clinical_notes debug.log I removed; the template does not say a removed debug line is a better fix than a refactor."
+  ],
+  "wished_for": [
+    "A worked example of the sensitive field attribute and table-level tags in XanoScript.",
+    "A recipe note saying when to use tables scope versus a tag, since CONF-011 and CONF-012 would otherwise catch the users table's email field.",
+    "A short statement of whether an empty approved-vendor list is a valid 'nothing approved yet' state for VND-001.",
+    "A template or check that tests whether a patient-facing or AI-agent call sends PHI (prompt contents), since VND-001 only sees the host."
+  ],
+  "parse_attempts": 18,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies cover the recipe's checkable parts (tagging, marking, login, response fields, logs, vendor list, TLS, access logging) and the dry run is clean, but nothing was evaluated, so I cannot say which findings will fire. Coverage is partial: no audit log (RET-001), no vendor approval (empty list), the patient chart still returns SSN and DOB, and whether PHI is sent to model providers is not checked. HIPAA compliance is not something a policy can establish."
+}

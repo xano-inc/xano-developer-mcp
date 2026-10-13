@@ -1,0 +1,139 @@
+--- a/api/app/payments/charge_POST.xs
++++ b/api/app/payments/charge_POST.xs
+@@ -13,10 +13,6 @@
+   }
+ 
+   stack {
+-    debug.log {
+-      value = "charge attempt " ~ ($input|json_encode)
+-    }
+-  
+     api.request {
+       url = "https://api.stripe.com/v1/payment_intents"
+       method = "POST"
+@@ -34,10 +30,6 @@
+       data = {
+         invoice_id              : $input.invoice_id
+         amount                  : $input.amount
+-        card_number             : $input.card_number
+-        card_cvv                : $input.card_cvv
+-        card_expiry             : $input.card_expiry
+-        cardholder_name         : $input.cardholder_name
+         stripe_payment_intent_id: $intent.response.result.id
+         status                  : "succeeded"
+       }
+--- a/policies/CONF-011.xs
++++ b/policies/CONF-011.xs
+@@ -0,0 +1,17 @@
++policy "CONF-011" {
++  title = "Sensitive fields are marked sensitive"
++  statement = "Card-adjacent fields that are still stored, such as card_last4, are marked sensitive wherever a table declares them, so they stay out of saved views and logs."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    title = "Listed fields are marked sensitive"
++    check = "table.field_attribute_required"
++    params = {
++      field_names: ["card_last4"]
++      attribute: "sensitive"
++    }
++  }
++}
+--- a/policies/LOG-001.xs
++++ b/policies/LOG-001.xs
+@@ -0,0 +1,18 @@
++policy "LOG-001" {
++  title = "Logs don't contain request, user or secret data"
++  statement = "Debug logs never reference request input, the logged-in user or environment variables. Cardholder data is request input, so it never reaches a log. Log the event, not the payload."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    title = "Logs name events, not input, auth or env"
++    check = "statement.expression_rule"
++    params = {
++      statements: ["debug.log"]
++      param_names: ["value"]
++      must_not_reference: ["$input", "$auth", "$env"]
++    }
++  }
++}
+--- a/policies/PCI-CHD-001.xs
++++ b/policies/PCI-CHD-001.xs
+@@ -0,0 +1,17 @@
++policy "PCI-CHD-001" {
++  title = "Cardholder data is never stored raw"
++  statement = "No table stores a card number, security code, expiry date or cardholder name. Card details go only to the payment processor, which returns a token that is kept instead. A table that declares one of these fields is reported until the field is removed by its owner."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss"]
++
++  rule {
++    title = "Card number, security code, expiry and cardholder name are never stored"
++    check = "table.field_attribute_required"
++    params = {
++      field_names: ["card_number", "card_cvv", "card_cvc", "cvv", "cvc", "pan", "card_expiry", "cardholder_name"]
++      forbidden: true
++    }
++  }
++}
+--- a/policies/SEC-011.xs
++++ b/policies/SEC-011.xs
+@@ -0,0 +1,18 @@
++policy "SEC-011" {
++  title = "External requests verify TLS certificates"
++  statement = "Every external request verifies the TLS certificate and host name of the server it talks to. Turning verification off is never acceptable, including for the card processor and bank-data calls."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    title = "Requests verify TLS certificates and hosts"
++    check = "statement.param_forbidden"
++    params = {
++      statements: ["api.request", "stream.from_request"]
++      param_names: ["verify_peer", "verify_host"]
++      values: [false]
++    }
++  }
++}
+--- a/policies/SEC-012.xs
++++ b/policies/SEC-012.xs
+@@ -0,0 +1,12 @@
++policy "SEC-012" {
++  title = "No secrets are hardcoded"
++  statement = "API keys, tokens, private keys, encryption keys and credentialed URLs are never written as literals in an object's definition or agent settings; they belong in environment variables. A value already held in an environment variable is compliant."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    check = "literal.credential_shape"
++  }
++}
+--- a/policies/VND-001.xs
++++ b/policies/VND-001.xs
+@@ -0,0 +1,15 @@
++policy "VND-001" {
++  title = "Data only goes to approved vendors"
++  statement = "Outbound requests, cloud and email providers and AI model providers are limited to the approved vendors: Stripe (api.stripe.com) and Plaid (production.plaid.com). Adding a vendor is the policy owner's decision; a vendor outside this list is reported, not exempted."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    check = "outbound.vendor_allowlist"
++    params = {
++      hosts: ["api.stripe.com", "production.plaid.com"]
++    }
++  }
++}

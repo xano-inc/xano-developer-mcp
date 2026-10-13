@@ -1,0 +1,124 @@
+--- a/api/app/customers/customer_id_PATCH.xs
++++ b/api/app/customers/customer_id_PATCH.xs
+@@ -15,6 +15,10 @@
+       field_value = $input.customer_id
+       data = {email: $input.email, phone: $input.phone}
+     } as $customer
++
++    function.run record_audit_event {
++      input = {actor_id: $auth.id, action: "update", table_name: "customers", record_id: $input.customer_id}
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -16,6 +16,10 @@
+       field_value = $auth.id
+       data = $input[""]
+     } as $me
++
++    function.run record_audit_event {
++      input = {actor_id: $auth.id, action: "update", table_name: "users", record_id: $auth.id}
++    } as $audit
+   }
+ 
+   response = $me
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -17,6 +17,10 @@
+       field_name = "id"
+       field_value = $input.user_id
+     }
++
++    function.run record_audit_event {
++      input = {actor_id: $input.user_id, action: "delete", table_name: "users", record_id: $input.user_id}
++    } as $audit
+   }
+ 
+   response = {deleted: true}
+--- a/function/record_audit_event.xs
++++ b/function/record_audit_event.xs
+@@ -0,0 +1,22 @@
++// Writes one audit_log entry recording who changed which record, in which table, and how. Call it straight after every edit or delete of customers or users.
++function record_audit_event {
++  input {
++    int actor_id?
++    text action
++    text table_name
++    int record_id
++  }
++
++  stack {
++    db.add audit_log {
++      data = {
++        actor_id: $input.actor_id
++        action: $input.action
++        table_name: $input.table_name
++        record_id: $input.record_id
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/policies/AUDIT-010.xs
++++ b/policies/AUDIT-010.xs
+@@ -0,0 +1,33 @@
++policy "AUDIT-010" {
++  title = "Changes to customer and user records are audited"
++  statement = "Every edit or delete of a customer or user record must call record_audit_event straight after the write, so the audit_log table holds who changed what and when. Only record_audit_event may write audit_log, so entries cannot be added, edited or removed any other way. This is an audit trail of changes, not proof that a change was reviewed or approved. An object that cannot record its change is reported, and exempting it is the policy owner's decision."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc8.1"]
++
++  rule {
++    check = "workspace.object_required"
++    params = { object_kind: "table", names: ["audit_log"] }
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = { restricted_tables: ["audit_log"], allowed_functions: ["record_audit_event"] }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.edit", tables: ["customers", "users"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.patch", tables: ["customers", "users"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.del", tables: ["customers", "users"] } }
++  }
++}
+--- a/table/audit_log.xs
++++ b/table/audit_log.xs
+@@ -0,0 +1,21 @@
++// Append-only record of each change to a customer or user record: who made it, what they did, which record, and when. Written only by record_audit_event.
++table audit_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    int actor_id? {
++      table = "users"
++    }
++
++    text action filters=trim
++    text table_name filters=trim
++    int record_id
++  }
++
++  index = [
++    {type: "primary", field: [{name: "id"}]}
++    {type: "btree", field: [{name: "record_id", op: "asc"}]}
++  ]
++}

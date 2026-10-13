@@ -1,0 +1,58 @@
+{
+  "goal_id": "G03",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): not needed, the ask is about logging, storage and vendors",
+    "no_pii_in_responses (DATA-010): fit, used with card and bank field list",
+    "sensitive_fields_marked (CONF-011): fit, used with card and bank field list",
+    "no_sensitive_data_in_logs (LOG-001): fit, used as-is",
+    "approved_vendors_only (VND-001): fit, hosts set to Stripe and Plaid",
+    "no_secrets_in_code (SEC-012): fit, covers the Twilio URL credential",
+    "tls_verification_on (SEC-011): fit, PCI recipe includes it; not asked for explicitly",
+    "protect_card_data recipe (PCI DSS): followed for its templates; its forbidden-field rule used with a narrower and different field list",
+    "no_destructive_sql, audit_log_protected, retained_data_cleaned_up, and others: not relevant to the ask"
+  ],
+  "templates_used": ["SEC-012", "VND-001", "SEC-011", "CONF-011", "DATA-010", "LOG-001"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "no hardcoded credentials, including the Twilio credential in function/acme_notify_sms"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "outbound calls only to Stripe and Plaid"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "card data in transit over verified TLS"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name", "card_last4", "bank_account_number", "bank_routing_number"], "attribute": "sensitive"}, "covers": "card and bank fields marked sensitive"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"object_kinds": ["query"], "fields": ["card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number"]}, "covers": "endpoints do not fetch card and bank fields (supporting coverage, not in the ask verbatim)"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data cannot be logged via debug.log"},
+    {"policy_key": "PCI-CARD-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number"], "forbidden": true}, "covers": "cardholder and bank data cannot be stored raw in any table"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cardholder data cannot be logged via datadog.log or via values read back from the database", "why": "no check reads datadog.log by default in LOG-001; LOG-001 only traces debug.log, per its limits text"},
+    {"part": "data sent to an approved vendor is not inspected (e.g. riskscreen would be flagged by host, but what it receives is not)", "why": "no check reads payload content sent to vendors"},
+    {"part": "PCI audit as a whole (access reviews, encryption at rest, network, people, backups, processor attestation)", "why": "needs runtime/org process"},
+    {"part": "whether the policy passes an audit", "why": "other: policies only show stored definitions match rules at run time; not compliance"},
+    {"part": "removing already-stored raw card data and changing the charge endpoint", "why": "other: fix requires product decision and data migration; customer's call, not built here"}
+  ],
+  "assumptions": [
+    "Stripe host is api.stripe.com and Plaid host is production.plaid.com, as they appear in the workspace",
+    "Customer's 'approved list' is exactly Stripe and Plaid; no other vendor is approved",
+    "Advisory enforcement is the right default for new policies; blocking is the owner's decision",
+    "Policy-only change is acceptable for 'build all of it': no object code changed, because removing raw card columns or the debug log changes product behaviour and stored data",
+    "Card-adjacent field list: card_number, card_cvv, card_expiry, cardholder_name, card_last4, bank_account_number, bank_routing_number"
+  ],
+  "workspace_names_used": ["payments", "payment_method", "card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number", "card_last4", "card_token", "payments/charge", "payments/fraud_check", "bank-accounts/link", "acme_notify_sms", "issue_refund", "api.stripe.com", "production.plaid.com", "api.twilio.com", "api.riskscreen.example", "api.shipfast.example"],
+  "confusions": [
+    "The skill's policies topic and the templates doc give slightly different 'Fill' guidance for LOG-001 and DATA-010 (object_kinds param present in catalogue but not in the doc summary); I took the catalogue JSON as authoritative",
+    "Skill says exceeding exit codes and policy evaluate are the honest checks, but evaluate is forbidden in this run; I could not confirm the findings I predicted",
+    "Unclear whether a forbidden-field rule should cover every field in the PCI list or only the ones the recipe names (card_number, cvv, cvc, pan); I used the customer's list",
+    "The skill says a policy file carries no comments, but there is no explicit statement whether tags on the policy itself are free-form or vocabulary-bound; I used pci-dss"
+  ],
+  "wished_for": [
+    "A PCI DSS recipe with fields for the card and bank field names and a worked example for bank account numbers, which the current recipe does not cover",
+    "A check or param for datadog.log in LOG-001, or a note in the template that it covers only debug.log",
+    "A way to rate whether a vendor host receives card data, rather than only whether it is on the list",
+    "Guidance on what to do when the policy would flag existing code that the customer is not ready to change (advisory vs blocking, finding triage)"
+  ],
+  "parse_attempts": 8,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policies parse and the dry run accepts them, and they cover the customer's three stated rules at the level of stored definitions: card data is not logged via debug.log, not stored in declared fields, and vendor hosts are limited to Stripe and Plaid. Confidence is not high because the policies were not evaluated (evaluate was forbidden in this run), so predicted findings are unverified, and the policies cannot see runtime logging, vendor payloads, or the wider PCI controls. The raw card columns and charge logging remain in the code until the customer changes them."
+}

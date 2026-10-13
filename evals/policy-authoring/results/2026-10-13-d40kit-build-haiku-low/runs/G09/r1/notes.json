@@ -1,0 +1,58 @@
+{
+  "goal_id": "G09",
+  "objects_built": [
+    {"kind": "task", "name": "purge_stale_personal_data", "file": "workspace/task/purge_stale_personal_data.xs", "role": "Nightly purge of support_tickets and webhook_deliveries older than 730 days (retention)"}
+  ],
+  "objects_changed": [
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Also reads the user's email, deletes support_tickets by user_id and newsletter_subscribers by email, detaches orders (user_id set to null via per-row db.patch), tagged erasure"},
+    {"kind": "table", "name": "users", "file": "workspace/table/users.xs", "change": "tags personal"},
+    {"kind": "table", "name": "user_address", "file": "workspace/table/user_address.xs", "change": "tags personal"},
+    {"kind": "table", "name": "sessions", "file": "workspace/table/sessions.xs", "change": "tags personal, retained"},
+    {"kind": "table", "name": "support_tickets", "file": "workspace/table/support_tickets.xs", "change": "tags personal, retained"},
+    {"kind": "table", "name": "newsletter_subscribers", "file": "workspace/table/newsletter_subscribers.xs", "change": "tags personal"},
+    {"kind": "table", "name": "webhook_deliveries", "file": "workspace/table/webhook_deliveries.xs", "change": "tags retained"}
+  ],
+  "templates_considered": [
+    "RET-002 retained_data_cleaned_up: fits the two-year retention ask directly; used",
+    "personal_data_erasure recipe: its erasure rule is the extra rule I wrote in GDPR-ERASE; its other templates (CONF-011, DATA-010, LOG-001) were not used because they cover marking fields, responses and logs, which the ask does not mention",
+    "CONF-011 sensitive_fields_marked: not used; I did not confirm the XanoScript syntax for the sensitive field attribute",
+    "DATA-010 / LOG-001: not used; outside deletion and retention"
+  ],
+  "templates_used": ["RET-002"],
+  "rules": [
+    {"policy_key": "RET-002", "check": "table.coverage_required", "params": {"tags": ["retained"], "referenced_by": {"object_kinds": ["task"], "statements": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"]}}, "covers": "Two-year retention: each retained table has a scheduled cleanup task"},
+    {"policy_key": "GDPR-ERASE", "check": "table.coverage_required", "params": {"tags": ["personal"], "referenced_by": {"object_kinds": ["function"], "tags": ["erasure"], "statements": ["db.del", "db.bulk.delete"]}}, "covers": "Account deletion: each personal-data table is deleted from by the erasure function"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "The two-year age itself (the 730-day filter in the task)", "why": "no check exists"},
+    {"part": "Deleting data everywhere: payment processor, email provider, AI vendor, backups, logs", "why": "needs runtime/org process"},
+    {"part": "Orders and invoices under legal retention: detached, not deleted, and no decision on conflict with the two-year rule", "why": "needs runtime/org process"},
+    {"part": "patients, appointments, clinical_notes, customers, customer_notes: not linked to user accounts", "why": "couldn't tell how"},
+    {"part": "Whether the erasure function's own deletes and detaches are the right ones", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "A user's personal data is what hangs off users.id via user_id, plus newsletter_subscribers matched by the user's email",
+    "orders are financial records and are detached rather than deleted",
+    "730 days is two years",
+    "Advisory enforcement is right for new policies per the skill",
+    "Tags on tables and functions use tags = [...] in the object body, which the dry run accepted"
+  ],
+  "workspace_names_used": ["delete_user_account", "users", "user_address", "sessions", "support_tickets", "newsletter_subscribers", "orders", "webhook_deliveries", "purge_expired_sessions", "account", "app", "users auth table"],
+  "confusions": [
+    "db.bulk.patch is named in the statement list for statement and check params, but its XanoScript form failed to parse ('Missing block: items'); I used db.patch in a foreach instead. The skill does not show the syntax for bulk writes.",
+    "The date filter syntax (now|subtract_days:730) was not documented in the skill or the catalogue; the dry run accepted it, but I have not verified it runs.",
+    "The skill says to run xano policy evaluate after changes; the brief forbids it. I could not report findings, so the rules' outcome is unverified.",
+    "Parse warnings say tags are on no object on the branch, because they only exist in pending files. Not clear from the skill whether a parse of pending work is expected to warn like this."
+  ],
+  "wished_for": [
+    "A XanoScript example of table and function tags, since none exist in this workspace",
+    "Syntax examples for db.bulk.* statements and for db.patch inside a foreach",
+    "A recipe or template for user-account erasure that explicitly covers orders and invoices under legal retention",
+    "Documentation of the date arithmetic filters usable in where clauses"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": ["Syntax error, while parsing: 'db.bulk.patch orders {' - Missing block: items"],
+  "dry_run_problems_seen": ["First dry run blocked delete_user_account on the db.bulk.patch syntax; fixed, second dry run clean"],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The rules only check that tagged tables are reached by a cleanup task and by an erasure function. They do not check the 730-day age, what the functions delete, the orders decision, or copies outside Xano. The policies have not been evaluated."
+}

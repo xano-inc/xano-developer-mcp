@@ -1,0 +1,36 @@
+{
+  "goal_id": "G12",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "AUTH-010: endpoints require login. Fits only the on-call half by name; it governs app users, not developer access to prod. Rejected.",
+    "AUTH-002: admin endpoints check the caller's role. Closest to 'devs get in via admin'; still about app callers, not on-call approval. Rejected.",
+    "RET-002 / RET-001 / CONF-010: retention, audit and tagged-table access. Keyword overlap with 'prod data' only; none reads environments or copies. Rejected.",
+    "VAL-001 / CONV-060: no fit to either half of the ask. Rejected."
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "Production data never ends up in staging", "why": "no check exists"},
+    {"part": "Devs can only get into prod through the on-call process", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'Prod' and 'staging' are environments or tenants outside the object definitions; the workspace holds no object named for either.",
+    "The tenants table is the closest thing to deployed environments; I did not treat it as an environment marker."
+  ],
+  "workspace_names_used": ["tenants", "db_connection_string", "admin", "tenant_id_PATCH", "orgs"],
+  "confusions": [
+    "The skill's 'What no check can see' section covers both halves almost verbatim, but the decision rule for 'build nothing' versus 'build a partial proxy' is not stated. I chose to build nothing, because a proxy would read as coverage it does not provide.",
+    "The brief says 'Coverage: policy files whose rules keep enforcement wired in'. With no enforcement possible, the coverage step has no object to name, so it was skipped."
+  ],
+  "wished_for": [
+    "A check or statement that reads environment or branch identity, or flags copies of production data into another environment.",
+    "A check that reads an access or approval record, or ties an endpoint to an on-call approval function.",
+    "A short recipe for 'no X in Y environment' asks that says up front when to build nothing."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Neither half of the ask is checkable from object definitions. I built no policy, so confidence that the policy achieves the goal is low by design; the ask needs controls outside Xano policy."
+}

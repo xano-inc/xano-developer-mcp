@@ -1,0 +1,15 @@
+{
+  "pulled": true,
+  "added": [
+    "function/record_audit_event.xs",
+    "policies/AUDIT-010.xs",
+    "table/audit_log.xs"
+  ],
+  "modified": [
+    "api/app/customers/customer_id_PATCH.xs",
+    "api/app/me_PATCH.xs",
+    "function/delete_user_account.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

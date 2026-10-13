@@ -1,0 +1,127 @@
+{
+  "goal_id": "G15",
+  "objects_built": [
+    {
+      "kind": "table",
+      "name": "rate_limit_hits",
+      "file": "workspace/table/rate_limit_hits.xs",
+      "role": "stores one row per request for the limiter to count"
+    },
+    {
+      "kind": "middleware",
+      "name": "rate_limit",
+      "file": "workspace/middleware/rate_limit.xs",
+      "role": "pre-phase limiter: refuses an ip past 20 requests to one path per 60s (intended; not attached to any endpoint yet)"
+    }
+  ],
+  "objects_changed": [
+    {
+      "kind": "query",
+      "name": "auth/login POST",
+      "file": "workspace/api/app/auth/login_POST.xs",
+      "change": "added tag 'login'; middleware attach attempted and removed (syntax refused)"
+    },
+    {
+      "kind": "query",
+      "name": "auth/signup POST",
+      "file": "workspace/api/app/auth/signup_POST.xs",
+      "change": "added tag 'login'; middleware attach attempted and removed (syntax refused)"
+    }
+  ],
+  "templates_considered": [
+    "endpoints_need_login: not applicable, asks about rate, not auth",
+    "protected_endpoints_run_middleware (AUTH-040): fits the shape (middleware on endpoints) but needs an existing middleware name in the workspace; I did not use it because it is about auth middleware",
+    "no template for rate limiting in kit/policy-templates.md"
+  ],
+  "templates_used": [],
+  "rules": [
+    {
+      "policy_key": "RATE-010",
+      "check": "object.middleware_required",
+      "params": {
+        "middleware": [
+          "rate_limit"
+        ],
+        "phase": "pre",
+        "endpoint_auth": "none",
+        "object_kinds": [
+          "query"
+        ]
+      },
+      "covers": "every public endpoint runs the limiter (new public endpoints)"
+    },
+    {
+      "policy_key": "RATE-010",
+      "check": "object.middleware_required",
+      "params": {
+        "middleware": [
+          "rate_limit"
+        ],
+        "phase": "pre",
+        "tags": [
+          "login"
+        ],
+        "object_kinds": [
+          "query"
+        ]
+      },
+      "covers": "login and signup run the limiter"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "login and signup actually rate limited",
+      "why": "couldn't tell how: middleware attach syntax on endpoints not found; the push refused every form I tried"
+    },
+    {
+      "part": "the limit's value, key, and whether it works",
+      "why": "no check can read what middleware does"
+    },
+    {
+      "part": "other existing public endpoints (health, newsletter, support chat, etc.)",
+      "why": "out of scope of the ask as I read it; policy will report them"
+    },
+    {
+      "part": "bot traffic from rotating ips / CDN / edge",
+      "why": "infrastructure, outside workspace definitions"
+    }
+  ],
+  "assumptions": [
+    "x-forwarded-for is the client ip header",
+    "'every new public endpoint' means endpoint_auth none (public) queries",
+    "a new tag 'login' is acceptable on login and signup",
+    "a 20-per-minute per-ip per-path limit is a reasonable default for the customer to tune"
+  ],
+  "workspace_names_used": [
+    "auth/login",
+    "auth/signup",
+    "app api group",
+    "users table",
+    "tags public"
+  ],
+  "confusions": [
+    "kit/policy-templates.md and kit/catalogue.json do not include the rate_limiting recipe; the live `xano policy catalogue` does. I used the live CLI output.",
+    "No documented XanoScript form for attaching middleware to an endpoint; every form tried was refused ('Invalid kind for middleware', 'Invalid block'). The skill and catalogue say what the check reads but not how to attach it.",
+    "The recipe's login rule says 'login API group', but login lives in the shared 'app' group, so api_groups would cover the whole app. I used a tag instead.",
+    "Syntax of the middleware body (request headers and path variables, error types for a 429-style refusal) is not documented in the materials here; I guessed $request.headers and accessdenied."
+  ],
+  "wished_for": [
+    "one working example of a middleware attached to an endpoint in XanoScript",
+    "the request header / ip variable names for middleware",
+    "a documented rate-limit middleware recipe in kit/ matching the live catalogue",
+    "a list of valid precondition error types"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [
+    "none fatal; warnings: rate_limit not on branch, tag login on no query, before push"
+  ],
+  "dry_run_problems_seen": [
+    "middleware = [\"rate_limit\"] refused: Invalid kind for middleware - static:text[]",
+    "middleware = [rate_limit] refused: Invalid kind for middleware - assign:expr",
+    "middleware = [{name: ...}] refused: Invalid block: name",
+    "middleware { rate_limit } block refused: unexpected 'middleware'",
+    "after removing attachments: dry run clean (no critical errors)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy and limiter exist and the push is clean, but login and signup are not attached to the limiter, so the core ask is not in effect. The limiter's logic is unverified and its header and error details are guesses. Only the public-endpoint coverage rule would work once attachment is solved."
+}

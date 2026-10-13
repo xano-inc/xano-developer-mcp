@@ -1,0 +1,108 @@
+{
+  "goal_id": "G11",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "SEC-013 requests_have_timeout: fits the timeout half of the ask; template lists only api.request, stream.from_request, webflow.request, so extended with api.microservice and api.lambda",
+    "LOG-010 external_calls_handle_errors: fits the error-handling half; same statement list extended the same way",
+    "LOG-011 middleware_surfaces_errors: did not fit; it is about middleware swallowing errors, not endpoint or function external calls",
+    "SEC-011 tls_verification_on: did not fit; TLS verification is not what was asked",
+    "RELIABILITY recipe 'Keep code easy to review': did not use; it bundles LOG-010 with tests, size and naming rules the customer did not ask for"
+  ],
+  "templates_used": [
+    "SEC-013",
+    "LOG-010"
+  ],
+  "rules": [
+    {
+      "policy_key": "SEC-013",
+      "check": "statement.param_bound",
+      "params": {
+        "statements": [
+          "api.request",
+          "stream.from_request",
+          "webflow.request",
+          "api.microservice",
+          "api.lambda"
+        ],
+        "param_names": [
+          "timeout"
+        ],
+        "max": 30,
+        "unit": "seconds"
+      },
+      "covers": "every external call has a timeout no longer than 30 seconds"
+    },
+    {
+      "policy_key": "LOG-010",
+      "check": "statement.containment",
+      "params": {
+        "statements": [
+          "api.request",
+          "stream.from_request",
+          "webflow.request",
+          "api.microservice",
+          "api.lambda"
+        ],
+        "must_be_inside": [
+          "try_catch"
+        ]
+      },
+      "covers": "every external call sits inside a try block so a vendor failure reaches error handling"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "catch branch actually handles the failure (fallback, clear error to caller)",
+      "why": "no check exists"
+    },
+    {
+      "part": "external calls via db.external.*.direct_query, ai.external.mcp.*, cloud.* statements",
+      "why": "no check exists for timeout on these; try-block rule not extended to them"
+    },
+    {
+      "part": "retries and what happens after a timeout",
+      "why": "no check exists (task retries not readable)"
+    },
+    {
+      "part": "timeouts computed at runtime rather than literals",
+      "why": "couldn't tell how; reported as unresolvable, not checked"
+    },
+    {
+      "part": "the app does not hang in production when a vendor is down",
+      "why": "needs runtime/org process"
+    }
+  ],
+  "assumptions": [
+    "Customer's 'external API call' includes api.microservice and api.lambda, which take a timeout param",
+    "Advisory is the right enforcement for a new policy, per the skill's default; blocking is the owner's choice",
+    "No existing objects should change in this change; the customer asked for a policy only",
+    "Calls without an explicit timeout are judged at the 10s default, so SEC-013 passes them as the check documents"
+  ],
+  "workspace_names_used": [
+    "acme_get_tracking",
+    "acme_sync_shipping_rates",
+    "acme_notify_sms",
+    "issue_refund",
+    "retry_failed_webhooks",
+    "quote_POST",
+    "fraud_check_POST",
+    "charge_POST",
+    "link_POST"
+  ],
+  "confusions": [
+    "Template SEC-013 and LOG-010 statement lists cover only three statements; the ask said 'any external call', so the extension to api.microservice and api.lambda was my call and is not in the template. The skill does not say whether a template's statement list should be widened for 'any'.",
+    "xano policy parse human output omits the severity line, while -o json shows severity: medium. Confirmed the file is correct, but the human view could mislead a reviewer.",
+    "Could not run xano policy evaluate (forbidden for this task), so every finding named in reply.md is a prediction from reading the files, not an evaluation result."
+  ],
+  "wished_for": [
+    "A recipe or template for 'every outbound call has timeout and error handling' that lists all external statements, not the three in the template",
+    "A way to state that a timeout set by a literal in a function's caller counts, documented with an example",
+    "An example of a try_catch whose catch does something meaningful, so the 'handles its failures' wording can be backed by a rule"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The two policies parse and dry-run cleanly and their checks match the timeout and error-handling parts of the ask on the listed statements. Confidence stops at medium because the catch branch is not checked, runtime timeouts are not verified, direct_query/mcp/cloud calls are outside the rules, and I could not run evaluate to confirm which existing calls are flagged."
+}

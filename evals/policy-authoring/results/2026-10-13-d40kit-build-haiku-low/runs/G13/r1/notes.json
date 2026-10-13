@@ -1,0 +1,35 @@
+{
+  "goal_id": "G13",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: considered for the customer-data endpoint part; checks login, not training, so does not fit the ask as stated",
+    "CONF-010 sensitive_tables_need_login: considered; needs tables tagged pii, which the workspace may not carry; checks access path, not training",
+    "recipe protect_health_data: considered; wrong regulation and still access-path only",
+    "people_and_training (catalogue gap entry): confirmed no check covers it"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "everyone on the team has done their security awareness training", "why": "no check exists"},
+    {"part": "before they are allowed to touch anything with customer data", "why": "needs runtime/org process (access grant gated on training record)"}
+  ],
+  "assumptions": [
+    "Customer data is represented by tables; no table tagged pii was confirmed in the workspace",
+    "Training completion is not stored in the Xano workspace definitions"
+  ],
+  "workspace_names_used": [],
+  "confusions": [
+    "The brief's step 2 expects a plan before building; with no buildable part, the plan and the no-build decision were written to reply.md with no object files",
+    "Skill says 'ask only what the workspace cannot tell you' but the ask is answerable as no-build; I did not ask, I explained"
+  ],
+  "wished_for": [
+    "An explicit 'not checkable' response pattern in the policy skill for people/process requests, with a suggested wording for the customer",
+    "Guidance on whether a self-attested flag (training_completed) counts as enforcement or as a misleading control"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No policy check reads people or training records, and the platform's own 'What no check can see' section lists People and training. A self-attested flag would not verify training. Nothing was built, so the request is not met by a policy."
+}

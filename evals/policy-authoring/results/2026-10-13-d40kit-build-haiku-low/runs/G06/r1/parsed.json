@@ -1,0 +1,287 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/CHG-001.xs",
+    "build/policies/CONV-040.xs",
+    "build/policies/CONV-050.xs",
+    "build/policies/LOG-010.xs",
+    "build/policies/PERF-001.xs",
+    "build/policies/REVIEW-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/CHG-001.xs",
+      "ok": true,
+      "key": "CHG-001",
+      "title": "Endpoints are tested",
+      "statement": "Every endpoint is exercised by a workflow test or unit test that asserts something, and every protected endpoint has a test asserting that an anonymous call is rejected. Checks test definitions only, not whether they pass.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CHG-001.R1",
+          "title": "",
+          "check": "object.test_coverage",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CHG-001.R2",
+          "title": "",
+          "check": "test.assertion_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/CONV-040.xs",
+      "ok": true,
+      "key": "CONV-040",
+      "title": "Endpoints and functions stay short",
+      "statement": "Every endpoint and function holds at most 30 statements and 3 levels of nesting. Split a long object into functions it calls. Large legacy objects are exempted only by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CONV-040.R1",
+          "title": "",
+          "check": "stack.size_limit",
+          "params": {
+            "max_statements": 30,
+            "max_nesting": 3,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/CONV-050.xs",
+      "ok": true,
+      "key": "CONV-050",
+      "title": "No leftover code",
+      "statement": "Stacks hold no disabled statements, declared inputs are read, and assigned variables are read. Delete dead code rather than switching it off.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CONV-050.R1",
+          "title": "",
+          "check": "stack.disabled_statement_forbidden",
+          "params": {
+            "allowed_statements": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CONV-050.R2",
+          "title": "",
+          "check": "object.unused_input_forbidden",
+          "params": {
+            "allowed_inputs": [],
+            "include_nested_inputs": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CONV-050.R3",
+          "title": "",
+          "check": "stack.unused_variable_forbidden",
+          "params": {
+            "include_results_of": [],
+            "allowed_variables": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/LOG-010.xs",
+      "ok": true,
+      "key": "LOG-010",
+      "title": "External calls handle their own failures",
+      "statement": "Every external request sits inside a try block, so a vendor failure reaches error handling. Checks api.request statements only.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request"
+            ],
+            "must_be_inside": [
+              "try_catch"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/PERF-001.xs",
+      "ok": true,
+      "key": "PERF-001",
+      "title": "Endpoints never return every row",
+      "statement": "Every list read an endpoint or AI tool runs, in its own stack or a function it calls, pages its results, at most 1000 rows a page.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "PERF-001.R1",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "db.query"
+            ],
+            "param_names": [
+              "per_page"
+            ],
+            "min": null,
+            "max": 1000,
+            "unit": "rows",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/REVIEW-001.xs",
+      "ok": true,
+      "key": "REVIEW-001",
+      "title": "Functions say what they do",
+      "statement": "Every function has a description of at least 20 characters saying what it is for, in words its callers need. Write the // comment lines directly above the function; do not pad to reach the length.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "REVIEW-001.R1",
+          "title": "",
+          "check": "object.description_required",
+          "params": {
+            "require_on": [
+              "object"
+            ],
+            "allowed_fields": [
+              "id",
+              "created_at"
+            ],
+            "min_length": 20,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

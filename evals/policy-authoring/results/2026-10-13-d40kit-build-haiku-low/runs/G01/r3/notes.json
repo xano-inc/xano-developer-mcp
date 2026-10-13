@@ -1,0 +1,45 @@
+{
+  "goal_id": "G01",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: fits, used as is (object.auth_required, except_tags public)",
+    "PERF-001 reads_are_paged: fits, used as is (statement.param_bound on db.query per_page, max 1000)",
+    "AUTH-020 own_records_only: partial fit. The ask is more about cross-tenant leakage than login, but compare_to expects $auth.<field> and the org id lives on the users row, so I did not build it",
+    "DATA-010 output fields: not used; the ask is about access, not which fields are returned",
+    "AUTH-003 public_endpoints_harmless: not needed; the ask is about reads"
+  ],
+  "templates_used": ["AUTH-010", "PERF-001"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "endpoints returning invoices without login, including invoices/export"},
+    {"policy_key": "PERF-001", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 1000, "unit": "rows", "object_kinds": ["query", "tool"]}, "covers": "endpoints returning the whole invoices table (paging off is reported as unbounded)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "returns the full invoices table to the wrong tenant (org isolation)", "why": "couldn't tell how: the org id is on the users row, not $auth, so no clean db.where_constraint_required rule fits"},
+    {"part": "a 2am change pushed with no review is stopped", "why": "needs runtime/org process: policies are advisory, and making them blocking is the owner's call"},
+    {"part": "the public tag is only added with approval", "why": "needs runtime/org process: no check verifies who added a tag"},
+    {"part": "endpoint currently lacking auth (invoices/export) is fixed", "why": "other: fixing it changes who can call it, which needs the owner's decision; I did not edit it"}
+  ],
+  "assumptions": [
+    "Invoices endpoints are those that reach the invoices table, so object.auth_required covers them through the template's rule",
+    "Advisory is the right default for a new policy; the customer decides on blocking",
+    "Other endpoints lacking auth (login, signup, health) are the owner's to tag public or protect"
+  ],
+  "workspace_names_used": ["invoices", "invoices/export", "invoices_GET", "app", "users", "org_id", "per_page", "db.query"],
+  "confusions": [
+    "The skill says policy_key/title checks and the template rule are authoritative, but the template rule for AUTH-010 scopes to every endpoint, so it also reaches non-invoice endpoints; there is no simple way to say 'only endpoints reaching invoices' while keeping the template's key",
+    "The skill's guidance on blocking vs advisory and the customer's wish to prevent shipping pull in opposite directions; I wrote advisory and explained it",
+    "xano policy parse -o default output dropped severity 'medium' and empty tags from PERF-001, so I could not confirm those fields were stored as written",
+    "The skill says the AUTH-020 template needs $auth.<field> compare_to; it does not say how to express an org id reached through a related user row"
+  ],
+  "wished_for": [
+    "A recipe or example for 'endpoints that return a table must be scoped to tenant' using a related-row compare, not only $auth",
+    "A way to scope object.auth_required to tables in the template, or a documented way to add a second scoped rule without duplicating findings",
+    "Guidance on whether parse output omits default-valued fields (severity medium, empty tags)"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The two policies parse and dry-run cleanly and would flag the unauthenticated full-table export endpoint, as far as I can tell from reading the stored definitions. But they are advisory, I have not evaluated them against the workspace, and they cannot see cross-tenant leakage or whether a public tag was approved."
+}

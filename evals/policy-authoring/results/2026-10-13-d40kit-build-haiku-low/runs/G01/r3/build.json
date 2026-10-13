@@ -1,0 +1,10 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/AUTH-010.xs",
+    "policies/PERF-001.xs"
+  ],
+  "modified": [],
+  "deleted": [],
+  "other_files": []
+}

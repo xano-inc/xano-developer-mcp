@@ -1,0 +1,38 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUTH-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUTH-010.xs",
+      "ok": true,
+      "key": "AUTH-010",
+      "title": "Endpoints require authentication",
+      "statement": "Every endpoint that reaches the invoices table must require a login. A deliberately public endpoint carries the `public` tag, signed off by the platform owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "invoices"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

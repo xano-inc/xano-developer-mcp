@@ -1,0 +1,104 @@
+--- a/policies/CHG-001.xs
++++ b/policies/CHG-001.xs
+@@ -0,0 +1,17 @@
++policy "CHG-001" {
++  title = "Endpoints are tested"
++  statement = "Every endpoint is exercised by a workflow test or unit test that asserts something, and every protected endpoint has a test asserting that an anonymous call is rejected."
++  severity = "low"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2"]
++
++  rule {
++    check = "object.test_coverage"
++    params = { object_kinds: ["query"] }
++  }
++
++  rule {
++    check = "test.assertion_required"
++  }
++}
+--- a/policies/CONV-040.xs
++++ b/policies/CONV-040.xs
+@@ -0,0 +1,12 @@
++policy "CONV-040" {
++  title = "Endpoints and functions stay short"
++  statement = "Every endpoint and function holds at most 30 statements and 3 levels of nesting. Move a coherent part of a long stack into a function and call it; do not disable statements to get under the limit."
++  severity = "low"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "stack.size_limit"
++    params = { max_statements: 30, max_nesting: 3, object_kinds: ["query", "function"] }
++  }
++}
+--- a/policies/CONV-050.xs
++++ b/policies/CONV-050.xs
+@@ -0,0 +1,19 @@
++policy "CONV-050" {
++  title = "No leftover code"
++  statement = "No disabled statements, unused inputs or unread variables are left in an object. Delete the leftover code rather than switching it off."
++  severity = "low"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "stack.disabled_statement_forbidden"
++  }
++
++  rule {
++    check = "object.unused_input_forbidden"
++  }
++
++  rule {
++    check = "stack.unused_variable_forbidden"
++  }
++}
+--- a/policies/LOG-010.xs
++++ b/policies/LOG-010.xs
+@@ -0,0 +1,13 @@
++policy "LOG-010" {
++  title = "External calls handle their own failures"
++  statement = "Every external request sits inside a try block, so a vendor failure reaches error handling."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    title = "Requests sit inside a try_catch"
++    check = "statement.containment"
++    params = { statements: ["api.request"], must_be_inside: ["try_catch"] }
++  }
++}
+--- a/policies/PERF-001.xs
++++ b/policies/PERF-001.xs
+@@ -0,0 +1,13 @@
++policy "PERF-001" {
++  title = "Endpoints never return every row"
++  statement = "Every paged read holds at most 1000 rows per page, so no endpoint or tool returns a whole table."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    title = "Reads page at most 1000 rows"
++    check = "statement.param_bound"
++    params = { statements: ["db.query"], param_names: ["per_page"], max: 1000, unit: "rows", object_kinds: ["query", "tool"] }
++  }
++}
+--- a/policies/REVIEW-001.xs
++++ b/policies/REVIEW-001.xs
+@@ -0,0 +1,12 @@
++policy "REVIEW-001" {
++  title = "Functions say what they do"
++  statement = "Every function has a description of at least 20 characters, written as the // comment lines directly above it, saying what the function is for in words its callers need."
++  severity = "low"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "object.description_required"
++    params = { object_kinds: ["function"], min_length: 20 }
++  }
++}

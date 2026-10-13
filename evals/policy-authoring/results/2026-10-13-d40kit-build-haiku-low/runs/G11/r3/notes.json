@@ -1,0 +1,57 @@
+{
+  "goal_id": "G11",
+  "objects_built": [],
+  "objects_changed": [
+    {"kind": "tool", "name": "issue_refund", "file": "workspace/ai/tool/issue_refund.xs", "change": "api.request wrapped in try_catch; catch throws 'Refund provider unavailable'"},
+    {"kind": "function", "name": "acme_notify_sms", "file": "workspace/function/acme_notify_sms.xs", "change": "api.request wrapped in try_catch; catch throws 'SMS provider unavailable'"},
+    {"kind": "function", "name": "acme_sync_shipping_rates", "file": "workspace/function/acme_sync_shipping_rates.xs", "change": "api.request wrapped in try_catch; catch logs carrier and substitutes 503 response"},
+    {"kind": "task", "name": "retry_failed_webhooks", "file": "workspace/task/retry_failed_webhooks.xs", "change": "api.request wrapped in try_catch; catch logs and substitutes 503 response; no attempt cap added"},
+    {"kind": "query", "name": "shipments/quote POST", "file": "workspace/api/app/shipments/quote_POST.xs", "change": "api.request wrapped in try_catch; catch throws 'Shipping quote unavailable'"},
+    {"kind": "query", "name": "payments/fraud_check POST", "file": "workspace/api/app/payments/fraud_check_POST.xs", "change": "api.request wrapped in try_catch; catch throws 'Fraud check unavailable'"},
+    {"kind": "query", "name": "payments/charge POST", "file": "workspace/api/app/payments/charge_POST.xs", "change": "api.request wrapped in try_catch; catch throws 'Payment provider unavailable'"},
+    {"kind": "query", "name": "bank-accounts/link POST", "file": "workspace/api/app/bank_accounts/link_POST.xs", "change": "api.request wrapped in try_catch; catch throws 'Bank link provider unavailable'"}
+  ],
+  "templates_considered": [
+    "requests_have_timeout (SEC-013): fits directly, used as-is",
+    "external_calls_handle_errors (LOG-010): fits directly, used as-is",
+    "approved_vendors_only (VND-001): not asked for",
+    "tls_verification_on (SEC-011): not asked for"
+  ],
+  "templates_used": ["requests_have_timeout", "external_calls_handle_errors"],
+  "rules": [
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "every external request has a timeout within 30 seconds (the hang)"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "every external request sits in error handling"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "ai.external.mcp.* and db.external.* calls", "why": "no timeout can be set on them, and the error rule does not list them"},
+    {"part": "quality of catch handling", "why": "no check confirms what a catch does, only that the try exists"},
+    {"part": "retry loop with no attempt cap in retry_failed_webhooks", "why": "no check reads task retries; not changed"},
+    {"part": "runtime vendor behaviour", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Customer wants existing external calls brought into compliance, not only a policy that flags them later",
+    "Fail-closed (throw) is the right catch behaviour for payment, fraud, refund, quote and bank-link calls",
+    "Runtime default timeout of 10 seconds applies to calls that omit timeout",
+    "Policies advisory and active, per template default; blocking is the owner's choice"
+  ],
+  "workspace_names_used": [
+    "acme_get_tracking", "acme_sync_shipping_rates", "acme_notify_sms", "issue_refund", "retry_failed_webhooks",
+    "shipments/quote", "payments/fraud_check", "payments/charge", "bank-accounts/link", "retry_failed_webhooks"
+  ],
+  "confusions": [
+    "xano policy parse output dropped the severity line from the normalised file, so it is unclear whether severity was stored",
+    "Catalogue lists templates as LOG-010 under 'Integrations' and 'Code review' categories; had to read both to find the rule",
+    "No example in the skill of throw syntax inside a catch; wrote throw { value = ... } from the skill's param list and relied on dry-run to validate",
+    "Unclear whether a variable declared with 'as' inside try is visible after try_catch, so catch blocks set a fallback var as the existing acme_get_tracking does"
+  ],
+  "wished_for": [
+    "A recipe or sample showing throw inside catch in XanoScript",
+    "A check that bounds retry attempts in tasks (the task retry gap)",
+    "Coverage for ai.external.mcp and db.external calls, which have no timeout param"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both rules are template checks that pass as written and the dry run is clean. Coverage is limited to api.request, stream.from_request and webflow.request, and the catch check tests presence of a try only. The hang caused by the uncapped retry task and the uncovered MCP and direct-query calls remain."
+}

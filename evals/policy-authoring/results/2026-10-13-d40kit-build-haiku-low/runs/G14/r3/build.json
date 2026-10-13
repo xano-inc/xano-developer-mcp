@@ -1,0 +1,20 @@
+{
+  "pulled": true,
+  "added": [
+    "function/record_audit_event.xs",
+    "policies/CUSTOMER-EMAIL-AUDIT.xs",
+    "policies/RET-001.xs",
+    "policies/SPEND-GUARD.xs",
+    "table/audit_log.xs"
+  ],
+  "modified": [
+    "api/app/auth/signup_POST.xs",
+    "api/app/customers/customer_id_PATCH.xs",
+    "api/app/customers_POST.xs",
+    "api/app/me_PATCH.xs",
+    "api/app/newsletter/subscribe_POST.xs",
+    "function/delete_user_account.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

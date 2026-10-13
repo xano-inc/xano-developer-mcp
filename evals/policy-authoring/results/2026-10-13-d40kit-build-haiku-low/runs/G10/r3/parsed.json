@@ -1,0 +1,77 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/HITL-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/HITL-001.xs",
+      "ok": true,
+      "key": "HITL-001",
+      "title": "AI agents can't delete records or email customers without a person's approval",
+      "statement": "AI tools never delete records, including through a function they call. Any AI tool that sends email must first call require_human_approval, which stops the send unless a person has set the email's approval row to approved. A tool that is not given a delete or email step is not affected.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "HITL-001.R1",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.del",
+              "db.bulk.delete",
+              "db.truncate"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HITL-001.R2",
+          "title": "",
+          "check": "stack.statement_order",
+          "params": {
+            "before": {
+              "functions": [
+                "require_human_approval"
+              ]
+            },
+            "after": [
+              "util.send_email"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "HITL-001.R2",
+          "text": "Function \"require_human_approval\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    }
+  ]
+}

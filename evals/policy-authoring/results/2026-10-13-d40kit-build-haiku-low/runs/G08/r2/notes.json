@@ -1,0 +1,39 @@
+{
+  "goal_id": "G08",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "no_secrets_in_code (SEC-012): fits exactly; the ask is 'no keys or passwords hardcoded'",
+    "protected_endpoints_run_middleware, object.middleware_required: did not fit, the ask is about literals, not auth"
+  ],
+  "templates_used": ["no_secrets_in_code"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "no API keys, tokens or passwords written as literals in functions or endpoints (defaults: all built-in patterns, definition and agent_settings locations)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "passwords in formats the built-in patterns do not recognise", "why": "no check exists"},
+    {"part": "that values actually come from env vars at runtime (the ask's 'they have to come from environment variables')", "why": "no check exists; the check only flags literals, it does not verify $env use or that the variable is set"},
+    {"part": "the existing Twilio credential in acme_notify_sms", "why": "other: it is a live secret that needs rotation and a code change, which is outside a policy change; the policy will report it but cannot fix it"},
+    {"part": "who wrote the literal and whether it was rotated", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The customer wants this advisory, as the skill directs for a new prevent-type policy; made no blocking choice for them",
+    "Policy key SEC-012 is free (xano policy list reported no policies)",
+    "tags soc2 and pci_dss copied from the template frameworks"
+  ],
+  "workspace_names_used": ["acme_notify_sms", "support_agent", "ticket_summarizer", "policy_authoring_eval", "workspace 9040"],
+  "confusions": [
+    "The template's Fill column says nothing, and the rule has params {}; it was not stated whether the rule block should carry an empty params object or omit it. I included params = {} and it parsed.",
+    "xano policy parse echoes the whole file to stdout on success, so the result is only clear from the exit code; the output is easy to misread as an error.",
+    "The statement field is described as the template summary, but the summary does not say how an exempted value is signed off; I wrote that wording myself."
+  ],
+  "wished_for": [
+    "A short recipe for 'secrets must come from env vars' that also covers passwords in plain text fields, or a documented note on the gap",
+    "An example of a policy that says 'uses $env' rather than 'no literal', since the customer's real requirement is the positive form"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The check reliably catches credential-shaped literals such as the Twilio key pattern in the workspace, and the dry run is clean. It cannot catch unrecognised password formats, and it does not prove that secrets come from env vars, so the policy covers the 'no hardcoded key' half of the ask, not the whole of it."
+}

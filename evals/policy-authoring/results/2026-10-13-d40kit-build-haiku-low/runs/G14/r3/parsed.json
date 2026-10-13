@@ -1,0 +1,304 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/CUSTOMER-EMAIL-AUDIT.xs",
+    "build/policies/RET-001.xs",
+    "build/policies/SPEND-GUARD.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/CUSTOMER-EMAIL-AUDIT.xs",
+      "ok": true,
+      "key": "CUSTOMER-EMAIL-AUDIT",
+      "title": "Changes to customer email tables are audited",
+      "statement": "Every insert, update and delete of the customer contact tables (customers, users, newsletter_subscribers) calls the record_audit_event function right after the write, so who changed what is recorded in audit_log. A write that cannot audit must be reviewed by the policy owner before it is exempted.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CUSTOMER-EMAIL-AUDIT.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.add",
+              "tables": [
+                "customers",
+                "users",
+                "newsletter_subscribers"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CUSTOMER-EMAIL-AUDIT.R2",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.patch",
+              "tables": [
+                "customers",
+                "users",
+                "newsletter_subscribers"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CUSTOMER-EMAIL-AUDIT.R3",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.edit",
+              "tables": [
+                "customers",
+                "users",
+                "newsletter_subscribers"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CUSTOMER-EMAIL-AUDIT.R4",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.del",
+              "tables": [
+                "customers",
+                "users",
+                "newsletter_subscribers"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CUSTOMER-EMAIL-AUDIT.R1",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "CUSTOMER-EMAIL-AUDIT.R2",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "CUSTOMER-EMAIL-AUDIT.R3",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "CUSTOMER-EMAIL-AUDIT.R4",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "The audit log table audit_log must exist. Only the record_audit_event function may write to it, and no statement may edit, delete or truncate an audit entry. Audit entries are append-only.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Table \"audit_log\" is not in this workspace, so it restricts nothing."
+        },
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Function \"record_audit_event\" is not on this branch, so it approves nothing."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/SPEND-GUARD.xs",
+      "ok": true,
+      "key": "SPEND-GUARD",
+      "title": "AI calls and task retries stay out of loops",
+      "statement": "AI calls (agent runs and MCP tool runs) are never made inside a foreach, for or while loop, where one request can fan out into many billed calls. Background tasks never make an outbound request inside a while loop, the shape that retries forever. This is a proxy: it does not cap spend, and it does not bound retries counted with a for or foreach. Spend caps and retry limits are not checked by any rule.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SPEND-GUARD.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.agent.run",
+              "ai.external.mcp.tool.run"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "foreach",
+              "for",
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "SPEND-GUARD.R2",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "task"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

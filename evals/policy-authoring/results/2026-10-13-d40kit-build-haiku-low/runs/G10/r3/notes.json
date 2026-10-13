@@ -1,0 +1,62 @@
+{
+  "goal_id": "G10",
+  "objects_built": [
+    {"kind": "table", "name": "email_approvals", "file": "workspace/table/email_approvals.xs", "role": "Holds each email an AI tool wants to send, with a status a person must set to approved"},
+    {"kind": "function", "name": "require_human_approval", "file": "workspace/function/require_human_approval.xs", "role": "Loads the approval row by id and stops the call with a precondition unless status is approved; the call the send-email rule looks for"}
+  ],
+  "objects_changed": [
+    {"kind": "tool", "name": "send_customer_email", "file": "workspace/ai/tool/send_customer_email.xs", "change": "Added required input approval_id (int) and a function.run of require_human_approval before util.send_email"}
+  ],
+  "templates_considered": [
+    "AUTH-003: public endpoints can't change data; did not fit, the ask is about AI tools, not endpoints",
+    "AUTH-002: admin role check; did not fit, no role is involved",
+    "API-010 / SEC-010: read-only and truncate rules; partly overlap the delete rule, but the ask is about tools only, so not used whole",
+    "CONV-030: AI tool descriptions; did not fit, not asked",
+    "Recipe 'Keep AI calls affordable and agents safe': used for its approval and tool-delete rules; its cost, loop and vendor parts were not asked for"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "HITL-001", "check": "stack.statement_forbidden", "params": {"statements": ["db.del", "db.bulk.delete", "db.truncate"], "object_kinds": ["tool"]}, "covers": "AI agents can't delete anything (tools, and functions they call); will flag existing delete_customer_note"},
+    {"policy_key": "HITL-001", "check": "stack.statement_order", "params": {"before": {"functions": ["require_human_approval"]}, "after": ["util.send_email"], "object_kinds": ["tool"]}, "covers": "Agents can't email customers without a human approving first (order only; not the approval decision)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "AI agents shouldn't be able to call tools that were not explicitly given to them", "why": "no check exists"},
+    {"part": "A human must approve before email; who sets approved and how a person reviews it", "why": "needs runtime/org process"},
+    {"part": "Delete rule covers tools only; deletes in tasks, endpoints or triggers are not judged", "why": "other: scoped to the ask, which names agents"},
+    {"part": "issue_refund moves money, which the ask did not name", "why": "other: out of the ask's scope"}
+  ],
+  "assumptions": [
+    "'Agents' means the two AI agents in the workspace; the only tools that matter are those in their tools lists",
+    "'Email customers' means util.send_email in a tool; no endpoint or task sends email",
+    "'Delete anything' means db.del, db.bulk.delete and db.truncate, reachable from a tool",
+    "Approval is modelled as a row in a new email_approvals table set to approved by a person; no approval UI or endpoint was built",
+    "Advisory, active policy, since the customer asked to prevent but the skill says blocking is the owner's choice",
+    "Key HITL-001 is my own; no template key fits"
+  ],
+  "workspace_names_used": [
+    "Support Agent", "Ticket Summarizer", "lookup_order", "delete_customer_note", "send_customer_email", "issue_refund", "customer_notes", "users", "support_tickets", "payments", "refunds", "delete_user_account", "support/chat", "send_customer_email"
+  ],
+  "confusions": [
+    "Policy path: the skill and brief say policies/<KEY>.xs, but xano policy parse resolved it relative to the current directory; I had to pass ./workspace/policies/HITL-001.xs. The first attempt used policies/HITL-001.xs from the project root and failed with ENOENT.",
+    "Recipe 'Keep AI calls affordable and agents safe' lists 'AI tools cannot delete records' and 'Deletes and emails wait for an approval check' together, with stack.statement_order after db.del. If tools cannot delete at all, the delete half of the approval rule never applies. The recipe does not say to drop it.",
+    "stack.statement_order's 'before' guard for the email: the skill says a guard written as conditional { throw } does not count. Whether a precondition inside a called function counts as a before at the call site is implied by the catalogue text but not stated as an example, so I relied on the catalogue text.",
+    "The 'Scope by' section lists object_kinds for tool, but the not-checkable section does not say whether a tool's own tools list (which tools an agent may expose) is out of reach; I inferred it from the 'Agent tool allowlists' entry.",
+    "The skill file preview was truncated at 430 lines and I had to read the rest in a second call; not a product issue but worth knowing for long skills."
+  ],
+  "wished_for": [
+    "A worked example of a human-approval gate: one table, one function, one tool, and the two rules together",
+    "A check or param that limits which tools an agent may be given (the ask's second part)",
+    "A note in the recipe that deletes are forbidden in tools, so the 'before delete' half of the recipe is not needed for tools",
+    "A line in the catalogue saying precondition inside a called function counts for stack.statement_order before"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "Policy parse failed: ENOENT: no such file or directory, open 'policies/HITL-001.xs' (wrong working directory; succeeded with ./workspace/policies/HITL-001.xs)"
+  ],
+  "dry_run_problems_seen": [
+    "None blocking. Dry run created 1 policy, 1 table, 1 function, updated 1 tool; no blocked objects or missing references reported.",
+    "Parse warning HITL-001.R2 (function not on branch) is expected for a function created in the same change; not a dry-run problem."
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Deletes from tools are fully checked by statement_forbidden, including through called functions, so that half is high. Email is checked only for order: a tool that sends email must call require_human_approval first, and that function only blocks if its approval row is not approved. Whether anyone can approve rows is outside what a check can see. The 'tools I haven't given them' part has no check; it is not covered. The delete rule will flag the existing delete_customer_note tool, which I did not change. I did not run policy evaluate, so the findings the rules produce on this workspace are predictions only."
+}

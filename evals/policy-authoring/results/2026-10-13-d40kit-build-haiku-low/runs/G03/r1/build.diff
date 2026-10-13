@@ -1,0 +1,150 @@
+--- a/policies/CONF-011.xs
++++ b/policies/CONF-011.xs
+@@ -0,0 +1,16 @@
++policy "CONF-011" {
++  title = "Sensitive fields are marked sensitive"
++  statement = "The card-adjacent and bank fields we keep are marked sensitive wherever a table declares them, so saved views and responses treat them as sensitive."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    check = "table.field_attribute_required"
++    params = {
++      field_names: ["card_last4", "bank_account_number", "bank_routing_number"],
++      attribute: "sensitive"
++    }
++  }
++}
+--- a/policies/DATA-010.xs
++++ b/policies/DATA-010.xs
+@@ -0,0 +1,16 @@
++policy "DATA-010" {
++  title = "Endpoints don't return personal data"
++  statement = "Endpoints never return card or bank fields: card numbers, security codes, expiry, cardholder name, bank account and routing numbers. They also never return any field marked sensitive in its table's schema. The check reads what each database statement fetches, not the final response."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    check = "db.output_fields_forbidden"
++    params = {
++      fields: ["card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number"],
++      object_kinds: ["query"]
++    }
++  }
++}
+--- a/policies/LOG-001.xs
++++ b/policies/LOG-001.xs
+@@ -0,0 +1,17 @@
++policy "LOG-001" {
++  title = "Logs don't contain request, user or secret data"
++  statement = "Debug logs record events, never request input, the logged-in user or environment values. Card numbers, security codes and cardholder names must never reach a log."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    check = "statement.expression_rule"
++    params = {
++      statements: ["debug.log"],
++      param_names: ["value"],
++      must_not_reference: ["$input", "$auth", "$env"]
++    }
++  }
++}
+--- a/policies/PCI-010.xs
++++ b/policies/PCI-010.xs
+@@ -0,0 +1,36 @@
++policy "PCI-010" {
++  title = "Cardholder data is never stored raw or logged"
++  statement = "No table declares a card number, security code, CVC or PAN, or the cardholder's name or card expiry. Card details go straight to the payment processor, which returns a token, and only the token and last four digits are kept. Datadog log messages and attributes never include request input, so card details cannot reach the logs."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss"]
++
++  rule {
++    title = "Card numbers and security codes are never stored"
++    check = "table.field_attribute_required"
++    params = {
++      field_names: ["card_number", "card_cvv", "cvv", "cvc", "pan"],
++      forbidden: true
++    }
++  }
++
++  rule {
++    title = "Cardholder name and expiry are never stored"
++    check = "table.field_attribute_required"
++    params = {
++      field_names: ["cardholder_name", "card_expiry"],
++      forbidden: true
++    }
++  }
++
++  rule {
++    title = "Datadog logs never include request input"
++    check = "statement.expression_rule"
++    params = {
++      statements: ["datadog.log"],
++      param_names: ["message", "attributes"],
++      must_not_reference: ["$input"]
++    }
++  }
++}
+--- a/policies/SEC-011.xs
++++ b/policies/SEC-011.xs
+@@ -0,0 +1,17 @@
++policy "SEC-011" {
++  title = "External requests verify TLS certificates"
++  statement = "Every external request verifies the TLS certificate and host name of the server it talks to. Card and bank data travel only over verified TLS."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    check = "statement.param_forbidden"
++    params = {
++      statements: ["api.request", "stream.from_request"],
++      param_names: ["verify_peer", "verify_host"],
++      values: [false]
++    }
++  }
++}
+--- a/policies/SEC-012.xs
++++ b/policies/SEC-012.xs
+@@ -0,0 +1,12 @@
++policy "SEC-012" {
++  title = "No secrets are hardcoded"
++  statement = "API keys, tokens, private keys, encryption keys and credentialed URLs are never written as literals in an object's definition or agent settings. They belong in environment variables. Card processor keys are included. A value that is already in an environment variable needs no change."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    check = "literal.credential_shape"
++  }
++}
+--- a/policies/VND-001.xs
++++ b/policies/VND-001.xs
+@@ -0,0 +1,15 @@
++policy "VND-001" {
++  title = "Data only goes to approved vendors"
++  statement = "Outbound requests go only to the vendors we approve: Stripe (api.stripe.com) and Plaid (production.plaid.com). Any other host, AI model provider or cloud or email provider is reported. Approving another vendor is the policy owner's decision, and card data never goes to a vendor outside this list."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "soc2"]
++
++  rule {
++    check = "outbound.vendor_allowlist"
++    params = {
++      hosts: ["api.stripe.com", "production.plaid.com"]
++    }
++  }
++}

@@ -1,0 +1,117 @@
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -6,7 +6,6 @@
+   input {
+     text name?
+     text phone?
+-    text role?
+     bool marketing_opt_in?
+   }
+ 
+@@ -14,7 +13,7 @@
+     db.patch users {
+       field_name = "id"
+       field_value = $auth.id
+-      data = $input[""]
++      data = $input|pick:["name","phone","marketing_opt_in"]
+     } as $me
+   }
+ 
+--- a/api/app/products/product_id/price_PATCH.xs
++++ b/api/app/products/product_id/price_PATCH.xs
+@@ -9,6 +9,10 @@
+   }
+ 
+   stack {
++    function.run require_manager {
++      input = {user_id: $auth.id}
++    } as $manager
++
+     db.patch products {
+       field_name = "id"
+       field_value = $input.product_id
+--- a/api/app/refunds/refund_id/approve_POST.xs
++++ b/api/app/refunds/refund_id/approve_POST.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_manager {
++      input = {user_id: $auth.id}
++    } as $manager
++
+     db.edit refunds {
+       field_name = "id"
+       field_value = $input.refund_id
+--- a/function/require_manager.xs
++++ b/function/require_manager.xs
+@@ -0,0 +1,20 @@
++// Stops the request unless the user is a manager or an admin. Call it as the first statement of any endpoint that approves refunds or changes prices.
++function require_manager {
++  input {
++    int user_id
++  }
++
++  stack {
++    db.get users {
++      field_name = "id"
++      field_value = $input.user_id
++    } as $user
++
++    precondition ($user.role == "manager" || $user.role == "admin") {
++      error_type = "accessdenied"
++      error = "Only managers can do this."
++    }
++  }
++
++  response = {allowed: true}
++}
+--- a/policies/AUTH-002.xs
++++ b/policies/AUTH-002.xs
+@@ -0,0 +1,29 @@
++policy "AUTH-002" {
++  title = "Admin endpoints check the caller's role"
++  statement = "Endpoints that approve refunds or change prices must call the require_manager role check as their first statement, passing the logged-in user, so only managers and admins can use them. Other endpoints are not covered by this policy."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "object.statement_required"
++    params = {
++      functions: ["require_manager"]
++      placement: "first"
++      must_reference: ["$auth"]
++      paths: ["refunds/{refund_id}/approve"]
++      object_kinds: ["query"]
++    }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {
++      functions: ["require_manager"]
++      placement: "first"
++      must_reference: ["$auth"]
++      paths: ["products/{product_id}/price"]
++      object_kinds: ["query"]
++    }
++  }
++}
+--- a/policies/AUTH-030.xs
++++ b/policies/AUTH-030.xs
+@@ -0,0 +1,14 @@
++policy "AUTH-030" {
++  title = "Users can't make themselves admin"
++  statement = "No write may take the role field from request input, so a user cannot set their own role, for example to manager or admin."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "db.write_from_input_forbidden"
++    params = {
++      fields: ["role"]
++    }
++  }
++}

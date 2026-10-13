@@ -1,0 +1,30 @@
+--- a/policies/DEV-REVIEW-001.xs
++++ b/policies/DEV-REVIEW-001.xs
+@@ -0,0 +1,27 @@
++policy "DEV-REVIEW-001" {
++  title = "Review checks for junior changes: size, error handling, tests"
++  statement = "Functions stay at most 80 statements. Every outbound HTTP call and stream request sits inside a try block. Every endpoint and function is covered by a test, and every test asserts something."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = []
++
++  rule {
++    check = "stack.size_limit"
++    params = { max_statements: 80, object_kinds: ["function"] }
++  }
++
++  rule {
++    check = "statement.containment"
++    params = { statements: ["api.request", "stream.from_request"], must_be_inside: ["try_catch"] }
++  }
++
++  rule {
++    check = "object.test_coverage"
++    params = { object_kinds: ["query", "function"] }
++  }
++
++  rule {
++    check = "test.assertion_required"
++  }
++}

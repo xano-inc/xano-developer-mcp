@@ -1,0 +1,191 @@
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -1,4 +1,5 @@
+ // Deletes a user and the personal data that hangs off them. Called by DELETE /account.
++// Erases the user's own records and anonymises business records that point to them.
+ function delete_user_account {
+   input {
+     int user_id
+@@ -13,6 +14,55 @@
+       where = $db.sessions.user_id == $input.user_id
+     } as $sessions
+   
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.user_id == $input.user_id
++    } as $tickets
++  
++    db.query orders {
++      where = $db.orders.user_id == $input.user_id
++      return = {type: "list"}
++    } as $orders_rows
++  
++    foreach ($orders_rows) {
++      each as $row {
++        db.patch orders {
++          field_name = "id"
++          field_value = $row.id
++          data = {user_id: null}
++        } as $orders_done
++      }
++    }
++  
++    db.query refunds {
++      where = $db.refunds.requested_by == $input.user_id
++      return = {type: "list"}
++    } as $refunds_requested_rows
++  
++    foreach ($refunds_requested_rows) {
++      each as $row {
++        db.patch refunds {
++          field_name = "id"
++          field_value = $row.id
++          data = {requested_by: null}
++        } as $refunds_requested_done
++      }
++    }
++  
++    db.query refunds {
++      where = $db.refunds.approved_by == $input.user_id
++      return = {type: "list"}
++    } as $refunds_approved_rows
++  
++    foreach ($refunds_approved_rows) {
++      each as $row {
++        db.patch refunds {
++          field_name = "id"
++          field_value = $row.id
++          data = {approved_by: null}
++        } as $refunds_approved_done
++      }
++    }
++  
+     db.del users {
+       field_name = "id"
+       field_value = $input.user_id
+@@ -20,5 +70,6 @@
+   }
+ 
+   response = {deleted: true}
++  tags = ["erasure"]
+   guid = "iWtAL7j6O0pMpjKQBxol3qm35T8"
+-}
+\ No newline at end of file
++}
+--- a/table/customer_notes.xs
++++ b/table/customer_notes.xs
+@@ -14,5 +14,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["retained"]
+   guid = "q7WQsqMJvHTdUMd5Y3I2ZY7-6Fg"
+ }
+\ No newline at end of file
+--- a/table/newsletter_subscribers.xs
++++ b/table/newsletter_subscribers.xs
+@@ -11,5 +11,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["retained"]
+   guid = "j189RCXCaWsxB1lbKjPDDQ84D60"
+ }
+\ No newline at end of file
+--- a/table/sessions.xs
++++ b/table/sessions.xs
+@@ -14,5 +14,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal"]
+   guid = "uuVqMevo2LCQDx36M046KfLjBzk"
+ }
+\ No newline at end of file
+--- a/table/support_tickets.xs
++++ b/table/support_tickets.xs
+@@ -21,5 +21,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal", "retained"]
+   guid = "BOYHPB_-O75NDfyqlRdIIzUD2_w"
+ }
+\ No newline at end of file
+--- a/table/user_address.xs
++++ b/table/user_address.xs
+@@ -16,5 +16,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal"]
+   guid = "yG7Wa2mH-Ofb57UmPidQ1UWjMYM"
+ }
+\ No newline at end of file
+--- a/table/users.xs
++++ b/table/users.xs
+@@ -27,5 +27,6 @@
+     {type: "btree", field: [{name: "org_id", op: "asc"}]}
+   ]
+ 
++  tags = ["personal"]
+   guid = "xU8Al0G-VGO1TKLY5LrNKIOkGUE"
+ }
+\ No newline at end of file
+--- a/policies/GDPR-ERASE-001.xs
++++ b/policies/GDPR-ERASE-001.xs
+@@ -0,0 +1,13 @@
++policy "GDPR-ERASE-001" {
++  title = "Account deletion erases personal data everywhere"
++  statement = "Every table tagged personal is erased by the account-erasure function, tagged erasure, when a user deletes their account. Records that must be kept for business or legal reasons are anonymised by that function rather than left linked to the person; a table outside this rule needs its own review."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["gdpr"]
++
++  rule {
++    check = "table.coverage_required"
++    params = { tags: ["personal"], referenced_by: { object_kinds: ["function"], tags: ["erasure"], statements: ["db.del", "db.bulk.delete"] } }
++  }
++}
+--- a/policies/RET-002.xs
++++ b/policies/RET-002.xs
+@@ -0,0 +1,13 @@
++policy "RET-002" {
++  title = "Retained data has a cleanup task"
++  statement = "Every table carrying your retained-data tag is referenced by a scheduled task that cleans it up."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "gdpr"]
++
++  rule {
++    check = "table.coverage_required"
++    params = { tags: ["retained"], referenced_by: { object_kinds: ["task"], statements: ["db.del", "db.bulk.delete"] } }
++  }
++}
+--- a/task/purge_retained_personal_data.xs
++++ b/task/purge_retained_personal_data.xs
+@@ -0,0 +1,23 @@
++// Deletes support tickets, customer notes and newsletter sign-ups older than two years.
++task purge_retained_personal_data {
++  stack {
++    var $cutoff {
++      value = now|subtract_secs_to_timestamp:63072000
++    }
++  
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.created_at < $cutoff
++    } as $tickets
++  
++    db.bulk.delete customer_notes {
++      where = $db.customer_notes.created_at < $cutoff
++    } as $notes
++  
++    db.bulk.delete newsletter_subscribers {
++      where = $db.newsletter_subscribers.created_at < $cutoff
++    } as $subscribers
++  }
++
++  schedule = [{starts_on: 2026-01-01 04:00:00+0000, freq: 86400}]
++  guid = "Qm7rT2kVbX9dLh4sWcZeNa1PyUo"
++}

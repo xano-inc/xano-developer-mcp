@@ -1,0 +1,188 @@
+--- a/api/admin/tenants/tenant_id_PATCH.xs
++++ b/api/admin/tenants/tenant_id_PATCH.xs
+@@ -21,6 +21,15 @@
+       field_value = $input.tenant_id
+       data = {status: $input.status, region: $input.region}
+     } as $tenant
++
++    function.run record_audit_event {
++      input = {
++        actor_id: $auth.id,
++        action: "update",
++        table_name: "tenants",
++        record_id: $input.tenant_id
++      }
++    } as $audit
+   }
+ 
+   response = $tenant
+--- a/api/app/customers/customer_id_PATCH.xs
++++ b/api/app/customers/customer_id_PATCH.xs
+@@ -15,6 +15,15 @@
+       field_value = $input.customer_id
+       data = {email: $input.email, phone: $input.phone}
+     } as $customer
++
++    function.run record_audit_event {
++      input = {
++        actor_id: $auth.id,
++        action: "update",
++        table_name: "customers",
++        record_id: $input.customer_id
++      }
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -16,6 +16,15 @@
+       field_value = $auth.id
+       data = $input[""]
+     } as $me
++
++    function.run record_audit_event {
++      input = {
++        actor_id: $auth.id,
++        action: "update",
++        table_name: "users",
++        record_id: $auth.id
++      }
++    } as $audit
+   }
+ 
+   response = $me
+--- a/api/app/refunds/refund_id/approve_POST.xs
++++ b/api/app/refunds/refund_id/approve_POST.xs
+@@ -13,6 +13,15 @@
+       field_value = $input.refund_id
+       data = {status: "approved", approved_by: $auth.id}
+     } as $refund
++
++    function.run record_audit_event {
++      input = {
++        actor_id: $auth.id,
++        action: "approve",
++        table_name: "refunds",
++        record_id: $input.refund_id
++      }
++    } as $audit
+   }
+ 
+   response = $refund
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -17,6 +17,16 @@
+       field_name = "id"
+       field_value = $input.user_id
+     }
++
++    function.run record_audit_event {
++      input = {
++        actor_id: $input.user_id,
++        action: "delete",
++        table_name: "users",
++        record_id: $input.user_id,
++        detail: "account deletion"
++      }
++    } as $audit
+   }
+ 
+   response = {deleted: true}
+--- a/function/record_audit_event.xs
++++ b/function/record_audit_event.xs
+@@ -0,0 +1,25 @@
++// Writes one audit_log entry. The only code that writes to audit_log; called after each change to an audited table.
++function record_audit_event {
++  input {
++    int actor_id?
++    text action
++    text table_name
++    int record_id
++    text detail?
++  }
++
++  stack {
++    db.add audit_log {
++      data = {
++        actor_id: $input.actor_id,
++        action: $input.action,
++        table_name: $input.table_name,
++        record_id: $input.record_id,
++        detail: $input.detail
++      }
++    } as $entry
++  }
++
++  response = $entry
++  guid = "rec_audit_event_g07"
++}
+--- a/policies/CHG-010.xs
++++ b/policies/CHG-010.xs
+@@ -0,0 +1,23 @@
++policy "CHG-010" {
++  title = "Changes to users, customers, refunds and tenants are audited"
++  statement = "Every edit, patch and delete of the users, customers, refunds and tenants tables calls the record_audit_event function, so each change has an entry in the audit log. A change that cannot call it must be raised with the policy owner, not exempted."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc8.1"]
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.edit", tables: ["users", "customers", "refunds", "tenants"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.patch", tables: ["users", "customers", "refunds", "tenants"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.del", tables: ["users", "customers", "refunds", "tenants"] } }
++  }
++}
+--- a/policies/RET-001.xs
++++ b/policies/RET-001.xs
+@@ -0,0 +1,18 @@
++policy "RET-001" {
++  title = "Only the audit function writes the audit log"
++  statement = "The audit_log table exists, and only the record_audit_event function writes to it. Audit entries are not edited or deleted by any other code."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc8.1"]
++
++  rule {
++    check = "workspace.object_required"
++    params = { object_kind: "table", names: ["audit_log"] }
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = { restricted_tables: ["audit_log"], allowed_functions: ["record_audit_event"] }
++  }
++}
+--- a/table/audit_log.xs
++++ b/table/audit_log.xs
+@@ -0,0 +1,19 @@
++// Audit trail: one row per edit or delete of an audited table, written only by record_audit_event.
++table audit_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    int actor_id? {
++      table = "users"
++    }
++
++    text action
++    text table_name
++    int record_id
++    text detail?
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

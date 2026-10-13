@@ -1,0 +1,41 @@
+{
+  "goal_id": "G01",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: fits; object.auth_required covers the ask. Used.",
+    "DATA-010 output_fields_forbidden: does not fit; the ask is about the whole table, not fields.",
+    "PERF-001 never return every row: partly fits; statement.param_bound on per_page would cap paging but not the export endpoint. Not used; flagged as a gap.",
+    "AUTH-020 own_records_only: partly fits (where constraint on org). Did not fit: compare_to needs $auth.* but org comes from a db.get on users, not $auth."
+  ],
+  "templates_used": ["AUTH-010"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"tables": ["invoices"]}, "covers": "endpoints that reach invoices must require login, so an endpoint returning invoices without auth is caught"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoint returns the full invoices table (paging/row cap)", "why": "no check exists"},
+    {"part": "logged-in endpoint returns rows from other orgs", "why": "couldn't tell how: where-constraint needs the org from a lookup, not $auth"},
+    {"part": "nobody ships it at 2am: enforcement beyond a finding", "why": "needs runtime/org process: advisory policy blocks nothing until owner sets blocking"},
+    {"part": "existing invoices/export endpoint has no auth", "why": "needs runtime/org process: fix changes who can call it, needs owner's choice of auth table"}
+  ],
+  "assumptions": [
+    "Customer wants login required, not a specific auth table; the policy does not name one.",
+    "Endpoints reaching invoices are judged through their table reads, as the check documents.",
+    "Severity critical is appropriate for an invoices data leak; customer did not state one."
+  ],
+  "workspace_names_used": ["invoices", "users", "invoices/export", "invoices_GET", "invoices/{invoice_id}", "app", "orgs", "invoice_item"],
+  "confusions": [
+    "The skill says to scope by tables for named tables, but the check catalogue example for object.auth_required shows tables only as a scope; it was clear enough but the 'judges endpoints reaching the tables' wording could mean direct reads only. Unclear whether a function-mediated read counts.",
+    "xano policy parse echoed the whole file on success and gave no explicit OK line; I took exit 0 as success.",
+    "The skill's Honesty section forbids predicting outcomes as results, but the brief asks for a plan that states what will be reported; I labelled the export finding as a prediction."
+  ],
+  "wished_for": [
+    "A way to run xano policy evaluate in this step so the export finding could be quoted rather than predicted (the brief forbids it here).",
+    "A template or recipe for 'data of table X never returned in full' (row cap plus auth) so the paging gap has a documented pairing."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The auth rule correctly scopes to invoices and will catch an unauthenticated endpoint that reads the table. It does not stop authenticated full-table reads or cross-org reads, and it is advisory, so it blocks nothing until the owner changes it. The existing export endpoint already violates it and I left it unchanged."
+}

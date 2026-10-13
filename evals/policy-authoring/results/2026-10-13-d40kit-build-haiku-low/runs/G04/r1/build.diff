@@ -1,0 +1,301 @@
+--- a/api/app/appointments_GET.xs
++++ b/api/app/appointments_GET.xs
+@@ -1,6 +1,7 @@
+ // Today's appointments for the waiting-room screen.
+ query appointments verb=GET {
+   api_group = "app"
++  auth = "users"
+ 
+   input {
+   }
+@@ -10,6 +11,10 @@
+       sort = {appointments.starts_at: "asc"}
+       return = {type: "list"}
+     } as $appointments
++
++    function.run log_phi_access {
++      input = {user_id: $auth.id, resource: "appointments", record_id: null}
++    } as $access
+   }
+ 
+   response = $appointments
+--- a/api/app/clinical_notes_POST.xs
++++ b/api/app/clinical_notes_POST.xs
+@@ -11,10 +11,6 @@
+   }
+ 
+   stack {
+-    debug.log {
+-      value = $input[""]
+-    }
+-  
+     db.add clinical_notes {
+       data = {
+         patient_id    : $input.patient_id
+@@ -23,6 +19,10 @@
+         note          : $input.note
+       }
+     } as $created
++
++    function.run log_phi_access {
++      input = {user_id: $auth.id, resource: "clinical_notes", record_id: $created.id}
++    } as $access
+   }
+ 
+   response = $created
+--- a/api/app/patients/patient_id_GET.xs
++++ b/api/app/patients/patient_id_GET.xs
+@@ -12,6 +12,10 @@
+       field_name = "id"
+       field_value = $input.patient_id
+     } as $patient
++
++    function.run log_phi_access {
++      input = {user_id: $auth.id, resource: "patients", record_id: $input.patient_id}
++    } as $access
+   }
+ 
+   response = $patient
+--- a/table/appointments.xs
++++ b/table/appointments.xs
+@@ -15,5 +15,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["phi"]
+   guid = "BzrPal7tO1x1hNGsRNgzRVQsOTg"
+ }
+\ No newline at end of file
+--- a/table/clinical_notes.xs
++++ b/table/clinical_notes.xs
+@@ -13,11 +13,12 @@
+       table = "appointments"
+     }
+   
+-    text diagnosis?
+-    text note
++    text diagnosis? {sensitive = true}
++    text note {sensitive = true}
+     text author_name?
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["phi"]
+   guid = "UiAA2Sf5YY9LLj5_dLilWvAygo0"
+ }
+\ No newline at end of file
+--- a/table/patients.xs
++++ b/table/patients.xs
+@@ -9,16 +9,17 @@
+       table = "orgs"
+     }
+   
+-    text first_name
+-    text last_name
+-    date dob
+-    text ssn?
+-    email email?
+-    text phone?
+-    text address?
+-    text insurance_member_id?
++    text first_name {sensitive = true}
++    text last_name {sensitive = true}
++    date dob {sensitive = true}
++    text ssn? {sensitive = true}
++    email email? {sensitive = true}
++    text phone? {sensitive = true}
++    text address? {sensitive = true}
++    text insurance_member_id? {sensitive = true}
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["phi"]
+   guid = "2owJebbNtRm-Ek78hCG3FxeWrO0"
+ }
+\ No newline at end of file
+--- a/function/log_phi_access.xs
++++ b/function/log_phi_access.xs
+@@ -0,0 +1,20 @@
++// Writes one phi_access_log row for a read or write of health data. Called by every object that reaches a phi table.
++function log_phi_access {
++  input {
++    int user_id
++    text resource
++    int record_id?
++  }
++
++  stack {
++    db.add phi_access_log {
++      data = {
++        user_id  : $input.user_id
++        resource : $input.resource
++        record_id: $input.record_id
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/policies/CONF-010.xs
++++ b/policies/CONF-010.xs
+@@ -0,0 +1,13 @@
++policy "CONF-010" {
++  title = "Sensitive tables are only reached by logged-in endpoints"
++  statement = "Every endpoint that reaches a table tagged phi, directly or through a function, requires login. A deliberately public endpoint that touches PHI is not allowed; its owner would need to decide otherwise."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa"]
++
++  rule {
++    check = "object.tagged_table_access"
++    params = {table_tags: ["phi"]}
++  }
++}
+--- a/policies/CONF-011.xs
++++ b/policies/CONF-011.xs
+@@ -0,0 +1,13 @@
++policy "CONF-011" {
++  title = "Sensitive fields are marked sensitive"
++  statement = "The patient identity, contact and clinical fields on patients and clinical_notes are marked sensitive in their table schema. A field that must stay unmarked needs its owner's decision, not a policy exemption."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa"]
++
++  rule {
++    check = "table.field_attribute_required"
++    params = {field_names: ["first_name", "last_name", "dob", "ssn", "email", "phone", "address", "insurance_member_id", "diagnosis", "note"], attribute: "sensitive", tables: ["patients", "clinical_notes"]}
++  }
++}
+--- a/policies/CONF-012.xs
++++ b/policies/CONF-012.xs
+@@ -0,0 +1,13 @@
++policy "CONF-012" {
++  title = "Tables holding confidential data are tagged"
++  statement = "A table holding patient identity or clinical fields (first name, last name, date of birth, SSN, contact details, insurance member ID, diagnosis, note) carries the phi tag. Tables outside patients and clinical_notes are not judged by this rule."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa"]
++
++  rule {
++    check = "table.tag_required"
++    params = {tag: "phi", field_names: ["first_name", "last_name", "dob", "ssn", "email", "phone", "address", "insurance_member_id", "diagnosis", "note"], tables: ["patients", "clinical_notes"]}
++  }
++}
+--- a/policies/CONF-013.xs
++++ b/policies/CONF-013.xs
+@@ -0,0 +1,12 @@
++policy "CONF-013" {
++  title = "Saved views hide sensitive fields"
++  statement = "Every saved table view hides the fields marked sensitive in its table's schema, and password fields, so a saved view does not show patient identity or clinical data in plain view."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa"]
++
++  rule {
++    check = "table.view_hide_required"
++  }
++}
+--- a/policies/DATA-010.xs
++++ b/policies/DATA-010.xs
+@@ -0,0 +1,13 @@
++policy "DATA-010" {
++  title = "Endpoints don't return personal data"
++  statement = "Endpoints never fetch the SSN, date of birth or insurance member ID, or any field marked sensitive. Fetching a sensitive field needs its owner's decision, not an exemption in this policy."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa"]
++
++  rule {
++    check = "db.output_fields_forbidden"
++    params = {fields: ["ssn", "dob", "insurance_member_id"], object_kinds: ["query"]}
++  }
++}
+--- a/policies/LOG-001.xs
++++ b/policies/LOG-001.xs
+@@ -0,0 +1,13 @@
++policy "LOG-001" {
++  title = "Logs don't contain request, user or secret data"
++  statement = "Debug logs name events, never the request input, the logged-in user or environment values. Patient data must not reach logs; a debug line that needs one is removed, not exempted."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa"]
++
++  rule {
++    check = "statement.expression_rule"
++    params = {statements: ["debug.log"], param_names: ["value"], must_not_reference: ["$input", "$auth", "$env"]}
++  }
++}
+--- a/policies/PHI-001.xs
++++ b/policies/PHI-001.xs
+@@ -0,0 +1,13 @@
++policy "PHI-001" {
++  title = "Objects reaching health tables record each access"
++  statement = "Every endpoint, function or task that reaches a table tagged phi calls log_phi_access unconditionally, so each read and write of health data leaves a row in phi_access_log. An object that cannot record the access is not exempted here; its owner decides."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa"]
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["log_phi_access"], placement: "unconditional", reaching_table_tags: ["phi"]}
++  }
++}
+--- a/policies/SEC-011.xs
++++ b/policies/SEC-011.xs
+@@ -0,0 +1,13 @@
++policy "SEC-011" {
++  title = "External requests verify TLS certificates"
++  statement = "Every external request verifies the TLS certificate and host name of the server it talks to, so health data is never sent over an unverified connection."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa"]
++
++  rule {
++    check = "statement.param_forbidden"
++    params = {statements: ["api.request", "stream.from_request"], param_names: ["verify_peer", "verify_host"], values: [false]}
++  }
++}
+--- a/policies/VND-001.xs
++++ b/policies/VND-001.xs
+@@ -0,0 +1,13 @@
++policy "VND-001" {
++  title = "Data only goes to approved vendors"
++  statement = "Outbound requests and AI model providers are limited to the vendors the owner approves. The approved list is empty until the owner adds vendors that may receive health data; every outbound call is reported until then."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa"]
++
++  rule {
++    check = "outbound.vendor_allowlist"
++    params = {hosts: [], providers: []}
++  }
++}
+--- a/table/phi_access_log.xs
++++ b/table/phi_access_log.xs
+@@ -0,0 +1,17 @@
++// Append-only record of each read or write of health data: who, which resource, which record and when.
++table phi_access_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    int user_id {
++      table = "users"
++    }
++
++    text resource
++    int record_id?
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

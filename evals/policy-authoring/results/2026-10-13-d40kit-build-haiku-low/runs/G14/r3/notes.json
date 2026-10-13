@@ -1,0 +1,76 @@
+{
+  "goal_id": "G14",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "Append-only record of who changed which record, what action, and when"},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "The only code that writes audit_log; called right after each customer-contact write"}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "customers POST", "file": "workspace/api/app/customers_POST.xs", "change": "Added function.run record_audit_event after db.add customers"},
+    {"kind": "query", "name": "customers/{customer_id} PATCH", "file": "workspace/api/app/customers/customer_id_PATCH.xs", "change": "Added function.run record_audit_event after db.patch customers"},
+    {"kind": "query", "name": "newsletter/subscribe POST", "file": "workspace/api/app/newsletter/subscribe_POST.xs", "change": "Added function.run record_audit_event after db.add newsletter_subscribers (actor_id null, public form)"},
+    {"kind": "query", "name": "auth/signup POST", "file": "workspace/api/app/auth/signup_POST.xs", "change": "Added function.run record_audit_event after db.add users (actor_id null, public form)"},
+    {"kind": "query", "name": "me PATCH", "file": "workspace/api/app/me_PATCH.xs", "change": "Added function.run record_audit_event after db.patch users"},
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Added function.run record_audit_event after db.del users"}
+  ],
+  "templates_considered": [
+    "audit_log_protected (RET-001): fits the audit-table and only-the-audit-function part; used",
+    "audit_changes recipe: covers who-changed-what; its extra rules are used in CUSTOMER-EMAIL-AUDIT, but its named tables and function come from me, not the recipe",
+    "ai_cost_and_agent_safety recipe: AI-in-loop rule matches; its other templates (VND-001, PERF-001, SEC-013, CONV-030) were not needed for the ask and would widen scope, so not used",
+    "personal_data_erasure recipe: erasure is not asked; not used",
+    "protect_health_data recipe: no health data in the ask; patients table not in scope; not used",
+    "no_pii_in_responses (DATA-010): ask does not mention responses; not used",
+    "tokens_expire / SEC-014: no token lifetime in the ask; not used"
+  ],
+  "templates_used": ["audit_log_protected"],
+  "rules": [
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "only the audit function writes audit_log; entries cannot be edited or deleted"},
+    {"policy_key": "CUSTOMER-EMAIL-AUDIT", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.add", "tables": ["customers", "users", "newsletter_subscribers"]}}, "covers": "creates of customer contact records call the audit function"},
+    {"policy_key": "CUSTOMER-EMAIL-AUDIT", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "users", "newsletter_subscribers"]}}, "covers": "patches of customer contact records call the audit function"},
+    {"policy_key": "CUSTOMER-EMAIL-AUDIT", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "users", "newsletter_subscribers"]}}, "covers": "edits of customer contact records call the audit function (no current db.edit on these tables; guards future code)"},
+    {"policy_key": "CUSTOMER-EMAIL-AUDIT", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "users", "newsletter_subscribers"]}}, "covers": "deletes of customer contact records call the audit function"},
+    {"policy_key": "SPEND-GUARD", "check": "statement.containment", "params": {"statements": ["ai.agent.run", "ai.external.mcp.tool.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "no AI call inside a loop (the cost blow-up)"},
+    {"policy_key": "SPEND-GUARD", "check": "statement.containment", "params": {"statements": ["api.request"], "must_not_be_inside": ["while"], "object_kinds": ["task"]}, "covers": "PROXY for a background task retrying forever: outbound request inside a while loop. Does not catch counted retries in for/foreach, and does not bound retries"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "$900 AI bill: actual spend and spend caps", "why": "no check exists"},
+    {"part": "background task retries forever", "why": "no check exists for task retry settings; only a while-loop proxy is covered"},
+    {"part": "tables that store customer emails: support_tickets.requester_email is also a customer email", "why": "couldn't tell how: I judged its writes to be AI-summary updates and left it out; the customer should decide"},
+    {"part": "who changed what, for writes made inside functions other than delete_user_account, and for writes outside the six sites", "why": "no check exists: object.statement_required judges query, tool, task and message objects, not functions; and the rule only sees the endpoints named"},
+    {"part": "actor identity on public writes (signup, newsletter)", "why": "needs runtime/org process: actor_id is null there by design"},
+    {"part": "audit entry retention", "why": "no check exists (retention age not checked)"},
+    {"part": "unrelated finding: me PATCH accepts role and passes $input[''] into db.patch users (self-promotion risk)", "why": "other: out of this ask; not fixed; needs its own AUTH-030-style policy and approval"}
+  ],
+  "assumptions": [
+    "Customer email tables are customers (email), users (email) and newsletter_subscribers (email)",
+    "support_tickets.requester_email counts as customer email but its writes are AI-summary updates, so it is out of audit scope",
+    "patients.email is health data; out of scope for a customer-email audit",
+    "Audit calls are placed after each write, unconditionally, and pass the signed-in user as actor_id where one exists",
+    "The customer approved the plan in the brief; I did not change the AI loop or webhook retry behaviour, only proposed them",
+    "statement.containment with object_kinds [task] for api.request is an acceptable proxy for retry-forever, as the customer's task is a while loop"
+  ],
+  "workspace_names_used": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients", "nightly_ticket_summaries", "retry_failed_webhooks", "customers_POST", "customer_id_PATCH", "subscribe_POST", "signup_POST", "me_PATCH", "delete_user_account", "Ticket Summarizer", "ai.agent.run usage in nightly_ticket_summaries"],
+  "confusions": [
+    "Template audit_log_protected's write_location_restricted: unclear whether omitting statements gives every built-in write (I assumed yes, which is what the dry run accepted, but no evaluate was run to confirm)",
+    "Recipe 'Record who changed what' gives db.edit, db.patch, db.del rules but no guidance for db.add (creates); I added db.add myself",
+    "Whether an object.statement_required rule should cover function objects: the catalogue's kind list excludes functions, so writes inside functions are unjudged by that check even though the recipe implies coverage",
+    "Whether a table-level tag was needed for scope: I scoped by exact table names instead, as the skill suggests when the user names tables",
+    "Policy check result is not visible from dry-run: the dry run lists policy create lines but no findings, so I cannot confirm the rules judge anything until evaluate runs (which the brief forbids for me)",
+    "Parse warnings about names that the branch does not have yet are expected when the change creates them, but the skill's rule is 'never accept the warning'; the warnings here are for objects this change creates"
+  ],
+  "wished_for": [
+    "A recipe or template for 'audit writes to named tables' that includes db.add and function-level writes",
+    "A clear statement of which object kinds object.statement_required judges, next to its params, with a note that functions are excluded",
+    "A proxy-free check for task retry limits, or at least a documented task retry setting",
+    "Guidance on whether a dry run can show which policies would fire, without a forbidden evaluate call"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [
+    "RET-001.R2: Table audit_log is not in this workspace (expected: created in this change)",
+    "RET-001.R2: Function record_audit_event is not on this branch (expected: created in this change)",
+    "CUSTOMER-EMAIL-AUDIT.R1-R4: Function record_audit_event is not on this branch (expected: created in this change)"
+  ],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The AI-in-loop rule and the audit-trail rules are direct checks of the named shapes, and the dry run was clean. Confidence is capped by: no evaluate run, so no findings confirmed; the retry rule is a proxy for 'retries forever'; spend caps and task retries are not checkable; and writes inside functions other than delete_user_account are not judged by the audit rules."
+}

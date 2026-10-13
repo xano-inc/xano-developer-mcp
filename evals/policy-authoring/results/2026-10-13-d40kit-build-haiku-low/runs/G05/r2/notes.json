@@ -1,0 +1,50 @@
+{
+  "goal_id": "G05",
+  "objects_built": [
+    {"kind": "function", "name": "require_admin_role", "file": "workspace/function/require_admin_role.xs", "role": "Loads the caller by user_id and raises accessdenied unless role is admin or support_lead"}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "users GET", "file": "workspace/api/admin/users_GET.xs", "change": "Added function.run require_admin_role as first statement with user_id $auth.id"},
+    {"kind": "query", "name": "tenants GET", "file": "workspace/api/admin/tenants_GET.xs", "change": "Added function.run require_admin_role as first statement"},
+    {"kind": "query", "name": "orgs/{org_id}/tenants GET", "file": "workspace/api/admin/orgs/org_id/tenants_GET.xs", "change": "Added function.run require_admin_role as first statement"},
+    {"kind": "query", "name": "tenants/{tenant_id} PATCH", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "Added function.run require_admin_role as first statement, before db.get"}
+  ],
+  "templates_considered": [
+    "AUTH-002 admin_endpoints_check_role: fits the role-check ask; template scopes by tags [admin], but no endpoint carries that tag, so scoped by api_groups instead",
+    "AUTH-020 own_records_only: did not fit; it filters per logged-in user, not per org on one table",
+    "AUTH-040 protected_endpoints_run_middleware: did not fit; the ask is a function call first, not a middleware attachment",
+    "AUTH-050 one_auth_table: did not fit"
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_admin_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "every endpoint in the admin group calls the role check first"},
+    {"policy_key": "ADMIN-TENANT-ORG", "check": "db.where_constraint_required", "params": {"field": "org_id", "table_selector": {"names": ["tenants"]}, "tables": ["tenants"]}, "covers": "reads and writes of tenants filter on org_id (presence only, no compare_to)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoints under /admin path outside the admin group (app/admin/stats_GET)", "why": "no check can scope by path prefix"},
+    {"part": "role check denies the right roles", "why": "no check reads what a function decides"},
+    {"part": "org_id filter has the right value (caller's own org)", "why": "couldn't tell how: compare_to would block cross-org support staff; left empty"},
+    {"part": "filter on writes done by id (tenant PATCH)", "why": "other: db.where_constraint_required may flag it; not verified without policy evaluate"},
+    {"part": "runtime data and who can reach the workspace", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Admin endpoints are the ones in the admin API group, as the brief's /admin means",
+    "org_id filter with no compare_to is the intended strictness; cross-org staff exist",
+    "A 'user' for the role check is $auth (users table, role enum)"
+  ],
+  "workspace_names_used": ["admin", "users", "tenants", "orgs", "org_id", "role", "support_lead", "admin", "app", "users GET", "tenants GET", "tenants/{tenant_id} PATCH", "orgs/{org_id}/tenants GET", "app/admin/stats", "require_admin_role"],
+  "confusions": [
+    "The AUTH-002 template scopes to tags [admin], but the brief's ask is path-based and no endpoint carries an admin tag; the skill says to prefer tags, yet it also says path prefix is not checkable. Chose api_groups; unclear whether tagging is expected",
+    "The skill says a fix must not add tags, but this is a build; unclear whether tagging stats_GET admin is in scope for a build",
+    "The template's frameworks list soc2/hipaa; the tags I wrote (soc2, cc6.1) are my choice, not from a template"
+  ],
+  "wished_for": [
+    "A scope param for endpoint path prefix (the catalogue lists it as not yet checkable)",
+    "A worked example of db.where_constraint_required for multi-org isolation without compare_to, where cross-org access is allowed"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": ["AUTH-002.R1 parse warning: function require_admin_role not on branch (expected before push, cleared by creating it in the same change)"],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "AUTH-002 checks the call is first in the admin group only, not /admin paths or what the role function decides. ADMIN-TENANT-ORG checks org_id presence, not value, and I have not run policy evaluate, so I cannot confirm which findings appear."
+}

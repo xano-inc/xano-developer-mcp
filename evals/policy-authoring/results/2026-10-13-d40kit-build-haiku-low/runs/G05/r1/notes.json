@@ -1,0 +1,69 @@
+{
+  "goal_id": "G05",
+  "objects_built": [
+    {"kind": "function", "name": "require_admin_role", "file": "workspace/function/require_admin_role.xs", "role": "Precondition that passes only when role is admin or support_lead; throws accessdenied otherwise. Called first by every admin endpoint."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "users GET", "file": "workspace/api/admin/users_GET.xs", "change": "Added function.run require_admin_role as first statement, input role from $auth.role."},
+    {"kind": "query", "name": "tenants GET", "file": "workspace/api/admin/tenants_GET.xs", "change": "Added require_admin_role first; added where = $db.tenants.org_id == $input.org_id (input already declared, previously unused). Changes returned rows."},
+    {"kind": "query", "name": "orgs/{org_id}/tenants GET", "file": "workspace/api/admin/orgs/org_id/tenants_GET.xs", "change": "Added require_admin_role as first statement. Filter already present."},
+    {"kind": "query", "name": "tenants/{tenant_id} PATCH", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "Added require_admin_role first; replaced db.get by id with db.query filtered on id and org_id (single); db.edit now keyed on $before.id. A tenant outside the caller's org now fails to edit."}
+  ],
+  "templates_considered": [
+    "AUTH-002: fits the admin role check; used, with placement first and api_groups added.",
+    "AUTH-020: partly fits (row-level isolation), but its second rule (write_from_input_forbidden) and per-user framing do not match a per-org tenants rule; not used.",
+    "AUTH-040: middleware-based alternative; no middleware exists and the ask is about the endpoints' own first statement; not used.",
+    "AUTH-030: covers role self-promotion via me_PATCH, outside this ask; recommended, not built.",
+    "CONF-010 / CONF-011 / CONF-012: no tenant tag or field-level sensitivity asked for; not used.",
+    "RET-001, AUTH-050, BIZ-001: not related to the ask."
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_admin_role"], "placement": "first", "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "Every admin-group endpoint calls the role check as its first statement"},
+    {"policy_key": "TENANT-010", "check": "db.where_constraint_required", "params": {"field": "org_id", "table_selector": {"names": ["tenants"]}}, "covers": "Every read and write of tenants filters on org_id"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "/admin path prefix as the scope", "why": "no check can scope by URL path; scoped by api_groups instead. admin/stats (app group, path admin/stats) is not covered."},
+    {"part": "role value must be admin or support_lead (content of the check, not just presence)", "why": "couldn't tell how: object.statement_required only proves the call happens first; the comparison inside require_admin_role is not read by any check"},
+    {"part": "org_id must be the caller's own org, not just present", "why": "no check; the rule only sees a filter on the field. tenants_GET takes org_id from input"},
+    {"part": "'before doing anything else' as an ordering over all statements", "why": "placement first covers the object's own first statement only; it does not prove the check is unconditional or precedes middleware-side work"},
+    {"part": "tenants table reached by app/admin/stats_GET unfiltered", "why": "other: the policy reports it; changing it alters a dashboard count, so left for the owner"},
+    {"part": "role escalation through me_PATCH", "why": "other: outside the ask; AUTH-030 would cover it, not built"}
+  ],
+  "assumptions": [
+    "Admin endpoints are the endpoints in the 'admin' API group (canonical admin), served at /api:admin.",
+    "$auth.role is the role field on the users table (enum admin|support_lead|...).",
+    "The customer wants 'never touches tenants' to mean any read or write, including db.get/db.edit by id, which needs an org_id filter.",
+    "Changing tenants_GET to filter by its existing org_id input is within the approved plan.",
+    "precondition with error_type accessdenied is the right failure for an unauthorised role.",
+    "Both policies advisory and active, as the skill's default for new policies."
+  ],
+  "workspace_names_used": [
+    "api group admin", "api/admin/users_GET.xs", "api/admin/tenants_GET.xs", "api/admin/orgs/org_id/tenants_GET.xs", "api/admin/tenants/tenant_id_PATCH.xs", "api/app/admin/stats_GET.xs", "api/app/me_PATCH.xs", "table tenants", "table users", "field users.role", "field tenants.org_id", "auth = users"
+  ],
+  "confusions": [
+    "The skill says AUTH-002 'Admin endpoints check the caller's role' template takes functions but does not say how to make the check the first statement; I used placement first from the catalogue, which the template text does not mention.",
+    "The skill's 'Fixing findings' rule (three objects then stop) and 'changes only what was asked' rule pulled against the brief's one-change build; I followed the brief and the approved plan.",
+    "Rule 6 says propose a tag separately rather than add it; the brief's change list has no tag step, so I did not tag api/app/admin/stats_GET.xs and proposed it instead.",
+    "Catalogue said api_groups scope only matches endpoints and asked for object_kinds to say so; the template does not show this, so I added object_kinds: [\"query\"] after the parse warning.",
+    "Policy syntax: parameters were accepted with newlines and no commas in the params block; parse normalised it to commas. Unclear whether either form is canonical for the user to write.",
+    "The brief says to check with dry run after building; the skill says never push without confirmation and to use evaluate. I could not run evaluate under the brief's limits, so I have no findings to report."
+  ],
+  "wished_for": [
+    "A recipe or example of a 'first statement' role check (function call as first statement in endpoints), including the function.run syntax and how $auth is passed.",
+    "A check or scope param that selects endpoints by URL path prefix, or a documented convention for tagging an admin path outside its group.",
+    "A check that verifies a function's body compares a value against an allowed set, or a way to name that behaviour as a 'function must contain' statement.",
+    "A template or recipe for tenant or org isolation (per-org scoping) distinct from AUTH-020's per-user framing.",
+    "The precondition statement syntax and error_type values in a policy-authoring example."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [
+    "No hard parse errors. Warning: AUTH-002.R1 api_groups only matches endpoints; set object_kinds (fixed).",
+    "Warning: AUTH-002.R1 function require_admin_role not on this branch (expected until push)."
+  ],
+  "dry_run_problems_seen": [
+    "None blocking. Dry run exit 0: creates 2 policies and 1 function, updates 4 queries. No policy evaluation was performed by dry run; no findings available."
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The role gate on the four admin endpoints and the org_id filter on the tenants table are enforceable and checkable. Confidence is held at medium because the policy only confirms that the check exists and runs first, not that it compares roles correctly; admin/stats in the app group sits outside the admin API group and is not covered; and the rule cannot confirm the org_id value is the caller's own. No policy evaluation was run, so the outcome is unverified."
+}

@@ -1,0 +1,11 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/SEC-012.xs"
+  ],
+  "modified": [
+    "function/acme_notify_sms.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

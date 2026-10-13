@@ -1,0 +1,348 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AI-COST-001.xs",
+    "build/policies/AUDIT-001.xs",
+    "build/policies/RET-001.xs",
+    "build/policies/TASK-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AI-COST-001.xs",
+      "ok": true,
+      "key": "AI-COST-001",
+      "title": "AI calls stay out of loops",
+      "statement": "AI agent runs and external MCP tool runs must not sit inside a foreach, for or while loop, where one request can run up unbounded model spend.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AI-COST-001.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.agent.run",
+              "ai.external.mcp.tool.run"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "foreach",
+              "for",
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/AUDIT-001.xs",
+      "ok": true,
+      "key": "AUDIT-001",
+      "title": "Customer email changes are audited",
+      "statement": "Every table that holds a customer email carries the customer-email tag. Anything reaching those tables requires login and calls record_audit_event, and every edit, patch and delete of them calls it, so the audit log shows who changed what.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AUDIT-001.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "email",
+              "requester_email"
+            ],
+            "field_types": [
+              "email"
+            ],
+            "include_sensitive": false,
+            "tag": "customer-email",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUDIT-001.R2",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "customer-email"
+            ],
+            "auth_tables": [],
+            "function": "record_audit_event",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUDIT-001.R3",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.edit",
+              "tables": [
+                "customers",
+                "newsletter_subscribers",
+                "support_tickets",
+                "users",
+                "patients"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUDIT-001.R4",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.patch",
+              "tables": [
+                "customers",
+                "newsletter_subscribers",
+                "support_tickets",
+                "users",
+                "patients"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUDIT-001.R5",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.del",
+              "tables": [
+                "customers",
+                "newsletter_subscribers",
+                "support_tickets",
+                "users",
+                "patients"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AUDIT-001.R2",
+          "text": "Function \"record_audit_event\" is not on this branch, so no object can satisfy this rule."
+        },
+        {
+          "rule_id": "AUDIT-001.R2",
+          "text": "table_tags \"customer-email\" is on no table in this workspace, so no access to it is judged."
+        },
+        {
+          "rule_id": "AUDIT-001.R3",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "AUDIT-001.R4",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "AUDIT-001.R5",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "The audit log table must exist, and only the record_audit_event function may write to it. Audit entries are never edited or deleted.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [
+              "db.edit",
+              "db.patch",
+              "db.add_or_edit",
+              "db.del",
+              "db.truncate",
+              "db.bulk.update",
+              "db.bulk.patch",
+              "db.bulk.delete"
+            ],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Table \"audit_log\" is not in this workspace, so it restricts nothing."
+        },
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Function \"record_audit_event\" is not on this branch, so it approves nothing."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/TASK-001.xs",
+      "ok": true,
+      "key": "TASK-001",
+      "title": "Tasks have no while loops",
+      "statement": "Background tasks must not use while loops. An unbounded loop is how a task retries forever. This is a proxy: retry limits themselves are not checked.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "TASK-001.R1",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "while"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "task"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

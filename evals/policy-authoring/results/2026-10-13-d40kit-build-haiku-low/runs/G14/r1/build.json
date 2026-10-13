@@ -1,0 +1,21 @@
+{
+  "pulled": true,
+  "added": [
+    "function/record_audit_event.xs",
+    "policies/AI-COST-001.xs",
+    "policies/AUDIT-001.xs",
+    "policies/RET-001.xs",
+    "policies/TASK-001.xs",
+    "table/audit_log.xs"
+  ],
+  "modified": [
+    "table/customers.xs",
+    "table/newsletter_subscribers.xs",
+    "table/patients.xs",
+    "table/support_tickets.xs",
+    "table/users.xs",
+    "task/retry_failed_webhooks.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

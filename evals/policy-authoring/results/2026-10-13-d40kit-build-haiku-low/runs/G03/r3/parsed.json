@@ -1,0 +1,306 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/CONF-011.xs",
+    "build/policies/DATA-010.xs",
+    "build/policies/LOG-001.xs",
+    "build/policies/PCI-CARD-001.xs",
+    "build/policies/SEC-011.xs",
+    "build/policies/SEC-012.xs",
+    "build/policies/VND-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/CONF-011.xs",
+      "ok": true,
+      "key": "CONF-011",
+      "title": "Sensitive fields are marked sensitive",
+      "statement": "The card and bank fields are marked sensitive wherever a table declares them. Related to PCI DSS requirement 3 (protect stored account data). Reads the table schemas only.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CONF-011.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "card_expiry",
+              "cardholder_name",
+              "card_last4",
+              "bank_account_number",
+              "bank_routing_number"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/DATA-010.xs",
+      "ok": true,
+      "key": "DATA-010",
+      "title": "Endpoints don't return personal data",
+      "statement": "Endpoints never fetch the card and bank fields, or any field marked sensitive. Related to PCI DSS requirement 3 (protect stored account data). Judges what each database statement fetches in the endpoint and the functions it calls, not the final response.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "DATA-010.R1",
+          "title": "",
+          "check": "db.output_fields_forbidden",
+          "params": {
+            "fields": [
+              "card_number",
+              "card_cvv",
+              "card_expiry",
+              "cardholder_name",
+              "bank_account_number",
+              "bank_routing_number"
+            ],
+            "include_sensitive": true,
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Logs don't contain request, user or secret data",
+      "statement": "Debug logs never reference request input, the logged-in user or environment variables, so card and bank data cannot reach logs. Related to PCI DSS requirement 3 (protect stored account data). Only debug.log is checked; datadog.log is not read by this rule.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/PCI-CARD-001.xs",
+      "ok": true,
+      "key": "PCI-CARD-001",
+      "title": "Card and bank data is never stored",
+      "statement": "No table declares a card number, card security code, card expiry, cardholder name, or bank account or routing number. Related to PCI DSS requirement 3 (protect stored account data). Removing a declared field loses data, so the table owner decides how to migrate; an exemption is the policy owner's decision.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "PCI-CARD-001.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "card_expiry",
+              "cardholder_name",
+              "bank_account_number",
+              "bank_routing_number"
+            ],
+            "field_types": [],
+            "attribute": "",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": true,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/SEC-011.xs",
+      "ok": true,
+      "key": "SEC-011",
+      "title": "External requests verify TLS certificates",
+      "statement": "External requests never switch off TLS certificate or host checks, so card and bank data sent to a processor is protected in transit. Related to PCI DSS requirement 4 (encryption in transit).",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SEC-011.R1",
+          "title": "",
+          "check": "statement.param_forbidden",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "verify_peer",
+              "verify_host"
+            ],
+            "values": [
+              false
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/SEC-012.xs",
+      "ok": true,
+      "key": "SEC-012",
+      "title": "No secrets are hardcoded",
+      "statement": "API keys, tokens, private keys, encryption keys and credentialed URLs are never written as literals in an object's definition or agent settings; they belong in environment variables. Related to PCI DSS requirement 8 (credentials). A value already reviewed is exempted by its owner, never by editing the rule.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "SEC-012.R1",
+          "title": "",
+          "check": "literal.credential_shape",
+          "params": {
+            "patterns": [],
+            "locations": [
+              "definition",
+              "agent_settings"
+            ],
+            "allowed_secrets": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/VND-001.xs",
+      "ok": true,
+      "key": "VND-001",
+      "title": "Data only goes to approved vendors",
+      "statement": "Outbound requests are limited to the approved vendors: Stripe (api.stripe.com) and Plaid (production.plaid.com). Adding a vendor is the policy owner's decision. Related to PCI DSS requirement 12.8 (service providers).",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "VND-001.R1",
+          "title": "",
+          "check": "outbound.vendor_allowlist",
+          "params": {
+            "kinds": [],
+            "hosts": [
+              "api.stripe.com",
+              "production.plaid.com"
+            ],
+            "providers": [],
+            "env_hosts": [],
+            "literal_urls_forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

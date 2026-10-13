@@ -1,0 +1,32 @@
+--- a/policies/AUTH-010.xs
++++ b/policies/AUTH-010.xs
+@@ -0,0 +1,13 @@
++policy "AUTH-010" {
++  title = "Endpoints require login"
++  statement = "Every endpoint requires authentication, unless it or its API group is tagged public. This covers the invoices endpoints: an endpoint that returns invoices without a login must not ship."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "hipaa"]
++
++  rule {
++    check = "object.auth_required"
++    params = { except_tags: ["public"] }
++  }
++}
+--- a/policies/PERF-001.xs
++++ b/policies/PERF-001.xs
+@@ -0,0 +1,13 @@
++policy "PERF-001" {
++  title = "Endpoints never return every row"
++  statement = "Every list read an endpoint or AI tool runs, in its own stack or a function it calls, pages its results, at most 1000 rows a page. A read of the whole invoices table with paging off is not allowed to ship."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = []
++
++  rule {
++    check = "statement.param_bound"
++    params = { statements: ["db.query"], param_names: ["per_page"], max: 1000, unit: "rows", object_kinds: ["query", "tool"] }
++  }
++}

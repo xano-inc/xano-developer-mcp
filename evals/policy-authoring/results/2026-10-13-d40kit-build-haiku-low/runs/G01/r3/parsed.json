@@ -1,0 +1,79 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUTH-010.xs",
+    "build/policies/PERF-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUTH-010.xs",
+      "ok": true,
+      "key": "AUTH-010",
+      "title": "Endpoints require login",
+      "statement": "Every endpoint requires authentication, unless it or its API group is tagged public. This covers the invoices endpoints: an endpoint that returns invoices without a login must not ship.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [
+              "public"
+            ],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/PERF-001.xs",
+      "ok": true,
+      "key": "PERF-001",
+      "title": "Endpoints never return every row",
+      "statement": "Every list read an endpoint or AI tool runs, in its own stack or a function it calls, pages its results, at most 1000 rows a page. A read of the whole invoices table with paging off is not allowed to ship.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "PERF-001.R1",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "db.query"
+            ],
+            "param_names": [
+              "per_page"
+            ],
+            "min": null,
+            "max": 1000,
+            "unit": "rows",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

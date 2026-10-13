@@ -1,0 +1,16 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/CONF-011.xs",
+    "policies/LOG-001.xs",
+    "policies/PCI-CHD-001.xs",
+    "policies/SEC-011.xs",
+    "policies/SEC-012.xs",
+    "policies/VND-001.xs"
+  ],
+  "modified": [
+    "api/app/payments/charge_POST.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

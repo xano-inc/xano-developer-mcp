@@ -1,0 +1,22 @@
+{
+  "pulled": true,
+  "added": [
+    "function/record_audit_event.xs",
+    "policies/AI-COST-001.xs",
+    "policies/AUDIT-001.xs",
+    "policies/RET-001.xs",
+    "table/audit_log.xs"
+  ],
+  "modified": [
+    "api/app/auth/signup_POST.xs",
+    "api/app/customers/customer_id_PATCH.xs",
+    "api/app/customers_POST.xs",
+    "api/app/me_PATCH.xs",
+    "api/app/newsletter/subscribe_POST.xs",
+    "function/delete_user_account.xs",
+    "function/summarize_ticket.xs",
+    "task/nightly_ticket_summaries.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

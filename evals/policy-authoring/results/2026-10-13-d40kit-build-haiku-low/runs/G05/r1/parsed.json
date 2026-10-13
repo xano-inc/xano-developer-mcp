@@ -1,0 +1,92 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUTH-002.xs",
+    "build/policies/TENANT-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUTH-002.xs",
+      "ok": true,
+      "key": "AUTH-002",
+      "title": "Admin endpoints check the caller's role",
+      "statement": "Every endpoint in the admin API group must call require_admin_role as its first statement, before it does anything else, so only admin and support_lead users get through. Endpoints are selected by API group, not by URL path: an endpoint under /admin in another API group is not judged.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-002.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_admin_role"
+            ],
+            "placement": "first",
+            "must_reference": [],
+            "when": [],
+            "tags": [],
+            "api_groups": [
+              "admin"
+            ],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AUTH-002.R1",
+          "text": "Function \"require_admin_role\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/TENANT-010.xs",
+      "ok": true,
+      "key": "TENANT-010",
+      "title": "Tenant reads and writes filter by org_id",
+      "statement": "Every read and write of the tenants table must filter on org_id, so one org's tenants are never read or changed without naming the org.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "TENANT-010.R1",
+          "title": "",
+          "check": "db.where_constraint_required",
+          "params": {
+            "table_selector": {
+              "names": [
+                "tenants"
+              ]
+            },
+            "field": "org_id",
+            "compare_to": "",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

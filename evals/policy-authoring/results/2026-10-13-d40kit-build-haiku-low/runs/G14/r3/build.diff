@@ -1,0 +1,226 @@
+--- a/api/app/auth/signup_POST.xs
++++ b/api/app/auth/signup_POST.xs
+@@ -16,7 +16,16 @@
+         password: $input.password
+       }
+     } as $user
+-  
++
++    function.run record_audit_event {
++      input = {
++        table_name: "users"
++        record_id : $user.id
++        action    : "create"
++        actor_id  : null
++      }
++    } as $audit
++
+     security.create_auth_token {
+       table = "users"
+       extras = {}
+--- a/api/app/customers/customer_id_PATCH.xs
++++ b/api/app/customers/customer_id_PATCH.xs
+@@ -15,6 +15,15 @@
+       field_value = $input.customer_id
+       data = {email: $input.email, phone: $input.phone}
+     } as $customer
++
++    function.run record_audit_event {
++      input = {
++        table_name: "customers"
++        record_id : $input.customer_id
++        action    : "update"
++        actor_id  : $auth.id
++      }
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/customers_POST.xs
++++ b/api/app/customers_POST.xs
+@@ -23,6 +23,15 @@
+         phone    : $input.phone
+       }
+     } as $customer
++
++    function.run record_audit_event {
++      input = {
++        table_name: "customers"
++        record_id : $customer.id
++        action    : "create"
++        actor_id  : $me.id
++      }
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -16,6 +16,15 @@
+       field_value = $auth.id
+       data = $input[""]
+     } as $me
++
++    function.run record_audit_event {
++      input = {
++        table_name: "users"
++        record_id : $auth.id
++        action    : "update"
++        actor_id  : $auth.id
++      }
++    } as $audit
+   }
+ 
+   response = $me
+--- a/api/app/newsletter/subscribe_POST.xs
++++ b/api/app/newsletter/subscribe_POST.xs
+@@ -15,6 +15,15 @@
+         confirmed: false
+       }
+     } as $subscriber
++
++    function.run record_audit_event {
++      input = {
++        table_name: "newsletter_subscribers"
++        record_id : $subscriber.id
++        action    : "create"
++        actor_id  : null
++      }
++    } as $audit
+   }
+ 
+   response = {ok: true}
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -17,6 +17,15 @@
+       field_name = "id"
+       field_value = $input.user_id
+     }
++
++    function.run record_audit_event {
++      input = {
++        table_name: "users"
++        record_id : $input.user_id
++        action    : "delete"
++        actor_id  : $input.user_id
++      }
++    } as $audit
+   }
+ 
+   response = {deleted: true}
+--- a/function/record_audit_event.xs
++++ b/function/record_audit_event.xs
+@@ -0,0 +1,22 @@
++// Writes one audit_log row. The only code that writes the audit log.
++function record_audit_event {
++  input {
++    text table_name
++    int record_id
++    text action
++    int? actor_id
++  }
++
++  stack {
++    db.add audit_log {
++      data = {
++        table_name: $input.table_name
++        record_id : $input.record_id
++        action    : $input.action
++        actor_id  : $input.actor_id
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/policies/CUSTOMER-EMAIL-AUDIT.xs
++++ b/policies/CUSTOMER-EMAIL-AUDIT.xs
+@@ -0,0 +1,28 @@
++policy "CUSTOMER-EMAIL-AUDIT" {
++  title = "Changes to customer email tables are audited"
++  statement = "Every insert, update and delete of the customer contact tables (customers, users, newsletter_subscribers) calls the record_audit_event function right after the write, so who changed what is recorded in audit_log. A write that cannot audit must be reviewed by the policy owner before it is exempted."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "hipaa"]
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.add", tables: ["customers", "users", "newsletter_subscribers"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.patch", tables: ["customers", "users", "newsletter_subscribers"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.edit", tables: ["customers", "users", "newsletter_subscribers"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.del", tables: ["customers", "users", "newsletter_subscribers"] } }
++  }
++}
+--- a/policies/RET-001.xs
++++ b/policies/RET-001.xs
+@@ -0,0 +1,18 @@
++policy "RET-001" {
++  title = "Only the audit function writes the audit log"
++  statement = "The audit log table audit_log must exist. Only the record_audit_event function may write to it, and no statement may edit, delete or truncate an audit entry. Audit entries are append-only."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "hipaa"]
++
++  rule {
++    check = "workspace.object_required"
++    params = { object_kind: "table", names: ["audit_log"] }
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = { restricted_tables: ["audit_log"], allowed_functions: ["record_audit_event"] }
++  }
++}
+--- a/policies/SPEND-GUARD.xs
++++ b/policies/SPEND-GUARD.xs
+@@ -0,0 +1,18 @@
++policy "SPEND-GUARD" {
++  title = "AI calls and task retries stay out of loops"
++  statement = "AI calls (agent runs and MCP tool runs) are never made inside a foreach, for or while loop, where one request can fan out into many billed calls. Background tasks never make an outbound request inside a while loop, the shape that retries forever. This is a proxy: it does not cap spend, and it does not bound retries counted with a for or foreach. Spend caps and retry limits are not checked by any rule."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["cost"]
++
++  rule {
++    check = "statement.containment"
++    params = { statements: ["ai.agent.run", "ai.external.mcp.tool.run"], must_not_be_inside: ["foreach", "for", "while"] }
++  }
++
++  rule {
++    check = "statement.containment"
++    params = { statements: ["api.request"], must_not_be_inside: ["while"], object_kinds: ["task"] }
++  }
++}
+--- a/table/audit_log.xs
++++ b/table/audit_log.xs
+@@ -0,0 +1,15 @@
++// Append-only record of changes to customer data: who changed which record, what changed, and when.
++table audit_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    text table_name
++    int record_id
++    text action
++    int actor_id?
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

@@ -1,0 +1,57 @@
+{
+  "goal_id": "G16",
+  "objects_built": [
+    {"kind": "function", "name": "require_manager", "file": "workspace/function/require_manager.xs", "role": "Takes user_id, reads the user's role, stops with accessdenied unless role == manager. Called first by the price and refund-approval endpoints."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "products/{product_id}/price PATCH", "file": "workspace/api/app/products/product_id/price_PATCH.xs", "change": "Added function.run require_manager {user_id: $auth.id} before db.patch products."},
+    {"kind": "query", "name": "refunds/{refund_id}/approve POST", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "Added function.run require_manager {user_id: $auth.id} before db.edit refunds."},
+    {"kind": "query", "name": "me PATCH", "file": "workspace/api/app/me_PATCH.xs", "change": "Removed the role input; db.patch now writes name, phone, marketing_opt_in explicitly instead of the whole input body ($input[\"\"])."}
+  ],
+  "templates_considered": [
+    "AUTH-030 no_self_promotion: fits exactly (role from request input). Used as handed over, with fields trimmed to [\"role\"] because is_admin is not on any table here.",
+    "AUTH-002 admin_endpoints_check_role: functions param fits, but its scope is admin endpoints; price and refund endpoints are in the app group, so using it would check the wrong surface.",
+    "AUTH-010 / AUTH-020 / AUTH-050: not needed; logins already exist and users are auth-gated.",
+    "BIZ-001 writes_check_first: close to the statement_order idea but has no params for a named function; used the custom statement_order rule instead."
+  ],
+  "templates_used": ["AUTH-030"],
+  "rules": [
+    {"policy_key": "AUTH-030", "check": "db.write_from_input_forbidden", "params": {"fields": ["role"]}, "covers": "No self-promotion: me PATCH can no longer write role from input."},
+    {"policy_key": "SHOP-010", "check": "object.statement_required", "params": {"functions": ["require_manager"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["products"]}}, "covers": "Every endpoint that changes a product price calls the manager check."},
+    {"policy_key": "SHOP-010", "check": "object.statement_required", "params": {"functions": ["require_manager"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["refunds"]}}, "covers": "Every endpoint that approves a refund calls the manager check."},
+    {"policy_key": "SHOP-010", "check": "stack.statement_order", "params": {"before": {"functions": ["require_manager"]}, "after": ["db.patch", "db.edit"], "tables": ["products", "refunds"]}, "covers": "The manager check runs before the write, not after."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "issue_refund AI tool (ai/tool/issue_refund.xs) refunds a payment through Stripe with no approval or role check, and the support agent can call it", "why": "no check exists"},
+    {"part": "Staff can view but not change: checked only for the two write paths found (price PATCH, refund approve); any future write path must be added to the rules", "why": "couldn't tell how"},
+    {"part": "Whether admin should also pass require_manager", "why": "other: the ask says only managers; I chose manager only"},
+    {"part": "Who holds the manager role and who approved the change", "why": "needs runtime/org process"},
+    {"part": "Existing users who already have role manager or the role field's current values", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Only the manager role passes; admin is not included.",
+    "Staff roles other than manager (staff, member, viewer, support_lead) are all denied price and refund changes.",
+    "db.patch with explicit null optional inputs in me PATCH leaves those fields unchanged; not verified at runtime.",
+    "Functions can be called with function.run and input = {user_id: ...} in the same way as delete_user_account."
+  ],
+  "workspace_names_used": ["users", "role", "manager", "products", "price", "refunds", "approved_by", "db.patch", "db.edit", "function.run", "require_manager (new)", "me", "products/{product_id}/price", "refunds/{refund_id}/approve", "issue_refund", "orgs"],
+  "confusions": [
+    "The template AUTH-030 lists is_admin, which this workspace does not have; the parser warned it protects nothing. It was not clear that template fields should be trimmed to the workspace's real fields when they do not exist.",
+    "Whether an object.statement_required when clause scoped by tables matches only the call's own statements or anything it reaches; I assumed it matches the endpoint's own db.patch/db.edit on that table.",
+    "Whether a function's response needs a value for the function to be called by function.run in a statement that ignores the result; I gave a simple response.",
+    "The catalogue does not say whether statement_order flags an endpoint that writes with no guard at all, as opposed to one whose guard runs after the write. I assumed it does."
+  ],
+  "wished_for": [
+    "A rule that restricts who may call an AI tool (for example by role), since tools have no caller identity and no check can see who calls them.",
+    "A worked example of object.statement_required with when.statement and when.tables for a write rule, which I had to infer.",
+    "A note on the template that a field list must be trimmed to real fields, not left at template defaults."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [
+    "parse (before the function existed) warned that require_manager is not on this branch: expected, since it is created in this change",
+    "parse warned that is_admin is not on any table: fixed by removing it from AUTH-030"
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The two write paths (price PATCH, refund approve) and the role-from-input hole are covered by checks that match the code. Medium, not high, because the AI refund tool bypasses the manager check and no rule can cover it, and the rules only verify that the guard is called, not that require_manager's role test is correct at runtime. I did not run xano policy evaluate, since it is not permitted in this run."
+}

@@ -1,0 +1,49 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/RATE-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/RATE-001.xs",
+      "ok": true,
+      "key": "RATE-001",
+      "title": "Public endpoints are rate limited",
+      "statement": "Every public endpoint, including login, signup and any added later, runs the rate_limit middleware before its stack, so one client address cannot flood it.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RATE-001.R1",
+          "title": "",
+          "check": "object.middleware_required",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "none",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RATE-001.R1",
+          "text": "Middleware \"rate_limit\" is not on this branch, so no object can satisfy this rule."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "key": "cd434d71968b37d8",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:39:13.880Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy RATE-010",
+        "create table rate_limit_hits",
+        "create middleware rate_limit",
+        "update query auth/login POST",
+        "update query auth/signup POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": [
+        "middleware/rate_limit.xs:2: middleware is missing an input clause",
+        "middleware/rate_limit.xs:2: middleware is missing a response clause"
+      ]
+    },
+    "unreadable": []
+  }
+}

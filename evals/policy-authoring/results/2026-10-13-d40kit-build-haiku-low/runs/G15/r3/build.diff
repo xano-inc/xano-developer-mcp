@@ -1,0 +1,87 @@
+--- a/api/app/auth/login_POST.xs
++++ b/api/app/auth/login_POST.xs
+@@ -32,6 +32,6 @@
+   }
+ 
+   response = {token: $token}
+-  tags = ["public"]
++  tags = ["public", "login"]
+   guid = "htgQegHjLXgs3wsCEx_67N9e8xo"
+ }
+\ No newline at end of file
+--- a/api/app/auth/signup_POST.xs
++++ b/api/app/auth/signup_POST.xs
+@@ -26,6 +26,6 @@
+   }
+ 
+   response = {token: $token}
+-  tags = ["public"]
++  tags = ["public", "login"]
+   guid = "uAC0OYfmlgmnJbNkIX2SDD_2iFA"
+ }
+\ No newline at end of file
+--- a/middleware/rate_limit.xs
++++ b/middleware/rate_limit.xs
+@@ -0,0 +1,25 @@
++// Refuses a client that sends more than 20 requests to one path in a minute. Runs before the endpoint's stack.
++middleware rate_limit {
++  stack {
++    var $ip {
++      value = $request.headers."x-forwarded-for" ?? "unknown"
++    }
++
++    db.add rate_limit_hits {
++      data = {
++        ip_address: $ip
++        path      : $request.path
++      }
++    } as $hit
++
++    db.query rate_limit_hits {
++      where = $db.rate_limit_hits.ip_address == $ip && $db.rate_limit_hits.path == $request.path && $db.rate_limit_hits.created_at > (now - 60)
++      return = {type: "count"}
++    } as $recent
++
++    precondition ($recent <= 20) {
++      error_type = "accessdenied"
++      error = "Too many requests. Try again in a minute."
++    }
++  }
++}
+--- a/policies/RATE-010.xs
++++ b/policies/RATE-010.xs
+@@ -0,0 +1,18 @@
++policy "RATE-010" {
++  title = "Public endpoints and login are rate limited"
++  statement = "Every public endpoint runs the rate_limit middleware before its stack, and so do login and signup. A caller past the limit is refused. An endpoint that cannot run the limiter is exempted by the platform owner, not by tagging it public."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["rate-limit"]
++
++  rule {
++    check = "object.middleware_required"
++    params = {middleware: ["rate_limit"], phase: "pre", endpoint_auth: "none", object_kinds: ["query"]}
++  }
++
++  rule {
++    check = "object.middleware_required"
++    params = {middleware: ["rate_limit"], phase: "pre", tags: ["login"], object_kinds: ["query"]}
++  }
++}
+--- a/table/rate_limit_hits.xs
++++ b/table/rate_limit_hits.xs
+@@ -0,0 +1,13 @@
++// One row per request to a rate-limited endpoint; the rate_limit middleware counts recent rows.
++table rate_limit_hits {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    text ip_address
++    text path
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

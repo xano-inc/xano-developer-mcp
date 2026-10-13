@@ -1,0 +1,16 @@
+{
+  "pulled": true,
+  "added": [
+    "function/require_admin_role.xs",
+    "policies/ADMIN-TENANT-ORG.xs",
+    "policies/AUTH-002.xs"
+  ],
+  "modified": [
+    "api/admin/orgs/org_id/tenants_GET.xs",
+    "api/admin/tenants/tenant_id_PATCH.xs",
+    "api/admin/tenants_GET.xs",
+    "api/admin/users_GET.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

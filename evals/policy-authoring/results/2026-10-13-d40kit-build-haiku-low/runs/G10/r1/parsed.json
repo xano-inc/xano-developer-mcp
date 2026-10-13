@@ -1,0 +1,67 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AGENT-SAFE-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AGENT-SAFE-001.xs",
+      "ok": true,
+      "key": "AGENT-SAFE-001",
+      "title": "AI tools never delete records or send email directly",
+      "statement": "AI tools never delete records or send email on their own. A delete or an email is queued in pending_actions for a person to approve, and the approved action runs outside the tool. This covers statements inside a function a tool calls.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AGENT-SAFE-001.R1",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.del",
+              "db.bulk.delete",
+              "db.truncate"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AGENT-SAFE-001.R2",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "util.send_email"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/CHG-010.xs",
+    "build/policies/RET-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/CHG-010.xs",
+      "ok": true,
+      "key": "CHG-010",
+      "title": "Changes to users, customers, refunds and tenants are audited",
+      "statement": "Every edit, patch and delete of the users, customers, refunds and tenants tables calls the record_audit_event function, so each change has an entry in the audit log. A change that cannot call it must be raised with the policy owner, not exempted.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CHG-010.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.edit",
+              "tables": [
+                "users",
+                "customers",
+                "refunds",
+                "tenants"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CHG-010.R2",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.patch",
+              "tables": [
+                "users",
+                "customers",
+                "refunds",
+                "tenants"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CHG-010.R3",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_audit_event"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.del",
+              "tables": [
+                "users",
+                "customers",
+                "refunds",
+                "tenants"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "CHG-010.R1",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "CHG-010.R2",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "CHG-010.R3",
+          "text": "Function \"record_audit_event\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "The audit_log table exists, and only the record_audit_event function writes to it. Audit entries are not edited or deleted by any other code.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Table \"audit_log\" is not in this workspace, so it restricts nothing."
+        },
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Function \"record_audit_event\" is not on this branch, so it approves nothing."
+        }
+      ]
+    }
+  ]
+}

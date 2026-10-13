@@ -1,0 +1,22 @@
+{
+  "key": "ec19bf8cf938924d",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:36.027Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy DEV-REVIEW-001"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": false,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

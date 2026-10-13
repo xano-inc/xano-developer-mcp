@@ -1,0 +1,86 @@
+--- a/ai/tool/send_customer_email.xs
++++ b/ai/tool/send_customer_email.xs
+@@ -11,9 +11,16 @@
+   
+     // Email body in plain text
+     text body
++
++    // The approved email_approvals row for this message
++    int approval_id
+   }
+ 
+   stack {
++    function.run require_human_approval {
++      input = {approval_id: $input.approval_id}
++    } as $approved
++
+     util.send_email {
+       api_key = $env.RESEND_API_KEY
+       service_provider = "resend"
+--- a/function/require_human_approval.xs
++++ b/function/require_human_approval.xs
+@@ -0,0 +1,20 @@
++// Stops the caller unless a person has approved this email. Call it before any step that sends email.
++function require_human_approval {
++  input {
++    int approval_id
++  }
++
++  stack {
++    db.get email_approvals {
++      field_name = "id"
++      field_value = $input.approval_id
++    } as $approval
++
++    precondition ($approval.status == "approved") {
++      error_type = "accessdenied"
++      error = "This email has not been approved by a person."
++    }
++  }
++
++  response = $approval
++}
+--- a/policies/HITL-001.xs
++++ b/policies/HITL-001.xs
+@@ -0,0 +1,17 @@
++policy "HITL-001" {
++  title = "AI agents can't delete records or email customers without a person's approval"
++  statement = "AI tools never delete records, including through a function they call. Any AI tool that sends email must first call require_human_approval, which stops the send unless a person has set the email's approval row to approved. A tool that is not given a delete or email step is not affected."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "stack.statement_forbidden"
++    params = { statements: ["db.del", "db.bulk.delete", "db.truncate"], object_kinds: ["tool"] }
++  }
++
++  rule {
++    check = "stack.statement_order"
++    params = { before: { functions: ["require_human_approval"] }, after: ["util.send_email"], object_kinds: ["tool"] }
++  }
++}
+--- a/table/email_approvals.xs
++++ b/table/email_approvals.xs
+@@ -0,0 +1,21 @@
++// Emails an AI tool wants to send to a customer. A person must set status to approved before the send runs.
++table email_approvals {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    email to
++    text subject
++    text body
++    enum status?=pending {
++      values = ["pending", "approved", "rejected", "sent"]
++    }
++
++    int approved_by? {
++      table = "users"
++    }
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

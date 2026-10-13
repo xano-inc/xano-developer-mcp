@@ -1,0 +1,25 @@
+{
+  "key": "faa8913e7c90b664",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:57.972Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy HITL-001",
+        "create table email_approvals",
+        "update tool send_customer_email",
+        "create function require_human_approval"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

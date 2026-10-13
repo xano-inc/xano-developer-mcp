@@ -1,0 +1,34 @@
+{
+  "goal_id": "G13",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "endpoints_need_login AUTH-010: partial only (login is not training); offered, not built",
+    "tables_classified CONV-023 / confidential_tables_tagged CONF-012: no tags exist in workspace; not relevant to training",
+    "protect_health_data recipe: wrong goal, health data not training"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "everyone on the team has completed security awareness training", "why": "no check exists"},
+    {"part": "before they're allowed to touch anything with customer data", "why": "no check exists for who the caller is; runtime gate would need a training record the workspace does not hold"}
+  ],
+  "assumptions": [
+    "customer data = tables such as customers, orders, invoices, payments, patients, clinical_notes (not verified by the customer)",
+    "the brief's 'build nothing if no policy can do the ask' rule applies here"
+  ],
+  "workspace_names_used": ["users", "customers", "orgs", "orders", "invoices", "payments", "patients", "clinical_notes", "endpoints_need_login", "AUTH-010", "object.auth_required"],
+  "confusions": [
+    "The brief says to build enforcement, coverage and gap, but also to build nothing when no policy can do the ask. For a training request these conflict: a gate on a self-set field would look like enforcement without being any. I took the build-nothing rule.",
+    "The catalogue's 'People and training' entry is clear, but the workflow asks for a plan before build; with no build, the plan and result are the same document."
+  ],
+  "wished_for": [
+    "A way for the policy to reference an external attestation (for example an LMS sync) as evidence, or an explicit statement in the catalogue of how to report that a control is out of scope.",
+    "A template that says what a partial control looks like for people-based requirements, so the answer is not improvised."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No check can read training completion; the workspace holds no training records, and a policy can only verify stored definitions. Nothing was built, so the customer's goal is not achieved in this change."
+}

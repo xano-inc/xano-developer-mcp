@@ -1,0 +1,125 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUTH-002.xs",
+    "build/policies/AUTH-030.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUTH-002.xs",
+      "ok": true,
+      "key": "AUTH-002",
+      "title": "Admin endpoints check the caller's role",
+      "statement": "Endpoints that approve refunds or change prices must call the require_manager role check as their first statement, passing the logged-in user, so only managers and admins can use them. Other endpoints are not covered by this policy.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-002.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "first",
+            "must_reference": [
+              "$auth"
+            ],
+            "when": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [
+              "refunds/{refund_id}/approve"
+            ],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUTH-002.R2",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "first",
+            "must_reference": [
+              "$auth"
+            ],
+            "when": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [
+              "products/{product_id}/price"
+            ],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AUTH-002.R1",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "AUTH-002.R2",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/AUTH-030.xs",
+      "ok": true,
+      "key": "AUTH-030",
+      "title": "Users can't make themselves admin",
+      "statement": "No write may take the role field from request input, so a user cannot set their own role, for example to manager or admin.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AUTH-030.R1",
+          "title": "",
+          "check": "db.write_from_input_forbidden",
+          "params": {
+            "statements": [],
+            "fields": [
+              "role"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "goal_id": "G06",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "external_calls_handle_errors (LOG-010): fits 'missing error handling', but only covers api.request, not stream/db.external/MCP calls",
+    "endpoints_have_tests (CHG-001): fits 'no tests'; checks that a test calls the endpoint and asserts, not that it passes",
+    "endpoints_stay_short (CONV-040): fits 'giant functions' via statement count and nesting; line count is not read",
+    "no_leftover_code (CONV-050): not named by the customer; included because the recipe bundles it with the rest",
+    "reads_are_paged (PERF-001): not named by the customer; included because the recipe bundles it",
+    "object.description_required rule from the recipe: no template for it, so written as own policy REVIEW-001"
+  ],
+  "templates_used": ["external_calls_handle_errors", "endpoints_have_tests", "endpoints_stay_short", "no_leftover_code", "reads_are_paged"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling (api.request only)"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "no tests (endpoints)"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests (anonymous call rejected on protected endpoints)"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant functions (statement count and nesting)"},
+    {"policy_key": "CONV-050", "check": "stack.disabled_statement_forbidden", "params": {}, "covers": "leftover code (not named by customer)"},
+    {"policy_key": "CONV-050", "check": "object.unused_input_forbidden", "params": {}, "covers": "leftover code (not named by customer)"},
+    {"policy_key": "CONV-050", "check": "stack.unused_variable_forbidden", "params": {}, "covers": "leftover code (not named by customer)"},
+    {"policy_key": "PERF-001", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 1000, "unit": "rows", "object_kinds": ["query", "tool"]}, "covers": "unbounded reads (not named by customer)"},
+    {"policy_key": "REVIEW-001", "check": "object.description_required", "params": {"object_kinds": ["function"], "min_length": 20}, "covers": "unclear function purpose (customer's 'you know the drill')"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "tests that actually pass or assert something useful", "why": "no check exists"},
+    {"part": "error handling that does something useful inside the catch", "why": "no check exists; only presence of try_catch is read"},
+    {"part": "200-line functions measured by line count", "why": "no check exists; statement count is the proxy"},
+    {"part": "error handling for vendor calls other than api.request", "why": "no check exists in LOG-010 scope; could add stream.from_request and db.external.* statements"},
+    {"part": "stop juniors breaking prod (blocking, not just visible)", "why": "needs owner decision; policies left advisory"},
+    {"part": "review and approval of changes", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'giant functions' maps to stack size, not lines",
+    "'no tests' maps to endpoints and their tests in the workspace (workflow_test folder)",
+    "advisory is the right starting enforcement; customer can switch later",
+    "the customer's list is examples ('you know the drill'), so the recipe's rules are reasonable to include"
+  ],
+  "workspace_names_used": ["policy_authoring_eval", "workflow_test"],
+  "confusions": [
+    "The recipe for 'Keep code easy to review' lists PERF-001 and CONV-050, which the customer did not name; unclear whether a recipe should be trimmed to the customer's words or applied whole.",
+    "The skill says to tag legacy objects first, but this would require changing existing objects, which the brief forbids without the customer's choice; I left it as a proposal.",
+    "No policy tags were specified for new policies; I invented 'code-review' as a label. The skill does not say what policy tags mean beyond labels."
+  ],
+  "wished_for": [
+    "A way to run xano policy evaluate in this session (forbidden here) so the plan can state predicted findings with evidence",
+    "A short example of how to scope the test rule to endpoints in one API group"
+  ],
+  "parse_attempts": 6,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Each rule matches its check and parses, and the dry run creates the six policies without warnings. But the checks read presence (try_catch, test calls, statement counts), not quality, and the enforcement is advisory, so the customer's 'stop juniors breaking prod' is only partly met and no findings were evaluated."
+}

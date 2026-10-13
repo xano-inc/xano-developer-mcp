@@ -1,0 +1,133 @@
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -8,11 +8,15 @@
+     db.bulk.delete user_address {
+       where = $db.user_address.user_id == $input.user_id
+     } as $addresses
+-  
++
+     db.bulk.delete sessions {
+       where = $db.sessions.user_id == $input.user_id
+     } as $sessions
+-  
++
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.user_id == $input.user_id
++    } as $tickets
++
+     db.del users {
+       field_name = "id"
+       field_value = $input.user_id
+@@ -20,5 +24,6 @@
+   }
+ 
+   response = {deleted: true}
++  tags = ["erasure"]
+   guid = "iWtAL7j6O0pMpjKQBxol3qm35T8"
+ }
+\ No newline at end of file
+--- a/table/sessions.xs
++++ b/table/sessions.xs
+@@ -14,5 +14,7 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal"]
++
+   guid = "uuVqMevo2LCQDx36M046KfLjBzk"
+ }
+\ No newline at end of file
+--- a/table/support_tickets.xs
++++ b/table/support_tickets.xs
+@@ -21,5 +21,7 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal", "retained"]
++
+   guid = "BOYHPB_-O75NDfyqlRdIIzUD2_w"
+ }
+\ No newline at end of file
+--- a/table/user_address.xs
++++ b/table/user_address.xs
+@@ -16,5 +16,7 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal"]
++
+   guid = "yG7Wa2mH-Ofb57UmPidQ1UWjMYM"
+ }
+\ No newline at end of file
+--- a/table/users.xs
++++ b/table/users.xs
+@@ -27,5 +27,7 @@
+     {type: "btree", field: [{name: "org_id", op: "asc"}]}
+   ]
+ 
++  tags = ["personal"]
++
+   guid = "xU8Al0G-VGO1TKLY5LrNKIOkGUE"
+ }
+\ No newline at end of file
+--- a/table/webhook_deliveries.xs
++++ b/table/webhook_deliveries.xs
+@@ -12,5 +12,7 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["retained"]
++
+   guid = "YMy5ywm1I5oVatF1OFPQElRADc0"
+ }
+\ No newline at end of file
+--- a/policies/ERASE-001.xs
++++ b/policies/ERASE-001.xs
+@@ -0,0 +1,13 @@
++policy "ERASE-001" {
++  title = "Account deletion erases personal data"
++  statement = "Every table tagged personal is reached by the erasure function, which deletes or anonymises a person's rows when their account is deleted. The erasure function carries the erasure tag. Tables that keep records for legal retention are anonymised, not deleted, and that choice belongs to the policy owner. This policy cannot see whether a row is personal in fact, only whether its table is tagged."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["gdpr"]
++
++  rule {
++    check = "table.coverage_required"
++    params = {tags: ["personal"], referenced_by: {object_kinds: ["function"], tags: ["erasure"], statements: ["db.del", "db.bulk.delete"]}}
++  }
++}
+--- a/policies/RET-002.xs
++++ b/policies/RET-002.xs
+@@ -0,0 +1,13 @@
++policy "RET-002" {
++  title = "Retained data has a cleanup task"
++  statement = "Every table tagged retained is deleted from by a scheduled task, so its rows are removed on a schedule. The task holds the retention period in its own query; no check reads the age of the rows it deletes. A table that must be kept longer is not tagged retained, and that choice belongs to its owner."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "gdpr"]
++
++  rule {
++    check = "table.coverage_required"
++    params = {tags: ["retained"], referenced_by: {object_kinds: ["task"], statements: ["db.del", "db.bulk.delete"]}}
++  }
++}
+--- a/task/purge_expired_customer_data.xs
++++ b/task/purge_expired_customer_data.xs
+@@ -0,0 +1,15 @@
++// Deletes support tickets and webhook deliveries older than two years every night.
++task purge_expired_customer_data {
++  stack {
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.created_at < ("now"|subtract_days:730)
++    } as $purged_tickets
++
++    db.bulk.delete webhook_deliveries {
++      where = $db.webhook_deliveries.created_at < ("now"|subtract_days:730)
++    } as $purged_deliveries
++  }
++
++  schedule = [{starts_on: 2026-01-01 04:00:00+0000, freq: 86400}]
++  tags = ["retained"]
++}

@@ -1,0 +1,67 @@
+{
+  "goal_id": "G04",
+  "objects_built": [
+    {"kind": "table", "name": "phi_access_log", "file": "workspace/table/phi_access_log.xs", "role": "Append-only row per read or write of health data: user, patient, action"},
+    {"kind": "function", "name": "log_phi_access", "file": "workspace/function/log_phi_access.xs", "role": "Writes one phi_access_log row for the logged-in user and the patient touched"}
+  ],
+  "objects_changed": [
+    {"kind": "table", "name": "patients", "file": "workspace/table/patients.xs", "change": "tags = [\"phi\"]; dob, ssn, insurance_member_id marked sensitive"},
+    {"kind": "table", "name": "appointments", "file": "workspace/table/appointments.xs", "change": "tags = [\"phi\"]; reason marked sensitive"},
+    {"kind": "table", "name": "clinical_notes", "file": "workspace/table/clinical_notes.xs", "change": "tags = [\"phi\"]; diagnosis and note marked sensitive"},
+    {"kind": "query", "name": "patients/{patient_id} GET", "file": "workspace/api/app/patients/patient_id_GET.xs", "change": "function.run log_phi_access as first statement (action read)"},
+    {"kind": "query", "name": "clinical_notes POST", "file": "workspace/api/app/clinical_notes_POST.xs", "change": "function.run log_phi_access as first statement (action create)"}
+  ],
+  "templates_considered": [
+    "protect_health_data (recipe): used as the basis, all its templates and its custom access rule",
+    "audit_log_protected (RET-001): did not fit; needs audit_log table and record_audit_event function that do not exist; not built",
+    "approved_vendors_only (VND-001): did not fit; needs hosts or providers the customer has not given; not written",
+    "no_secrets_in_code (SEC-012): not in the health recipe; left out to keep scope to the ask",
+    "tables_classified / agreed_tag_vocabulary: not in the recipe; left out"
+  ],
+  "templates_used": ["confidential_tables_tagged", "sensitive_fields_marked", "sensitive_tables_need_login", "no_pii_in_responses", "no_sensitive_data_in_logs", "views_hide_sensitive", "tls_verification_on"],
+  "rules": [
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"tag": "phi", "field_names": ["dob", "ssn", "insurance_member_id", "reason", "diagnosis", "note"]}, "covers": "health tables carry the phi tag"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"attribute": "sensitive", "field_names": ["dob", "ssn", "insurance_member_id", "reason", "diagnosis", "note"]}, "covers": "health fields marked sensitive"},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["phi"]}, "covers": "anything reaching phi tables requires login"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["patients.ssn", "patients.dob", "patients.insurance_member_id", "appointments.reason", "clinical_notes.diagnosis", "clinical_notes.note"], "object_kinds": ["query"]}, "covers": "endpoints do not fetch health fields"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "logs do not hold request, user or secret data"},
+    {"policy_key": "CONF-013", "check": "table.view_hide_required", "params": {}, "covers": "saved views hide sensitive fields"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "external requests verify TLS"},
+    {"policy_key": "PHI-ACCESS-010", "check": "object.statement_required", "params": {"functions": ["log_phi_access"], "placement": "unconditional", "reaching_table_tags": ["phi"]}, "covers": "every access to health data records a log_phi_access call"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Approved vendors receiving health data", "why": "needs runtime/org process"},
+    {"part": "Audit log of changes to health data (RET-001)", "why": "other"},
+    {"part": "Public appointments endpoint reaching PHI without login", "why": "other"},
+    {"part": "Access reviews, staff training, BAAs, encryption at rest, backups, network", "why": "no check exists"},
+    {"part": "Retention period for health records", "why": "no check exists"},
+    {"part": "Health fields under names not listed", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "phi is the health tag, as the recipe asks for CONF-012 and CONF-010",
+    "patients, appointments and clinical_notes are the only PHI tables in the workspace",
+    "reason, diagnosis, note, ssn, dob and insurance_member_id are the health fields",
+    "Customer approved the tagging and field-attribute changes in the plan, so I did not ask again",
+    "Endpoint auth stays unchanged: enabling login is outside the listed change types"
+  ],
+  "workspace_names_used": ["patients", "appointments", "clinical_notes", "patients/{patient_id}", "clinical_notes POST", "appointments GET", "debug.log in clinical_notes POST", "users"],
+  "confusions": [
+    "Field attribute syntax for sensitive is not in the skill or catalogue examples; the inline {sensitive: true} form gave a syntax error; the block form { sensitive = true } worked on dry run",
+    "Table tag syntax (tags = [...] at table level) is not shown in the skill; I inferred it from endpoint tags",
+    "Recipe says CONF-012 uses the same tag as the access rule, but the template's own tag is confidential; the recipe's step to pick one tag is not explicit about overriding the template value",
+    "No guid was given for new objects; I left guid out and dry run accepted them",
+    "Skill's Ask first rules (for tags, auth, data) conflict with a build task where the customer pre-approved the whole change; I followed the brief"
+  ],
+  "wished_for": [
+    "An example of a table tag and a sensitive field attribute in XanoScript",
+    "A recipe note on how to pick one health tag and whether it replaces a template's tag param",
+    "Guidance on whether a recipe's template set should include RET-001 when no audit table exists"
+  ],
+  "parse_attempts": 8,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [
+    "Inline {sensitive: true} on a table field: Syntax error: unexpected 'sensitive:' (fixed with a block form)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The enforcement and rules are wired and the dry run is clean, but the public appointments endpoint and the whole-row patient response will still be flagged, and vendors, audit log, retention and the non-policy controls are not covered. This covers the health-data tagging, field marking and access logging, not HIPAA as a whole."
+}

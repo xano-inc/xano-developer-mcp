@@ -1,0 +1,14 @@
+{
+  "pulled": true,
+  "added": [
+    "function/require_human_approval.xs",
+    "policies/AGENT-010.xs",
+    "table/approval_requests.xs"
+  ],
+  "modified": [
+    "ai/tool/delete_customer_note.xs",
+    "ai/tool/send_customer_email.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

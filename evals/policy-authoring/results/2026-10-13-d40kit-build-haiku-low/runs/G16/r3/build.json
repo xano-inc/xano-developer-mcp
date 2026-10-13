@@ -1,0 +1,15 @@
+{
+  "pulled": true,
+  "added": [
+    "function/require_manager.xs",
+    "policies/AUTH-030.xs",
+    "policies/SHOP-010.xs"
+  ],
+  "modified": [
+    "api/app/me_PATCH.xs",
+    "api/app/products/product_id/price_PATCH.xs",
+    "api/app/refunds/refund_id/approve_POST.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

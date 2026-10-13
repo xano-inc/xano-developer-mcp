@@ -1,0 +1,62 @@
+{
+  "goal_id": "G03",
+  "objects_built": [],
+  "objects_changed": [
+    {"kind": "query", "name": "payments/charge POST", "file": "workspace/api/app/payments/charge_POST.xs", "change": "Removed debug.log of the whole $input (logged card number, CVV, expiry, cardholder name). Removed card_number, card_cvv, card_expiry, cardholder_name from the db.add payments data. Inputs left in place."}
+  ],
+  "templates_considered": [
+    "protect_card_data recipe: used as the basis; its card-specific rule and template list were followed",
+    "no_secrets_in_code (SEC-012): fit, used",
+    "approved_vendors_only (VND-001): fit, used with customer's hosts",
+    "tls_verification_on (SEC-011): fit, used",
+    "sensitive_fields_marked (CONF-011): fit, used with card_last4 (only card-adjacent field stored)",
+    "no_sensitive_data_in_logs (LOG-001): fit, used",
+    "no_pii_in_responses (DATA-010): considered, not used; the ask does not mention responses",
+    "no_destructive_sql, get_endpoints_only_read etc.: not relevant to the ask",
+    "bank account data: no template for it; not added since the ask names cardholder data"
+  ],
+  "templates_used": ["no_secrets_in_code", "approved_vendors_only", "tls_verification_on", "sensitive_fields_marked", "no_sensitive_data_in_logs"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "no credentials hardcoded (acme_notify_sms Twilio URL is a current finding)"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "data only to Stripe and Plaid"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "TLS verification stays on for vendor calls"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["card_last4"], "attribute": "sensitive"}, "covers": "card-adjacent stored field marked sensitive"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data not logged"},
+    {"policy_key": "PCI-CHD-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_cvc", "cvv", "cvc", "pan", "card_expiry", "cardholder_name"], "forbidden": true}, "covers": "cardholder data not stored raw"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Cardholder data never sent to a non-approved vendor, at runtime", "why": "couldn't tell how: rules read literal hosts and provider IDs only; a value sent through a variable or a runtime-built URL is not traced to its content. Fraud-check endpoint sends card_number to an unapproved host; the rule reports the host, not the data."},
+    {"part": "Cardholder data not logged, beyond debug.log", "why": "needs runtime/org process: LOG-001 covers only debug.log and only traces input through variables; datadog.log not covered because the workspace has none, and the template limits say to add it when used"},
+    {"part": "Card data in responses", "why": "other: not in the ask; DATA-010 would cover it, not added"},
+    {"part": "Bank account and routing numbers", "why": "other: the ask named cardholder data; the customer may want these forbidden too"},
+    {"part": "Encryption at rest, access reviews, staff training, retention, backups", "why": "needs runtime/org process: not checkable from object definitions (kit lists these as not_checkable)"},
+    {"part": "Stored card columns removed from payments table", "why": "other: deleting columns loses data, template says ask first; left for the customer to decide"},
+    {"part": "Unused card inputs remain on charge endpoint", "why": "other: removing inputs changes the API contract; no check added for it"}
+  ],
+  "assumptions": [
+    "Customer's approved vendor list is Stripe and Plaid; hosts used are api.stripe.com and production.plaid.com, the ones in the workspace code",
+    "Cardholder data = card_number, card_cvv/cvc/cvv, pan, card_expiry, cardholder_name",
+    "Advisory enforcement is the right default; the customer decides whether to make them blocking",
+    "Removing storage (not table columns) from charge_POST is in scope; deleting columns is not",
+    "Recipe's one-policy-per-template rule followed, so five template policies plus one own policy"
+  ],
+  "workspace_names_used": ["payments/charge POST", "payments", "card_number", "card_cvv", "card_expiry", "cardholder_name", "payment_method", "card_last4", "acme_notify_sms", "fraud_check POST", "api.riskscreen.example", "api.stripe.com", "production.plaid.com", "bank_accounts/link POST"],
+  "confusions": [
+    "SKILL.md was longer than the first read showed; the catalogue section and rule authoring were needed, took several reads",
+    "Recipe says to create each template as its own policy and then one policy of your own; unclear whether a single combined policy is preferred for an audit-facing ask. Followed the recipe",
+    "Whether a Stripe or Plaid host should be exact host or a suffix like .stripe.com: skill example used .example.com form; chose exact hosts actually in code, which is narrower",
+    "outbound.vendor_allowlist with kinds empty: the doc says non-http kinds with no providers are reported as not yet reviewed; this will flag Resend, OpenAI, Anthropic and Xano-internal kinds, unclear how much noise to expect",
+    "xano policy parse output is the reformatted policy with no warnings; no way to tell a clean parse from a parse that silently dropped something without reading it"
+  ],
+  "wished_for": [
+    "A recipe or template variant for PCI card data that includes cardholder-name and expiry as forbidden, since the template list is card_number and CVV only",
+    "A check or example for debug.log/datadog.log on named input fields, not only $input root",
+    "Guidance on whether the vendor allowlist should use exact hosts or host suffixes for vendors like Stripe and Plaid that use several subdomains",
+    "Example of how to check a field's value is cardholder data at runtime is out of reach; a sentence in the skill would have saved time"
+  ],
+  "parse_attempts": 6,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Storage of card fields, logging of input and vendor hosts are each checked by a rule that names the relevant fields or hosts, and the dry run is clean. But the rules read definitions only: a runtime value moved through a variable, the remaining card fields on payments, and the unapproved fraud-check vendor are all reported findings that only resolve when the customer acts. No policy here can prove the audit requirements are met."
+}

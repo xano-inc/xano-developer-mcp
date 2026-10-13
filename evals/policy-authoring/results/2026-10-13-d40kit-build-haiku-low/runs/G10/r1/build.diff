@@ -1,0 +1,114 @@
+--- a/ai/tool/delete_customer_note.xs
++++ b/ai/tool/delete_customer_note.xs
+@@ -1,6 +1,6 @@
+-// Deletes an internal note about a customer.
++// Asks for an internal note about a customer to be deleted. A person approves it first.
+ tool delete_customer_note {
+-  instructions = "Delete an internal note when the customer asks for it to be removed."
++  instructions = "Ask for an internal note to be deleted when the customer asks for it to be removed. The deletion waits for a person to approve it, so tell the customer it is pending."
+ 
+   input {
+     // The note to delete
+@@ -8,12 +8,14 @@
+   }
+ 
+   stack {
+-    db.del customer_notes {
+-      field_name = "id"
+-      field_value = $input.note_id
+-    }
++    db.add pending_actions {
++      data = {
++        action : "delete_customer_note"
++        payload: {note_id: $input.note_id}
++      }
++    } as $queued
+   }
+ 
+-  response = {deleted: true}
++  response = {queued: true}
+   guid = "fBiHjWG1iPkEHhqm-foQR71c0Xg"
+ }
+\ No newline at end of file
+--- a/ai/tool/send_customer_email.xs
++++ b/ai/tool/send_customer_email.xs
+@@ -1,29 +1,27 @@
+-// Emails a customer on behalf of support.
++// Queues an email to a customer for support. A person approves it before it is sent.
+ tool send_customer_email {
+-  instructions = "Send the customer an email with the answer or next steps."
++  instructions = "Queue an email to the customer with the answer or next steps. The email is not sent until a person approves it, so tell the customer it is pending."
+ 
+   input {
+     // The customer's email address
+     email to
+-  
++
+     // Email subject line
+     text subject
+-  
++
+     // Email body in plain text
+     text body
+   }
+ 
+   stack {
+-    util.send_email {
+-      api_key = $env.RESEND_API_KEY
+-      service_provider = "resend"
+-      subject = $input.subject
+-      message = $input.body
+-      to = $input.to
+-      from = "support@acme.example"
+-    } as $sent
++    db.add pending_actions {
++      data = {
++        action : "send_customer_email"
++        payload: {to: $input.to, subject: $input.subject, body: $input.body}
++      }
++    } as $queued
+   }
+ 
+-  response = {sent: true}
++  response = {queued: true}
+   guid = "CCzsw2M_uOR-T8psXFQa6b_WdHA"
+ }
+\ No newline at end of file
+--- a/policies/AGENT-SAFE-001.xs
++++ b/policies/AGENT-SAFE-001.xs
+@@ -0,0 +1,17 @@
++policy "AGENT-SAFE-001" {
++  title = "AI tools never delete records or send email directly"
++  statement = "AI tools never delete records or send email on their own. A delete or an email is queued in pending_actions for a person to approve, and the approved action runs outside the tool. This covers statements inside a function a tool calls."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "stack.statement_forbidden"
++    params = { statements: ["db.del", "db.bulk.delete", "db.truncate"], object_kinds: ["tool"] }
++  }
++
++  rule {
++    check = "stack.statement_forbidden"
++    params = { statements: ["util.send_email"], object_kinds: ["tool"] }
++  }
++}
+--- a/table/pending_actions.xs
++++ b/table/pending_actions.xs
+@@ -0,0 +1,14 @@
++// Actions the AI agent asked for that a person must approve before they run.
++table pending_actions {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    text action
++    json payload?
++    text status?=pending
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}
+\ No newline at end of file

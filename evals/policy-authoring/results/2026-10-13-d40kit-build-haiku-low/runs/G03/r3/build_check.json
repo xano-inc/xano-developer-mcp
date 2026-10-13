@@ -1,0 +1,28 @@
+{
+  "key": "2f788bc116c87d6e",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:09.179Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy CONF-011",
+        "create policy DATA-010",
+        "create policy LOG-001",
+        "create policy PCI-CARD-001",
+        "create policy SEC-011",
+        "create policy SEC-012",
+        "create policy VND-001"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": false,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUTH-030.xs",
+    "build/policies/SHOP-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUTH-030.xs",
+      "ok": true,
+      "key": "AUTH-030",
+      "title": "Users can't make themselves admin",
+      "statement": "Record writes never take a privilege field such as role from request input, nor a whole record from it. A user cannot raise their own role, for example to manager, through their profile endpoint.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-030.R1",
+          "title": "",
+          "check": "db.write_from_input_forbidden",
+          "params": {
+            "statements": [],
+            "fields": [
+              "role"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/SHOP-010.xs",
+      "ok": true,
+      "key": "SHOP-010",
+      "title": "Only managers approve refunds or change prices",
+      "statement": "Only a user whose role is manager may approve a refund or change a product price. Every endpoint that does either calls require_manager before the write. Staff may view refunds and products but not change them.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SHOP-010.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.patch",
+              "tables": [
+                "products"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "SHOP-010.R2",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.edit",
+              "tables": [
+                "refunds"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "SHOP-010.R3",
+          "title": "",
+          "check": "stack.statement_order",
+          "params": {
+            "before": {
+              "functions": [
+                "require_manager"
+              ]
+            },
+            "after": [
+              "db.patch",
+              "db.edit"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [
+              "products",
+              "refunds"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "SHOP-010.R1",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "SHOP-010.R2",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "SHOP-010.R3",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    }
+  ]
+}

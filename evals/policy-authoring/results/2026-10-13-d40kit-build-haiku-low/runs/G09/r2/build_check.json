@@ -1,0 +1,33 @@
+{
+  "key": "caba82c5cf08023c",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:52.166Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy ERASE-001",
+        "create policy RET-002",
+        "update table sessions",
+        "update table support_tickets",
+        "update table user_address",
+        "update table users",
+        "update table webhook_deliveries",
+        "update function delete_user_account",
+        "create task purge_expired_customer_data"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": [
+        "task/purge_expired_customer_data.xs:5: Unknown filter function 'subtract_days'",
+        "task/purge_expired_customer_data.xs:9: Unknown filter function 'subtract_days'"
+      ]
+    },
+    "unreadable": []
+  }
+}

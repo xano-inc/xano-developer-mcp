@@ -1,0 +1,169 @@
+--- a/api/admin/orgs/org_id/tenants_GET.xs
++++ b/api/admin/orgs/org_id/tenants_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_admin_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
+     db.query tenants {
+       where = $db.tenants.org_id == $input.org_id
+       return = {type: "list"}
+@@ -15,5 +19,6 @@
+   }
+ 
+   response = $tenants
++  tags = ["admin"]
+   guid = "kC39ZPgrjdXHBHL2WIrtAJOPl0U"
+ }
+\ No newline at end of file
+--- a/api/admin/tenants/tenant_id_PATCH.xs
++++ b/api/admin/tenants/tenant_id_PATCH.xs
+@@ -11,11 +11,15 @@
+   }
+ 
+   stack {
+-    db.get tenants {
+-      field_name = "id"
+-      field_value = $input.tenant_id
++    function.run require_admin_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
++    db.query tenants {
++      where = $db.tenants.id == $input.tenant_id && $db.tenants.org_id == $input.org_id
++      return = {type: "single"}
+     } as $before
+-  
++
+     db.edit tenants {
+       field_name = "id"
+       field_value = $input.tenant_id
+@@ -24,5 +28,6 @@
+   }
+ 
+   response = $tenant
++  tags = ["admin"]
+   guid = "q_GTR5U7b2fchb6y6QVrfJuh4mo"
+ }
+\ No newline at end of file
+--- a/api/admin/tenants_GET.xs
++++ b/api/admin/tenants_GET.xs
+@@ -8,11 +8,17 @@
+   }
+ 
+   stack {
++    function.run require_admin_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
+     db.query tenants {
++      where = $db.tenants.org_id == $input.org_id
+       return = {type: "list"}
+     } as $tenants
+   }
+ 
+   response = $tenants
++  tags = ["admin"]
+   guid = "4nJQd3BQCPRKwDnGh4J1BAAuBfo"
+ }
+\ No newline at end of file
+--- a/api/admin/users_GET.xs
++++ b/api/admin/users_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_admin_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
+     db.query users {
+       sort = {users.created_at: "desc"}
+       return = {type: "list", paging: {page: $input.page, per_page: 50}}
+@@ -15,5 +19,6 @@
+   }
+ 
+   response = $users
++  tags = ["admin"]
+   guid = "9tH4Fh132vcd-EMkOyC5g4f4yu4"
+ }
+\ No newline at end of file
+--- a/api/app/admin/stats_GET.xs
++++ b/api/app/admin/stats_GET.xs
+@@ -7,6 +7,10 @@
+   }
+ 
+   stack {
++    function.run require_admin_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
+     db.query tenants {
+       return = {type: "count"}
+     } as $tenant_count
+@@ -17,5 +21,6 @@
+   }
+ 
+   response = {tenants: $tenant_count, users: $user_count}
++  tags = ["admin"]
+   guid = "Ht7y0W-CD8I3INuKKz9HxJvNK6Q"
+ }
+\ No newline at end of file
+--- a/function/require_admin_role.xs
++++ b/function/require_admin_role.xs
+@@ -0,0 +1,20 @@
++// Stops the request unless the user is an admin or a support lead. Admin endpoints call it first.
++function require_admin_role {
++  input {
++    int user_id
++  }
++
++  stack {
++    db.get users {
++      field_name = "id"
++      field_value = $input.user_id
++    } as $user
++
++    precondition ($user.role == "admin" || $user.role == "support_lead") {
++      error_type = "accessdenied"
++      error = "Admins and support leads only."
++    }
++  }
++
++  response = $user
++}
+--- a/policies/AUTH-002.xs
++++ b/policies/AUTH-002.xs
+@@ -0,0 +1,13 @@
++policy "AUTH-002" {
++  title = "Admin endpoints check the caller's role"
++  statement = "Every endpoint tagged admin calls the require_admin_role function as its first statement, passing the logged-in user. Only admin and support_lead users may pass that check. An admin endpoint that cannot call it is reported, and the owner decides any exemption."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "hipaa"]
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["require_admin_role"], placement: "first", must_reference: ["$auth"], tags: ["admin"], object_kinds: ["query"]}
++  }
++}
+--- a/policies/TEN-001.xs
++++ b/policies/TEN-001.xs
+@@ -0,0 +1,13 @@
++policy "TEN-001" {
++  title = "Tenant reads and writes filter on org_id"
++  statement = "Nothing reads or writes the tenants table without constraining org_id, so one org never reaches another org's tenants. A query that must span orgs needs an exemption decided by the policy owner."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2"]
++
++  rule {
++    check = "db.where_constraint_required"
++    params = {field: "org_id", table_selector: {names: ["tenants"]}}
++  }
++}

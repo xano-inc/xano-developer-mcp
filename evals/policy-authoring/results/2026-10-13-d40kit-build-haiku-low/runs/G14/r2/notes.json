@@ -1,0 +1,65 @@
+{
+  "goal_id": "G14",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "append-only record of changes to tables holding customer emails"},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "the only writer of audit_log; called after each audited write"}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "customers POST", "file": "workspace/api/app/customers_POST.xs", "change": "unconditional function.run record_audit_event after db.add customers"},
+    {"kind": "query", "name": "customers/{customer_id} PATCH", "file": "workspace/api/app/customers/customer_id_PATCH.xs", "change": "audit call after db.patch customers"},
+    {"kind": "query", "name": "me PATCH", "file": "workspace/api/app/me_PATCH.xs", "change": "audit call after db.patch users"},
+    {"kind": "query", "name": "auth/signup POST", "file": "workspace/api/app/auth/signup_POST.xs", "change": "audit call after db.add users; payload excludes password"},
+    {"kind": "query", "name": "newsletter/subscribe POST", "file": "workspace/api/app/newsletter/subscribe_POST.xs", "change": "audit call after db.add newsletter_subscribers"},
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "audit call after db.del users"},
+    {"kind": "function", "name": "summarize_ticket", "file": "workspace/function/summarize_ticket.xs", "change": "audit call after db.edit support_tickets"},
+    {"kind": "task", "name": "nightly_ticket_summaries", "file": "workspace/task/nightly_ticket_summaries.xs", "change": "audit call after db.edit support_tickets, inside foreach (so not unconditional; AUDIT-001 will flag it). AI loop left as is."}
+  ],
+  "templates_considered": [
+    "audit_log_protected (RET-001): fit; used for the audit table and single-writer rule",
+    "audit_changes recipe: fit; used as the basis for the audit policy, but its per-statement rules were written by hand in AUDIT-001 and it does not carry a key of its own",
+    "ai_cost_and_agent_safety recipe: partial fit; its loop rule is used as AI-COST-001. Its VND-001, PERF-001, SEC-013 and CONV-030 templates were not added: the ask did not cover them",
+    "retained_data_cleaned_up (RET-002): did not fit; no retention ask",
+    "no_pii_in_responses, sensitive_fields_marked, tables_classified and other data templates: did not fit; the ask was about change tracking and AI spend"
+  ],
+  "templates_used": ["audit_log_protected"],
+  "rules": [
+    {"policy_key": "AI-COST-001", "check": "statement.containment", "params": {"statements": ["ai.agent.run", "ai.external.mcp.tool.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI call inside a loop (the $900 incident)"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit log exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "only the audit function writes the audit log"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.add", "tables": ["customers", "users", "newsletter_subscribers", "patients", "orgs", "support_tickets"]}}, "covers": "creates of email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "users", "newsletter_subscribers", "patients", "orgs", "support_tickets"]}}, "covers": "edits of email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "users", "newsletter_subscribers", "patients", "orgs", "support_tickets"]}}, "covers": "patches of email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "users", "newsletter_subscribers", "patients", "orgs", "support_tickets"]}}, "covers": "deletes from email tables are audited"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "background task retrying forever", "why": "no check exists"},
+    {"part": "spend cap on AI calls ($900 total, not just loops)", "why": "no check exists"},
+    {"part": "new tables that store emails are covered automatically", "why": "couldn't tell how: object.statement_required and table.write_location_restricted take exact table names only; no tag-based table selector was found for these rules"},
+    {"part": "who approved changes and who reads the audit log", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Customer-email tables are those with an email-typed or email-named field: customers, users, newsletter_subscribers, patients, orgs (billing_email), support_tickets (requester_email)",
+    "Actor is $auth.id where the endpoint requires login; null for public endpoints and for the summarizer and nightly task, which have no caller identity",
+    "A change is audited by the audit function call rather than by a database trigger, which the platform checks did not look at",
+    "retry_failed_webhooks is the task the customer means; its while loop is left unchanged"
+  ],
+  "workspace_names_used": ["customers", "users", "newsletter_subscribers", "patients", "orgs", "support_tickets", "record_audit_event", "nightly_ticket_summaries", "retry_failed_webhooks", "summarize_ticket", "delete_user_account", "ai.agent.run Ticket Summarizer", "audit_log"],
+  "confusions": [
+    "The recipe audit_changes lists per-statement object.statement_required rules but no key for the policy; I had to pick AUDIT-001 myself",
+    "The recipe for AI cost says 'AI calls are not made inside loops' and names ai.external.mcp.tool.run, but it is unclear whether that statement exists in every workspace",
+    "No example for when.tables with several tables; I assumed it accepts a list of table names",
+    "Unclear whether a db.add inside a loop counts as unconditional for placement; I treated any call inside a loop as not unconditional",
+    "The audit payload could leak fields such as password hashes depending on what is passed; the skill gives no guidance on what an audit payload should carry"
+  ],
+  "wished_for": [
+    "A tag-based table selector for object.statement_required (e.g. tables by tag), so a new table with emails is covered without editing the policy",
+    "A check for task retry caps or a loop exit guard",
+    "A recipe note on what an audit payload must not contain",
+    "Confirmation whether db.add counts as a write for the table.write_location_restricted statement list"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The AI-in-loop rule is a direct fit and the audit single-writer rule is a template. The audit coverage depends on hand-listed table names and on every writer calling the function; writes that bypass it and new email tables are not caught. The retry-forever part is not covered at all."
+}

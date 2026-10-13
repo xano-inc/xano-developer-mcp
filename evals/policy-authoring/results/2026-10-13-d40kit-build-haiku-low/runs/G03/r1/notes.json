@@ -1,0 +1,88 @@
+{
+  "goal_id": "G03",
+  "objects_built": [],
+  "objects_changed": [],
+  "policy_files_written": [
+    "workspace/policies/SEC-012.xs",
+    "workspace/policies/VND-001.xs",
+    "workspace/policies/SEC-011.xs",
+    "workspace/policies/CONF-011.xs",
+    "workspace/policies/DATA-010.xs",
+    "workspace/policies/LOG-001.xs",
+    "workspace/policies/PCI-010.xs"
+  ],
+  "templates_considered": [
+    "protect_card_data (recipe): followed for its template list; its suggested charge_card function and field_attribute sensitive change were not built, because they change what the charge flow stores and returns, which I left for the customer to decide",
+    "SEC-012 no_secrets_in_code: fit, the Twilio literal in acme_notify_sms",
+    "VND-001 approved_vendors_only: fit, with hosts set to Stripe and Plaid",
+    "SEC-011 tls_verification_on: fit, copied rule as written",
+    "CONF-011 sensitive_fields_marked: fit, field list set to the card-adjacent and bank fields the workspace stores",
+    "DATA-010 no_pii_in_responses: fit, but the workspace has no query output list naming these fields, so it may judge nothing here",
+    "LOG-001 no_sensitive_data_in_logs: fit, rule copied as written; catches charge_POST and clinical_notes",
+    "SEC-010, RET-001, AUTH-010, CHG-001 and others: not relevant to the ask"
+  ],
+  "templates_used": ["SEC-012", "VND-001", "SEC-011", "CONF-011", "DATA-010", "LOG-001"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "no credentials hardcoded, including the card processor keys"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "card data only to Stripe and Plaid; providers left empty so AI, cloud and email providers are reported as not yet reviewed"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "card and bank data travel over verified TLS"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["card_last4", "bank_account_number", "bank_routing_number"], "attribute": "sensitive"}, "covers": "kept card-adjacent and bank fields marked sensitive"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number"], "object_kinds": ["query"]}, "covers": "card and bank fields never fetched into an endpoint output list"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data never logged through debug.log"},
+    {"policy_key": "PCI-010", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "cvv", "cvc", "pan"], "forbidden": true}, "covers": "card numbers and security codes never stored"},
+    {"policy_key": "PCI-010", "check": "table.field_attribute_required", "params": {"field_names": ["cardholder_name", "card_expiry"], "forbidden": true}, "covers": "cardholder name and expiry never stored (stricter than PCI DSS; flagged to the customer)"},
+    {"policy_key": "PCI-010", "check": "statement.expression_rule", "params": {"statements": ["datadog.log"], "param_names": ["message", "attributes"], "must_not_reference": ["$input"]}, "covers": "datadog logs never include request input (none in the workspace today)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoint responses carrying stored card columns (payments/charge returns $payment)", "why": "no check reads an object's response"},
+    {"part": "what is sent to an approved vendor (card number in the payload to Stripe/Plaid)", "why": "no check inspects request payloads; outbound.vendor_allowlist judges the host only"},
+    {"part": "fraud_check sending card_number to a non-approved host", "why": "partly covered: VND-001 reports the host, but cannot tell which data it carries"},
+    {"part": "card data reaching the vendor through runtime-built URLs", "why": "couldn't tell: the check reports unresolved destinations but does not judge them"},
+    {"part": "encryption at rest, backups, copies between environments, data already in the database", "why": "runtime/org process"},
+    {"part": "access reviews, training, PCI scope and QSA sign-off", "why": "needs runtime/org process"},
+    {"part": "whether bank account and routing numbers must be forbidden rather than marked sensitive", "why": "other: a product decision, not a check question"},
+    {"part": "PCI DSS scope of kept cardholder name and expiry (permitted by PCI when PAN is protected; the customer wants them not stored)", "why": "other: a policy-intent decision for the customer"}
+  ],
+  "assumptions": [
+    "Plaid is approved at production.plaid.com only; sandbox is not in the workspace",
+    "Approved vendors are exactly the hosts the customer named, Stripe and Plaid, with no LLM, email or cloud providers approved",
+    "The customer wants cardholder name and expiry not stored at all, per 'cardholder stuff can't be stored raw'",
+    "Bank account and routing numbers are in scope of 'bank data' for marking sensitive, not for forbidding",
+    "Advisory enforcement is right for a first set of policies; the customer decides whether to make them blocking",
+    "No application code should change in this pass, since fixing the findings changes stored data and behaviour"
+  ],
+  "workspace_names_used": [
+    "payments (table: card_number, card_cvv, card_expiry, cardholder_name, bank_account_number, bank_routing_number, stripe_payment_intent_id)",
+    "payment_method (table: card_last4, card_token, card_brand)",
+    "clinical_notes (table and endpoint: debug.log of $input)",
+    "payments/charge (api/app/payments/charge_POST.xs)",
+    "payments/fraud_check (api/app/payments/fraud_check_POST.xs, host api.riskscreen.example)",
+    "bank-accounts/link (api/app/bank_accounts/link_POST.xs, host production.plaid.com)",
+    "acme_notify_sms (function, literal Twilio credential in URL)",
+    "acme_send_invoice_email, send_customer_email (util.send_email, service_provider resend)",
+    "support_agent (anthropic), ticket_summarizer (openai)",
+    "issue_refund (ai tool, api.stripe.com)",
+    "acme_sync_shipping_rates (debug.log, not read in detail)"
+  ],
+  "confusions": [
+    "The recipe for protect_card_data suggests a charge_card function and a sensitive attribute on card_last4 and billing_address. The workspace has no billing_address field, and the recipe does not say what to do when the existing charge flow stores raw card data. I had to decide that myself: no build, findings predicted.",
+    "The card-field rule uses exact names. The recipe example lists cvv, but this workspace names the column card_cvv, so the template would silently miss it. I only caught it on re-reading my own file. The recipe should warn that field names must match the schema exactly, or list both spellings.",
+    "VND-001 with providers left empty: the catalogue says empty providers reports all as not yet reviewed, but it is unclear whether that applies to every kind or only agent.llm. I assumed every kind.",
+    "outbound.vendor_allowlist has no data-flow scope. Table scope does not catch an api.request that carries card data without touching a table, so the fraud-check endpoint is only covered by its host.",
+    "DATA-010's limits say it judges what each statement fetches, but the skill's recipe reads like it judges the response. The skill's 'No check reads an object's response' is clearer, and I relied on it.",
+    "It is not clear whether policy-level tags (pci-dss) mean anything to a check or only to filtering. I used them for labelling only.",
+    "The skill says a template fits 'when its title, rules or words cover the request'. Several templates cover card data only in part, so the choice of which to include was a judgement call, not a rule."
+  ],
+  "wished_for": [
+    "A PCI DSS recipe that lists exact field names to check against a sample schema, with a note that names must match, not just resemble",
+    "A way to scope outbound.vendor_allowlist to the objects that carry a given field or param (for example card_number in an api.request params), not just to hosts",
+    "A check or param that reads the response, or at least the fields a db.add returns",
+    "A worked example of a multi-key policy mixing template rules with extra rules, so the key choice for the extra rules is clearer",
+    "Guidance on whether 'cardholder data' means PCI's definition or the customer's wording, since the two differ on name and expiry"
+  ],
+  "parse_attempts": 8,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policies parse, the dry run is clean, and each stated rule maps to a check that reads the matching part of the ask. Confidence is only medium because (a) I did not run evaluate, so the predicted findings are unverified; (b) the response leak and the content of vendor payloads are invisible to the checks; and (c) the policies will not pass on the current code, which stores raw card data and logs input. A PCI audit would also need controls outside definitions. I also caught and fixed one exact-name miss (card_cvv) in my own rule while checking predictions, so an unchecked gap of the same kind may remain. Process note: I briefly wrote a catalogue dump to /tmp, outside the working directory, and deleted it."
+}

@@ -1,0 +1,38 @@
+{
+  "goal_id": "G01",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "AUTH-010: fits. Endpoints require login. Its object.auth_required rule scoped with tables: [\"invoices\"] covers the ask directly.",
+    "DATA-010: partial fit. Covers fields, not auth; not needed for this ask.",
+    "PERF-001: partial fit. Would bound page size, which is a separate concern from auth; not built."
+  ],
+  "templates_used": ["AUTH-010"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"tables": ["invoices"]}, "covers": "Any endpoint reaching the invoices table, directly or via a called function, must require login (export_GET is currently a finding)."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Authorization: a logged-in user must only see their own org's invoices", "why": "no check exists"},
+    {"part": "Full-table return by a logged-in caller (no paging or row cap)", "why": "other"},
+    {"part": "Fixing export_GET (adding auth) so the finding clears", "why": "needs runtime/org process"},
+    {"part": "Blocking enforcement so an unauthenticated endpoint cannot be pushed", "why": "other"}
+  ],
+  "assumptions": [
+    "tables param matches the exact table name 'invoices' in the workspace (verified in table/invoices.xs).",
+    "Customer wants the policy advisory-first; the skill says to write new policies advisory and explain blocking."
+  ],
+  "workspace_names_used": ["invoices", "invoice_item", "orgs", "invoices_GET", "invoices/{invoice_id}", "invoices/export", "export_GET", "app"],
+  "confusions": [
+    "The skill says to 'propose' fixing an unauthenticated endpoint rather than applying it, but the brief asks for a finished change; I resolved this by not editing export_GET and flagging it.",
+    "The catalogue JSON's top-level layout (items/templates arrays) is not described in the skill; I had to inspect it to find template rules."
+  ],
+  "wished_for": [
+    "A worked example of scoping object.auth_required by tables to protect a single table, as the skill has for one-off requests.",
+    "Guidance on whether an endpoint's fix should be applied when a brief asks for a build, given the skill's ask-first rule for auth changes."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policy correctly targets every endpoint that reaches invoices and reports export_GET today, so the auth gap is visible. It is advisory and does not block a push, and it checks only the saved auth setting, not the authorization of invoice_id_GET or the response size."
+}

@@ -1,0 +1,25 @@
+{
+  "key": "92424d10e6d62901",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:55.601Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AGENT-SAFE-001",
+        "create table pending_actions",
+        "update tool delete_customer_note",
+        "update tool send_customer_email"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

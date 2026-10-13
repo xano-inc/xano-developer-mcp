@@ -1,0 +1,109 @@
+{
+  "goal_id": "G15",
+  "objects_built": [
+    {
+      "kind": "table",
+      "name": "rate_limit_hits",
+      "file": "workspace/table/rate_limit_hits.xs",
+      "role": "stores one row per request keyed by client, read to count recent requests"
+    },
+    {
+      "kind": "middleware",
+      "name": "rate_limit",
+      "file": "workspace/middleware/rate_limit.xs",
+      "role": "rejects a client above 60 requests in 60 seconds before the endpoint stack runs"
+    }
+  ],
+  "objects_changed": [],
+  "templates_considered": [
+    "protected_endpoints_run_middleware (AUTH-040): fits the middleware attachment idea but scopes to endpoint_auth required only; the ask needs public endpoints, so did not use it as-is",
+    "endpoints_need_login (AUTH-010): does not fit, the ask is about limits not login",
+    "public_endpoints_harmless (AUTH-003): does not fit, about data changes"
+  ],
+  "templates_used": [],
+  "rules": [
+    {
+      "policy_key": "RATE-010",
+      "check": "object.middleware_required",
+      "params": {
+        "middleware": [
+          "rate_limit"
+        ],
+        "phase": "pre",
+        "endpoint_auth": "none",
+        "object_kinds": [
+          "query"
+        ]
+      },
+      "covers": "every public endpoint, including login, signup and future public endpoints, runs the limiter"
+    },
+    {
+      "policy_key": "RATE-010",
+      "check": "object.middleware_required",
+      "params": {
+        "middleware": [
+          "rate_limit"
+        ],
+        "phase": "pre",
+        "endpoint_auth": "required",
+        "object_kinds": [
+          "query"
+        ]
+      },
+      "covers": "logged-in endpoints also run the limiter"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "limit login and signup specifically",
+      "why": "other"
+    },
+    {
+      "part": "every new public endpoint gets the limit automatically",
+      "why": "other"
+    },
+    {
+      "part": "limit actually throttles bots",
+      "why": "no check exists"
+    },
+    {
+      "part": "rate_limit_hits cleanup",
+      "why": "other"
+    }
+  ],
+  "assumptions": [
+    "x-forwarded-for is the client key available in middleware via $request.headers",
+    "error_type accessdenied is acceptable for a 429-style rejection",
+    "the group-level middleware attachment is the intended way new endpoints inherit the limiter"
+  ],
+  "workspace_names_used": [
+    "app",
+    "auth/login",
+    "auth/signup",
+    "users",
+    "sessions",
+    "policy_authoring_eval"
+  ],
+  "confusions": [
+    "The skill/catalogue never shows XanoScript syntax for attaching middleware to an api_group; six variants were refused by the parser with unclear messages ('Invalid block: name', 'Invalid kind for middleware - static:text[]', 'Expecting static:object[]'), so the error shape is inconsistent.",
+    "The skill names a middleware file path only indirectly; no example middleware file or the middleware block grammar (exception_policy, input/stack keys) is shown, so I inferred it from the pull layout.",
+    "Whether $request.headers is the correct way to read the client address in middleware is not documented in the kit.",
+    "The brief said to build the plan first and build only that; the plan's api_group change could not be built, so the policy would flag every endpoint until someone resolves the syntax."
+  ],
+  "wished_for": [
+    "A worked XanoScript example of a middleware file and of attaching middleware to an api_group and to a single endpoint",
+    "A rate-limit template or recipe (bot protection) so this is not a custom policy",
+    "A way to read the client IP in middleware, documented"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [
+    "Policy parse failed: ENOENT (file not yet written; my mistake)",
+    "api_group app: Invalid block: name / Invalid kind for middleware - static:text[] / Expecting static:object[] / Invalid block: rate_limit / Invalid block: middleware"
+  ],
+  "dry_run_problems_seen": [
+    "api_group app blocked on middleware attachment syntax (6 attempts); removed, so app group unchanged",
+    "after removal dry run clean"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The limiter middleware and table pass dry run, and the policy parses, but no endpoint attaches the middleware, so the policy would flag all endpoints and nothing is rate limited until the api_group attachment is made. The limiter itself is unverified against real traffic and its client key is spoofable."
+}

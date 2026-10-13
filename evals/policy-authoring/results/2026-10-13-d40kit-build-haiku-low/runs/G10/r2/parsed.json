@@ -1,0 +1,56 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AGENT-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AGENT-010.xs",
+      "ok": true,
+      "key": "AGENT-010",
+      "title": "AI agents wait for human approval before deleting or emailing",
+      "statement": "An AI agent tool may delete records or send email only after require_human_approval has run in the same tool. A person approves each action in approval_requests first. Tools that do neither are not affected.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AGENT-010.R1",
+          "title": "",
+          "check": "stack.statement_order",
+          "params": {
+            "before": {
+              "functions": [
+                "require_human_approval"
+              ]
+            },
+            "after": [
+              "db.del",
+              "db.bulk.delete",
+              "db.truncate",
+              "util.send_email"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AGENT-010.R1",
+          "text": "Function \"require_human_approval\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    }
+  ]
+}

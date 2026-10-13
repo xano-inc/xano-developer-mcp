@@ -1,0 +1,13 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/AGENT-SAFE-001.xs",
+    "table/pending_actions.xs"
+  ],
+  "modified": [
+    "ai/tool/delete_customer_note.xs",
+    "ai/tool/send_customer_email.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

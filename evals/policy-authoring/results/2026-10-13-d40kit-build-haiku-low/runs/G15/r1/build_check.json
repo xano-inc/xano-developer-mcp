@@ -1,0 +1,29 @@
+{
+  "key": "f94ec9a22af5432b",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:39:11.464Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy RATE-001",
+        "create table rate_limit_hits",
+        "create middleware rate_limit",
+        "create task purge_rate_limit_hits"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": [
+        "middleware/rate_limit.xs:19: Unknown filter function 'add_seconds'",
+        "middleware/rate_limit.xs:2: middleware is missing an input clause",
+        "middleware/rate_limit.xs:2: middleware is missing a response clause"
+      ]
+    },
+    "unreadable": []
+  }
+}

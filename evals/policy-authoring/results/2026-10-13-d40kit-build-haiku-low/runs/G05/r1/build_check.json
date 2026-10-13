@@ -1,0 +1,30 @@
+{
+  "key": "a5363be562ae00c9",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:27.372Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AUTH-002",
+        "create policy TENANT-010",
+        "create function require_admin_role",
+        "update query orgs/{org_id}/tenants GET",
+        "update query tenants/{tenant_id} PATCH",
+        "update query tenants GET",
+        "update query users GET"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": [
+        "function/require_admin_role.xs:2: function is missing a response clause"
+      ]
+    },
+    "unreadable": []
+  }
+}

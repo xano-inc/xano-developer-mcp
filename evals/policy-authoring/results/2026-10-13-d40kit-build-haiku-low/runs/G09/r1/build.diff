@@ -1,0 +1,179 @@
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -5,14 +5,42 @@
+   }
+ 
+   stack {
++    db.get users {
++      field_name = "id"
++      field_value = $input.user_id
++    } as $user
++
+     db.bulk.delete user_address {
+       where = $db.user_address.user_id == $input.user_id
+     } as $addresses
+-  
++
+     db.bulk.delete sessions {
+       where = $db.sessions.user_id == $input.user_id
+     } as $sessions
+-  
++
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.user_id == $input.user_id
++    } as $tickets
++
++    db.bulk.delete newsletter_subscribers {
++      where = $db.newsletter_subscribers.email == $user.email
++    } as $subscriptions
++
++    db.query orders {
++      where = $db.orders.user_id == $input.user_id
++      return = {type: "list"}
++    } as $orders
++
++    foreach ($orders) {
++      each as $order {
++        db.patch orders {
++          field_name = "id"
++          field_value = $order.id
++          data = {user_id: null}
++        } as $detached
++      }
++    }
++
+     db.del users {
+       field_name = "id"
+       field_value = $input.user_id
+@@ -20,5 +48,6 @@
+   }
+ 
+   response = {deleted: true}
++  tags = ["erasure"]
+   guid = "iWtAL7j6O0pMpjKQBxol3qm35T8"
+ }
+\ No newline at end of file
+--- a/table/newsletter_subscribers.xs
++++ b/table/newsletter_subscribers.xs
+@@ -11,5 +11,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal"]
+   guid = "j189RCXCaWsxB1lbKjPDDQ84D60"
+ }
+\ No newline at end of file
+--- a/table/sessions.xs
++++ b/table/sessions.xs
+@@ -14,5 +14,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal", "retained"]
+   guid = "uuVqMevo2LCQDx36M046KfLjBzk"
+ }
+\ No newline at end of file
+--- a/table/support_tickets.xs
++++ b/table/support_tickets.xs
+@@ -21,5 +21,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal", "retained"]
+   guid = "BOYHPB_-O75NDfyqlRdIIzUD2_w"
+ }
+\ No newline at end of file
+--- a/table/user_address.xs
++++ b/table/user_address.xs
+@@ -16,5 +16,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal"]
+   guid = "yG7Wa2mH-Ofb57UmPidQ1UWjMYM"
+ }
+\ No newline at end of file
+--- a/table/users.xs
++++ b/table/users.xs
+@@ -27,5 +27,6 @@
+     {type: "btree", field: [{name: "org_id", op: "asc"}]}
+   ]
+ 
++  tags = ["personal"]
+   guid = "xU8Al0G-VGO1TKLY5LrNKIOkGUE"
+ }
+\ No newline at end of file
+--- a/table/webhook_deliveries.xs
++++ b/table/webhook_deliveries.xs
+@@ -12,5 +12,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["retained"]
+   guid = "YMy5ywm1I5oVatF1OFPQElRADc0"
+ }
+\ No newline at end of file
+--- a/policies/GDPR-ERASE.xs
++++ b/policies/GDPR-ERASE.xs
+@@ -0,0 +1,20 @@
++policy "GDPR-ERASE" {
++  title = "Account deletion erases personal data"
++  statement = "Every table carrying the personal tag is deleted from by the erasure function, which runs when a user deletes their account. Orders are detached, not deleted, and are not covered by this rule."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["gdpr"]
++
++  rule {
++    check = "table.coverage_required"
++    params = {
++      tags: ["personal"],
++      referenced_by: {
++        object_kinds: ["function"],
++        tags: ["erasure"],
++        statements: ["db.del", "db.bulk.delete"]
++      }
++    }
++  }
++}
+--- a/policies/RET-002.xs
++++ b/policies/RET-002.xs
+@@ -0,0 +1,19 @@
++policy "RET-002" {
++  title = "Retained data has a cleanup task"
++  statement = "Every table carrying the retained tag is referenced by a scheduled task that cleans it up. Retention age is set inside each cleanup task and is not checked here."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "gdpr"]
++
++  rule {
++    check = "table.coverage_required"
++    params = {
++      tags: ["retained"],
++      referenced_by: {
++        object_kinds: ["task"],
++        statements: ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"]
++      }
++    }
++  }
++}
+--- a/task/purge_stale_personal_data.xs
++++ b/task/purge_stale_personal_data.xs
+@@ -0,0 +1,15 @@
++// Every night, deletes support tickets and webhook deliveries older than two years.
++task purge_stale_personal_data {
++  stack {
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.created_at < (now|subtract_days:730)
++    } as $purged_tickets
++
++    db.bulk.delete webhook_deliveries {
++      where = $db.webhook_deliveries.created_at < (now|subtract_days:730)
++    } as $purged_deliveries
++  }
++
++  schedule = [{starts_on: 2026-01-01 04:00:00+0000, freq: 86400}]
++  guid = "Ck3rW0sLQ9aVm2fTnP7xJ1dYe8E"
++}
+\ No newline at end of file

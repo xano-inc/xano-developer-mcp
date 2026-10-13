@@ -1,0 +1,13 @@
+{
+  "pulled": true,
+  "added": [
+    "function/require_human_approval.xs",
+    "policies/HITL-001.xs",
+    "table/email_approvals.xs"
+  ],
+  "modified": [
+    "ai/tool/send_customer_email.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

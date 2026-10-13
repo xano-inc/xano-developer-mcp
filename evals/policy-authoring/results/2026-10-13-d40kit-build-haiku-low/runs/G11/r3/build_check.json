@@ -1,0 +1,37 @@
+{
+  "key": "b53ac7b97afafdee",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:39:02.676Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy LOG-010",
+        "create policy SEC-013",
+        "update tool issue_refund",
+        "update function acme_notify_sms",
+        "update function acme_sync_shipping_rates",
+        "update task retry_failed_webhooks",
+        "update query bank-accounts/link POST",
+        "update query payments/charge POST",
+        "update query payments/fraud_check POST",
+        "update query shipments/quote POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": [
+        "ai/tool/issue_refund.xs:28: throw is missing the name attribute",
+        "api/app/bank_accounts/link_POST.xs:29: throw is missing the name attribute",
+        "api/app/payments/fraud_check_POST.xs:23: throw is missing the name attribute",
+        "api/app/shipments/quote_POST.xs:23: throw is missing the name attribute",
+        "function/acme_notify_sms.xs:19: throw is missing the name attribute"
+      ]
+    },
+    "unreadable": []
+  }
+}

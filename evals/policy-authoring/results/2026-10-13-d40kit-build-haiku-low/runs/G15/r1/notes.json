@@ -1,0 +1,58 @@
+{
+  "goal_id": "G15",
+  "objects_built": [
+    {"kind": "middleware", "name": "rate_limit", "file": "workspace/middleware/rate_limit.xs", "role": "Refuses a call when one client IP has made 10 or more calls to the same endpoint in the current minute; counts calls in rate_limit_hits"},
+    {"kind": "table", "name": "rate_limit_hits", "file": "workspace/table/rate_limit_hits.xs", "role": "One counter row per client IP, endpoint and one-minute window"},
+    {"kind": "task", "name": "purge_rate_limit_hits", "file": "workspace/task/purge_rate_limit_hits.xs", "role": "Daily delete of counter rows whose window has ended"}
+  ],
+  "objects_changed": [],
+  "templates_considered": [
+    "protected_endpoints_run_middleware (AUTH-040): object.middleware_required, but it checks only endpoints that require login; the ask is about public endpoints, so it did not fit",
+    "endpoints_need_login (AUTH-010): would require login on signup/login, which is wrong for a public signup",
+    "public_endpoints_harmless (AUTH-003): concerns writes from public endpoints, not rate limits"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "RATE-001", "check": "object.middleware_required", "params": {"middleware": ["rate_limit"], "phase": "pre", "endpoint_auth": "none", "object_kinds": ["query"]}, "covers": "Every public endpoint, including login, signup and future ones, must run rate_limit before its stack"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Actually limiting login and signup traffic", "why": "couldn't tell how: I could not get middleware attachment syntax accepted in the dry run, so no endpoint runs the middleware; the rule will report all six public endpoints until it is attached"},
+    {"part": "Whether the middleware counts and refuses correctly", "why": "no check confirms what middleware does; only attachment is checked"},
+    {"part": "Request rate, bot traffic, and whether 10/min suits real users", "why": "needs runtime data; policies read definitions only"},
+    {"part": "Concurrency-safe counting", "why": "read-then-write counting can let simultaneous requests through; not a policy concern, a design limit"},
+    {"part": "Public endpoints that are not tagged public (invoices/export, appointments)", "why": "other: they are public by having no auth; the rule covers them, but the exposure itself needs an auth decision that is outside this ask"}
+  ],
+  "assumptions": [
+    "$request.ip and $request.path are available in middleware and return the client address and endpoint path",
+    "precondition (false) with error_type accessdenied returns a refusal to the caller",
+    "now|add_seconds:60 is a valid filter",
+    "a public endpoint is one with no auth line, or tagged public, per the workspace files; endpoint_auth none reflects Xano's own view and was not separately checked",
+    "enforcement advisory is the right default for a new policy; blocking left to the customer"
+  ],
+  "workspace_names_used": ["users", "newsletter_subscribers", "invoices", "appointments", "app", "login", "signup", "health", "invoices/export", "appointments", "auth/login", "auth/signup", "newsletter/subscribe"],
+  "confusions": [
+    "The skill and catalogue say how to attach a middleware to an object only in prose ('attaching per object replaces inherited middleware'). They give no XanoScript example of the attachment statement itself, so I could not write it.",
+    "The Ask is for rate limiting, and the catalogue has no rate-limit check. I used object.middleware_required as the closest fit, which only proves attachment, not behaviour.",
+    "The AUTH-040 template's keywords include 'rate limit' but its rule requires login, so the keyword match is misleading for a public-endpoint rule.",
+    "The dry run reports 'Invalid block: name' and 'Invalid kind for middleware' errors without pointing at the valid form, which made the attachment syntax hard to find."
+  ],
+  "wished_for": [
+    "A XanoScript example of attaching middleware to a single endpoint, with the phase setting",
+    "A rate-limit recipe or template (middleware plus counter table plus policy) for login and signup",
+    "A check or param that reads which endpoints run a given middleware in a given phase, so the rule's target is explicit",
+    "Documentation of the request-context variables available to middleware ($request.ip, path)"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "Invalid block: name (on middleware = [{name: ..., phase: ...}] in query header)",
+    "Invalid kind for middleware - static:text[] (middleware = [\"rate_limit\"])",
+    "Invalid kind for middleware - assign:expr (middleware = [rate_limit])",
+    "Syntax error: unexpected 'middleware' (middleware rate_limit { phase = \"pre\" } block)"
+  ],
+  "dry_run_problems_seen": [
+    "Six endpoints blocked by middleware attachment syntax (all reverted); final dry run clean with the four new objects only",
+    "RATE-001.R1 warning from xano policy parse: rate_limit not on branch (expected before push)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy and the middleware are in place, but no public endpoint is attached to the middleware: the attachment syntax was rejected four times and I did not find the right form. Until the six endpoints are attached, the rule reports them and nothing is rate limited. Even after attachment, the counting logic and the request-context names are unverified, and the dry run does not check them."
+}

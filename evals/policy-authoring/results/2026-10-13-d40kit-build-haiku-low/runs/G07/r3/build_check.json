@@ -1,0 +1,27 @@
+{
+  "key": "0fa9350951920f64",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:44.962Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AUDIT-010",
+        "create table audit_log",
+        "update function delete_user_account",
+        "create function record_audit_event",
+        "update query customers/{customer_id} PATCH",
+        "update query me PATCH"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

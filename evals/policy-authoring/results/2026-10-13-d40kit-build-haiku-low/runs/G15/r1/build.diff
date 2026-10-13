@@ -1,0 +1,86 @@
+--- a/middleware/rate_limit.xs
++++ b/middleware/rate_limit.xs
+@@ -0,0 +1,38 @@
++// Limits how often one client address can call a public endpoint: 10 calls per minute for each endpoint. Past the limit the call is refused.
++middleware rate_limit {
++  stack {
++    var $bucket_key {
++      value = $request.ip ~ ":" ~ $request.path
++    }
++
++    db.query rate_limit_hits {
++      where = $db.rate_limit_hits.bucket_key == $bucket_key && $db.rate_limit_hits.window_ends_at > now
++      return = {type: "single"}
++    } as $bucket
++
++    conditional {
++      if ($bucket == null) {
++        db.add rate_limit_hits {
++          data = {
++            bucket_key    : $bucket_key
++            hits          : 1
++            window_ends_at: now|add_seconds:60
++          }
++        }
++      }
++      elseif ($bucket.hits >= 10) {
++        precondition (false) {
++          error_type = "accessdenied"
++          error = "Too many requests. Wait a minute and try again."
++        }
++      }
++      else {
++        db.edit rate_limit_hits {
++          field_name = "id"
++          field_value = $bucket.id
++          data = {hits: $bucket.hits + 1}
++        }
++      }
++    }
++  }
++}
+--- a/policies/RATE-001.xs
++++ b/policies/RATE-001.xs
+@@ -0,0 +1,13 @@
++policy "RATE-001" {
++  title = "Public endpoints are rate limited"
++  statement = "Every public endpoint, including login, signup and any added later, runs the rate_limit middleware before its stack, so one client address cannot flood it."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["rate-limit"]
++
++  rule {
++    check = "object.middleware_required"
++    params = { middleware: ["rate_limit"], phase: "pre", endpoint_auth: "none", object_kinds: ["query"] }
++  }
++}
+--- a/table/rate_limit_hits.xs
++++ b/table/rate_limit_hits.xs
+@@ -0,0 +1,13 @@
++// Request counts per client address and endpoint for each one-minute window; read by the rate_limit middleware.
++table rate_limit_hits {
++  auth = false
++
++  schema {
++    int id
++    text bucket_key
++    int hits?=0
++    timestamp window_ends_at
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}
+--- a/task/purge_rate_limit_hits.xs
++++ b/task/purge_rate_limit_hits.xs
+@@ -0,0 +1,10 @@
++// Deletes rate-limit counters whose window has ended every night.
++task purge_rate_limit_hits {
++  stack {
++    db.bulk.delete rate_limit_hits {
++      where = $db.rate_limit_hits.window_ends_at < now
++    } as $purged
++  }
++
++  schedule = [{starts_on: 2026-01-01 03:05:00+0000, freq: 86400}]
++}

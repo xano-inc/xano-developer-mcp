@@ -1,0 +1,12 @@
+{
+  "pulled": true,
+  "added": [
+    "middleware/rate_limit.xs",
+    "policies/RATE-001.xs",
+    "table/rate_limit_hits.xs",
+    "task/purge_rate_limit_hits.xs"
+  ],
+  "modified": [],
+  "deleted": [],
+  "other_files": []
+}

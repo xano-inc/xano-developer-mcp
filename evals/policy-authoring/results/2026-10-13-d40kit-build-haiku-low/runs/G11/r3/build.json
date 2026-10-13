@@ -1,0 +1,19 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/LOG-010.xs",
+    "policies/SEC-013.xs"
+  ],
+  "modified": [
+    "ai/tool/issue_refund.xs",
+    "api/app/bank_accounts/link_POST.xs",
+    "api/app/payments/charge_POST.xs",
+    "api/app/payments/fraud_check_POST.xs",
+    "api/app/shipments/quote_POST.xs",
+    "function/acme_notify_sms.xs",
+    "function/acme_sync_shipping_rates.xs",
+    "task/retry_failed_webhooks.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

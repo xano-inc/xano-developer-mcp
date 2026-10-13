@@ -1,0 +1,56 @@
+{
+  "goal_id": "G06",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "LOG-010 external_calls_handle_errors: fits the missing error handling complaint",
+    "CHG-001 endpoints_have_tests: fits the no tests complaint",
+    "CONV-040 endpoints_stay_short: fits the 200-line function complaint",
+    "CONV-050 no_leftover_code: part of the recipe, not named in the ask; included for the recipe",
+    "PERF-001 reads_are_paged: part of the recipe, not named in the ask; included for the recipe",
+    "CONV-030 ai_tools_described and others: not relevant to the ask",
+    "AUTH/DATA/SEC families: not relevant to the ask"
+  ],
+  "templates_used": ["LOG-010", "CHG-001", "CONV-040", "CONV-050", "PERF-001"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling on external calls"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "no tests for endpoints"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "tests that do not assert anything for protected endpoints"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant 200-line functions"},
+    {"policy_key": "CONV-050", "check": "stack.disabled_statement_forbidden", "params": {}, "covers": "leftover code (recipe, not in the ask)"},
+    {"policy_key": "CONV-050", "check": "object.unused_input_forbidden", "params": {}, "covers": "leftover code (recipe, not in the ask)"},
+    {"policy_key": "CONV-050", "check": "stack.unused_variable_forbidden", "params": {}, "covers": "leftover code (recipe, not in the ask)"},
+    {"policy_key": "PERF-001", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 1000, "unit": "rows", "object_kinds": ["query", "tool"]}, "covers": "unbounded reads (recipe, not in the ask)"},
+    {"policy_key": "REVIEW-001", "check": "object.description_required", "params": {"object_kinds": ["function"], "min_length": 20}, "covers": "functions say what they do (recipe, not in the ask)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "juniors breaking prod: nothing stops a merge or push", "why": "needs runtime/org process"},
+    {"part": "error handling beyond try_catch presence (what the catch does)", "why": "no check exists"},
+    {"part": "error handling on stream.from_request, ai.external.mcp.*, db.external.*", "why": "other"},
+    {"part": "test quality (assertions meaningful)", "why": "no check exists"},
+    {"part": "code review of approvals and people", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Customer wants the full Keep code easy to review recipe, so I included recipe rules beyond the three named complaints",
+    "Advisory is the right default; the customer did not say blocking",
+    "Whole workspace in scope; no exemptions chosen",
+    "CHG-001 soc2 tag copied from the template, not requested"
+  ],
+  "workspace_names_used": ["api_group app", "table invoices", "function acme_send_invoice_email", "workflow_test health_check", "workflow_test invoices_require_login"],
+  "confusions": [
+    "The recipe says follow it and create one policy per template, but the ask named three problems; unclear whether to add the recipe's extra templates when the customer did not name them",
+    "CONV-040 template has no fill and no examples, so the 30/3 values came from the template summary, not a workspace-specific choice",
+    "LOG-010 template only covers api.request, while the recipe text says to add other statements to cover every outbound call; left as template",
+    "CHG-001 limits note says the anonymous-call workflow test fails until the platform enforces auth; unclear whether to use the workflow form at all"
+  ],
+  "wished_for": [
+    "A recipe note on whether to include every recipe template or only those the ask names",
+    "A template that covers all external statements for LOG-010, not only api.request",
+    "An example of a workflow test that asserts an anonymous call is rejected, given the limitation"
+  ],
+  "parse_attempts": 7,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Each complaint maps to a check, but the checks only confirm presence (a try_catch exists, a test exists and asserts) and nothing is advisory-blocking. The ask is to stop juniors breaking prod, which no policy can enforce. I did not run xano policy evaluate, so the actual findings are unseen."
+}

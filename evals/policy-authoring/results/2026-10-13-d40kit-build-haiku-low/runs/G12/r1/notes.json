@@ -1,0 +1,43 @@
+{
+  "goal_id": "G12",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "sensitive_tables_need_login (CONF-010): would cover prod-tagged tables needing login, but does not address environment copies or developer access; not used",
+    "audit_log_protected / audit_changes recipe: about who changed what, not environment separation or access approval; not used",
+    "protect_health_data / other recipes: no environment or on-call rule; not used"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "no check exists"},
+    {"part": "devs can only get into prod through the on-call process", "why": "needs runtime/org process"},
+    {"part": "identifying which tables or tenants are production", "why": "no check exists; workspace has no environment object (tenants has db_connection_string but no env marker)"},
+    {"part": "runtime gate that API callers must pass for prod data (on-call grant)", "why": "couldn't tell how: no grant store exists in the workspace and no check verifies a grant; a function that checks nothing would be a fake control"}
+  ],
+  "assumptions": [
+    "'prod' and 'staging' are not modelled in the workspace; no environment marker exists on any object",
+    "tenants.db_connection_string is per-tenant data, not an environment flag",
+    "The customer's on-call process lives outside Xano (no approval table in the workspace)"
+  ],
+  "workspace_names_used": [
+    "policy_authoring_eval",
+    "tenants",
+    "orgs",
+    "purge_expired_sessions"
+  ],
+  "confusions": [
+    "The skill and catalogue say copies between environments are not checkable but do not say how to represent an environment in a workspace, so the 'environment' part of the ask has no obvious object shape to target",
+    "The brief's 'build all of it' approval and its 'if no policy can do it, build nothing' rule pull in different directions when only part of an ask is checkable; I took the second rule for the non-checkable halves and built nothing"
+  ],
+  "wished_for": [
+    "A template or recipe for 'data must not cross environments' that names the marker convention (tag, field or branch) and says which check can verify the marker",
+    "A statement in the not-checkable list that says whether a branch or environment name is visible to policies at all",
+    "A worked example of a runtime gate policy (a function every endpoint on a tag must call) that states how to verify the gate function actually checks something"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Neither half of the ask is enforceable by a policy in the current catalogue: copies between environments and access approvals are both listed as not checkable, and the workspace has no environment or on-call object to anchor a check. I built nothing and wrote no policy. Confidence that a policy achieves the goal is low by construction; this is the expected outcome, not a gap in the build. Baseline dry-run reported no changes."
+}

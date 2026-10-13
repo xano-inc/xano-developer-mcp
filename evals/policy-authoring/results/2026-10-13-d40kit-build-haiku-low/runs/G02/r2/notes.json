@@ -1,0 +1,46 @@
+{
+  "goal_id": "G02",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "functions_snake_case (CONV-010): fits; used its object.naming shape for the function rule, but it has no prefix, so the client-prefix rule was written by hand",
+    "fields_snake_case (CONV-011): did not fit; the ask covers endpoints, tables and functions only",
+    "endpoint_paths_versioned (CONV-012): did not fit; it requires kebab-case and a version segment, and the customer asked for snake_case with no version rule",
+    "function_arguments_snake_case (CONV-013): did not fit; the ask does not cover inputs",
+    "tags_kebab_case (CONV-021): did not fit; the ask does not cover tags"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are always lowercase snake_case (paths)"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "suffixes": ["s"]}, "covers": "tables are plural (literal 's' suffix; irregular plurals not handled)"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "prefixes": ["acme_"]}, "covers": "functions start with the client prefix"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoints are lowercase snake_case, for endpoint names (query objects)", "why": "no check exists: object.naming does not accept query as an object kind, so the rule selects nothing"},
+    {"part": "one client prefix across 12 clients", "why": "other: one policy has one prefix param; each client workspace needs its own policy, and the prefix is an assumption"},
+    {"part": "names used inside code strings or referenced by callers", "why": "no check exists: policies read declared names only"},
+    {"part": "irregular plurals in tables", "why": "other: suffix 's' is literal; needs allowed_names entries the owner sets"},
+    {"part": "runtime behaviour and existing non-compliant objects being renamed", "why": "needs runtime/org process: policies flag, they do not rename"}
+  ],
+  "assumptions": [
+    "client prefix is acme_, taken from the existing acme_* functions in this workspace",
+    "'endpoints' means endpoint paths for the snake_case rule; endpoint (query) names were not checked",
+    "'advisory' is the right enforcement because the customer said flag it, don't block it"
+  ],
+  "workspace_names_used": ["policy_authoring_eval", "acme_calculate_tax", "acme_get_tracking", "acme_notify_sms", "acme_send_invoice_email", "acme_sync_shipping_rates", "calculateLateFee", "delete_user_account", "summarize_ticket", "invoice_item", "payment_method", "user_address", "getCustomerProfile"],
+  "confusions": [
+    "The skill says a rule can name the object kinds that object.naming inspects, but query is listed as a kind in the catalogue's object list elsewhere; the parser warned that query is not a kind this check inspects. I did not find that exclusion documented next to object.naming.",
+    "The skill's object.naming catalogue entry does not say that endpoint names (query objects) are out of scope; the only way I found it was the parser warning.",
+    "CONV-012 (endpoint paths) is kebab-case, but the customer asked for snake_case; the template cannot be used with a changed case without editing it, and the skill says to change case_style rather than add a second policy, which is confusing when the template says kebab-case."
+  ],
+  "wished_for": [
+    "A recipe for 'endpoint names' that says how to cover query objects, or confirms that endpoint_path is the intended target",
+    "A worked example of a per-client prefix policy across several workspaces",
+    "A note in the naming entry that a suffix is literal, with a plural-handling example"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": ["rule warning: NAMING-001.R2: object_kinds 'query' is not a kind this check inspects (object.naming)"],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The naming check exists and the policy parses and dry-runs cleanly, so the convention is wired in. Confidence is medium because endpoint names (queries) are not covered, the prefix is an assumption, and I did not run evaluate, so the findings on existing objects are estimates from file names."
+}

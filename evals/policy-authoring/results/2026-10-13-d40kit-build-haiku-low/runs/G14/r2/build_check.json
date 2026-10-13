@@ -1,0 +1,39 @@
+{
+  "key": "3fb2bc068cc30772",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:39:07.291Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AI-COST-001",
+        "create policy AUDIT-001",
+        "create policy RET-001",
+        "create table audit_log",
+        "update function delete_user_account",
+        "create function record_audit_event",
+        "update function summarize_ticket",
+        "update task nightly_ticket_summaries",
+        "update query auth/signup POST",
+        "update query customers/{customer_id} PATCH",
+        "update query customers POST",
+        "update query me PATCH",
+        "update query newsletter/subscribe POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": [
+        "api/app/customers/customer_id_PATCH.xs:25: Expecting: one of these possible Token sequences: 1. [.] 2. [[] but found: ' '",
+        "api/app/customers_POST.xs:33: Expecting: one of these possible Token sequences: 1. [.] 2. [[] but found: ' '",
+        "api/app/me_PATCH.xs:26: Expecting: one of these possible Token sequences: 1. [.] 2. [[] but found: ' '",
+        "api/app/newsletter/subscribe_POST.xs:24: Expecting: one of these possible Token sequences: 1. [.] 2. [[] but found: ' '"
+      ]
+    },
+    "unreadable": []
+  }
+}

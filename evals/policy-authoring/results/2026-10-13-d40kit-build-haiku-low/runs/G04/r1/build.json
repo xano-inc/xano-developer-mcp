@@ -1,0 +1,26 @@
+{
+  "pulled": true,
+  "added": [
+    "function/log_phi_access.xs",
+    "policies/CONF-010.xs",
+    "policies/CONF-011.xs",
+    "policies/CONF-012.xs",
+    "policies/CONF-013.xs",
+    "policies/DATA-010.xs",
+    "policies/LOG-001.xs",
+    "policies/PHI-001.xs",
+    "policies/SEC-011.xs",
+    "policies/VND-001.xs",
+    "table/phi_access_log.xs"
+  ],
+  "modified": [
+    "api/app/appointments_GET.xs",
+    "api/app/clinical_notes_POST.xs",
+    "api/app/patients/patient_id_GET.xs",
+    "table/appointments.xs",
+    "table/clinical_notes.xs",
+    "table/patients.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

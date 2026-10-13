@@ -1,0 +1,189 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUTH-002.xs",
+    "build/policies/AUTH-030.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUTH-002.xs",
+      "ok": true,
+      "key": "AUTH-002",
+      "title": "Refund and price changes check the caller is a manager",
+      "statement": "Every stack that edits or patches refunds or products calls the require_manager function, unconditionally, so only users with the manager role can approve refunds or change prices. Staff can read both but not change them. A change that cannot call the check is a finding for the policy owner to decide, not something to exempt.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-002.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.edit",
+              "tables": [
+                "refunds"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUTH-002.R2",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.patch",
+              "tables": [
+                "refunds"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUTH-002.R3",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.edit",
+              "tables": [
+                "products"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUTH-002.R4",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": {
+              "statement": "db.patch",
+              "tables": [
+                "products"
+              ]
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AUTH-002.R1",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "AUTH-002.R2",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "AUTH-002.R3",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "AUTH-002.R4",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/AUTH-030.xs",
+      "ok": true,
+      "key": "AUTH-030",
+      "title": "Users can't make themselves admin",
+      "statement": "No write takes the role field from request input or copies a whole request body into a record, so a caller cannot give themselves the manager or admin role. Role changes come from a fixed value set by an authorised process, not from what the caller sends.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-030.R1",
+          "title": "",
+          "check": "db.write_from_input_forbidden",
+          "params": {
+            "statements": [],
+            "fields": [
+              "role"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

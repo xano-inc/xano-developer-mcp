@@ -1,0 +1,82 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/RATE-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/RATE-010.xs",
+      "ok": true,
+      "key": "RATE-010",
+      "title": "Public endpoints and login are rate limited",
+      "statement": "Every public endpoint runs the rate_limit middleware before its stack, and so do login and signup. A caller past the limit is refused. An endpoint that cannot run the limiter is exempted by the platform owner, not by tagging it public.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RATE-010.R1",
+          "title": "",
+          "check": "object.middleware_required",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "none",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RATE-010.R2",
+          "title": "",
+          "check": "object.middleware_required",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "tags": [
+              "login"
+            ],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RATE-010.R1",
+          "text": "Middleware \"rate_limit\" is not on this branch, so no object can satisfy this rule."
+        },
+        {
+          "rule_id": "RATE-010.R2",
+          "text": "tags \"login\" is on no query on this branch, so it selects nothing."
+        },
+        {
+          "rule_id": "RATE-010.R2",
+          "text": "Middleware \"rate_limit\" is not on this branch, so no object can satisfy this rule."
+        }
+      ]
+    }
+  ]
+}

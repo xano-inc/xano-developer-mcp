@@ -1,0 +1,51 @@
+{
+  "goal_id": "G10",
+  "objects_built": [
+    {"kind": "table", "name": "pending_actions", "file": "workspace/table/pending_actions.xs", "role": "approval queue: agent-requested deletes and emails are written here as pending instead of executed"}
+  ],
+  "objects_changed": [
+    {"kind": "tool", "name": "delete_customer_note", "file": "workspace/ai/tool/delete_customer_note.xs", "change": "db.del on customer_notes replaced with db.add into pending_actions (action delete_customer_note, payload note_id); response {queued: true}; instructions updated to say deletion waits for approval"},
+    {"kind": "tool", "name": "send_customer_email", "file": "workspace/ai/tool/send_customer_email.xs", "change": "util.send_email replaced with db.add into pending_actions (action send_customer_email, payload to/subject/body); response {queued: true}; instructions updated to say email waits for approval"}
+  ],
+  "templates_considered": [
+    "no_destructive_sql: about truncation and raw SQL, not AI tool deletes; did not fit",
+    "no_self_promotion: about privilege fields, not in ask; did not fit",
+    "public_endpoints_harmless: about public endpoints, not AI tools; did not fit",
+    "tables_have_listed_fields and no_leftover_code: unrelated to the ask; did not fit"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "AGENT-SAFE-001", "check": "stack.statement_forbidden", "params": {"statements": ["db.del", "db.bulk.delete", "db.truncate"], "object_kinds": ["tool"]}, "covers": "AI agents cannot delete anything"},
+    {"policy_key": "AGENT-SAFE-001", "check": "stack.statement_forbidden", "params": {"statements": ["util.send_email"], "object_kinds": ["tool"]}, "covers": "AI agents cannot email customers directly; email is queued for approval"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "agents only call tools the customer explicitly gave them", "why": "no check exists"},
+    {"part": "a human approves each delete and email before it runs", "why": "needs runtime/org process: the approve step (endpoint or screen, with auth) is not built and the policy only keeps deletes and emails out of tools"},
+    {"part": "issue_refund moves money from an agent without approval", "why": "other: outside the ask, flagged, not changed"}
+  ],
+  "assumptions": [
+    "AI tools are the only way an agent acts; the agent's tools list in ai/agent/support_agent.xs is the explicit tool set",
+    "Customer wants queueing as the approval mechanism; approvals happen by a person acting on pending_actions",
+    "Scope of 'email customers' is the send_customer_email tool; util.send_email in a non-tool object is out of scope",
+    "Advisory enforcement, per skill guidance for new policies, not blocking",
+    "Tool names kept as-is (delete_customer_note) even though the tool no longer deletes; renaming is an ask-first change",
+    "Tool files for new/changed objects did not need guid for the new table; left guid off pending_actions"
+  ],
+  "workspace_names_used": ["support_agent", "delete_customer_note", "send_customer_email", "lookup_order", "issue_refund", "customer_notes", "support_tickets", "policy_authoring_eval", "util.send_email", "db.del"],
+  "confusions": [
+    "The skill's 'Agent tool allowlists' gap is clear, but the brief's ask (tools the customer did not give) maps to it directly; no guidance on whether to write a partial rule or only name the gap. I named the gap and did not invent a rule.",
+    "Recipe 'Keep AI calls affordable and agents safe' suggests stack.statement_order with a require_approval function. The skill itself says that check confirms call order, not the decision. I chose to queue actions into a table instead, since a stub approval function would only be a presence check. The recipe does not mention queueing as an approach.",
+    "The statement_forbidden example says 'AI tools can't delete records' but does not say what to do about the tool's behaviour; I had to rewrite tool instructions and responses myself, and the skill gives no pattern for it.",
+    "The catalogue JSON 'params' field includes both scope and check params in one list, so it is not obvious which params are required for stack.statement_forbidden (only statements is required per the skill text)."
+  ],
+  "wished_for": [
+    "A worked example of human-approval gating for tools: queue table plus approval endpoint, and which policy rules then hold.",
+    "A check or param that limits which tools an agent may call (an allowlist on agent.tools).",
+    "Guidance on whether a new table needs a guid when written by hand, or whether push assigns one."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policy's two rules do block delete and email statements in any tool, including inside functions tools call, so the delete and email halves are covered and parse passed; the dry run reported no problems. Confidence is not high because the approval step is not built, so queued actions never run, and the tool allowlist is not checked at all. No evaluate run was permitted, so no finding has been observed."
+}

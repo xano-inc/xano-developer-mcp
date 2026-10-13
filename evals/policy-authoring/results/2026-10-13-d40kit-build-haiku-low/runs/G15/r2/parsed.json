@@ -1,0 +1,76 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/RATE-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/RATE-010.xs",
+      "ok": true,
+      "key": "RATE-010",
+      "title": "Public endpoints are rate limited",
+      "statement": "Every endpoint, public or logged-in, runs the rate_limit middleware before its stack, so one client cannot flood login, signup or any other endpoint. An endpoint that cannot run it must be raised with the policy owner before it ships; exempting one is the owner's decision, not the author's.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RATE-010.R1",
+          "title": "Public endpoints attach the rate limiter",
+          "check": "object.middleware_required",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "none",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RATE-010.R2",
+          "title": "Logged-in endpoints attach the rate limiter",
+          "check": "object.middleware_required",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "required",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RATE-010.R1",
+          "text": "Middleware \"rate_limit\" is not on this branch, so no object can satisfy this rule."
+        },
+        {
+          "rule_id": "RATE-010.R2",
+          "text": "Middleware \"rate_limit\" is not on this branch, so no object can satisfy this rule."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "key": "9b7f5bd6d099b078",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:40.536Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AUDIT-001",
+        "create policy AUTH-010",
+        "create policy CHG-001",
+        "create policy RET-001",
+        "create table audit_log",
+        "create function record_audit_event",
+        "update query refunds/{refund_id}/approve POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

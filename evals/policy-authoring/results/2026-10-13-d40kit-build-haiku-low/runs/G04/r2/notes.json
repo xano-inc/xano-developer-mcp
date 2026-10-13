@@ -1,0 +1,76 @@
+{
+  "goal_id": "G04",
+  "objects_built": [
+    {"kind": "table", "name": "phi_access_log", "file": "workspace/table/phi_access_log.xs", "role": "Append-only record of who accessed which patient record and when. Target of log_phi_access."},
+    {"kind": "function", "name": "log_phi_access", "file": "workspace/function/log_phi_access.xs", "role": "Writes one phi_access_log row for the logged-in user. Called unconditionally by PHI-reaching endpoints, enforced by PHI-ACCESS-RECORD."}
+  ],
+  "objects_changed": [
+    {"kind": "table", "name": "patients", "file": "workspace/table/patients.xs", "change": "Added tags = [\"phi\"]; marked ssn, dob, insurance_member_id sensitive."},
+    {"kind": "table", "name": "appointments", "file": "workspace/table/appointments.xs", "change": "Added tags = [\"phi\"]."},
+    {"kind": "table", "name": "clinical_notes", "file": "workspace/table/clinical_notes.xs", "change": "Added tags = [\"phi\"]; marked diagnosis sensitive."},
+    {"kind": "query", "name": "patients/{patient_id} GET", "file": "workspace/api/app/patients/patient_id_GET.xs", "change": "Added function.run log_phi_access first in stack, user_id from $auth.id."},
+    {"kind": "query", "name": "clinical_notes POST", "file": "workspace/api/app/clinical_notes_POST.xs", "change": "Added function.run log_phi_access first in stack; removed debug.log of $input[\"\"] (request body to logs)."}
+  ],
+  "templates_considered": [
+    "confidential_tables_tagged (CONF-012): fit, used, tag set to phi to match the health recipe.",
+    "sensitive_fields_marked (CONF-011): fit, used.",
+    "sensitive_tables_need_login (CONF-010): fit, used.",
+    "no_pii_in_responses (DATA-010): fit, used.",
+    "no_sensitive_data_in_logs (LOG-001): fit, used.",
+    "views_hide_sensitive (CONF-013): fit, used.",
+    "approved_vendors_only (VND-001): fit by topic, not used. Needs hosts or providers the owner must approve; choosing them would be an owner decision.",
+    "tls_verification_on (SEC-011): fit, used.",
+    "no_secrets_in_code (SEC-012): fit, used. Not strictly in the health recipe; included as a transport and credential safeguard.",
+    "audit_log_protected (RET-001): fit by topic, not used. Needs an audit table and audit function; belongs to the separate audit-trail goal.",
+    "personal_data_erasure recipe: not used; the ask did not mention erasure or retention.",
+    "protect_card_data recipe: not relevant."
+  ],
+  "templates_used": ["confidential_tables_tagged", "sensitive_fields_marked", "sensitive_tables_need_login", "no_pii_in_responses", "no_sensitive_data_in_logs", "views_hide_sensitive", "tls_verification_on", "no_secrets_in_code"],
+  "rules": [
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["ssn", "dob", "diagnosis", "insurance_member_id"], "tag": "phi"}, "covers": "Tables holding health data carry the phi tag."},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["ssn", "dob", "diagnosis", "insurance_member_id"], "attribute": "sensitive"}, "covers": "Health data fields are marked sensitive."},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["phi"]}, "covers": "Anything reaching phi tables requires login."},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["ssn", "dob", "insurance_member_id", "diagnosis"], "object_kinds": ["query"]}, "covers": "Endpoints do not fetch health data fields."},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "Debug logs do not carry request, user or env data."},
+    {"policy_key": "CONF-013", "check": "table.view_hide_required", "params": {}, "covers": "Saved views hide sensitive fields."},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "External requests verify TLS (transmission security)."},
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "No hardcoded credentials."},
+    {"policy_key": "PHI-ACCESS-RECORD", "check": "object.statement_required", "params": {"functions": ["log_phi_access"], "placement": "unconditional", "reaching_table_tags": ["phi"]}, "covers": "Every object reaching phi tables records the access (access-log requirement)."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Approved vendors receiving health data (VND-001)", "why": "needs owner decision"},
+    {"part": "Audit trail of who changed PHI and audit-log write restriction (RET-001)", "why": "other goal; needs audit table and function"},
+    {"part": "Users only reach their own records (AUTH-020)", "why": "other; product decision on clinician scope"},
+    {"part": "Anonymous appointments GET reaching phi table", "why": "other; enabling auth changes who can call it; left for owner to approve. Will be flagged by CONF-010 and PHI-ACCESS-RECORD."},
+    {"part": "customers.date_of_birth may hold health data", "why": "couldn't tell: field name differs from dob; unclear if customers hold patients"},
+    {"part": "Retention, backups, encryption at rest, training, access reviews", "why": "no check exists"},
+    {"part": "Runtime data and copies between environments", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "The clinic's patients, appointments and clinical notes are the health data; customers and customer_notes are not PHI.",
+    "Health data field names are exactly ssn, dob, diagnosis, insurance_member_id.",
+    "Tag name phi, as in the recipe.",
+    "log_phi_access is called with user_id from $auth.id and resource and resource_id from $input.patient_id.",
+    "Removing the debug.log in clinical_notes POST is acceptable: it logs request input, which is the exact leak LOG-001 targets.",
+    "Predicted DATA-010 finding on patients GET: db.get with no output fetches all fields; not verified by evaluation."
+  ],
+  "workspace_names_used": ["patients", "appointments", "clinical_notes", "customers", "customer_notes", "users", "orgs", "patients/{patient_id} GET", "appointments GET", "clinical_notes POST", "debug.log", "api.request", "stream.from_request", "function.run", "db.get", "db.add"],
+  "confusions": [
+    "The sensitive field attribute syntax is not shown anywhere in the workspace or the skill. I used `sensitive = true` inside a field block and relied on the dry run to accept it. The dry run accepted it, but I cannot tell from the output that the attribute was stored.",
+    "The table-level tags syntax was inferred from endpoint and workflow test tags; the dry run accepted tags = [\"phi\"] on tables, but I did not see it confirmed.",
+    "Recipe says CONF-012 tag and the access rule should share a tag, while the CONF-012 template default is confidential. The recipe overrides it to phi; I followed the recipe, but a reader could expect confidential.",
+    "The recipe's extra rule for PHI reach uses reaching_table_tags, a scope param on object.statement_required, but the catalogue entry for that check lists it only as a scope param in the general scope section. It parsed without warnings, but I had to reconcile two places.",
+    "The skill's policy file header says policies live under /policies/, while the brief says ./workspace/policies/. I used the brief's location.",
+    "The clinical notes POST used debug.log with $input[\"\"], an odd expression; removing it is a change the skill could not have predicted."
+  ],
+  "wished_for": [
+    "A worked example of a sensitive field attribute and a table tags line in XanoScript.",
+    "A note on whether db.get with no output counts as fetching all fields for DATA-010, since that changes the finding.",
+    "A way to run xano policy evaluate on a dry-run branch so findings can be confirmed before the customer pushes. The brief forbids it, so I could only predict them."
+  ],
+  "parse_attempts": 9,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The enforcement is wired in: PHI tables are tagged, sensitive fields are marked, access is logged by a real function, and the dry run is clean. Confidence is medium, not high, for three reasons. First, the appointments GET endpoint is anonymous and I did not change it, so the policy will flag a real gap that the customer must decide on. Second, DATA-010 will flag patients GET, which returns all fields, and I did not change its response. Third, the policies were not evaluated, because the brief forbids evaluate; the findings above are predictions. Vendors, audit trail, and retention are not covered."
+}

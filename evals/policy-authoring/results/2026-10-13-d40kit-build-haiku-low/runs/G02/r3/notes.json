@@ -1,0 +1,42 @@
+{
+  "goal_id": "G02",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "functions_snake_case (CONV-010): covers snake_case only, no prefix rule; not used as the key or rule set",
+    "endpoint_paths_versioned (CONV-012): requires a version segment, which the ask did not request; not used",
+    "fields_snake_case (CONV-011): fields were not in the ask; not used",
+    "endpoints_need_login (AUTH-010): about auth, not naming; not used"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are lowercase snake_case"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "suffixes": ["s"]}, "covers": "tables are plural (literal trailing s only)"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "case_style": "snake_case", "prefixes": ["acme_"]}, "covers": "functions snake_case and start with client prefix"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "client prefix differs per client, one prefix per workspace", "why": "other"},
+    {"part": "plural check is a literal trailing s; irregular plurals not recognised", "why": "no check exists"},
+    {"part": "whether a name's meaning or the prefix is right for the client", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "client prefix is acme_ (only prefix visible in this workspace)",
+    "endpoint path snake_case applies to the path, not the verb suffix in file names",
+    "advisory low severity is what flag-not-block means"
+  ],
+  "workspace_names_used": ["invoice_item", "payment_method", "user_address", "calculateLateFee", "delete_user_account", "summarize_ticket", "bank-accounts/link", "getCustomerProfile", "policy_authoring_eval"],
+  "confusions": [
+    "Skill says a table plural suffix check is literal; no check tests plurality properly, unclear if that is intended",
+    "Client prefix is per workspace; the policy has no way to take it from a shared setting, so it is hard-coded per copy",
+    "Enforcement section of the brief expects runtime objects; for a naming ask there are none, and the brief did not say so"
+  ],
+  "wished_for": [
+    "A template for prefixed function names, or a prefix param shared across workspaces",
+    "A plural check that recognises irregular plurals"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Policy parses and the dry run accepts it, and the three checks match the ask. Findings are not evaluated yet, so the expected hits are predictions. The acme_ prefix is an assumption and the plural check is only a trailing-s test."
+}

@@ -1,0 +1,64 @@
+{
+  "goal_id": "G09",
+  "objects_built": [
+    {"kind": "task", "name": "purge_expired_customer_data", "file": "workspace/task/purge_expired_customer_data.xs", "role": "Nightly delete of support_tickets and webhook_deliveries older than 730 days (retention). Tagged retained. No guid line; dry run accepted it."}
+  ],
+  "objects_changed": [
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Added db.bulk.delete of support_tickets by user_id, and tag erasure. An attempted db.bulk.patch of orders.user_id to null was removed after two syntax failures."},
+    {"kind": "table", "name": "users", "file": "workspace/table/users.xs", "change": "Added tag personal"},
+    {"kind": "table", "name": "user_address", "file": "workspace/table/user_address.xs", "change": "Added tag personal"},
+    {"kind": "table", "name": "sessions", "file": "workspace/table/sessions.xs", "change": "Added tag personal"},
+    {"kind": "table", "name": "support_tickets", "file": "workspace/table/support_tickets.xs", "change": "Added tags personal and retained"},
+    {"kind": "table", "name": "webhook_deliveries", "file": "workspace/table/webhook_deliveries.xs", "change": "Added tag retained"},
+    {"kind": "table", "name": "orders", "file": "workspace/table/orders.xs", "change": "Tag personal added, then removed once the anonymising patch was dropped. File should be unchanged; verify."}
+  ],
+  "templates_considered": [
+    "RET-002: fits exactly (retained tables covered by a cleanup task)",
+    "DATA-010, CONF-011, LOG-001: in the GDPR recipe but not asked for (personal fields, responses, logs); not used",
+    "Erase and expire personal data recipe: used for its extra rule, erasure function coverage",
+    "Right-to-erasure rule: no template with this exact rule; own key ERASE-001"
+  ],
+  "templates_used": ["RET-002"],
+  "rules": [
+    {"policy_key": "RET-002", "check": "table.coverage_required", "params": {"tags": ["retained"], "referenced_by": {"object_kinds": ["task"], "statements": ["db.del", "db.bulk.delete"]}}, "covers": "2-year retention: retained tables have a cleanup task"},
+    {"policy_key": "ERASE-001", "check": "table.coverage_required", "params": {"tags": ["personal"], "referenced_by": {"object_kinds": ["function"], "tags": ["erasure"], "statements": ["db.del", "db.bulk.delete"]}}, "covers": "Account deletion: every personal table is deleted from by the erasure function"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Customer data (customers, orders, invoices, payments, etc.) kept longer than 2 years", "why": "needs runtime/org process"},
+    {"part": "Orders keep user_id after account deletion (anonymisation)", "why": "couldn't tell how: db.bulk.patch syntax failed twice"},
+    {"part": "Age of records deleted by the task", "why": "no check exists"},
+    {"part": "Copies in third-party services, logs and backups on deletion", "why": "no check exists"},
+    {"part": "Who approves retention periods and deletion requests", "why": "needs runtime/org process"},
+    {"part": "Personal fields marked sensitive, kept out of responses and logs", "why": "other: not asked in the ask; left out"}
+  ],
+  "assumptions": [
+    "'Delete their stuff everywhere' means every table with a user_id link to users, plus sessions and addresses",
+    "The 2-year limit applies to support_tickets and webhook_deliveries only in this change; customer tables were left for the customer to decide",
+    "subtract_days filter works in XanoScript; dry run did not flag it, but I did not confirm its runtime behaviour",
+    "New objects without a guid line are acceptable to the push"
+  ],
+  "workspace_names_used": ["delete_user_account", "account_DELETE", "purge_expired_sessions", "users", "user_address", "sessions", "support_tickets", "orders", "webhook_deliveries", "customers", "customer_notes", "invoices", "payments", "payment_method", "refunds", "shipments", "invoice_item"],
+  "confusions": [
+    "db.bulk.patch syntax is not in the skill or catalogue. Two forms failed: 'Missing block: items' and then 'Invalid block: where' with items.",
+    "Policy parse dropped the severity line from its formatted output for RET-002 though it was written; unclear if severity is kept on push.",
+    "The skill says a tag warning means the rule judges nothing, but when the tag is part of the same change the warning is expected. The skill does not say how to tell these apart.",
+    "The recipe's Extra rules for erasure say add db.edit/db.patch to statements where anonymised; the rule as written does not say whether any-of or all-of applies across statements."
+  ],
+  "wished_for": [
+    "A db.bulk.patch example in the kit or skill",
+    "A date-arithmetic example (for example subtract_days or a relative-time filter) for retention tasks",
+    "Guidance on whether guid is required for new objects in XanoScript push"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "Policy parse: no errors, only rule warnings (tags retained/personal/erasure not on any object yet)",
+    "Dry run: Syntax error, while parsing: 'db.bulk.patch orders {' - Missing block: items",
+    "Dry run: Syntax error, while parsing: 'db.bulk.patch orders {' - Invalid block: where"
+  ],
+  "dry_run_problems_seen": [
+    "Two db.bulk.patch failures (see parse_errors_seen); resolved by removing the statement",
+    "Final dry run: no critical errors; 2 policies, 5 tables, 1 function, 1 task"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Deletion covers only users, addresses, sessions and support tickets; orders keep the user link. Retention covers only support tickets and webhook deliveries, not the customer tables that hold customer data. Policies check only what is tagged, and the age cutoff is not checked. Nothing has been pushed or evaluated."
+}

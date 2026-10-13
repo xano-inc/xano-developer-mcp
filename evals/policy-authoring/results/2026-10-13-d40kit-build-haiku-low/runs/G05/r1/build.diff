@@ -1,0 +1,121 @@
+--- a/api/admin/orgs/org_id/tenants_GET.xs
++++ b/api/admin/orgs/org_id/tenants_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_admin_role {
++      input = {role: $auth.role}
++    } as $role_check
++
+     db.query tenants {
+       where = $db.tenants.org_id == $input.org_id
+       return = {type: "list"}
+--- a/api/admin/tenants/tenant_id_PATCH.xs
++++ b/api/admin/tenants/tenant_id_PATCH.xs
+@@ -11,14 +11,18 @@
+   }
+ 
+   stack {
+-    db.get tenants {
+-      field_name = "id"
+-      field_value = $input.tenant_id
++    function.run require_admin_role {
++      input = {role: $auth.role}
++    } as $role_check
++
++    db.query tenants {
++      where = $db.tenants.id == $input.tenant_id && $db.tenants.org_id == $input.org_id
++      return = {type: "single"}
+     } as $before
+-  
++
+     db.edit tenants {
+       field_name = "id"
+-      field_value = $input.tenant_id
++      field_value = $before.id
+       data = {status: $input.status, region: $input.region}
+     } as $tenant
+   }
+--- a/api/admin/tenants_GET.xs
++++ b/api/admin/tenants_GET.xs
+@@ -8,7 +8,12 @@
+   }
+ 
+   stack {
++    function.run require_admin_role {
++      input = {role: $auth.role}
++    } as $role_check
++
+     db.query tenants {
++      where = $db.tenants.org_id == $input.org_id
+       return = {type: "list"}
+     } as $tenants
+   }
+--- a/api/admin/users_GET.xs
++++ b/api/admin/users_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_admin_role {
++      input = {role: $auth.role}
++    } as $role_check
++
+     db.query users {
+       sort = {users.created_at: "desc"}
+       return = {type: "list", paging: {page: $input.page, per_page: 50}}
+--- a/function/require_admin_role.xs
++++ b/function/require_admin_role.xs
+@@ -0,0 +1,13 @@
++// Stops the request unless the caller's role is admin or support_lead. Admin endpoints call it first.
++function require_admin_role {
++  input {
++    text role
++  }
++
++  stack {
++    precondition ($input.role == "admin" || $input.role == "support_lead") {
++      error_type = "accessdenied"
++      error = "Admin or support lead role required"
++    }
++  }
++}
+--- a/policies/AUTH-002.xs
++++ b/policies/AUTH-002.xs
+@@ -0,0 +1,17 @@
++policy "AUTH-002" {
++  title = "Admin endpoints check the caller's role"
++  statement = "Every endpoint in the admin API group must call require_admin_role as its first statement, before it does anything else, so only admin and support_lead users get through. Endpoints are selected by API group, not by URL path: an endpoint under /admin in another API group is not judged."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "object.statement_required"
++    params = {
++      functions: ["require_admin_role"]
++      placement: "first"
++      api_groups: ["admin"]
++      object_kinds: ["query"]
++    }
++  }
++}
+--- a/policies/TENANT-010.xs
++++ b/policies/TENANT-010.xs
+@@ -0,0 +1,15 @@
++policy "TENANT-010" {
++  title = "Tenant reads and writes filter by org_id"
++  statement = "Every read and write of the tenants table must filter on org_id, so one org's tenants are never read or changed without naming the org."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "db.where_constraint_required"
++    params = {
++      field: "org_id"
++      table_selector: {names: ["tenants"]}
++    }
++  }
++}

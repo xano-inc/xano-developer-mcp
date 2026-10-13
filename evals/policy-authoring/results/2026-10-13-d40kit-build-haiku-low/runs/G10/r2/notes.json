@@ -1,0 +1,51 @@
+{
+  "goal_id": "G10",
+  "objects_built": [
+    {"kind": "table", "name": "approval_requests", "file": "workspace/table/approval_requests.xs", "role": "Holds one row per action an agent wants to take; status must be 'approved' by a person before the action runs"},
+    {"kind": "function", "name": "require_human_approval", "file": "workspace/function/require_human_approval.xs", "role": "Loads an approval_requests row by id and preconditions status == 'approved'; called before deletes and emails in agent tools"}
+  ],
+  "objects_changed": [
+    {"kind": "tool", "name": "delete_customer_note", "file": "workspace/ai/tool/delete_customer_note.xs", "change": "Added required int approval_id input; function.run require_human_approval before db.del customer_notes"},
+    {"kind": "tool", "name": "send_customer_email", "file": "workspace/ai/tool/send_customer_email.xs", "change": "Added required int approval_id input; function.run require_human_approval before util.send_email"}
+  ],
+  "templates_considered": [
+    "ai_cost_and_agent_safety (recipe): has the approval-before-delete/email rule and the AI-tool-cannot-delete rule; used only the approval ordering rule, since the ask is approval, not a permanent ban",
+    "no_destructive_sql SEC-010: covers raw SQL/truncate, not an approval gate; did not fit",
+    "public_endpoints_harmless AUTH-003: about public endpoints, not agents; did not fit",
+    "agent_tool_allowlists (not_checkable): the 'only tools I gave them' ask; no check exists, so not a template"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "AGENT-010", "check": "stack.statement_order", "params": {"before": {"functions": ["require_human_approval"]}, "after": ["db.del", "db.bulk.delete", "db.truncate", "util.send_email"], "object_kinds": ["tool"]}, "covers": "Agents can't delete or email without a human approval call first"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Agents shouldn't call tools I haven't explicitly given them", "why": "no check exists"},
+    {"part": "A human actually approves (who approved, that they saw the action)", "why": "needs runtime/org process"},
+    {"part": "Agents cannot delete anything at all, even with approval", "why": "other: the policy gates deletes behind approval rather than forbidding them, reading 'without a human approving it first' literally"},
+    {"part": "Approval endpoint / UI and how the agent gets an approval_id", "why": "other: not in the brief's build list; left for the customer"}
+  ],
+  "assumptions": [
+    "'Agents' means AI agent tools, so the rule is scoped to object_kinds tool and endpoints/tasks are untouched",
+    "'Delete anything' covers db.del, db.bulk.delete and db.truncate",
+    "Approval is a row in approval_requests with status 'approved'",
+    "Policy written advisory, as the skill says for new policies; blocking is the owner's choice",
+    "No policy is needed for issue_refund because the ask did not name refunds"
+  ],
+  "workspace_names_used": ["support_agent", "delete_customer_note", "send_customer_email", "issue_refund", "lookup_order", "customer_notes", "approval_requests", "Support Agent", "require_human_approval"],
+  "confusions": [
+    "The skill's helper paths are for the policies/ folder at the project root; the brief says ./workspace/policies/<KEY>.xs. I followed the brief.",
+    "Running the dry run with -d ./workspace from inside the workspace directory reported 'No changes to push' with no error; it only listed the changes when run from the project root. The skill and brief do not say which directory to run from.",
+    "Scope params (object_kinds) sit in the same params block as check params; the skill says scope params are top-level, which I read as inside params. The parser accepted it with no warning.",
+    "The skill does not say how a rule's object_kinds scope works for stack.statement_order, so I guessed it from the scope section."
+  ],
+  "wished_for": [
+    "A recipe or example for a human-approval gate (approval table, status check, and how an agent tool gets an approval id)",
+    "Guidance on whether 'can't do X without approval' should use stack.statement_order or a forbidden statement",
+    "A clear statement of which directory the dry-run push expects"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": ["First dry run from inside the workspace directory reported 'No changes to push' with no error; re-run from the project root listed all five changes"],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The approval ordering is checked and parses, but the rule only confirms that the approval function runs before each delete or email, not that a person approved. Tool allowlisting is not covered by any check. Approval has no UI yet, so the behavior depends on work outside this change."
+}

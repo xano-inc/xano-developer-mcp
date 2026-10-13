@@ -1,0 +1,57 @@
+{
+  "goal_id": "G07",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "Holds one row per audited edit or delete of customers or users: actor, action, table, record, time."},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "The only writer of audit_log; called straight after each audited write."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "customers/{customer_id} PATCH", "file": "workspace/api/app/customers/customer_id_PATCH.xs", "change": "Added function.run record_audit_event (update, customers) after db.patch customers."},
+    {"kind": "query", "name": "me PATCH", "file": "workspace/api/app/me_PATCH.xs", "change": "Added function.run record_audit_event (update, users) after db.patch users."},
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Added function.run record_audit_event (delete, users) after db.del users."}
+  ],
+  "templates_considered": [
+    "RET-001: fits. Audit log exists and only the audit function writes it. Used for the audit-log rules.",
+    "CHG-001: did not use. It requires a test on every endpoint, which is a different control and a large authoring task. Left as a follow-up.",
+    "CONF-010 / CONF-011 / CONF-012: did not fit. No tables are tagged or marked sensitive, and the ask is not about sensitive data.",
+    "AUTH-010 / AUTH-030 / AUTH-002: did not fit the ask (access control on requests, not change records). Noted AUTH-030 as relevant to the me PATCH mass-assignment issue I observed, but not in scope."
+  ],
+  "templates_used": ["RET-001"],
+  "rules": [
+    {"policy_key": "AUDIT-010", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "The audit trail table exists"},
+    {"policy_key": "AUDIT-010", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "Only the audit function writes the audit log"},
+    {"policy_key": "AUDIT-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "users"]}}, "covers": "Edits of customer and user records are audited"},
+    {"policy_key": "AUDIT-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "users"]}}, "covers": "Patches of customer and user records are audited"},
+    {"policy_key": "AUDIT-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "users"]}}, "covers": "Deletes of customer and user records are audited (endpoints, tasks, tools and messages only; the function delete path is not judged)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Access reviews: who has workspace access and whether it was reviewed", "why": "no check exists"},
+    {"part": "Change approvals: who approved a change before it shipped", "why": "no check exists; approvals happen outside definitions"},
+    {"part": "Tests on changes (SOC 2 CC8.1 change management testing)", "why": "other: CHG-001 would need tests across all endpoints; not built in this change"},
+    {"part": "Audit of adds to customers and users", "why": "other: scope limited to edits and deletes per the recipe; adds not recorded"},
+    {"part": "Delete path through delete_user_account", "why": "no check exists for this: object.statement_required does not inspect function kind, so the function's db.del is not judged"}
+  ],
+  "assumptions": [
+    "customers and users are the tables that hold personal data for this ask; no sensitive tags exist.",
+    "The auth table is users and $auth.id is the signed-in user's id.",
+    "Edits and deletes are the change-control events the auditor cares about; adds were left out on purpose.",
+    "Tags soc2 and cc8.1 are acceptable labels; they are not in the workspace yet and are proposed."
+  ],
+  "workspace_names_used": ["customers", "users", "customers/{customer_id} PATCH", "me PATCH", "delete_user_account", "record_audit_event", "audit_log", "orgs", "record_id"],
+  "confusions": [
+    "The check catalogue says object.statement_required judges query, tool, task and message, but the recipe's delete rule implies a function that does the delete can satisfy it. The skill does not say how to cover a write that lives inside a function. The recipe does not mention this gap.",
+    "The skill says a rule can use when.tables to pick statements, but it does not say whether listing two tables means any of them or both. I assumed any.",
+    "Recipe 'Record who changed what' gives the rule text but not whether the audit call should go in the endpoint or the function. I put it where the write is for the function case, which the policy cannot see.",
+    "The function.run input syntax was not in the skill; I copied the form from existing endpoints in the workspace."
+  ],
+  "wished_for": [
+    "A check, or a param on object.statement_required, that judges calls inside functions the object calls, so a delete in a helper function is covered.",
+    "A short note on whether table-list params in when are any-of or all-of.",
+    "An example of a SOC 2 change-control recipe that covers edits without requiring an audit table, or an explicit statement of what the audit trail does and does not prove.",
+    "A way to record access reviews or change approvals as evidence, or at least a documented pointer to where those belong."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy covers the audit trail for edits and patches to customers and users, and the delete path only through endpoints. It does not cover access reviews, change approvals, adds, or the delete inside delete_user_account. The auditor's ask is about change controls and access reviews; this policy can prove only a narrow part of change logging. I did not run policy evaluate, so I have not confirmed which findings it produces."
+}

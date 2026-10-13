@@ -1,0 +1,155 @@
+{
+  "goal_id": "G09",
+  "objects_built": [
+    {
+      "kind": "task",
+      "name": "purge_retained_personal_data",
+      "file": "workspace/task/purge_retained_personal_data.xs",
+      "role": "Daily deletes of support_tickets, customer_notes, newsletter_subscribers older than 730 days (retained-data cleanup)"
+    }
+  ],
+  "objects_changed": [
+    {
+      "kind": "function",
+      "name": "delete_user_account",
+      "file": "workspace/function/delete_user_account.xs",
+      "change": "Added tags erasure; deletes user's support_tickets; nulls user_id/requested_by/approved_by on orders and refunds via query + per-row db.patch"
+    },
+    {
+      "kind": "table",
+      "name": "users, user_address, sessions, support_tickets",
+      "file": "workspace/table/*.xs",
+      "change": "tags personal (support_tickets also retained)"
+    },
+    {
+      "kind": "table",
+      "name": "customer_notes, newsletter_subscribers",
+      "file": "workspace/table/*.xs",
+      "change": "tags retained"
+    }
+  ],
+  "templates_considered": [
+    "retained_data_cleaned_up (RET-002): fits the 2-year cleanup requirement; used as-is with tags [retained]",
+    "no_pii_in_responses (DATA-010): covers responses, not deletion; not used, not asked",
+    "sensitive_fields_marked (CONF-011): would need field attribute changes across tables; not done",
+    "personal_data_erasure recipe: followed partly (RET-002 + one erasure coverage rule); CONF-011/DATA-010/LOG-001 not applied"
+  ],
+  "templates_used": [
+    "RET-002"
+  ],
+  "rules": [
+    {
+      "policy_key": "RET-002",
+      "check": "table.coverage_required",
+      "params": {
+        "tags": [
+          "retained"
+        ],
+        "referenced_by": {
+          "object_kinds": [
+            "task"
+          ],
+          "statements": [
+            "db.del",
+            "db.bulk.delete"
+          ]
+        }
+      },
+      "covers": "2-year retention: retained tables have a deleting cleanup task"
+    },
+    {
+      "policy_key": "GDPR-ERASE-001",
+      "check": "table.coverage_required",
+      "params": {
+        "tags": [
+          "personal"
+        ],
+        "referenced_by": {
+          "object_kinds": [
+            "function"
+          ],
+          "tags": [
+            "erasure"
+          ],
+          "statements": [
+            "db.del",
+            "db.bulk.delete"
+          ]
+        }
+      },
+      "covers": "account deletion: personal tables reached by the erasure function"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "Keep no customer data longer than 2 years (the age itself)",
+      "why": "no check exists"
+    },
+    {
+      "part": "Personal data in customers, payment_method, customer_notes, newsletter_subscribers, patients, clinical_notes not linked to the account is not erased on account deletion",
+      "why": "couldn't tell how (no user link; needs owner decision)"
+    },
+    {
+      "part": "Financial records (orders, refunds, payments, invoices) retention vs erasure",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Backups, logs, exports, AI summaries, copies between environments",
+      "why": "no check exists"
+    },
+    {
+      "part": "Legal basis, consent, notice, response time to erasure requests",
+      "why": "needs runtime/org process"
+    }
+  ],
+  "assumptions": [
+    "Table-level tags syntax 'tags = [...]' before guid, same as endpoints; accepted by dry run",
+    "Retention cutoff 63072000 seconds = 2 years; subtract_secs_to_timestamp filter accepted by dry run",
+    "Financial records anonymised, not deleted",
+    "Only account-linked tables tagged personal"
+  ],
+  "workspace_names_used": [
+    "delete_user_account",
+    "account_DELETE",
+    "users",
+    "user_address",
+    "sessions",
+    "support_tickets",
+    "orders",
+    "refunds",
+    "customer_notes",
+    "newsletter_subscribers",
+    "customers",
+    "payment_method",
+    "patients",
+    "clinical_notes",
+    "orgs",
+    "sessions.user_id",
+    "support_tickets.user_id",
+    "orders.user_id",
+    "refunds.requested_by",
+    "refunds.approved_by"
+  ],
+  "confusions": [
+    "Bulk patch statement (db.bulk.patch) rejected with 'Missing block: items' and db.patch rejected 'Invalid block: where'; skill lists the names but gives no example syntax for bulk patch or update",
+    "No example of a date-arithmetic filter in the skill or workspace; used subtract_secs_to_timestamp guessing, dry run accepted it",
+    "Unclear whether table tags are declared in table files (no existing table has tags; only endpoints and workflow tests do)",
+    "Recipe personal_data_erasure says tag personal tables and the erasure function, but does not say which tables count as personal, and the workspace has no such tags"
+  ],
+  "wished_for": [
+    "Example XanoScript for db.bulk.patch / db.bulk.update with where and data",
+    "Example of date arithmetic in a task where clause and a retention example that matches a 2-year limit",
+    "Example of a table-level tags declaration",
+    "A check that reads retention age, or at least a way to state the age in a rule"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "(dry run) Syntax error while parsing 'db.bulk.patch orders {' - Missing block: items",
+    "(dry run) Invalid block: where for db.patch orders"
+  ],
+  "dry_run_problems_seen": [
+    "Initial function draft blocked by bulk patch syntax; fixed to query + per-row db.patch; final dry run clean"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The erasure rule only checks that a function reaches personal tables with a delete statement, not that the deletion is correct or complete. The 2-year limit is unenforced by any check. Several personal-data tables are outside the account and not erased. Financial retention is a legal decision still open."
+}

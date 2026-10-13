@@ -1,0 +1,301 @@
+--- a/api/app/auth/signup_POST.xs
++++ b/api/app/auth/signup_POST.xs
+@@ -16,6 +16,16 @@
+         password: $input.password
+       }
+     } as $user
++
++    function.run record_audit_event {
++      input = {
++        table_name: "users"
++        record_id : $user.id
++        action    : "add"
++        actor_id  : $user.id
++        changes   : {email: $user.email, name: $user.name}
++      }
++    } as $audit
+   
+     security.create_auth_token {
+       table = "users"
+--- a/api/app/customers/customer_id_PATCH.xs
++++ b/api/app/customers/customer_id_PATCH.xs
+@@ -15,6 +15,16 @@
+       field_value = $input.customer_id
+       data = {email: $input.email, phone: $input.phone}
+     } as $customer
++
++    function.run record_audit_event {
++      input = {
++        table_name: "customers"
++        record_id : $customer.id
++        action    : "patch"
++        actor_id  : $auth.id
++        changes   : $input
++      }
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/customers_POST.xs
++++ b/api/app/customers_POST.xs
+@@ -23,6 +23,16 @@
+         phone    : $input.phone
+       }
+     } as $customer
++
++    function.run record_audit_event {
++      input = {
++        table_name: "customers"
++        record_id : $customer.id
++        action    : "add"
++        actor_id  : $me.id
++        changes   : $input
++      }
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -16,6 +16,16 @@
+       field_value = $auth.id
+       data = $input[""]
+     } as $me
++
++    function.run record_audit_event {
++      input = {
++        table_name: "users"
++        record_id : $me.id
++        action    : "patch"
++        actor_id  : $auth.id
++        changes   : $input
++      }
++    } as $audit
+   }
+ 
+   response = $me
+--- a/api/app/newsletter/subscribe_POST.xs
++++ b/api/app/newsletter/subscribe_POST.xs
+@@ -15,6 +15,15 @@
+         confirmed: false
+       }
+     } as $subscriber
++
++    function.run record_audit_event {
++      input = {
++        table_name: "newsletter_subscribers"
++        record_id : $subscriber.id
++        action    : "add"
++        changes   : $input
++      }
++    } as $audit
+   }
+ 
+   response = {ok: true}
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -17,6 +17,16 @@
+       field_name = "id"
+       field_value = $input.user_id
+     }
++
++    function.run record_audit_event {
++      input = {
++        table_name: "users"
++        record_id : $input.user_id
++        action    : "del"
++        actor_id  : $input.user_id
++        changes   : {user_id: $input.user_id}
++      }
++    } as $audit
+   }
+ 
+   response = {deleted: true}
+--- a/function/summarize_ticket.xs
++++ b/function/summarize_ticket.xs
+@@ -20,6 +20,15 @@
+       field_value = $ticket.id
+       data = {summary: $summary}
+     } as $saved
++
++    function.run record_audit_event {
++      input = {
++        table_name: "support_tickets"
++        record_id : $ticket.id
++        action    : "edit"
++        changes   : {summary: $summary}
++      }
++    } as $audit
+   }
+ 
+   response = $saved
+--- a/task/nightly_ticket_summaries.xs
++++ b/task/nightly_ticket_summaries.xs
+@@ -18,6 +18,15 @@
+           field_value = $ticket.id
+           data = {summary: $summary}
+         } as $saved
++
++        function.run record_audit_event {
++          input = {
++            table_name: "support_tickets"
++            record_id : $ticket.id
++            action    : "edit"
++            changes   : {summary: $summary}
++          }
++        } as $audit
+       }
+     }
+   }
+--- a/function/record_audit_event.xs
++++ b/function/record_audit_event.xs
+@@ -0,0 +1,24 @@
++// Writes one audit_log entry. The only object allowed to write audit_log.
++function record_audit_event {
++  input {
++    text table_name
++    int record_id?
++    text action
++    int actor_id?
++    json changes?
++  }
++
++  stack {
++    db.add audit_log {
++      data = {
++        table_name: $input.table_name
++        record_id : $input.record_id
++        action    : $input.action
++        actor_id  : $input.actor_id
++        changes   : $input.changes
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/policies/AI-COST-001.xs
++++ b/policies/AI-COST-001.xs
+@@ -0,0 +1,15 @@
++policy "AI-COST-001" {
++  title = "AI calls stay out of loops"
++  statement = "An AI agent run or external MCP tool call must not sit inside a loop. A loop multiplies each call by its iteration count, which runs up model spend. An AI call that truly must repeat must be moved out of the loop or reviewed and exempted by the policy owner."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "statement.containment"
++    params = {
++      statements: ["ai.agent.run", "ai.external.mcp.tool.run"]
++      must_not_be_inside: ["foreach", "for", "while"]
++    }
++  }
++}
+--- a/policies/AUDIT-001.xs
++++ b/policies/AUDIT-001.xs
+@@ -0,0 +1,55 @@
++policy "AUDIT-001" {
++  title = "Changes to customer-email tables are audited"
++  statement = "Every add, edit, patch and delete on a table that stores customer emails must call the record_audit_event function unconditionally, so each change is recorded with who made it. Tables covered: customers, users, newsletter_subscribers, patients, orgs and support_tickets. A table added later that stores emails must be added to these rules. An object that cannot audit its write must be fixed, not exempted, unless the policy owner decides otherwise."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "object.statement_required"
++    params = {
++      functions: ["record_audit_event"]
++      placement: "unconditional"
++      when: {
++        statement: "db.add"
++        tables: ["customers", "users", "newsletter_subscribers", "patients", "orgs", "support_tickets"]
++      }
++    }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {
++      functions: ["record_audit_event"]
++      placement: "unconditional"
++      when: {
++        statement: "db.edit"
++        tables: ["customers", "users", "newsletter_subscribers", "patients", "orgs", "support_tickets"]
++      }
++    }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {
++      functions: ["record_audit_event"]
++      placement: "unconditional"
++      when: {
++        statement: "db.patch"
++        tables: ["customers", "users", "newsletter_subscribers", "patients", "orgs", "support_tickets"]
++      }
++    }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {
++      functions: ["record_audit_event"]
++      placement: "unconditional"
++      when: {
++        statement: "db.del"
++        tables: ["customers", "users", "newsletter_subscribers", "patients", "orgs", "support_tickets"]
++      }
++    }
++  }
++}
+--- a/policies/RET-001.xs
++++ b/policies/RET-001.xs
+@@ -0,0 +1,23 @@
++policy "RET-001" {
++  title = "Only the audit function writes the audit log"
++  statement = "The audit log table exists, and only the record_audit_event function writes to it. Nothing else may edit, delete or insert audit entries, so the record of who changed what stays trustworthy. A caller can still pass whatever it likes to the audit function."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "workspace.object_required"
++    params = {
++      object_kind: "table"
++      names: ["audit_log"]
++    }
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = {
++      restricted_tables: ["audit_log"]
++      allowed_functions: ["record_audit_event"]
++    }
++  }
++}
+--- a/table/audit_log.xs
++++ b/table/audit_log.xs
+@@ -0,0 +1,20 @@
++// Append-only record of who changed which row of a table holding customer emails.
++// Written only by record_audit_event.
++table audit_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    text table_name
++    int record_id?
++    text action
++    int actor_id?
++    json changes?
++  }
++
++  index = [
++    {type: "primary", field: [{name: "id"}]}
++    {type: "btree", field: [{name: "table_name", op: "asc"}, {name: "record_id", op: "asc"}]}
++  ]
++}

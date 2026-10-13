@@ -1,0 +1,23 @@
+{
+  "key": "3f528809cdd24073",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:48.571Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy SEC-012",
+        "update function acme_notify_sms"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

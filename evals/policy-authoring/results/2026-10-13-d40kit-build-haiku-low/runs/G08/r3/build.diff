@@ -1,0 +1,28 @@
+--- a/function/acme_notify_sms.xs
++++ b/function/acme_notify_sms.xs
+@@ -7,8 +7,9 @@
+ 
+   stack {
+     api.request {
+-      url = "https://AC5f1b2c3d4e:twilio-auth-token-not-real@api.twilio.com/2010-04-01/Accounts/AC5f1b2c3d4e/Messages.json"
++      url = "https://api.twilio.com/2010-04-01/Accounts/" ~ $env.TWILIO_ACCOUNT_SID ~ "/Messages.json"
+       method = "POST"
++      headers = ["Authorization: Basic " ~ $env.TWILIO_BASIC_AUTH]
+       params = {To: $input.to, From: "+15550100", Body: $input.body}
+     } as $sms
+   }
+--- a/policies/SEC-012.xs
++++ b/policies/SEC-012.xs
+@@ -0,0 +1,12 @@
++policy "SEC-012" {
++  title = "No secrets are hardcoded"
++  statement = "API keys, tokens, private keys, encryption keys and credentialed URLs are never written as literals in an object's definition or agent settings; they belong in environment variables. Read them with $env in the object, and let the owner set and rotate their values."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "pci-dss"]
++
++  rule {
++    check = "literal.credential_shape"
++  }
++}

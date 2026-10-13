@@ -1,0 +1,33 @@
+{
+  "key": "e97aadc3529a0e7a",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-13T23:38:53.873Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy GDPR-ERASE-001",
+        "create policy RET-002",
+        "update table customer_notes",
+        "update table newsletter_subscribers",
+        "update table sessions",
+        "update table support_tickets",
+        "update table user_address",
+        "update table users",
+        "update function delete_user_account",
+        "create task purge_retained_personal_data"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": [
+        "task/purge_retained_personal_data.xs:5: Unknown filter function 'subtract_secs_to_timestamp'"
+      ]
+    },
+    "unreadable": []
+  }
+}

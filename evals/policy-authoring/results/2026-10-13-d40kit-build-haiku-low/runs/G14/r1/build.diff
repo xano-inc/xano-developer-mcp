@@ -1,0 +1,266 @@
+--- a/table/customers.xs
++++ b/table/customers.xs
+@@ -21,5 +21,6 @@
+     {type: "btree", field: [{name: "email", op: "asc"}]}
+   ]
+ 
++  tags = ["customer-email"]
+   guid = "WKqblBRNMCInJ6wZcd1FmbcGC4E"
+ }
+\ No newline at end of file
+--- a/table/newsletter_subscribers.xs
++++ b/table/newsletter_subscribers.xs
+@@ -11,5 +11,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["customer-email"]
+   guid = "j189RCXCaWsxB1lbKjPDDQ84D60"
+ }
+\ No newline at end of file
+--- a/table/patients.xs
++++ b/table/patients.xs
+@@ -20,5 +20,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["customer-email"]
+   guid = "2owJebbNtRm-Ek78hCG3FxeWrO0"
+ }
+\ No newline at end of file
+--- a/table/support_tickets.xs
++++ b/table/support_tickets.xs
+@@ -21,5 +21,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["customer-email"]
+   guid = "BOYHPB_-O75NDfyqlRdIIzUD2_w"
+ }
+\ No newline at end of file
+--- a/table/users.xs
++++ b/table/users.xs
+@@ -27,5 +27,6 @@
+     {type: "btree", field: [{name: "org_id", op: "asc"}]}
+   ]
+ 
++  tags = ["customer-email"]
+   guid = "xU8Al0G-VGO1TKLY5LrNKIOkGUE"
+ }
+\ No newline at end of file
+--- a/task/retry_failed_webhooks.xs
++++ b/task/retry_failed_webhooks.xs
+@@ -1,44 +1,59 @@
+-// Re-sends failed webhook deliveries until they go through.
++// Re-sends failed webhook deliveries, at most 5 attempts per run. A delivery that still fails is marked retry_exhausted so later runs stop selecting it.
+ task retry_failed_webhooks {
+   stack {
+     db.query webhook_deliveries {
+       where = $db.webhook_deliveries.status == "failed"
+       return = {type: "list"}
+     } as $failed
+-  
++
+     foreach ($failed) {
+       each as $delivery {
+         var $delivered {
+           value = false
+         }
+-      
+-        while ($delivered == false) {
+-          each {
+-            api.request {
+-              url = $delivery.url
+-              method = "POST"
+-              params = $delivery.payload
+-            } as $attempt
+-          
++
++        for (5) {
++          each as $attempt_no {
+             conditional {
+-              if ($attempt.response.status == 200) {
+-                var.update $delivered {
+-                  value = true
++              if ($delivered == false) {
++                api.request {
++                  url = $delivery.url
++                  method = "POST"
++                  params = $delivery.payload
++                } as $attempt
++
++                conditional {
++                  if ($attempt.response.status == 200) {
++                    var.update $delivered {
++                      value = true
++                    }
++                  }
+                 }
+               }
+             }
+           }
+         }
+-      
+-        db.edit webhook_deliveries {
+-          field_name = "id"
+-          field_value = $delivery.id
+-          data = {status: "delivered"}
+-        } as $done
++
++        conditional {
++          if ($delivered) {
++            db.edit webhook_deliveries {
++              field_name = "id"
++              field_value = $delivery.id
++              data = {status: "delivered"}
++            } as $done
++          }
++          else {
++            db.edit webhook_deliveries {
++              field_name = "id"
++              field_value = $delivery.id
++              data = {status: "retry_exhausted"}
++            } as $gave_up
++          }
++        }
+       }
+     }
+   }
+ 
+   schedule = [{starts_on: 2026-01-01 00:00:00+0000, freq: 300}]
+   guid = "xVlZD1UTTY6Qkl9YE0I31YR43FU"
+-}
+\ No newline at end of file
++}
+--- a/function/record_audit_event.xs
++++ b/function/record_audit_event.xs
+@@ -0,0 +1,22 @@
++// Writes one audit entry. Called for each edit, patch and delete of a customer-email table.
++function record_audit_event {
++  input {
++    int actor_user_id?
++    text table_name
++    int record_id?
++    text action
++  }
++
++  stack {
++    db.add audit_log {
++      data = {
++        actor_user_id: $input.actor_user_id
++        table_name   : $input.table_name
++        record_id    : $input.record_id
++        action       : $input.action
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/policies/AI-COST-001.xs
++++ b/policies/AI-COST-001.xs
+@@ -0,0 +1,13 @@
++policy "AI-COST-001" {
++  title = "AI calls stay out of loops"
++  statement = "AI agent runs and external MCP tool runs must not sit inside a foreach, for or while loop, where one request can run up unbounded model spend."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["cost"]
++
++  rule {
++    check = "statement.containment"
++    params = {statements: ["ai.agent.run", "ai.external.mcp.tool.run"], must_not_be_inside: ["foreach", "for", "while"]}
++  }
++}
+--- a/policies/AUDIT-001.xs
++++ b/policies/AUDIT-001.xs
+@@ -0,0 +1,33 @@
++policy "AUDIT-001" {
++  title = "Customer email changes are audited"
++  statement = "Every table that holds a customer email carries the customer-email tag. Anything reaching those tables requires login and calls record_audit_event, and every edit, patch and delete of them calls it, so the audit log shows who changed what."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "audit"]
++
++  rule {
++    check = "table.tag_required"
++    params = {field_names: ["email", "requester_email"], field_types: ["email"], include_sensitive: false, tag: "customer-email"}
++  }
++
++  rule {
++    check = "object.tagged_table_access"
++    params = {table_tags: ["customer-email"], function: "record_audit_event"}
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["record_audit_event"], placement: "unconditional", when: {statement: "db.edit", tables: ["customers", "newsletter_subscribers", "support_tickets", "users", "patients"]}}
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["record_audit_event"], placement: "unconditional", when: {statement: "db.patch", tables: ["customers", "newsletter_subscribers", "support_tickets", "users", "patients"]}}
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["record_audit_event"], placement: "unconditional", when: {statement: "db.del", tables: ["customers", "newsletter_subscribers", "support_tickets", "users", "patients"]}}
++  }
++}
+--- a/policies/RET-001.xs
++++ b/policies/RET-001.xs
+@@ -0,0 +1,18 @@
++policy "RET-001" {
++  title = "Only the audit function writes the audit log"
++  statement = "The audit log table must exist, and only the record_audit_event function may write to it. Audit entries are never edited or deleted."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "audit"]
++
++  rule {
++    check = "workspace.object_required"
++    params = {object_kind: "table", names: ["audit_log"]}
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = {restricted_tables: ["audit_log"], allowed_functions: ["record_audit_event"], statements: ["db.edit", "db.patch", "db.add_or_edit", "db.del", "db.truncate", "db.bulk.update", "db.bulk.patch", "db.bulk.delete"]}
++  }
++}
+--- a/policies/TASK-001.xs
++++ b/policies/TASK-001.xs
+@@ -0,0 +1,13 @@
++policy "TASK-001" {
++  title = "Tasks have no while loops"
++  statement = "Background tasks must not use while loops. An unbounded loop is how a task retries forever. This is a proxy: retry limits themselves are not checked."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = ["reliability"]
++
++  rule {
++    check = "stack.statement_forbidden"
++    params = {statements: ["while"], object_kinds: ["task"]}
++  }
++}
+--- a/table/audit_log.xs
++++ b/table/audit_log.xs
+@@ -0,0 +1,15 @@
++// Append-only record of who changed customer email data. Written only by record_audit_event.
++table audit_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    int actor_user_id?
++    text table_name
++    int record_id?
++    text action
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

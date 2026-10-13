@@ -1,0 +1,59 @@
+{
+  "goal_id": "G07",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "Audit trail: one row per change to an audited table (actor, action, table, record, time)."},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "Only writer of audit_log; called after each edit, patch or delete of an audited table."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "me (PATCH)", "file": "workspace/api/app/me_PATCH.xs", "change": "Added function.run record_audit_event after db.patch users."},
+    {"kind": "query", "name": "customers/{customer_id} (PATCH)", "file": "workspace/api/app/customers/customer_id_PATCH.xs", "change": "Added function.run record_audit_event after db.patch customers."},
+    {"kind": "query", "name": "refunds/{refund_id}/approve (POST)", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "Added function.run record_audit_event after db.edit refunds."},
+    {"kind": "query", "name": "tenants/{tenant_id} (PATCH, admin)", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "Added function.run record_audit_event after db.edit tenants."},
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Added function.run record_audit_event after db.del users."}
+  ],
+  "templates_considered": [
+    "audit_log_protected (RET-001): fits; used for the audit_log existence and write-restriction rules.",
+    "audit_changes recipe: fits the goal; its rules are the basis of CHG-010, which is written by hand because the recipe's rules have no template.",
+    "endpoints_need_login (AUTH-010): considered for the 'who can reach it' part; not used because it is access control, not change control, and changing auth needs an owner decision.",
+    "no_self_promotion (AUTH-030): relevant to the me_PATCH role problem; not used because the ask is audit evidence and the fix would change behaviour."
+  ],
+  "templates_used": ["audit_log_protected"],
+  "rules": [
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "The audit trail exists."},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "Only record_audit_event writes to the audit log; edits and deletes of entries are reported."},
+    {"policy_key": "CHG-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["users", "customers", "refunds", "tenants"]}}, "covers": "Every edit of an audited table records the change."},
+    {"policy_key": "CHG-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["users", "customers", "refunds", "tenants"]}}, "covers": "Every patch of an audited table records the change."},
+    {"policy_key": "CHG-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["users", "customers", "refunds", "tenants"]}}, "covers": "Every delete from an audited table records the change (endpoints/tasks only; see confusions)."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Access reviews (periodic review of who has access, with sign-off)", "why": "needs runtime/org process"},
+    {"part": "Change approvals (who approved a change before it shipped)", "why": "no check exists"},
+    {"part": "Deletes performed inside functions (delete_user_account's db.del)", "why": "no check exists: object.statement_required does not inspect function objects"},
+    {"part": "Audit log tamper-proofing at the database or admin level", "why": "needs runtime/org process"},
+    {"part": "Audit coverage of tables beyond users/customers/refunds/tenants", "why": "other: scope chosen to keep the change small; the customer can extend the list"}
+  ],
+  "assumptions": [
+    "The four tables users, customers, refunds and tenants are the sensitive ones for change control; the customer has not named tables.",
+    "Edits to records are audited with the actor being $auth.id where the endpoint is authenticated; delete_user_account is self-service so actor = the deleted user.",
+    "Each audited write sits on an unconditional path (no early return), so placement unconditional is satisfied by a call at the end of the stack.",
+    "The workspace's guid values are arbitrary strings for new objects (I used rec_audit_event_g07 for the function); xano workspace push may require valid guids."
+  ],
+  "workspace_names_used": ["users", "customers", "refunds", "tenants", "me", "customer_id", "refund_id", "tenant_id", "delete_user_account", "$auth.id", "api_group app/admin"],
+  "confusions": [
+    "The skill's catalogue says object.statement_required applies to query, tool, task, message, but the recipe asks for unconditional calls in a deletion path that lives in a function; the policy cannot see function-level deletes and the docs do not say how to cover that without moving the delete.",
+    "The brief says to fix dry-run findings, but the shell tool was denied partway through the session, so I could not run xano policy parse or the dry run. The policy and object XanoScript syntax (especially function.run input syntax and workspace object guid format) is from reading examples, not verified.",
+    "The skill says the guard and test blocks are reserved; not needed, but worth noting the policy header format was clear.",
+    "The recipe names 'record who changed what' but does not say whether the audited write must be inside the same request or can be a separate function call; I placed it after the write in the same stack."
+  ],
+  "wished_for": [
+    "A way to run xano policy parse and xano workspace push --dry-run in the same session that starts the build, or a dry-run check that works without the shell.",
+    "A check for functions (or an option on object.statement_required to include functions) so deletes inside helper functions can be policed.",
+    "An example of function.run input syntax and a generated guid convention for new objects in the template docs.",
+    "A template or check for 'access review evidence' (even a record table plus a required scheduled task) so the access-review part of SOC 2 has something concrete to point at."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Change control is partly covered: the audit trail exists, is protected, and the audited endpoints call it. But neither policy was parsed or dry-run (the shell was denied), the syntax is unverified, deletes inside functions are not policed, and access reviews and change approvals are not checkable at all. Confidence is low that the policy proves SOC 2 change control to an auditor."
+}

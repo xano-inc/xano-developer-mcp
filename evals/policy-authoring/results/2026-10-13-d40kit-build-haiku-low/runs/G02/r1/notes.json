@@ -1,0 +1,51 @@
+{
+  "goal_id": "G02",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "CONV-010: function naming snake_case; covers style but not the client prefix, so not used alone",
+    "CONV-011: field naming; out of scope for this ask",
+    "CONV-012: endpoint paths kebab-case; conflicts with the customer's snake_case ask, so not used",
+    "CONV-023 / CONV-020 / CONV-021: tags; not in the ask"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are lowercase snake_case"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "suffixes": ["s"]}, "covers": "tables are plural"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "prefixes": ["acme_"]}, "covers": "functions start with the client prefix"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "client prefix differs per client; 12 clients need 12 policies, one per workspace", "why": "other"},
+    {"part": "the 'acme_' prefix was inferred from this workspace, not stated by the customer", "why": "couldn't tell how"},
+    {"part": "plural check is a literal suffix; irregular plurals need allowed_names, which the workspace does not yet need", "why": "no check exists"},
+    {"part": "endpoint path for endpoints with no explicit path is derived by Xano; not confirmed from definitions", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "client prefix for this workspace is acme_, from the five existing acme_ functions",
+    "flag-only means active=true, enforcement=advisory",
+    "function case style not asked for; only the prefix is checked",
+    "endpoint paths with {params} are judged as written"
+  ],
+  "workspace_names_used": [
+    "acme_calculate_tax", "acme_get_tracking", "acme_notify_sms", "acme_send_invoice_email", "acme_sync_shipping_rates",
+    "calculateLateFee", "delete_user_account", "summarize_ticket",
+    "payment_method", "invoice_item", "user_address",
+    "bank-accounts/link", "getCustomerProfile"
+  ],
+  "confusions": [
+    "CONV-012 requires kebab-case endpoint paths, the opposite of the customer's snake_case; the skill does not say how to handle a customer who wants the other convention beyond changing case_style, which would change a template's rule",
+    "the skill says to start from a template when one covers part of the request, but the conventions templates each cover one slice; it is unclear whether to combine them or write own key",
+    "whether endpoint_path judges {param} segments and endpoints with no explicit path was not stated",
+    "the catalogue does not say whether object.naming applies case_style to functions when only prefixes are set"
+  ],
+  "wished_for": [
+    "a multi-workspace recipe: one policy per client workspace with a prefix parameter",
+    "an example of object.naming on endpoint_path with path params",
+    "a note on whether evaluate runs in this sandbox; I was told not to run it, so predictions are unverified"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three checks match the three asks and parse and dry-run cleanly. Not verified: findings, since evaluate was out of scope. The prefix is inferred; endpoint path derivation for query names without an explicit path is unconfirmed; and one policy per workspace is needed for 12 clients."
+}

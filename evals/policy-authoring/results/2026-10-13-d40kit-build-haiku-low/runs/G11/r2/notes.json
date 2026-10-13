@@ -1,0 +1,44 @@
+{
+  "goal_id": "G11",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "external_calls_handle_errors (LOG-010): fits; used, but extended its statements list to every external statement in the catalogue's external_calls group, as its limits note suggests",
+    "requests_have_timeout (SEC-013): fits; used the param_bound rule as written",
+    "middleware_surfaces_errors (LOG-011): did not fit; it checks middleware exception settings, not outbound calls",
+    "outbound.vendor_allowlist (VND-001): did not fit; the ask is about timeouts and error handling, not destinations"
+  ],
+  "templates_used": ["external_calls_handle_errors", "requests_have_timeout"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda", "ai.external.mcp.tool.run", "db.external.postgres.direct_query", "db.external.mysql.direct_query", "db.external.mssql.direct_query", "db.external.oracle.direct_query", "db.external.snowflake.direct_query"], "must_be_inside": ["try_catch"]}, "covers": "error handling on external calls"},
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "timeout ceiling of 30 seconds"},
+    {"policy_key": "SEC-013", "check": "statement.param_required", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda"], "param_names": ["timeout"]}, "covers": "timeout set explicitly rather than left to the 10-second default"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling is meaningful (the catch does something useful)", "why": "no check exists"},
+    {"part": "retries and circuit breaking for failing vendors", "why": "no check exists"},
+    {"part": "a hung ai.external.mcp.* or db.external.* call is bounded", "why": "no check exists; these statements take no timeout"},
+    {"part": "which timeout value is right for each vendor", "why": "needs runtime/org process"},
+    {"part": "calls made outside the workspace", "why": "other"}
+  ],
+  "assumptions": [
+    "Advisory enforcement is acceptable; the customer can ask for blocking",
+    "Both template keys (LOG-010, SEC-013) are free: the workspace has no policies",
+    "Existing violations should be reported, not fixed, in this change"
+  ],
+  "workspace_names_used": ["acme_get_tracking", "acme_sync_shipping_rates", "acme_notify_sms", "retry_failed_webhooks", "quote_POST", "charge_POST", "fraud_check_POST", "link_POST", "issue_refund", "policy_authoring_eval"],
+  "confusions": [
+    "The catalogue says statement.param_required does not count timeout = 10 as set, since it equals the default; the skill does not say how to express an explicit value the check accepts. Unclear whether that is intended.",
+    "The template's statements list (api.request only) differs from its limits note (add other external statements); the skill does not say which to follow, so I extended it.",
+    "xano policy parse prints a normalised copy of the file to stdout by default, which looks like it may drop fields. Using -o json showed severity is kept."
+  ],
+  "wished_for": [
+    "A way to see findings without xano policy evaluate, which the brief forbids, so the expected findings are inferred from reading the files",
+    "A ready-made recipe for external-call resilience that combines containment, param_bound and param_required"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policies enforce a try_catch wrapper and an explicit timeout ≤ 30s on every external statement found in the catalogue. They do not check that the catch handles the failure or that a runtime hang is bounded, and I could not run evaluate to confirm the findings."
+}

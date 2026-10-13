@@ -1,0 +1,35 @@
+{
+  "goal_id": "G13",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: fits access to endpoints, not training completion; not used",
+    "CONF-010 sensitive_tables_need_login: could gate customer-data tables by login, not training; not used",
+    "AUTH-040 protected_endpoints_run_middleware: could check a training middleware is attached, but no middleware exists and the training data source is undefined; not used"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "every team member has completed security awareness training before touching customer data", "why": "no check exists"},
+    {"part": "customer data identified in the workspace", "why": "couldn't tell how; no tag or table names describe it, and the customer has not named them"},
+    {"part": "the training gate itself (middleware or table that records completion)", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The ask means the policy must enforce training completion, not only that some gate exists.",
+    "Building a training gate without a defined training data source would be invented compliance, so nothing was built."
+  ],
+  "workspace_names_used": ["policy-authoring-eval"],
+  "confusions": [
+    "The brief's plan-then-build flow assumes a buildable check; for this ask the answer is no policy, so the plan and the result are the same document. Clarified in reply.md.",
+    "The skill's People and training entry says policies cannot see training, but the Recipes/templates have no 'training' check to point to. Confirmed by searching the catalogue; no ambiguity remained after that."
+  ],
+  "wished_for": [
+    "A clear statement in the catalogue of which adjacent controls (middleware gate, write restriction) a customer should be steered toward when the core ask is a people/process requirement.",
+    "A way to tag customer-data tables by a classification the customer already uses, without guessing names."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No policy can see whether people have completed training; the platform states this under People and training. Nothing was built, so no policy achieves the goal. Adjacent gates are offered, but each still needs a decision on the training data source and the customer-data tables."
+}

@@ -1,0 +1,41 @@
+{
+  "goal_id": "G08",
+  "objects_built": [],
+  "objects_changed": [
+    {"kind": "function", "name": "acme_notify_sms", "file": "workspace/function/acme_notify_sms.xs", "change": "Replaced the literal Twilio account SID and auth token in the api.request URL with $env.TWILIO_ACCOUNT_SID and $env.TWILIO_AUTH_TOKEN; no other change"}
+  ],
+  "templates_considered": ["no_secrets_in_code (SEC-012): fits exactly; used its check and key", "endpoints_need_login, no_pii_in_responses, own_records_only and others: not related to the ask"],
+  "templates_used": ["no_secrets_in_code"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "No API key, token, private key or credentialed URL written as a literal in any definition or agent settings (defaults: all patterns, locations definition and agent_settings)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Keys must come from environment variables (positive requirement)", "why": "no check exists"},
+    {"part": "Environment variables are set and hold the right values", "why": "needs runtime/org process"},
+    {"part": "Secrets in formats the built-in patterns do not recognise", "why": "no check exists"},
+    {"part": "Secrets in table records, request data, logs and env values", "why": "no check exists"},
+    {"part": "Previously exposed Twilio token is rotated", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The env variable names TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN; the customer must create them",
+    "Putting env values into a credentialed URL is acceptable in this workspace; a Basic auth header would be better but I did not verify the base64 filter",
+    "Policy should be advisory (new-policy rule); the customer did not ask for blocking"
+  ],
+  "workspace_names_used": ["acme_notify_sms", "table users", "function acme_get_tracking (format reference)", "environment variables already used: RESEND_API_KEY, SHIPFAST_API_KEY, STRIPE_SECRET_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, PLAID_CLIENT_ID, PLAID_SECRET"],
+  "confusions": [
+    "The skill says to write no comments in policy files and to keep statement as the guidance; fine, but the skill's 'Never' rules around fixing findings (ask first) sit awkwardly with a brief that says build all of the plan; I followed the brief and made the one function edit",
+    "Skill's fix guidance says a literal secret fix is a 'Do it' only when the user asked for a fix; the brief asked for changes to existing objects, so I treated the function edit as in scope",
+    "Nothing in the catalogue says what happens to a credential inside a URL built from $env parts; I could not tell whether url_credentials would still match, so the prediction is uncertain",
+    "xano policy parse printed the file back on success rather than a short OK, which made it unclear whether it validated or just echoed"
+  ],
+  "wished_for": [
+    "An example of an env-variable fix for a credential in a URL, and a recipe for Basic auth headers in api.request",
+    "A note on whether literal.credential_shape flags a literal that is only partly secret (one half a SID, half a token)",
+    "A way to run xano policy evaluate in dry-run mode for a new policy, so the prediction could be checked without a push"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policy parses and dry-run is clean, and literal.credential_shape is the right check for this ask. Medium because the check only sees recognised shapes and the policy is advisory, and it does not verify that $env is used or that variables are set. I have not run evaluate, so the finding set is a prediction."
+}

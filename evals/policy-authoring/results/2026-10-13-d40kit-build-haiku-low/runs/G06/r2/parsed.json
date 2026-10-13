@@ -1,0 +1,106 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/DEV-REVIEW-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/DEV-REVIEW-001.xs",
+      "ok": true,
+      "key": "DEV-REVIEW-001",
+      "title": "Review checks for junior changes: size, error handling, tests",
+      "statement": "Functions stay at most 80 statements. Every outbound HTTP call and stream request sits inside a try block. Every endpoint and function is covered by a test, and every test asserts something.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "DEV-REVIEW-001.R1",
+          "title": "",
+          "check": "stack.size_limit",
+          "params": {
+            "max_statements": 80,
+            "max_nesting": null,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "DEV-REVIEW-001.R2",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "must_be_inside": [
+              "try_catch"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "DEV-REVIEW-001.R3",
+          "title": "",
+          "check": "object.test_coverage",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query",
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "DEV-REVIEW-001.R4",
+          "title": "",
+          "check": "test.assertion_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

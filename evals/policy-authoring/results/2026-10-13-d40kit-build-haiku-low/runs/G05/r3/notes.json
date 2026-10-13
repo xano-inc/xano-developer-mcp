@@ -1,0 +1,52 @@
+{
+  "goal_id": "G05",
+  "objects_built": [{"kind": "function", "name": "require_admin_role", "file": "workspace/function/require_admin_role.xs", "role": "Loads the user by id and fails with accessdenied unless role is admin or support_lead"}],
+  "objects_changed": [
+    {"kind": "query", "name": "users GET", "file": "workspace/api/admin/users_GET.xs", "change": "tags admin; first statement function.run require_admin_role with $auth.id"},
+    {"kind": "query", "name": "tenants GET", "file": "workspace/api/admin/tenants_GET.xs", "change": "tags admin; role check first; where org_id == $input.org_id added (input was declared and unused)"},
+    {"kind": "query", "name": "orgs/{org_id}/tenants GET", "file": "workspace/api/admin/orgs/org_id/tenants_GET.xs", "change": "tags admin; role check first"},
+    {"kind": "query", "name": "tenants/{tenant_id} PATCH", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "tags admin; role check first; prior db.get by id replaced with db.query filtering id and org_id; db.edit by id left as is"},
+    {"kind": "query", "name": "admin/stats GET", "file": "workspace/api/app/admin/stats_GET.xs", "change": "tags admin; role check first; counts unchanged"}
+  ],
+  "templates_considered": [
+    "admin_endpoints_check_role (AUTH-002): fits the role-check half, used as written with functions and tags",
+    "own_records_only (AUTH-020): its db.where_constraint_required rule targets owner fields on any table; the org_id-on-tenants rule is narrower, so I wrote a custom policy",
+    "no_self_promotion (AUTH-030): would catch me_PATCH role write; not in scope of the ask, not added",
+    "endpoints_need_login (AUTH-010): not needed, all admin endpoints already require auth"
+  ],
+  "templates_used": ["admin_endpoints_check_role"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_admin_role"], "placement": "first", "must_reference": ["$auth"], "tags": ["admin"], "object_kinds": ["query"]}, "covers": "admin endpoints check role before doing anything else"},
+    {"policy_key": "TEN-001", "check": "db.where_constraint_required", "params": {"field": "org_id", "table_selector": {"names": ["tenants"]}}, "covers": "never touches tenants table without filtering by org_id"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "role check logic (admin or support_lead)", "why": "no check exists"},
+    {"part": "endpoints under /admin that lack the admin tag", "why": "no check exists; the policy only sees tagged endpoints"},
+    {"part": "tenant db.edit in tenant_id PATCH cannot be org-filtered as written", "why": "other"},
+    {"part": "cross-org tenant count in admin/stats", "why": "needs owner decision"},
+    {"part": "token validity and real role/org_id values at runtime", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The admin group endpoints are the ones under api/admin; admin/stats is in the app group but its path is under /admin, so I tagged it",
+    "Admin endpoints use auth=users, so $auth.id is the caller",
+    "The role check's error_type accessdenied is acceptable for the precondition",
+    "org_id on tenants is the filter the customer means, not on users"
+  ],
+  "workspace_names_used": ["require_admin_role", "users", "tenants", "orgs", "admin", "app", "users_GET", "tenants_GET", "tenant_id_PATCH", "stats"],
+  "confusions": [
+    "The template admin_endpoints_check_role says a function called require_admin is the usual example; the customer wants the admin or support_lead value check, which the policy cannot see, so the role logic lives in the function body only",
+    "No documented way to scope a rule to an API group's path prefix; the tag scope was the only option that reached admin/stats",
+    "Parse warns that tag admin is on no query until the tag is pushed; it is expected but reads like a real problem",
+    "Unclear whether db.edit accepts a where filter; the policy docs show field_name/field_value only"
+  ],
+  "wished_for": [
+    "A way to scope by path prefix (for example /admin) rather than by tag, so new endpoints under the prefix are picked up without a tag",
+    "A recipe for org-level tenancy (filter on org_id) that is separate from owner-based own_records_only",
+    "A note on whether db.edit and db.patch accept a where clause for filtered writes"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": ["rule warning: tag admin on no query on this branch", "rule warning: function require_admin_role not on this branch"],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The call-first rule is well supported by the template, but it only checks the call, not the role logic, and the admin tag must be applied to each endpoint. TEN-001 covers all tenants reads and writes, but two expected findings (PATCH db.edit and stats count) remain by design. I did not run policy evaluate, so I have not seen the real findings."
+}

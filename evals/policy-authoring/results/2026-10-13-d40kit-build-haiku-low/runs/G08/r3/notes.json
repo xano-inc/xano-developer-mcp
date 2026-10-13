@@ -1,0 +1,38 @@
+{
+  "goal_id": "G08",
+  "objects_built": [],
+  "objects_changed": [
+    {"kind": "function", "name": "acme_notify_sms", "file": "workspace/function/acme_notify_sms.xs", "change": "Removed Twilio credentials embedded in the api.request URL; URL now built from $env.TWILIO_ACCOUNT_SID and auth header from $env.TWILIO_BASIC_AUTH. Env var names are my choice."}
+  ],
+  "templates_considered": ["SEC-012 no_secrets_in_code: fits the ask directly (hardcoded keys and credentialed URLs), used as-is"],
+  "templates_used": ["SEC-012"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "No API keys, tokens or credentialed URLs written as literals in any object definition or agent settings; the Twilio case from the ask"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Bare 32-hex Twilio auth token in a header or param with no recognisable shape", "why": "no check exists"},
+    {"part": "Generic hardcoded passwords (e.g. password = \"...\") not in a known credential shape", "why": "no check exists"},
+    {"part": "Values inside environment variables are not scanned by default", "why": "other"},
+    {"part": "Rotating the exposed Twilio credential and setting env vars", "why": "needs runtime/org process"},
+    {"part": "Blocking enforcement instead of advisory", "why": "other"}
+  ],
+  "assumptions": [
+    "Env var names TWILIO_ACCOUNT_SID and TWILIO_BASIC_AUTH are new; the customer must set them",
+    "The customer wants the function fixed in this change, since the approved plan said build all of it",
+    "Advisory enforcement is the right default for a new policy per the skill"
+  ],
+  "workspace_names_used": ["acme_notify_sms", "acme_get_tracking", "acme_send_invoice_email", "SHIPFAST_API_KEY", "RESEND_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"],
+  "confusions": [
+    "The catalogue says aws and twilio match identifiers rather than secrets, but gives no pattern for a bare Twilio auth token; unclear whether any pattern catches it",
+    "The skill's rule for writing a $env reference in place of a literal does not show the exact XanoScript for concatenating an env value into a URL; I copied the style from acme_get_tracking headers"
+  ],
+  "wished_for": [
+    "A pattern or literal check for generic password and bare hex token shapes",
+    "An example of a $env reference used inside a url string"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The literal credential check covers the Twilio incident and the general API key case, but a bare hex auth token or a generic password can pass unflagged. The dry run was clean, but no policy evaluation has been run, so findings are unverified."
+}

@@ -1,0 +1,98 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUTH-002.xs",
+    "build/policies/TEN-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUTH-002.xs",
+      "ok": true,
+      "key": "AUTH-002",
+      "title": "Admin endpoints check the caller's role",
+      "statement": "Every endpoint tagged admin calls the require_admin_role function as its first statement, passing the logged-in user. Only admin and support_lead users may pass that check. An admin endpoint that cannot call it is reported, and the owner decides any exemption.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-002.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_admin_role"
+            ],
+            "placement": "first",
+            "must_reference": [
+              "$auth"
+            ],
+            "when": [],
+            "tags": [
+              "admin"
+            ],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AUTH-002.R1",
+          "text": "tags \"admin\" is on no query on this branch, so it selects nothing."
+        },
+        {
+          "rule_id": "AUTH-002.R1",
+          "text": "Function \"require_admin_role\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/TEN-001.xs",
+      "ok": true,
+      "key": "TEN-001",
+      "title": "Tenant reads and writes filter on org_id",
+      "statement": "Nothing reads or writes the tenants table without constraining org_id, so one org never reaches another org's tenants. A query that must span orgs needs an exemption decided by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "TEN-001.R1",
+          "title": "",
+          "check": "db.where_constraint_required",
+          "params": {
+            "table_selector": {
+              "names": [
+                "tenants"
+              ]
+            },
+            "field": "org_id",
+            "compare_to": "",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

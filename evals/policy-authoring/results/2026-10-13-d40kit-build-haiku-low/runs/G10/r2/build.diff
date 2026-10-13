@@ -1,0 +1,124 @@
+--- a/ai/tool/delete_customer_note.xs
++++ b/ai/tool/delete_customer_note.xs
+@@ -1,13 +1,20 @@
+-// Deletes an internal note about a customer.
++// Deletes an internal note about a customer, only after a person approved it.
+ tool delete_customer_note {
+-  instructions = "Delete an internal note when the customer asks for it to be removed."
++  instructions = "Delete an internal note when the customer asks for it to be removed. Needs an approval_id from a person's approval."
+ 
+   input {
+     // The note to delete
+     int note_id
++
++    // The approval request a person approved for this deletion
++    int approval_id
+   }
+ 
+   stack {
++    function.run require_human_approval {
++      input = {approval_id: $input.approval_id}
++    } as $approved
++
+     db.del customer_notes {
+       field_name = "id"
+       field_value = $input.note_id
+@@ -16,4 +23,4 @@
+ 
+   response = {deleted: true}
+   guid = "fBiHjWG1iPkEHhqm-foQR71c0Xg"
+-}
+\ No newline at end of file
++}
+--- a/ai/tool/send_customer_email.xs
++++ b/ai/tool/send_customer_email.xs
+@@ -1,6 +1,6 @@
+-// Emails a customer on behalf of support.
++// Emails a customer on behalf of support, only after a person approved it.
+ tool send_customer_email {
+-  instructions = "Send the customer an email with the answer or next steps."
++  instructions = "Send the customer an email with the answer or next steps. Needs an approval_id from a person's approval."
+ 
+   input {
+     // The customer's email address
+@@ -11,9 +11,16 @@
+   
+     // Email body in plain text
+     text body
++
++    // The approval request a person approved for this email
++    int approval_id
+   }
+ 
+   stack {
++    function.run require_human_approval {
++      input = {approval_id: $input.approval_id}
++    } as $approved
++
+     util.send_email {
+       api_key = $env.RESEND_API_KEY
+       service_provider = "resend"
+@@ -26,4 +33,4 @@
+ 
+   response = {sent: true}
+   guid = "CCzsw2M_uOR-T8psXFQa6b_WdHA"
+-}
+\ No newline at end of file
++}
+--- a/function/require_human_approval.xs
++++ b/function/require_human_approval.xs
+@@ -0,0 +1,20 @@
++// Stops the calling action unless a person has approved the matching approval request.
++function require_human_approval {
++  input {
++    int approval_id
++  }
++
++  stack {
++    db.get approval_requests {
++      field_name = "id"
++      field_value = $input.approval_id
++    } as $approval
++
++    precondition ($approval.status == "approved") {
++      error_type = "accessdenied"
++      error = "A person must approve this action first."
++    }
++  }
++
++  response = $approval
++}
+--- a/policies/AGENT-010.xs
++++ b/policies/AGENT-010.xs
+@@ -0,0 +1,12 @@
++policy "AGENT-010" {
++  title = "AI agents wait for human approval before deleting or emailing"
++  statement = "An AI agent tool may delete records or send email only after require_human_approval has run in the same tool. A person approves each action in approval_requests first. Tools that do neither are not affected."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "stack.statement_order"
++    params = {before: {functions: ["require_human_approval"]}, after: ["db.del", "db.bulk.delete", "db.truncate", "util.send_email"], object_kinds: ["tool"]}
++  }
++}
+--- a/table/approval_requests.xs
++++ b/table/approval_requests.xs
+@@ -0,0 +1,16 @@
++// One row per action an AI agent wants to take on a customer. A person sets status to approved before the action runs.
++table approval_requests {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    text action
++    text target
++    text status?="pending"
++    text decided_by?
++    timestamp decided_at?
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

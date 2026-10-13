@@ -1,0 +1,67 @@
+{
+  "goal_id": "G16",
+  "objects_built": [
+    {"kind": "function", "name": "require_manager", "file": "workspace/function/require_manager.xs", "role": "Reads the given user's row and stops the call with accessdenied unless role is manager. Called by the refund-approve and price-change endpoints."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "refunds/{refund_id}/approve", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "Added function.run require_manager with user_id = $auth.id before the db.edit refunds."},
+    {"kind": "query", "name": "products/{product_id}/price", "file": "workspace/api/app/products/product_id/price_PATCH.xs", "change": "Added function.run require_manager with user_id = $auth.id before the db.patch products."},
+    {"kind": "query", "name": "me", "file": "workspace/api/app/me_PATCH.xs", "change": "Removed the text role input. Replaced data = $input[\"\"] (whole-body write) with explicit name, phone and marketing_opt_in, closing the self-promotion path."}
+  ],
+  "templates_considered": [
+    "AUTH-030 no_self_promotion: fits the self-promotion part exactly; used as-is with fields [role].",
+    "AUTH-002 admin_endpoints_check_role: template is about admin endpoints; the ask is about manager-only actions. Kept its key and its object.statement_required shape, with functions [require_manager] and the scope on refunds and products. Title changed to match.",
+    "AUTH-003 public_endpoints_harmless: no fit; the ask is not about public endpoints.",
+    "AUTH-050, AUTH-040, BIZ-001: no fit for this ask, or only loosely (BIZ-001 is check-before-write ordering, which statement_order would need per-table functions for; not used).",
+    "RET-001 / audit recipes: out of scope for this ask."
+  ],
+  "templates_used": ["AUTH-030", "AUTH-002"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_manager"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["refunds"]}}, "covers": "Refund edits (approval) only happen after the manager check."},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_manager"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["refunds"]}}, "covers": "Same, for patch writes to refunds."},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_manager"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["products"]}}, "covers": "Price changes (edit) only after the manager check."},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_manager"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["products"]}}, "covers": "Price changes (patch) only after the manager check; this is the one the price endpoint uses."},
+    {"policy_key": "AUTH-030", "check": "db.write_from_input_forbidden", "params": {"fields": ["role"]}, "covers": "Nobody can set their own role from request input; me PATCH no longer takes it."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Regular staff can view but not change: all changes other than refunds and prices (customer edits, payments, bank links, etc.)", "why": "couldn't tell how"},
+    {"part": "Only managers may approve refunds or change prices, for writes that do not use db.edit or db.patch on refunds/products (db.add_or_edit, db.bulk.*, db.direct_query, etc.)", "why": "no check exists"},
+    {"part": "Nobody can just give themselves manager, via internal or admin tooling that writes role from a fixed value", "why": "no check exists"},
+    {"part": "Who is allowed to be a manager (who gets the role, who approves it)", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "\"Change prices\" means the products/{product_id}/price PATCH endpoint, and \"approve refunds\" means refunds/{refund_id}/approve POST.",
+    "\"Manager\" is the users.role value \"manager\"; admin is not included because the ask says only managers.",
+    "\"Regular staff\" is the users.role value \"staff\"; the restriction is implemented as 'not manager', which also covers member and viewer.",
+    "Customer approved a plan and wants it built in one change; policies are active and advisory, not blocking, per the skill's rule for new policies."
+  ],
+  "workspace_names_used": [
+    "users (table, role enum, org_id)",
+    "refunds (table, status, approved_by)",
+    "products (table, price)",
+    "auth table users",
+    "refunds/{refund_id}/approve",
+    "products/{product_id}/price",
+    "me",
+    "products",
+    "refunds"
+  ],
+  "confusions": [
+    "AUTH-002's template and check description are about admin endpoints; there is no template for 'role-restricted action', so I reused AUTH-002 with a manager function and scoped rules. Unclear whether a template can be re-scoped this way or should get its own key.",
+    "The skill says a rule with a tables scope is judged by reaching objects; whether when.statement + when.tables matches db.patch inside a function called from an endpoint is not stated. I scoped to endpoint stacks by reasoning only.",
+    "Catalogue/skill do not say whether a new object should carry a guid line; the existing workspace files all do. I left it off the two new/edited files that had none to copy (the new function).",
+    "The brief says policies go in ./workspace/policies/, the skill says /policies/ relative to the project root; I followed the brief."
+  ],
+  "wished_for": [
+    "A way to say 'write of this table only via this function' that fits a per-field, per-statement case without a restricted-tables policy (table.write_location_restricted would need the endpoints rewritten to call a single writer function).",
+    "An example of a role-restricted policy (manager-only actions) with the function signature the check expects (e.g. does it need $auth or an id input).",
+    "A note on whether object.statement_required sees function.run calls that themselves do the write, to know if the scope is judged on the caller's stack or the callee's."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [
+    "Dry run exit 0; no policy findings printed (dry-run does not evaluate policies, and I did not run xano policy evaluate, which the brief forbids). Parse warned that require_manager is not on the branch: expected, since it is part of this change."
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The refund-approve and price endpoints now call a manager-only function, and AUTH-002 checks that. Self-promotion through me PATCH is removed and AUTH-030 checks for role from input. Confidence is not high because the rules only see db.edit and db.patch on two tables, the regular-staff restriction covers only refunds and prices, and nothing has been evaluated against the live branch, so the findings are predictions."
+}
