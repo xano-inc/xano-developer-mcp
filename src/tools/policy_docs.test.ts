@@ -63,6 +63,24 @@ describe("policy documentation", () => {
     expect(generator.renderTemplates(catalogue)).toBe(readFileSync(generator.TEMPLATES_MD, "utf8"));
   });
 
+  it("renders PHP's empty params ([]) as {} in a check's uses and a recipe's rules", async () => {
+    const generator = await import(new URL("../../scripts/gen-policy-check-docs.mjs", import.meta.url).href);
+    const catalogue = JSON.parse(readFileSync(generator.CATALOGUE, "utf8"));
+    const check = catalogue.items[0];
+    const recipe = catalogue.recipes.find((r: { rules?: unknown[] }) => (r.rules ?? []).length > 0);
+    expect(recipe).toBeDefined();
+    const emptied = {
+      ...catalogue,
+      items: [{ ...check, uses: [{ goal: "An empty use", params: [] }] }, ...catalogue.items.slice(1)],
+      recipes: catalogue.recipes.map((r: { id: string; rules?: Array<Record<string, unknown>> }) =>
+        r.id === recipe.id ? { ...r, rules: [{ ...r.rules![0], params: [] }] } : r,
+      ),
+    };
+    expect(generator.renderSections(emptied).checks).toContain(`- \`${check.id}\`: An empty use → \`{}\``);
+    expect(generator.renderTemplates(emptied)).toContain(`with \`{}\`.`);
+    expect(generator.renderTemplates(emptied)).not.toContain("with `[]`");
+  });
+
   it("lists the templates in their own topic, with their checks and what each leaves to fill, and points at it", () => {
     const templates = xanoscriptDocs({ topic: "policy-templates" }).documentation;
     expect(resolveTopic("policy-template")).toBe("policy-templates");

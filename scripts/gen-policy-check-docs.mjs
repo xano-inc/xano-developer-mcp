@@ -26,6 +26,11 @@ const cell = s => String(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace
 const code = v => '`' + (v === '' ? '""' : v) + '`';
 const ownParams = it => Object.entries(it.params ?? {}).filter(([name]) => !SCOPE_KEYS.includes(name));
 
+/** A rule's params as one line of JSON. The catalogue is PHP's JSON, where an empty object is `[]`. */
+function paramsJson(params) {
+  return JSON.stringify(Array.isArray(params) && params.length === 0 ? {} : (params ?? {}));
+}
+
 function checks(items) {
   const out = ['| Check | Label | Behavior | Parameters |', '| --- | --- | --- | --- |'];
   for (const it of items) {
@@ -34,7 +39,7 @@ function checks(items) {
     if (oneOf.size) params.unshift(`1 of (${[...oneOf].map(code).join(', ')})`);
     out.push(`| \`${it.id}\` | ${cell(it.label)} | ${cell(it.description)} | ${params.join(', ') || '_scope only_'} |`);
   }
-  const uses = items.flatMap(it => (it.uses ?? []).map(use => `- \`${it.id}\`: ${use.goal} → ${code(JSON.stringify(use.params ?? {}))}${use.note ? ` — ${use.note}` : ''}`));
+  const uses = items.flatMap(it => (it.uses ?? []).map(use => `- \`${it.id}\`: ${use.goal} → ${code(paramsJson(use.params))}${use.note ? ` — ${use.note}` : ''}`));
   if (uses.length) out.push('', 'Uses: what each check is for, as goals in a customer\'s words with the params that achieve them, scope params included. Each is a complete rule its check accepts as written; `{}` takes the check\'s defaults.', '', ...uses);
   out.push('', 'Closed value sets worth knowing without a catalogue round-trip:', '');
   for (const it of items) {
@@ -179,7 +184,7 @@ function recipesSection(catalogue, items) {
       for (const rule of recipe.rules) {
         // No example here: a check's own example is often unrelated, and the recipe's prerequisites name the values.
         const fill = rule.needs?.length ? ` Fill ${rule.needs.map(code).join(', ')}.` : '';
-        out.push(`- ${rule.title}: ${code(rule.check)} with ${code(JSON.stringify(rule.params ?? {}))}.${fill}`);
+        out.push(`- ${rule.title}: ${code(rule.check)} with ${code(paramsJson(rule.params))}.${fill}`);
       }
     }
     if (recipe.limits?.length) {
