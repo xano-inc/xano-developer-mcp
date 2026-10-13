@@ -7952,7 +7952,7 @@
     {
       "id": "test.assertion_required",
       "label": "Tests assert anonymous calls are rejected",
-      "description": "Requires, for each endpoint that requires a login, a test that calls it without one and asserts that it is rejected. A tokenless endpoint unit test counts too. Anonymous means no token (or a literal null, empty or false one) and no Authorization header in literal headers; a computed token or headers may authenticate. The rejection is asserted by expect.to_throw wrapping the call with the text Unauthorized, Authentication Required or Unauthorized - Authentication Required (whole, any case; an empty text would accept any failure), or by a later expect.to_equal or expect.to_contain on the call result's code or message with ERROR_CODE_UNAUTHORIZED or one of those texts; an endpoint unit test with no token counts with such a to_throw expectation. A workflow test's api.call does not yet enforce the endpoint's auth when called without a token, so such a test fails at run time until the platform does; an endpoint unit test observes the rejection today. Endpoints that do not require authentication are skipped: they cannot reject an anonymous call. Tests are read, not run; every workflow test and the endpoints' unit tests are read whatever the rule's scope, and an inactive workflow test counts for nothing.",
+      "description": "Requires, for each endpoint that requires a login, a test that calls it without one and asserts that it is rejected. A tokenless endpoint unit test counts too. Anonymous means no token (or a literal null, empty or false one) and no Authorization header in literal headers; a computed token or headers may authenticate. The rejection is asserted by expect.to_throw wrapping the call with the text Unauthorized, Authentication Required or Unauthorized - Authentication Required (whole, any case; an empty text would accept any failure), or by a later expect.to_equal or expect.to_contain on the call result's code or message with ERROR_CODE_UNAUTHORIZED or one of those texts; an endpoint unit test with no token counts with such a to_throw expectation. A workflow test's api.call applies the endpoint's auth as an HTTP request does: a call with no token is refused, binding the code and message, or raising inside expect.to_throw. Endpoints that do not require authentication are skipped: they cannot reject an anonymous call. Tests are read, not run; every workflow test and the endpoints' unit tests are read whatever the rule's scope, and an inactive workflow test counts for nothing.",
       "params": {
         "tags": {
           "type": "string[]",
@@ -8067,7 +8067,7 @@
           "name": "reaching_table_tags"
         }
       ],
-      "fix_hint": "Add an endpoint unit test with no token expecting to_throw \"Unauthorized\", or a workflow test calling it with no token inside expect.to_throw \"Unauthorized\".",
+      "fix_hint": "Add a workflow test that calls it with no token inside expect.to_throw \"Unauthorized\" (or asserts the result's code is ERROR_CODE_UNAUTHORIZED), or an endpoint unit test with no token expecting to_throw \"Unauthorized\".",
       "keywords": [
         "test",
         "assert",
@@ -8970,7 +8970,7 @@
         "401",
         "negative test"
       ],
-      "limits": "Inspects test definitions without running them, so a test that exists but fails still counts; an assertion must follow each call, but what it asserts is not checked. A workflow test cannot yet observe an anonymous call's rejection (api.call runs a protected endpoint anonymously), so that test fails until the platform enforces auth there; an endpoint unit test called without a token and expecting the rejection works today.",
+      "limits": "Inspects test definitions without running them, so a test that exists but fails still counts; an assertion must follow each call, but what it asserts is not checked.",
       "examples": {},
       "rules": [
         {
