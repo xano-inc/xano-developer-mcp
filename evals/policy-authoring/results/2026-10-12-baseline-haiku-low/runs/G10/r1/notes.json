@@ -1,0 +1,43 @@
+{
+  "goal_id": "G10",
+  "templates_considered": [
+    "no_destructive_sql (SEC-010): forbids raw SQL and truncation, not ordinary db.del; the ask is about deletes, so it only partly fits and was not used",
+    "writes_check_first (BIZ-001): stack.statement_order for checks before writes; does not cover delete or approval, so did not fit",
+    "endpoints_need_login, admin_endpoints_check_role, protected_endpoints_run_middleware: about endpoint auth and roles, not agent tools; did not fit",
+    "no_leftover_code, tables_have_listed_fields, others: unrelated to the ask; did not fit"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "AGENT-010", "check": "stack.statement_forbidden", "params": {"statements": ["db.del", "db.truncate"], "object_kinds": ["tool"]}, "covers": "agents can't delete anything (tool stacks, including functions they call)"},
+    {"policy_key": "AGENT-020", "check": "object.statement_required", "params": {"functions": ["request_human_approval"], "placement": "unconditional", "when": {"statement": "util.send_email"}}, "covers": "agents can't email customers without a human approving first"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "agents shouldn't call tools the user hasn't explicitly given them", "why": "no check exists"},
+    {"part": "human approval is actually enforced at runtime, not just present in the stored definition", "why": "needs runtime/org process"},
+    {"part": "delete via bulk writes (db.bulk.*) and delete-like calls to external services (api.request DELETE)", "why": "other: not in the ask's exact wording; I left them out rather than guessing a wider scope"}
+  ],
+  "assumptions": [
+    "Agent tools are the only objects an AI agent runs; the endpoints and the delete_user_account function are reachable only if a tool calls them, and stack.statement_forbidden follows function calls",
+    "util.send_email is the statement name for sending email; db.del and db.truncate are the delete statement names",
+    "request_human_approval is the approval gate, as used by issue_refund",
+    "tags = [\"ai-agents\"] on the policies is a tag I made up; the workspace has no tag vocabulary I could find"
+  ],
+  "workspace_names_used": [
+    "support_agent", "ticket_summarizer", "delete_customer_note", "lookup_order", "send_customer_email", "issue_refund", "request_human_approval", "delete_user_account", "customer_notes", "approval_requests"
+  ],
+  "confusions": [
+    "object.statement_required: the description says 'Set statements or functions; with both, the statement must call one of the functions', but the 'when' param says 'statement' is a single name; unclear whether 'when.statement' can be a list",
+    "No check reads an agent's tool list, though the catalogue includes 'agent' in object_kinds for several checks; not clear which check, if any, can see agent.tools",
+    "stack.statement_forbidden says tools are judged as their own object, and functions they call are followed; it is not stated whether db.del reached through function.run is reported at the tool or at the function, which matters for the finding location",
+    "Whether a policy with no tags needs a tag at all; the policy file format shows tags as optional but the examples always have them"
+  ],
+  "wished_for": [
+    "A check that reads an agent's tool list (for example agent.tools against an allowlist)",
+    "A worked example of object.statement_required with when.statement for an approval gate, showing placement unconditional vs first",
+    "A list of statement names (db.del, util.send_email, etc.) so I can confirm each name without guessing"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both rules parse cleanly and match the delete and email parts of the ask, but I have not run xano policy evaluate, so the findings I expect are predictions. The tool-allowlist part has no check, and the approval gate is only checked in the stored definition, not at runtime."
+}

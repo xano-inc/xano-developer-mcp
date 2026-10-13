@@ -1,0 +1,142 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUTH-010.xs",
+    "CHG-001.xs",
+    "RET-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUTH-010.xs",
+      "ok": true,
+      "key": "AUTH-010",
+      "title": "Endpoints require login",
+      "statement": "Every endpoint requires a logged-in user, unless it or its API group is tagged public. Public endpoints (login, health, newsletter signup) carry the public tag. Related to SOC 2 CC6.1 (logical access).",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [
+              "public"
+            ],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CHG-001.xs",
+      "ok": true,
+      "key": "CHG-001",
+      "title": "Endpoints are tested",
+      "statement": "Every endpoint is exercised by a workflow test or unit test that asserts something, and every protected endpoint has a test asserting that an anonymous call is rejected. Tests are evidence of change testing before release; they do not prove the tests pass. Related to SOC 2 CC8.1 (change management).",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CHG-001.R1",
+          "title": "",
+          "check": "object.test_coverage",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CHG-001.R2",
+          "title": "",
+          "check": "test.assertion_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "The audit_log table exists, and only the record_audit_event function writes to it, so every recorded change to customer data comes through one place. Related to SOC 2 CC7.2 (monitoring) and CC8.1 (change management).",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

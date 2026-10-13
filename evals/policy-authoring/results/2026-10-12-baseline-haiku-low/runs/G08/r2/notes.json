@@ -1,0 +1,50 @@
+{
+  "goal_id": "G08",
+  "templates_considered": [
+    "no_secrets_in_code (SEC-012): direct fit, literal.credential_shape covers API keys, tokens and credentialed URLs in definitions and agent settings; no fill needed",
+    "no_pii_in_responses (DATA-010): does not fit, concerns response output fields, not hardcoded secrets",
+    "no_sensitive_data_in_logs (LOG-001): does not fit, concerns logs rather than source literals",
+    "sensitive_fields_marked (CONF-011): does not fit, concerns field attributes, not literals"
+  ],
+  "templates_used": ["no_secrets_in_code"],
+  "rules": [
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {},
+      "covers": "no API keys or tokens hardcoded in a function or endpoint (default patterns include twilio, stripe, aws, url_credentials); default locations definition and agent_settings span all functions and endpoints"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "passwords hardcoded in a function or endpoint (generic password strings)", "why": "no check exists"},
+    {"part": "secrets must come from environment variables (verifying a value is read via $env)", "why": "no check exists; literal.credential_shape flags literals only"},
+    {"part": "enforcement should block saves or publishes", "why": "other: a choice for the policy owner, not something to decide for them; left advisory"}
+  ],
+  "assumptions": [
+    "Default patterns (empty list = all) are wanted, including twilio and url_credentials",
+    "Default locations (definition, agent_settings) are sufficient; env is not scanned by design",
+    "Template statement and severity are acceptable without tailoring to the agency",
+    "No tags needed; template lists soc2 as a framework but the template carries no tags field to copy"
+  ],
+  "workspace_names_used": [
+    "function/acme_notify_sms (contains a Twilio SID and auth token literal in a URL)",
+    "$env.RESEND_API_KEY, $env.SHIPFAST_API_KEY, $env.STRIPE_SECRET_KEY, $env.PLAID_SECRET (examples of correct env usage)",
+    "policy_authoring_eval workspace"
+  ],
+  "confusions": [
+    "The skill's authoring rules are long and lean toward fix-and-ask flows; for a fresh template-based policy the path from template to file was clear, but it took reading several sections to confirm the template needs no params",
+    "The template table gives title, key and checks but not the statement; the statement came from the catalogue JSON summary, not the markdown, which is a gap in policy-templates.md",
+    "Unclear whether an empty params object renders as params = {} or should be omitted; the parser accepted it and expanded defaults in the JSON output",
+    "The check description says definition scans 'disabled content included', which matters for whether disabled code still triggers findings; not stated in the template docs"
+  ],
+  "wished_for": [
+    "Template markdown should include each template's statement/summary so authors do not need the JSON",
+    "A check that flags hardcoded password fields or password-named string literals",
+    "A way to assert a value comes from $env (positive check), not just that no literal matches",
+    "Example of an evaluate output line for a finding, so a prediction can be checked against real output"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The template is a direct fit for keys and tokens and parses cleanly, and the workspace has a real Twilio literal the rule should catch. Confidence is medium rather than high because passwords are not covered, the check does not verify that $env is used, and the finding on acme_notify_sms is a prediction; evaluate was forbidden, so it is not confirmed."
+}

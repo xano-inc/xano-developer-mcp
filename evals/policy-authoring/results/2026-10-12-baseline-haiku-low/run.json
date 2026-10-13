@@ -1,0 +1,31 @@
+{
+  "label": "2026-10-12-baseline-haiku-low",
+  "model": "haiku",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "kit_sha256_16": "5a629c39af63a091",
+  "repeats": 2,
+  "goals": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G07",
+    "G08",
+    "G09",
+    "G10",
+    "G11",
+    "G12",
+    "G13",
+    "G14"
+  ],
+  "workspace_id": "9040",
+  "instance": "http://localhost:9999",
+  "repo_commit": "b452aba6f7af4265602fc69bd3925b365f6a64b7",
+  "claude_version": "2.1.296 (Claude Code)",
+  "started": "2026-10-13T03:24:33.577Z",
+  "ended": "2026-10-13T03:32:17.102Z",
+  "total_cost_usd": 0.51639052
+}

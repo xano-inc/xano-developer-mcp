@@ -1,0 +1,132 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "LOG-001.xs",
+    "PCI-001.xs",
+    "VND-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Logs don't contain request, user or secret data",
+      "statement": "Debug logs never reference request input, the logged-in user or environment variables. Cardholder and bank data is request input, so it must not reach a debug log. Only debug.log is checked on this branch.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "PCI-001.xs",
+      "ok": true,
+      "key": "PCI-001",
+      "title": "Cardholder and bank account data is not stored raw",
+      "statement": "Card numbers, card security codes, card expiry dates, cardholder names and bank account and routing numbers must not be stored as fields in any table. Store a processor token or the last four digits instead. The check reads field names only: it cannot tell whether a stored field is encrypted, and a card number held under a different field name is not found.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "PCI-001.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "card_expiry",
+              "cardholder_name",
+              "bank_account_number",
+              "bank_routing_number"
+            ],
+            "field_types": [],
+            "attribute": "",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": true,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "VND-001.xs",
+      "ok": true,
+      "key": "VND-001",
+      "title": "Data only goes to approved vendors",
+      "statement": "Outbound requests and cloud, email and AI model providers may only go to the approved vendors. Approved on this branch: Stripe (api.stripe.com) and Plaid (production.plaid.com). Any other destination is reported until the policy owner approves it, and cardholder or bank data must never go to an unapproved vendor.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "VND-001.R1",
+          "title": "",
+          "check": "outbound.vendor_allowlist",
+          "params": {
+            "kinds": [],
+            "hosts": [
+              "api.stripe.com",
+              "production.plaid.com"
+            ],
+            "providers": [],
+            "env_hosts": [],
+            "literal_urls_forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

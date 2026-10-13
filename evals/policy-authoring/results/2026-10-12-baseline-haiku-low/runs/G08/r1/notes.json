@@ -1,0 +1,51 @@
+{
+  "goal_id": "G08",
+  "templates_considered": [
+    "no_secrets_in_code: SEC-012, literal.credential_shape, no fill needed; matches the 'API keys/passwords must come from env vars' ask",
+    "tls_verification_on / requests_have_timeout / external_calls_handle_errors: outbound-request hygiene, not related to secrets",
+    "no_sensitive_data_in_logs: covers logging of secrets indirectly only; not the ask",
+    "approved_vendors_only: vendor allowlist, not related to hardcoding"
+  ],
+  "templates_used": ["no_secrets_in_code"],
+  "rules": [
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {},
+      "covers": "API keys and tokens (Twilio, Stripe, etc.) hardcoded in functions/endpoints; defaults scan all patterns and the definition and agent_settings locations"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "generic passwords hardcoded in functions or endpoints", "why": "no check exists"},
+    {"part": "'must come from environment variables' as a positive requirement (that every credential is read from $env)", "why": "no check exists; the check only flags literals, it does not require $env use"}
+  ],
+  "assumptions": [
+    "The customer's 'Twilio key' is the literal in function acme_notify_sms (line 10 of the pulled file)",
+    "Template defaults are acceptable: all patterns, definition and agent_settings locations, no allowed_secrets",
+    "A starting policy should be advisory and active, per the authoring rules",
+    "Tag 'soc2' is acceptable (template lists soc2 framework)",
+    "Suggested env var name TWILIO_AUTH_TOKEN is only an example; the customer picks the name"
+  ],
+  "workspace_names_used": [
+    "function/acme_notify_sms",
+    "function/acme_send_invoice_email ($env.RESEND_API_KEY, already env-based)",
+    "ai/agent/support_agent ($env.ANTHROPIC_API_KEY, already env-based)",
+    "$env.SHIPFAST_API_KEY (already env-based)"
+  ],
+  "confusions": [
+    "The check's param docs say 'Definitions avoid credential literals' but the description for the default locations says definition and agent_settings; it was not obvious whether a function with an env-based value is considered compliant without an explicit statement. The fix text says a value already in $env is in place, which resolves it, but it lives in the fix text, not the param docs.",
+    "The skill says a password is a 'literal key' only in the security.encrypt/hmac context; the template title 'No secrets are hardcoded' and summary mention 'tokens' and 'credentialed URLs' but not passwords, so a customer asking about passwords is mapped to a check that may not detect them. Not clear from the catalogue whether a plain password literal is caught.",
+    "No check verifies positively that a credential is read from $env; the template's summary implies this ('belong in environment variables') but the rule can only flag violations.",
+    "Whether scope params (tags, api_groups) are needed for a workspace-wide secrets policy was unclear; I left them out because the policy should apply everywhere."
+  ],
+  "wished_for": [
+    "A check or documented recipe for generic password/secret-named fields assigned a literal (for example a field named password or secret set to a string literal).",
+    "A positive check that a named credential must be read from $env, or a note that literal.credential_shape is the only available mechanism for this requirement.",
+    "A worked example showing that an env-sourced value passes literal.credential_shape, to confirm the expectation for customers.",
+    "Confirmation of whether a Twilio account SID in a URL (identifier, not a secret) is flagged, since the check doc says aws and twilio match identifiers."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The template's check directly targets hardcoded API keys and tokens, and the Twilio literal is in the workspace, so it covers the main case the customer cares about. Confidence is not high because generic passwords and the positive 'must come from env' requirement have no check, and I have not evaluated the policy against the workspace, so detection of the actual Twilio literal is inferred from the check docs, not observed."
+}

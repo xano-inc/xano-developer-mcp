@@ -1,0 +1,60 @@
+{
+  "goal_id": "G14",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: not the ask; customer asks are about cost and audit",
+    "BIZ-001 writes_check_first: stack.statement_order fits write ordering, not loops or audit; not used",
+    "RET-001 audit_log_protected: about who may write audit_log, not whether email-table writes are audited; audit_log already exists and is written only by record_audit_event, so the template would add nothing; not used",
+    "RET-002 retained_data_cleaned_up: retention cleanup, not asked; not used",
+    "SEC-013 requests_have_timeout: timeouts, not retry loops; not used",
+    "CONF-010 sensitive_tables_need_login / CONF-012 confidential_tables_tagged: need tags on tables, and no table in the workspace is tagged; the audit ask is about change tracking, not login; not used",
+    "CONF-011 sensitive_fields_marked: marks fields, does not track changes; not used",
+    "VND-001 approved_vendors_only: about vendors, not cost loops; not used"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["ai.agent.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI call inside a loop cost $900"},
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["api.request"], "must_not_be_inside": ["while"]}, "covers": "background task retrying forever (approximation: flags any outbound request inside a while, does not check whether a bound exists)"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.add", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: inserts into email tables must record an audit event"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: edits of email tables"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: patches of email tables"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: deletes from email tables"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Retries that run forever: no check bounds a loop's iteration count, so the rule only flags outbound requests inside a while loop", "why": "no check exists"},
+    {"part": "Tracking by a tag on tables holding customer email (the way the policy is meant to be scoped in the long term)", "why": "other: workspace tables have no tags; I scoped by table name instead, and the brief said not to add tags"},
+    {"part": "Confirming the audit record is correct (fields, actor), not just that the call is made", "why": "no check exists"},
+    {"part": "Whether an AI call costs too much per run (spend or token budget)", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "'customer emails' means the email-typed fields on customers, users, newsletter_subscribers, support_tickets (requester_email) and patients (email?)",
+    "record_audit_event is the audit function to require; it writes audit_log",
+    "ai.agent.run and api.request are the statement names for the AI call and outbound request",
+    "a while loop, foreach loop and for loop are valid must_not_be_inside block names",
+    "a predicted finding list is a prediction only; I did not run xano policy evaluate"
+  ],
+  "workspace_names_used": [
+    "customers", "users", "newsletter_subscribers", "support_tickets", "patients", "audit_log",
+    "record_audit_event", "nightly_ticket_summaries", "retry_failed_webhooks", "summarize_ticket",
+    "customers_POST", "customer_id_PATCH", "newsletter/subscribe_POST", "Ticket Summarizer", "Support Agent",
+    "webhook_deliveries", "delete_user_account", "requester_email"
+  ],
+  "confusions": [
+    "Whether statement.containment accepts 'while' and 'for' as must_not_be_inside names: the catalogue describes foreach and try_catch as examples, but does not list the full set of block names; I assumed the loop keywords are valid and parse reported no warning",
+    "No guidance on how to express 'a loop that repeats an outbound request without a bound': the catalogue has no check for iteration counts, and the closest rule (must_not_be_inside while) is an approximation that will also flag bounded loops",
+    "No guidance on scoping a rule to write statements on named tables without a tag: object.statement_required's when takes one statement name per condition, so covering db.add, db.edit, db.patch and db.del needed four rules; a list form for when.statement would simplify this",
+    "The skill says a template prefix like AUTH- or DATA- with an unused number must not be used; it did not say whether a new prefix such as AUDIT- or COST- is acceptable, so I used those",
+    "The skill says to read policy files under /policies/ for the workspace's exemption conventions; there are none in this workspace (policy list shows none), and the skill did not say what to do when there is no convention yet",
+    "xano policy parse printed the policy back in a reformatted layout; this is useful but not documented, so I did not know whether the output or the exit code is the thing to check"
+  ],
+  "wished_for": [
+    "A check that bounds a loop's iteration count, or bounds the number of calls a statement can make per run (cost guard)",
+    "A complete list of block names accepted by statement.containment (for while, for, foreach, try_catch.catch, etc.)",
+    "A way to express 'statement X on table in tables list' in one rule (a list form for when.statement), instead of one rule per write statement",
+    "A template for cost controls (loop-contained AI calls, bounded retries)",
+    "Guidance on whether a new policy key prefix is acceptable when no template uses it"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The AI-in-loop rule is a direct check of the $900 pattern and should catch it; the retry rule is an approximation (any outbound request inside a while, not an unbounded retry). The audit rules check that a record_audit_event call is unconditional for writes to the named email tables, which fits 'who changed what' only if the tables are complete and the audit call is correct; they are scoped by name, not tag, because the workspace has no table tags. Both files parse with exit 0. I did not run xano policy evaluate, so the predicted findings are unconfirmed."
+}

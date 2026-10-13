@@ -1,0 +1,58 @@
+{
+  "goal_id": "G02",
+  "templates_considered": [
+    "CONV-010 functions_snake_case: fits the function half (object.naming, snake_case); lacks the client prefix, so rule 2 adds prefixes",
+    "CONV-011 fields_snake_case: not applicable, the ask is about endpoints, tables and functions",
+    "CONV-012 endpoint_paths_versioned: rejected, it requires kebab-case paths, which contradicts the ask's snake_case",
+    "CONV-013 function_arguments_snake_case: not applicable, the ask is about function names, not arguments",
+    "CONV-020/021 tag vocabulary and kebab tags: not applicable",
+    "No template covers plural table names or a client prefix; table plurality has no check"
+  ],
+  "templates_used": ["CONV-010 (partially, as the basis for the function rule; the policy key is NAMING-010, a custom key, and the prefix is added)"],
+  "rules": [
+    {
+      "policy_key": "NAMING-010",
+      "check": "object.naming",
+      "params": {"name_kind": "endpoint_path", "case_style": "snake_case"},
+      "covers": "endpoints are lowercase snake_case"
+    },
+    {
+      "policy_key": "NAMING-010",
+      "check": "object.naming",
+      "params": {"name_kind": "object", "case_style": "snake_case", "prefixes": ["acme_"], "object_kinds": ["function"]},
+      "covers": "functions are snake_case and start with the client prefix (acme_ assumed)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "tables are plural", "why": "no check exists"},
+    {"part": "functions start with the client prefix, for each of the 12 client workspaces", "why": "other"}
+  ],
+  "assumptions": [
+    "client prefix is acme_ (five functions in this workspace use it; the customer did not name it)",
+    "endpoint names are judged by endpoint_path, so a query's path segments are checked, not its display name",
+    "the policy is advisory and active, per the customer's flag-don't-block request",
+    "severity low, matching the platform's CONV convention templates",
+    "custom key NAMING-010 is used because no template fits the combined ask"
+  ],
+  "workspace_names_used": [
+    "endpoints: getCustomerProfile, bank-accounts/link, invoices/{invoice_id}, customers/{customer_id}",
+    "functions: calculateLateFee, acme_send_invoice_email, check_admin_role, record_audit_event, summarize_ticket, delete_user_account, request_human_approval, acme_get_tracking, acme_sync_shipping_rates, acme_calculate_tax, acme_notify_sms",
+    "tables: invoice_item (singular), invoices, audit_log"
+  ],
+  "confusions": [
+    "CONV-012 endpoint_paths_versioned uses kebab-case while the request asks for snake_case; the template set has no endpoint snake_case template, so I used a raw object.naming rule",
+    "object.naming description says object_kinds chooses whose names; the scope param of the same name also exists in the scope section. Both readings agree here, but the doc does not say which one to use in a rule with name_kind object",
+    "the skill says the catalogue below is the entire vocabulary, but the catalogue JSON keeps checks under items and has no checks key; I had to look up object.naming there",
+    "skill says 36 checks; catalogue includes templates such as reads_are_paged that policy-templates.md does not list",
+    "no guidance on how to express a per-client prefix across multiple workspaces with one policy"
+  ],
+  "wished_for": [
+    "a template or recipe for endpoint and function naming with a client prefix",
+    "a check for plural table names, or a documented approximation",
+    "guidance on whether object_kinds in object.naming is a scope param or a name_kind param"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The endpoint and function naming rules parse and map directly to the ask, with the acme_ prefix an assumption. Table plurality is not checkable, and I did not run evaluate, so the predicted findings are unverified."
+}

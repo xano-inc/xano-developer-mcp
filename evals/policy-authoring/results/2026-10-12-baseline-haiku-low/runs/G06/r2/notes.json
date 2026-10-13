@@ -1,0 +1,60 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "CHG-001 endpoints_have_tests: fits 'no tests'; used as-is (template scopes test_coverage to query, I widened to function)",
+    "LOG-010 external_calls_handle_errors: fits 'missing error handling' for external calls; used as-is",
+    "CONV-040 endpoints_stay_short: fits 'giant functions'; used with its size rule widened to function kind",
+    "CONV-041 shallow_nesting: same check as CONV-040; merged into CONV-040 as one rule with max_nesting, rather than a second policy",
+    "AUTH-010 endpoints_need_login: not used; ask does not mention auth",
+    "SEC-010 no_destructive_sql, SEC-012 no_secrets_in_code, DATA-010, LOG-001: not used; ask does not mention them",
+    "CONV-010..013 naming, CONV-030 ai_tools_described, CONV-050 no_leftover_code: not used; 'you know the drill' is vague and I did not guess further",
+    "VAL-001 inputs_validated: plausible for 'missing error handling' but not what it checks; not used"
+  ],
+  "templates_used": ["CHG-001", "LOG-010", "CONV-040"],
+  "rules": [
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query", "function"]}, "covers": "no tests (endpoints and functions)"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests: login-protected endpoints must have a rejected-anonymous-call test"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling (external calls only)"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant functions (statement count and nesting)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "missing error handling beyond external calls (DB writes, logic errors, input failures)", "why": "couldn't tell how: no check reads whether a db or logic error is handled; statement.containment only sees named statements"},
+    {"part": "tests that actually verify behaviour (not just exist and contain an assertion)", "why": "no check inspects assertion content; test.assertion_required and object.test_coverage only check presence and that an expect follows the call"},
+    {"part": "'200 line functions' as a line count", "why": "no check counts lines; stack.size_limit counts statements and nesting, which I used as the proxy"},
+    {"part": "'stop juniors breaking prod' as a whole", "why": "needs runtime/org process: policies read stored definitions only, and blocking/enforcement is an owner decision"},
+    {"part": "'you know the drill' (unspecified other review nits)", "why": "other: the customer did not list them; I did not guess"}
+  ],
+  "assumptions": [
+    "'giant functions' means stacks too long or too deep, not literal line count",
+    "'missing error handling' means external api.request calls not wrapped in try_catch, the only error-handling check the catalogue has",
+    "the workspace's endpoints and functions are in scope for all three; no api_groups/tags scoping since the workspace has almost no tags",
+    "advisory and active per brief for a new policy; no blocking requested",
+    "policy keys reuse the template keys CHG-001, LOG-010, CONV-040"
+  ],
+  "workspace_names_used": [
+    "api/app/payments/charge_POST.xs (endpoint, api.request with no try_catch)",
+    "function/acme_get_tracking.xs (only file with try_catch around api.request)",
+    "function/acme_sync_shipping_rates.xs (largest stack, 82 lines, nesting ~5)",
+    "workflow_test/invoices_require_login.xs, workflow_test/health_check.xs (only two tests in workspace)",
+    "tags public, smoke (no owner or sensitivity tags exist)",
+    "auth = \"users\" (login-protected endpoint pattern)"
+  ],
+  "confusions": [
+    "CHG-001 template scopes object.test_coverage to object_kinds ['query'] but the ask covers functions too; unclear whether a template's rules are a starting point or a fixed set, and the catalogue entry for test_coverage did not list object_kinds in its params section I read",
+    "CONV-040 and CONV-041 are the same check with different params; the skill says a template is one policy with its key, so merging two templates into one rule was my call and not documented",
+    "xano policy parse text output dropped the severity line for LOG-010 while printing it for CHG-001 and CONV-040; the -o json output shows severity medium. I used json to confirm",
+    "the skill says the catalogue is the entire vocabulary but the template table lists 'tests' as CHG-001 with severity low, which seems mismatched with a customer asking to stop breaking prod; no guidance on severity choice",
+    "no guidance for 'missing error handling' in general: only external-call containment has a check, and the fix note (add try_catch) is only for external calls"
+  ],
+  "wished_for": [
+    "a check that counts lines or a size proxy the customer would recognise, or a recipe mapping 'long functions' to stack.size_limit",
+    "a recipe for combining two templates into one policy (e.g. CONV-040 + CONV-041)",
+    "a check that tests assertion content, or at least a note on what an assertion must check",
+    "guidance on error handling for DB writes and logic, not just api.request",
+    "an example policy showing object_kinds usage in test_coverage and size_limit (the templates list them but the check docs do not confirm the param names)"
+  ],
+  "parse_attempts": 7,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Each of the three rules maps to a real catalogue check and parses with no rule warnings, but the goal is partly met: error handling is covered only for external calls, test checks prove presence not quality, and '200 line functions' is approximated by statements and nesting. The policies are advisory and not yet evaluated against the workspace, so the predicted findings are unverified."
+}

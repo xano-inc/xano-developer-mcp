@@ -1,0 +1,67 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "COST-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "COST-001.xs",
+      "ok": true,
+      "key": "COST-001",
+      "title": "AI calls and background retries don't run in unbounded loops",
+      "statement": "No AI agent call may sit inside a foreach, for or while loop, where one bad run can bill once per item or per retry. No background task may loop with while, since a while retry can run forever. A call or retry that really needs a loop is exempted by the policy owner, not by a tag you add yourself.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "COST-001.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.agent.run"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "foreach",
+              "for",
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "COST-001.R2",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "while"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "task"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

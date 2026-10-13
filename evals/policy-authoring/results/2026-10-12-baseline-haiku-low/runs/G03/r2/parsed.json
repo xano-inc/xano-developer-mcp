@@ -1,0 +1,160 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "LOG-001.xs",
+    "PCI-010.xs",
+    "VND-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Logs don't contain request, user or secret data",
+      "statement": "Debug and Datadog logs never reference request input, the logged-in user or environment variables. Cardholder data (card number, CVV, expiry, cardholder name) and bank account details arrive as request input, so they can never be logged. Log the event, not the values.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "LOG-001.R2",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "datadog.log"
+            ],
+            "param_names": [
+              "message"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "PCI-010.xs",
+      "ok": true,
+      "key": "PCI-010",
+      "title": "Cardholder data is not stored raw",
+      "statement": "Table schemas never declare a raw card number (PAN), card verification code (CVV) or bank account number as a field. Card data is kept only as a processor token (for example a Stripe payment method id) or a masked value such as the last four digits. Sensitive authentication data such as the CVV is never stored, even encrypted. A field that must hold raw data is an exception for the policy owner, not a fix.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "PCI-010.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "bank_account_number"
+            ],
+            "field_types": [],
+            "attribute": "",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": true,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "VND-001.xs",
+      "ok": true,
+      "key": "VND-001",
+      "title": "Data only goes to approved vendors",
+      "statement": "Outbound requests, cloud and email providers and AI model providers are limited to the vendors approved by the security owner. The approved vendors are Stripe (api.stripe.com) and Plaid (production.plaid.com). Adding a vendor is a decision for the policy owner, not a code change.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "VND-001.R1",
+          "title": "",
+          "check": "outbound.vendor_allowlist",
+          "params": {
+            "kinds": [],
+            "hosts": [
+              "api.stripe.com",
+              "production.plaid.com"
+            ],
+            "providers": [],
+            "env_hosts": [],
+            "literal_urls_forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

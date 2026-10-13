@@ -1,0 +1,45 @@
+{
+  "goal_id": "G06",
+  "templates_considered": [
+    "CHG-001 endpoints_have_tests: fits 'no tests'; used as-is",
+    "CONV-040 endpoints_stay_short: fits 'giant functions' only partly; template scopes to query only, I added function and kept 30/3; statements not lines",
+    "LOG-010 external_calls_handle_errors: fits part of 'missing error handling' (outbound calls only); used",
+    "AUTH-010, SEC-013, SEC-011, CONV-021 and others: considered for 'breaking prod' and reliability, none matched the ask's named items; not used",
+    "CONV-041 shallow_nesting: overlaps CONV-040 max_nesting; not used to avoid duplicate coverage"
+  ],
+  "templates_used": ["CHG-001", "CONV-040", "LOG-010"],
+  "rules": [
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "no tests: every endpoint called by a test"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests: tests assert anonymous calls are rejected"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant functions: statement and nesting limit (not line count)"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling: outbound HTTP calls only"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "missing error handling in general (db writes, non-HTTP failures)", "why": "no check exists"},
+    {"part": "giant 200-line functions measured in lines", "why": "couldn't tell how: checks count statements; approximated"},
+    {"part": "test quality (tests that exist but assert little)", "why": "no check exists; test.assertion_required only checks an assertion follows the call"},
+    {"part": "juniors breaking prod (merge/push gating)", "why": "needs runtime/org process: a blocking enforcement is the owner's decision, not authored here"}
+  ],
+  "assumptions": [
+    "Customer means 'functions' generally when they say giant functions; CONV-040 template covers only query, so I added function",
+    "Advisory enforcement is the right default for a new policy per the skill",
+    "Keys CHG-001, CONV-040, LOG-010 are free on this branch (policy list showed none)",
+    "Workspace names used in reasoning: payments/charge endpoint, api group app, auth table users, functions in the function folder"
+  ],
+  "workspace_names_used": ["payments/charge", "app", "users", "policy_authoring_eval", "health_check", "invoices_require_login", "calculate_late_fee", "acme_sync_shipping_rates", "api.request", "try_catch"],
+  "confusions": [
+    "SKILL template for CONV-040 limits object_kinds to query; the customer's ask is about functions, and it is unclear whether a template may be widened without it becoming a custom policy",
+    "xano policy parse text output dropped the severity line for LOG-010 while the file and -o json both have severity medium; looks like a formatter issue",
+    "Catalogue 'limits' say a test that exists but fails still counts; unclear how that interacts with a blocking gate",
+    "Skill says a new policy whose rules match an existing one is refused as duplicate; no check on whether my rule set matches a template's rule set exactly, which it does for CHG-001 and LOG-010"
+  ],
+  "wished_for": [
+    "A check that counts lines of code or a clear recipe for converting a line limit to statements",
+    "A check for general error handling (try around db writes and function calls), not only api.request",
+    "Guidance on whether a template may be widened (more object_kinds) without losing its identity"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Three checks match the parts of the ask they can measure: tests, statement/nesting limits, outbound error handling. Error handling is only partly covered, lines are not counted, and nothing has been evaluated against the workspace, so the match is unverified."
+}

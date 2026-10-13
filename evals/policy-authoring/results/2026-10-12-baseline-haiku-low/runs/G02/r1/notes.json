@@ -1,0 +1,47 @@
+{
+  "goal_id": "G02",
+  "templates_considered": [
+    "functions_snake_case (CONV-010): covers function naming but enforces snake_case, which the customer did not ask for; rejected to avoid adding an unrequested rule",
+    "endpoint_paths_versioned (CONV-012): endpoint paths but requires kebab-case and a version segment; conflicts with the customer's snake_case ask; rejected",
+    "fields_snake_case (CONV-011): fields, not asked; rejected",
+    "agreed_tag_vocabulary / tags_kebab_case / owner_team_tagged / tables_classified: tags, not asked; rejected"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "CLIENT-NAMING", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are lowercase snake_case"},
+    {"policy_key": "CLIENT-NAMING", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "pattern": "[a-z0-9_]*s"}, "covers": "tables are plural (approximate: trailing s only)"},
+    {"policy_key": "CLIENT-NAMING", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "prefixes": ["acme_"]}, "covers": "functions start with the client prefix"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "tables are plural", "why": "couldn't tell how: no plural check exists; object.naming pattern (regex ending in s) is an approximation that misses irregular plurals and passes words like status"},
+    {"part": "client prefix value", "why": "other: the prefix is not stated in the ask and differs per client; assumed acme_ from the workspace's existing functions"}
+  ],
+  "assumptions": [
+    "client prefix is acme_ (the prefix used by 5 of 12 functions in this workspace)",
+    "endpoint 'name' means endpoint path segments, judged by endpoint_path snake_case",
+    "endpoint paths with {param} segments are acceptable as-is",
+    "no change to existing names; advisory only"
+  ],
+  "workspace_names_used": [
+    "tables: audit_log, invoice_item, payment_method, user_address (would fail plural); users, orgs, sessions, customers etc. (pass)",
+    "functions: acme_send_invoice_email, acme_get_tracking, acme_sync_shipping_rates, acme_calculate_tax, acme_notify_sms (pass); calculate_late_fee, calculateLateFee, check_admin_role, record_audit_event, summarize_ticket, delete_user_account, request_human_approval (would fail)",
+    "endpoint paths: getCustomerProfile and bank-accounts/link would fail snake_case"
+  ],
+  "confusions": [
+    "The endpoint_path snake_case rule conflicts with the CONV-012 template's kebab-case and version rules; the skill says to start from a matching template, and none fits snake_case endpoints, so I wrote a custom key instead of a CONV- key",
+    "Custom key: the skill says never to use a template prefix (CONV-) with a number no template has, and gives no guidance on a key for a custom policy; I used CLIENT-NAMING",
+    "Catalogue description says the endpoint_path rule judges each segment; unclear whether an endpoint's query identifier (getCustomerProfile) or its path is what the customer means by 'endpoint name'",
+    "No way to express plural names in object.naming beyond a regex; the pattern param text says I-Regexp matched against the whole name, which I applied but could not verify against the evaluator",
+    "The prefix is per-client but the request gives no prefix; the skill does not say whether to ask or assume"
+  ],
+  "wished_for": [
+    "a naming recipe for plural tables (or a plural-aware check)",
+    "an example of a custom policy key convention for non-template policies",
+    "guidance on how endpoint naming maps onto endpoint_path vs. the query identifier",
+    "a worked example of object.naming with prefixes and a pattern together"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The file parses (exit 0, no warnings) and each rule maps to a catalogue check, but the table plural rule is only an approximation, the function prefix is assumed, and nothing was evaluated against the workspace, so the flagged names are predictions from reading the pulled files."
+}

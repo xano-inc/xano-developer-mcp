@@ -1,0 +1,51 @@
+{
+  "goal_id": "G10",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): title is about endpoints and login, not agent tools; no fit",
+    "writes_check_first (BIZ-001): stack.statement_order for 'check before write'; title is about endpoints checking the caller, not approval before email; considered for the approval ordering but didn't use it because the title doesn't cover it",
+    "no_destructive_sql (SEC-010): forbids raw SQL and truncation, not db.del; doesn't cover the delete ask",
+    "get_endpoints_only_read (API-010): GET endpoints only; not about agents; no fit",
+    "public_endpoints_harmless (AUTH-003): endpoints only; no fit",
+    "no_sensitive_data_in_logs, approved_vendors_only (VND-001): email providers are a vendor concern but the ask is approval, not vendor choice; no fit",
+    "ai_tools_described (CONV-030): about tool descriptions; unrelated to the ask",
+    "inputs_validated (VAL-001): not part of the ask; no fit"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "AGENT-001", "check": "stack.statement_forbidden", "params": {"statements": ["db.del", "db.bulk.*"], "object_kinds": ["tool"]}, "covers": "agents can't delete anything (db.del and db.bulk delete, direct or via called functions)"},
+    {"policy_key": "AGENT-002", "check": "object.statement_required", "params": {"functions": ["request_human_approval"], "placement": "first", "object_kinds": ["tool"], "when": {"statement": "util.send_email"}}, "covers": "agents can't email customers without a human approving first (presence and ordering of the approval call only)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "AI agents shouldn't be able to call tools I haven't explicitly given them", "why": "no check exists"},
+    {"part": "human approval must be the approval for this specific email (approval_id matches)", "why": "couldn't tell how: object.statement_required checks a call exists, not its arguments; must_reference applies to references, not to a value compared against a row"},
+    {"part": "deletes or emails by endpoints, functions or api.call to own endpoints, not just agent tools", "why": "other: scoped to tool kind to match the agent ask; api.call targets are not followed"}
+  ],
+  "assumptions": [
+    "AI agents are the tool objects (ai/tool/*) that support_agent lists; the rules scope to object_kinds tool, which includes any tool, not only ones the agent uses",
+    "request_human_approval is the approval mechanism, per its own description",
+    "a 'first' placement is the right strictness for 'approve before send' (the call must be the tool's first statement)",
+    "util.send_email is the statement name for email (the tool uses it directly)",
+    "key prefix AGENT- is free and not a template prefix"
+  ],
+  "workspace_names_used": [
+    "support_agent", "delete_customer_note", "send_customer_email", "issue_refund", "lookup_order", "request_human_approval", "delete_user_account", "acme_send_invoice_email", "customer_notes", "approval_requests", "record_audit_event", "policy_authoring_eval"
+  ],
+  "confusions": [
+    "The catalogue has no check that reads an agent's tools list, so the 'only tools I've given it' ask has no check; the description of object.tag_required etc. doesn't mention agent tool lists",
+    "object.statement_required lists 'tool' as an object kind but the object_kinds param description says kinds come from those the check inspects; it wasn't clear whether 'agent' objects could be scoped to check their tools list, and no check exposes that",
+    "The 'when' param is an object with statement, tables, fields, hosts; the skill's catalogue shows it as a param in object.statement_required, but whether 'statement' could be a function name or only a statement name wasn't stated; I used util.send_email",
+    "stack.statement_forbidden says 'Middleware, addons and agent tools are not followed: each is judged as its own object'; this conflicts visually with the ask that tools can't delete through other tools, but it's consistent since each tool is judged on its own. Not a conflict, but worth a note",
+    "The approval-before-send rule can't tell an approved call from an unapproved one, so the rule would pass a tool that calls request_human_approval without an approval_id (the function throws on that path, which the check doesn't model)",
+    "Did not find a template or a documented recipe for 'a human approves before the action'; I had to combine object.statement_required with a function name by hand"
+  ],
+  "wished_for": [
+    "A check that reads an agent's tool list (agent.tools) and compares it to an allowlist",
+    "A recipe for 'human approves before an action' using request_human_approval, showing how to require the approval call and what it does not check",
+    "A check that verifies a value passed to an approval function comes from the approval record (for example, approval_id)",
+    "Documentation of whether 'when.statement' accepts a custom function name or only a built-in statement"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The delete rule and the approval-before-email rule use real checks and real names, and both parse. Confidence is capped at medium because the approval rule checks only that the approval call exists and is first, not that the approved id is correct, and the tool-allowlist part has no check at all. I did not evaluate, so I haven't confirmed which tools the rules flag at runtime."
+}

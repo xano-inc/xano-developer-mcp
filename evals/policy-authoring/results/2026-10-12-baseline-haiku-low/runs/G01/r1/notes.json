@@ -1,0 +1,40 @@
+{
+  "goal_id": "G01",
+  "templates_considered": [
+    "endpoints_need_login: AUTH-010, fits: the ask is 'no endpoint returns invoices without auth'; object.auth_required with tables scope covers it",
+    "own_records_only: AUTH-020, did not fit: the ask is about auth on all invoices reads, not per-user row ownership; the list endpoint already filters by org",
+    "no_pii_in_responses: DATA-010, did not fit: it checks which fields are returned, not whether the rows are returned unauthenticated",
+    "tables_classified / sensitive_tables_need_login: CONF-010, considered: would need a tag on invoices, which the workspace lacks"
+  ],
+  "templates_used": ["endpoints_need_login"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"tables": ["invoices"], "except_tags": ["public"]}, "covers": "every endpoint reaching the invoices table must require login; public exemption by tag only"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoint returns the full invoices table (unbounded rows, no paging or filter), even when authenticated", "why": "no check exists"},
+    {"part": "blocking the push (customer said 'make sure nobody ships')", "why": "other: a new policy is advisory by default; blocking is the owner's choice and was not made"}
+  ],
+  "assumptions": [
+    "'without auth' means auth = absent on the endpoint, not a missing check in the body",
+    "'invoices' is the table name invoices; its endpoints are in api group app",
+    "the public tag is the platform's exemption convention (used by health, login and newsletter endpoints in this workspace)",
+    "tables scope reaches endpoints that use invoices through functions (per the skill's scope docs)"
+  ],
+  "workspace_names_used": ["invoices", "invoice_item", "app", "users", "invoices/export", "invoices_GET", "invoices/{invoice_id}", "public"],
+  "confusions": [
+    "The skill says a new policy is active and advisory, but the customer said 'make sure nobody ships'. The guidance does not say how to pick advisory vs blocking when the user wants enforcement; I defaulted to advisory and asked.",
+    "The template title 'Endpoints require login' is misleading once scoped to invoices. The skill says to add a rule title in that case but does not say whether the policy title should change too. I kept the template title and set a rule title.",
+    "The skill says to propose a tag rather than add one, but scoping by table name is fragile without a tag. The guidance on when table-name scope is acceptable is thin.",
+    "The catalogue has no check for row count or paging on a db.query. The skill's 'cover every part or name what none reads' applies, but no template or example covers 'bulk read' as a concept.",
+    "Shell: `sed -i` on macOS needs an explicit backup suffix argument; my first attempt misparsed. Not a product issue."
+  ],
+  "wished_for": [
+    "A check or param for unbounded reads (db.query with no where, paging or limit) on endpoints, or a recipe that combines object.input_rules with db.output_fields_forbidden for it",
+    "A worked example of a template scoped to one table, showing the rule title convention",
+    "A short note on advisory vs blocking for a user who wants enforcement from day one"
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The auth half is covered by object.auth_required scoped to invoices, and parses with no warnings. The 'full table returned' half is not checkable with any catalogue check, and the policy is advisory and not yet evaluated, so no finding has been confirmed. My prediction is one finding on invoices/export, based on reading the XanoScript, not a run."
+}

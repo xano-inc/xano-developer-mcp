@@ -1,0 +1,59 @@
+{
+  "goal_id": "G14",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): not relevant to cost or tracking",
+    "retained_data_cleaned_up (RET-002): cleanup task, not a cost cap",
+    "audit_log_protected (RET-001): protects audit_log writes, does not make customer email tables tracked; possible follow-up, not written",
+    "confidential_tables_tagged (CONF-012): tags tables with fields, but workspace has no tags on tables and a tag does not track changes; rejected",
+    "owner_team_tagged / tables_classified (CONV-022/023): tag classification only, not asked; rejected",
+    "no_destructive_sql (SEC-010): unrelated to cost or tracking; rejected",
+    "no cost template exists in the catalogue: no template covers AI-call spend or retry limits"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["ai.agent.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI call inside a loop billing per item or per retry ($900 incident)"},
+    {"policy_key": "COST-001", "check": "stack.statement_forbidden", "params": {"statements": ["while"], "object_kinds": ["task"]}, "covers": "background task retrying forever (retry_failed_webhooks uses while with no limit); blunt, flags every while in a task, not only unbounded ones"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cap on AI spend / budget per run", "why": "no check exists"},
+    {"part": "retry limit and retry schedule frequency for background tasks", "why": "no check reads task retry or schedule settings; object.settings_forbidden on task only exposes active and datasource"},
+    {"part": "track who changed what on tables that store customer emails", "why": "no check verifies change history; tags on tables are classification only and the workspace has none"},
+    {"part": "only unbounded while loops (not bounded retries)", "why": "no check distinguishes bounded from unbounded loops; stack.statement_forbidden on while is the closest approximation"}
+  ],
+  "assumptions": [
+    "ai.agent.run is the statement name for agent calls (used in workspace task and function)",
+    "'while' and 'foreach', 'for' are the block names accepted by statement.containment must_not_be_inside and stack.statement_forbidden",
+    "customer email tables are customers.email, users.email, newsletter_subscribers.email, patients.email, support_tickets.requester_email, orgs.billing_email",
+    "policy key COST-001 is free (no policies exist in workspace); a custom key since no template covers cost",
+    "advisory + active true is the right default for a new policy"
+  ],
+  "workspace_names_used": [
+    "ai.agent.run (in task nightly_ticket_summaries and function summarize_ticket)",
+    "Ticket Summarizer (agent)",
+    "nightly_ticket_summaries (task)",
+    "retry_failed_webhooks (task)",
+    "webhook_deliveries (table)",
+    "support_tickets (table)",
+    "customers, users, newsletter_subscribers, patients, orgs (tables with email fields)",
+    "audit_log (table)",
+    "record_audit_event (function)"
+  ],
+  "confusions": [
+    "No template or check covers AI spend. The catalogue has no cost category, so I had to combine checks by hand.",
+    "stack.statement_forbidden takes exact statement names, but the docs do not list block names for while/foreach. I assumed 'while' and 'foreach' are accepted names; parse gave no warnings, but I have not verified evaluation.",
+    "statement.containment must_not_be_inside lists 'foreach', 'for', 'while' as blocks, but it is unclear whether 'for' and 'while' are separate names or the same as the stack statement name.",
+    "The skill says to scope by tag, but tables have no tags in this workspace. I could not tell whether tables should be tagged first or whether the policy could work without tags.",
+    "The brief says no xano evaluate; I could not check whether the rules fire on the real workspace."
+  ],
+  "wished_for": [
+    "A cost/budget category in the catalogue, or a check for loop-bounded retries or AI call counts",
+    "A check that reads task retry settings or schedule frequency",
+    "A recipe for 'every write to tables with field X calls audit function Y', since tags alone do not track changes",
+    "Documentation of block names accepted by containment and forbid checks (while, foreach, for, conditional)",
+    "A template or example for cost controls"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The loop-AI rule catches the exact incident pattern and the while rule catches the unbounded retry, but both are approximations. Neither caps spend or limits retries, and the email tracking part is not covered at all. Parse is clean with no rule warnings, but I did not run evaluate, so I have not confirmed the rules match in the real workspace."
+}

@@ -1,0 +1,74 @@
+{
+  "goal_id": "G09",
+  "templates_considered": [
+    "RET-002 retained_data_cleaned_up: fits the retention/cleanup half of the ask; used, but its tags param matches no table in this workspace",
+    "RET-001 audit_log_protected: audit log is about who changed what, not retention or erasure; did not fit",
+    "DATA-010 no_pii_in_responses: about responses, not deletion; did not fit",
+    "CONF-010 sensitive_tables_need_login / CONF-012 confidential_tables_tagged: need sensitive/confidential tags the workspace lacks; did not fit the ask",
+    "AUTH-020 own_records_only: about read/write ownership, not erasure; did not fit",
+    "No template for account erasure: wrote custom key GDPR-ERASURE using table.coverage_required, which the catalogue lists as the closest check"
+  ],
+  "templates_used": ["RET-002"],
+  "rules": [
+    {
+      "policy_key": "RET-002",
+      "check": "table.coverage_required",
+      "params": {
+        "tags": ["retained"],
+        "referenced_by": {
+          "object_kinds": ["task"],
+          "statements": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"]
+        }
+      },
+      "covers": "Retention: tables that hold retained data must be cleaned up by a scheduled task. Does not check the two-year age condition. Currently matches zero tables because no table has the retained tag."
+    },
+    {
+      "policy_key": "GDPR-ERASURE",
+      "check": "table.coverage_required",
+      "params": {
+        "table_selector": {"has_fk_to": "users"},
+        "referenced_by": {
+          "object_kinds": ["function", "query", "task"],
+          "statements": ["db.del", "db.bulk.delete"]
+        }
+      },
+      "covers": "Account deletion reaches user data: every table with a field linking to users must be deleted from by a function, query or task. Expected to flag orders and support_tickets (prediction, not evaluated)."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Personal data is kept no longer than two years (the age condition of the cleanup)", "why": "no check exists"},
+    {"part": "Deletion removes the user's own rows, not all rows of the table", "why": "no check exists"},
+    {"part": "Customer data (customers, payments, payment_method, patients, customer_notes) is erased when a user account is deleted", "why": "couldn't tell how: those tables link to customers, not users, and the ask does not say whether customers are the data subject"},
+    {"part": "Deletion at external vendors (payments, shipping, email) and in logs", "why": "needs runtime/org process"},
+    {"part": "Invoices and orders kept for legal reasons versus anonymised", "why": "needs runtime/org process"},
+    {"part": "Audit log retention", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "The data subject is a users row; customers are end customers of orgs and are a separate subject",
+    "Erasure means deleting rows; anonymisation was not written as a rule because no check distinguishes it",
+    "A table with a users foreign key and no delete statement is a real gap rather than deliberate retention",
+    "The retained tag is meant to be added to tables by the owner; I did not add it",
+    "Tags on a policy record the GDPR criterion; I did not claim compliance"
+  ],
+  "workspace_names_used": [
+    "users", "sessions", "user_address", "orders", "support_tickets", "customers", "customer_notes", "payments", "payment_method", "patients", "audit_log", "delete_user_account", "delete_customer_note", "purge_expired_sessions", "nightly_ticket_summaries", "record_audit_event", "account_DELETE"
+  ],
+  "confusions": [
+    "The RET-002 template lists its fill as tags, but in the catalogue tags is a scope param on the rule itself, not a param of table.coverage_required. I put it at the rule's top-level params, and the parser accepted it. The template text is ambiguous about where it goes.",
+    "The catalogue has no check for deleting a user's own rows, so the erasure rule can only prove that a delete exists on each table. The skill's guidance to cover every part of the ask left a gap I could only name, not check.",
+    "table.coverage_required's referenced_by.object_kinds default is query, function, task, trigger, but the template sets only task. The difference is not explained anywhere I read.",
+    "The skill says to write a template key with a free suffix when the key exists, and never a template prefix with a new number. My custom key GDPR-ERASURE was chosen because no template covers erasure; the guidance on naming custom keys is thin."
+  ],
+  "wished_for": [
+    "A check that verifies a delete filters on the deleted user's id (a where constraint on a field, with compare_to set to the deleted id)",
+    "A check or template for retention by age (a where predicate on a timestamp field compared to now minus a period)",
+    "A recipe for a GDPR erasure or retention policy: which checks combine, and how to name the tags and scope",
+    "A way to say a table holds personal data without a per-table tag, e.g. a has_fk_to scope plus a field-type check"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "RET-002.R1: tags \"retained\" is on no table on this branch, so it selects nothing. (warning, not an error)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Only the account-to-user-table link is checked, and only that a delete statement exists, not that it deletes the right rows. The two-year limit is not checked at all. The retention rule currently matches no table because no table carries the retained tag. Customer data and external vendors are not covered. Predicted findings were not evaluated, because the brief forbids running xano policy evaluate."
+}

@@ -1,0 +1,54 @@
+{
+  "goal_id": "G03",
+  "templates_considered": [
+    "LOG-001 (no_sensitive_data_in_logs): fits 'cardholder data can't be logged'; used, extended with a datadog.log rule because the template limits text says to add it",
+    "VND-001 (approved_vendors_only): fits the vendor allowlist; used with hosts",
+    "DATA-010 (no_pii_in_responses): considered, not used; the ask is about logs, storage and vendors, not responses",
+    "CONF-011 (sensitive_fields_marked): considered, not used; marking a field sensitive does not stop it being stored raw",
+    "CONF-010 (sensitive_tables_need_login): considered, not used; needs a sensitive-data table tag the workspace lacks and the ask does not mention auth",
+    "SEC-012 (no_secrets_in_code): considered, not used; not in the ask, but acme_notify_sms has a hardcoded Twilio credential URL, so flagged in reply only",
+    "CONF-012 (confidential_tables_tagged): considered, not used; would need a tag the customer has not agreed"
+  ],
+  "templates_used": ["LOG-001", "VND-001"],
+  "rules": [
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data not logged via debug.log (direct request-input references only)"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["datadog.log"], "param_names": ["message"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data not logged via datadog.log; added per template limits text"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "data only sent to Stripe and Plaid (destination only, not content)"},
+    {"policy_key": "PCI-010", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "bank_account_number"], "forbidden": true}, "covers": "no raw PAN, CVV or bank account number declared as table fields"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cardholder data not logged when it reaches the log via a DB read or function return", "why": "no check exists: statement.expression_rule does not trace values through database results or function returns"},
+    {"part": "card data sent to an approved vendor is handled safely (what is sent is not inspected)", "why": "no check exists: outbound.vendor_allowlist checks destinations only"},
+    {"part": "raw card data stored under field names not listed (pan, cvv2, etc.)", "why": "couldn't tell how: forbidden field check is name-based; no check flags a value shape in a schema"},
+    {"part": "cardholder data written to storage via a non-listed write path or to a column named differently", "why": "other: same limitation as above; a PCI-aware check would need a data-classification tag the workspace lacks"},
+    {"part": "PCI compliance overall", "why": "needs runtime/org process: policies only check stored definitions; a QSA assessment is out of scope"}
+  ],
+  "assumptions": [
+    "Cardholder data = card_number, card_cvv, card_expiry, cardholder_name, per the payments endpoint input names",
+    "CVV must never be stored even encrypted, per PCI rules; PAN stored raw is forbidden per the ask",
+    "bank_account_number treated as in scope for 'can't be stored raw' because the customer said 'bank data' too",
+    "approved hosts are api.stripe.com and production.plaid.com; the sandbox Plaid host is not used in the workspace",
+    "tag pci-dss used as a label only; no PCI requirement numbers claimed",
+    "active=true and enforcement=advisory for new policies, per the skill's guidance"
+  ],
+  "workspace_names_used": ["payments", "card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number", "payments/charge", "clinical_notes", "api.stripe.com", "production.plaid.com", "acme_notify_sms", "debug.log", "datadog.log"],
+  "confusions": [
+    "The skill says a policy file carries no comments but the template output and examples are unclear about whether // lines are allowed; I avoided them",
+    "No explicit guidance on whether a 'forbidden' field check should list fields that are sensitive-by-nature (CVV) versus fields the customer merely wants masked",
+    "table.field_attribute_required lists field_names+ and field_types+ both as 'at least one of'; unclear whether field_names alone is enough with forbidden true. Parse accepted it, but I cannot confirm evaluation behaviour without running evaluate",
+    "The vendor rule's providers vs hosts choice: Stripe and Plaid are not Xano provider IDs, so I used hosts; the docs say hosts or providers, so this is fine but not spelled out for SaaS vendors",
+    "The LOG-001 template limits text suggests adding datadog.log but the template only has one rule; unclear whether extending a template counts as a template change under the skill's 'start from it' rule",
+    "PCI scope: nothing in the catalogue or skill maps to PCI DSS requirements; I used tag pci-dss as a label and did not claim a requirement number"
+  ],
+  "wished_for": [
+    "A data-classification check or tag convention (e.g. a 'cardholder' table/field tag) so a rule can say 'fields carrying cardholder data' rather than a list of names",
+    "A PCI DSS template set mapping framework criteria to rules, with the caveat that it is not a compliance claim",
+    "A check that follows database read values into debug.log or datadog.log",
+    "An example showing a vendor allowlist for SaaS vendors (Stripe, Plaid) with hosts vs providers guidance",
+    "Clear guidance on the difference between forbidding a field in the schema and forbidding it in writes (db.add data)"
+  ],
+  "parse_attempts": 7,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Each policy parses cleanly, but the checks cover only part of the ask: log and storage rules are name- or reference-based, the vendor rule checks destinations not content, and nothing was evaluated (evaluate is forbidden in this run), so every finding is a prediction. The draft is a useful starting point, not a PCI control."
+}

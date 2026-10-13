@@ -1,0 +1,86 @@
+{
+  "goal_id": "G05",
+  "templates_considered": [
+    "AUTH-002 admin_endpoints_check_role: fits the role-check half; used as the starting point. Template scopes by tag 'admin' and its example function is require_admin; the workspace has neither, so I scoped by api_groups ['admin'] and used check_admin_role.",
+    "AUTH-020 own_records_only: does not fit; it is owner-by-user_id, and the ask is org_id tenancy for staff.",
+    "AUTH-030 no_self_promotion: related to /admin role safety but not asked for; not used.",
+    "AUTH-010 endpoints_need_login: not asked for; admin endpoints already use auth = 'users'.",
+    "CONF-010 sensitive_tables_need_login / DATA-010 no_pii_in_responses: not asked for; not used.",
+    "No template covers 'tenants reads filter by org_id'; key TEN-010 chosen (no template uses the TEN prefix)."
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {
+      "policy_key": "AUTH-002",
+      "check": "object.statement_required",
+      "params": {
+        "functions": ["check_admin_role"],
+        "placement": "first",
+        "must_reference": ["$auth"],
+        "api_groups": ["admin"],
+        "object_kinds": ["query"]
+      },
+      "covers": "Every endpoint under /admin (admin API group) checks the caller's role first, via check_admin_role passed $auth. Does not verify the role values inside the function; does not cover /api:app/admin/stats (wrong group)."
+    },
+    {
+      "policy_key": "TEN-010",
+      "check": "db.where_constraint_required",
+      "params": {
+        "table_selector": {"names": ["tenants"]},
+        "field": "org_id"
+      },
+      "covers": "Never touches tenants without filtering by org_id: every read/write of tenants must have an org_id predicate. Does not require the value to equal the caller's org (compare_to left empty deliberately)."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "role is 'admin' or 'support_lead' (the value check)",
+      "why": "no check exists"
+    },
+    {
+      "part": "/admin as a URL path (endpoints under /admin, including api/app/admin/stats)",
+      "why": "couldn't tell how: no check selects by path; only api_groups, tags, tables, verbs and endpoint_auth exist. Used the admin API group as the closest match."
+    },
+    {
+      "part": "'before doing anything else' (strictly first, before any db read)",
+      "why": "partly covered: placement 'first' checks the role call is the first statement, but a literal reading also excludes any other preceding statement; the placement check is strict about the first statement only, and may not match db statements that do not read the caller"
+    },
+    {
+      "part": "filtering by org_id means the caller's own org",
+      "why": "needs runtime/org process: the ask does not say whether staff are org-scoped; I left it open and asked"
+    }
+  ],
+  "assumptions": [
+    "'/admin' means endpoints in the workspace's 'admin' API group (canonical 'admin', served at /api:admin).",
+    "'the tenants table' means table tenants, with field org_id (schema: int org_id to orgs).",
+    "The role-check function is check_admin_role (function/check_admin_role.xs), and its precondition enforces admin/support_lead.",
+    "Staff endpoints are cross-org, so org_id should be a filter presence check, not an equality with the caller's org.",
+    "Both policies advisory and active, per the skill's default for new policies."
+  ],
+  "workspace_names_used": [
+    "api_group admin (canonical admin)",
+    "function check_admin_role",
+    "table tenants, field org_id",
+    "table users, field role (admin, support_lead, member, viewer), org_id",
+    "endpoints api/admin/tenants_GET, api/admin/orgs/org_id/tenants_GET, api/admin/tenants/tenant_id_PATCH, api/admin/users_GET, api/app/admin/stats_GET",
+    "auth = 'users' on admin endpoints"
+  ],
+  "confusions": [
+    "AUTH-002 template uses tags: ['admin'] to select endpoints and example function 'require_admin'; the workspace has no admin tag and the role function is named check_admin_role. The template says to 'fill' only the functions, so it's unclear whether tags should also be replaced by api_groups, which I did.",
+    "The check catalogue says api_groups selects endpoints only, but the parser warned that object.statement_required with api_groups inspects endpoints only and suggested object_kinds ['query']. The warning is correct but the skill doesn't say to set object_kinds alongside api_groups, so I found it only by parsing.",
+    "No path-based scope exists. 'Under /admin' has no direct check; the user's words map to a group or tag, and the skill's scoping section doesn't say what to do when the user names a URL path.",
+    "'placement first' can't express 'before any db read' vs 'first statement'. It is the first statement only; the skill doesn't explain how a preceding db.get is judged.",
+    "I was told not to run xano policy evaluate, so I can't confirm which findings the rules produce; my predicted findings are from reading the stacks and may be wrong, especially for db.where_constraint_required on db.get and count queries.",
+    "The partial-coverage note for 'before doing anything else' in ask_parts_not_covered is my own judgement, not something the skill states; the skill only defines placement 'first' as the first statement."
+  ],
+  "wished_for": [
+    "A scope selector for URL path prefix (e.g. path_prefix: '/admin') or a way to tag API groups in one place.",
+    "A worked example of object.statement_required with api_groups + functions + placement first, to show it is endpoint-only and needs object_kinds.",
+    "A note on whether db.get/db.edit/count reads count for db.where_constraint_required (table_selector) and whether a predicate on the id field is enough.",
+    "Guidance on splitting one customer ask into several policies (one policy per file, but a mixed ask spanning two templates)."
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The role check and org_id filter are both expressible and parse cleanly, with one warning fixed. But: (a) the policy checks that check_admin_role is called first, not that it allows the right roles; (b) /admin is mapped to the admin API group, which misses api/app/admin/stats; (c) the org_id rule checks presence of a filter, not that it matches the caller's org; (d) I could not run xano policy evaluate, so the predicted findings are unverified."
+}

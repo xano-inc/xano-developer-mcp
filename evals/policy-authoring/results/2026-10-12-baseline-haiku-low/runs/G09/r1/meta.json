@@ -1,0 +1,43 @@
+{
+  "goal_id": "G09",
+  "repeat": 1,
+  "label": "2026-10-12-baseline-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:28:27.329Z",
+  "wall_ms": 56737,
+  "duration_ms": 55272,
+  "cost_usd": 0.019437250000000003,
+  "num_turns": 14,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "GDPR-ERASURE.xs",
+    "RET-002.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 2,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "cat .claude/skills/xano-policies/SKILL.md; echo ---; ls -R kit; echo ---; cat kit/policy-templates.md",
+    "cat kit/catalogue.json",
+    "cd kit && python3 -I -c \"\nimport json\nd=json.load(open('catalogue.json'))\nprint(d.keys())\nfor i in d['items']:\n    print(i.get('id'), '|', i.get('label'))\n\" ; cd ..; wc -c kit/policy-templates.md; head -c 4000 kit/policy-templates.md",
+    "xano workspace pull -d ./workspace 2>&1 | tail -20; echo ---; xano policy list 2>&1 | head -50; echo ---; ls -R workspace | head -150",
+    "cd workspace && cat function/delete_user_account.xs; echo ----; cat api/app/account_DELETE.xs; echo ----; cat task/purge_expired_sessions.xs; echo ----; cat table/users.xs; echo ----; grep -l \"tag\\|retain\\|personal\\|pii\" -r table | head; echo; grep -rn \"tags\" table | head -40",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline-haiku-low/G09-r1/workspace/table && for f in *.xs; do echo \"== $f\"; head -3 $f; grep -E \"^\\s+(int|text|email|timestamp|password|enum|bool|decimal|json|date)\\b\" $f | tr -s ' ' | tr '\\n' ';'; ech…",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline-haiku-low/G09-r1 && python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nfor i in d['items']:\n    if i['id'] in ('table.coverage_required','object.tagged_table_access','db.output…",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline-haiku-low/G09-r1/workspace && grep -n -A2 \"user_id\\|customer_id\\|actor_id\" table/*.xs | grep -v \"^--$\" | head -60; echo ---; grep -rn \"db.del\\|db.bulk.delete\\|db.truncate\" . | grep -v \"^./table…",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline-haiku-low/G09-r1 && cat > out/RET-002.xs <<'EOF'\npolicy \"RET-002\" {\n  title = \"Retained data has a cleanup task\"\n  statement = \"Every table carrying the retained-data tag is referenced by a sch…"
+  ],
+  "final_message": "Wrote `out/RET-002.xs`, `out/GDPR-ERASURE.xs`, `out/reply.md` and `out/notes.json`; both policies parse, but neither was evaluated, and confidence that they achieve the goal is low."
+}

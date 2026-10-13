@@ -1,0 +1,42 @@
+{
+  "goal_id": "G02",
+  "repeat": 1,
+  "label": "2026-10-12-baseline-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:24:33.582Z",
+  "wall_ms": 60584,
+  "duration_ms": 59331,
+  "cost_usd": 0.017142920000000002,
+  "num_turns": 13,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "CLIENT-NAMING.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 2,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "cat .claude/skills/xano-policies/SKILL.md; echo ---; cat kit/policy-templates.md; echo ---; ls kit",
+    "cat kit/catalogue.json | head -c 60000",
+    "xano workspace pull -d ./workspace 2>&1 | tail -20; echo ---; xano policy list 2>&1 | head -40; echo ---; find ./workspace -type f | sed 's|^\\./workspace/||' | head -200",
+    "cd workspace && grep -rhoE '^(query|function|table|task|api_group|workflow_test) \"[^\"]*\"' . | sort | uniq -c | head -150; echo ---; grep -rh -m1 -E '^query ' api/app/customers/customer_id_PATCH.xs api/app/health_GET.xs; echo; grep -rh -A0 -E '^query' api | head -60",
+    "cd /private/var/folders/nh/9_xvnknj6b52n_jwztm8fc_h0000gp/T/xano-policy-authoring-eval/2026-10-12-baseline-haiku-low/G02-r1 && grep -rhoE '^(table|function|task|api_group|addon|middleware|tool|agent) [^{]*' workspace | sort | uniq -c; echo ---; cat workspace/policy_authoring_eval.xs | head -30; echo…",
+    "python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nprint(d.keys())\nfor t in d.get('templates',[]):\n    if t.get('id','').startswith('functions') or t.get('id')=='fields_snake_case' or t.get('id')=='endpoint_paths_versioned': print(json.dumps(t,indent=1)[:1500])\nfor it in d['items']:…",
+    "mkdir -p out && cat > out/CLIENT-NAMING.xs <<'EOF'\npolicy \"CLIENT-NAMING\" {\n  title = \"Client naming conventions\"\n  statement = \"Endpoint paths are lowercase snake_case, table names are plural, and function names start with the client prefix acme_. This policy flags a name that breaks the convention…",
+    "xano policy parse out/CLIENT-NAMING.xs -o json 2>&1 | head -60",
+    "cat > out/reply.md <<'EOF'\nHere is a policy I'd publish for your naming conventions: `CLIENT-NAMING` (file `out/CLIENT-NAMING.xs`). It's active and **advisory**, so it flags names and blocks nothing.\n\n**What it checks**\n\n1. **Endpoints are lowercase snake_case.** Checks each endpoint path segment ag…"
+  ],
+  "final_message": "Wrote `out/CLIENT-NAMING.xs`, `out/reply.md` and `out/notes.json`; the policy parses cleanly. Confidence: medium. The table plural rule is only an approximation, the `acme_` prefix is assumed, and nothing was evaluated against the workspace."
+}

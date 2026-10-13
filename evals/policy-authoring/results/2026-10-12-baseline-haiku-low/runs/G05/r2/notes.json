@@ -1,0 +1,43 @@
+{
+  "goal_id": "G05",
+  "templates_considered": [
+    "admin_endpoints_check_role: fits AUTH-002; used, but scoped by api_groups ['admin'] instead of its tags ['admin'] because the workspace group has no tags",
+    "own_records_only: rejected; its compare_to $auth.id matches a per-user owner, but the ask is org-level and support staff must reach other orgs' tenants",
+    "endpoints_need_login, no_pii_in_responses, no_destructive_sql, get_endpoints_only_read: not relevant to the ask",
+    "no template for the tenants org_id filter: built AUTH-021 from db.where_constraint_required directly"
+  ],
+  "templates_used": ["admin_endpoints_check_role"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["check_admin_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "every admin endpoint calls the role check before doing anything else"},
+    {"policy_key": "AUTH-021", "check": "db.where_constraint_required", "params": {"field": "org_id", "table_selector": {"names": ["tenants"]}, "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "admin endpoints never touch tenants without an org_id filter"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "every endpoint under /admin", "why": "other"},
+    {"part": "role must be 'admin' or 'support_lead' (the decision itself)", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "'/admin' means API group 'admin' (canonical 'admin', served at /api:admin)",
+    "Role values and the test are in function check_admin_role (precondition on $user.role)",
+    "The tenants table is named 'tenants' with field 'org_id'",
+    "Support staff must be able to read tenants of other orgs, so the org filter is not compared to the caller's org",
+    "The check cannot see the role decision inside check_admin_role; it only checks the call is first"
+  ],
+  "workspace_names_used": ["admin (api group)", "check_admin_role", "tenants", "org_id", "$auth", "tenants_GET", "tenant_id_PATCH", "orgs/org_id/tenants_GET", "users_GET", "admin/stats (app group)", "users.role", "users.org_id"],
+  "confusions": [
+    "The skill says to scope by tag, not by name, but the workspace's admin API group has no tags and I may not change the workspace; the template's own example tags ['admin'] would have matched nothing here",
+    "No way to scope by URL path: an endpoint under /admin/ in another API group (app/admin/stats) cannot be selected, and the catalogue doesn't say so",
+    "Unclear whether db.get by field_name with no compare_to is judged by db.where_constraint_required at all; the description lists db.get as judged by its where, but db.get here uses field_name/field_value, so I inferred it is flagged",
+    "Unclear whether table_selector.names combined with field 'org_id' (vs 'tenants.org_id') changes which reads are judged; I used the bare field plus table_selector",
+    "No guidance on how a check that cannot verify the value (e.g. a hard-coded org_id) is treated; I assume any predicate on the field passes"
+  ],
+  "wished_for": [
+    "A path or URL-prefix scope for endpoints, so '/admin' can mean the URL prefix rather than an API group or tag",
+    "A template or worked example for a per-table tenant or org isolation rule, separate from the per-owner own_records_only template",
+    "A worked example showing a role-check precondition inside the called function, and what the check does and does not verify",
+    "Clear guidance on whether a policy can be verified with xano policy evaluate without publishing, so I could confirm my expected findings"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both policies parse cleanly and the role-first and org_id rules map to real checks. Confidence is held back because the /admin path gap (app/admin/stats) is not covered, the org filter only confirms a predicate is present not that it is correct, and my expected findings were not confirmed by evaluation (which I was not permitted to run)."
+}

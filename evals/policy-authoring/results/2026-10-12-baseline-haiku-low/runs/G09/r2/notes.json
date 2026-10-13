@@ -1,0 +1,55 @@
+{
+  "goal_id": "G09",
+  "templates_considered": [
+    "retained_data_cleaned_up (RET-002): fits the 2-year retention half; title and rule match the cleanup-task need; used with the retained tag",
+    "audit_log_protected (RET-001): considered for the deletion trail; the ask is not about write restriction, so not used",
+    "own_records_only (AUTH-020): considered for scoping deletions to the user; does not express deletion coverage, so not used",
+    "no_pii_in_responses (DATA-010): considered as a GDPR angle; not about deletion or retention, so not used"
+  ],
+  "templates_used": ["retained_data_cleaned_up"],
+  "rules": [
+    {
+      "policy_key": "RET-002",
+      "check": "table.coverage_required",
+      "params": {
+        "tags": ["retained"],
+        "referenced_by": {
+          "object_kinds": ["task"],
+          "statements": ["db.del", "db.bulk.delete", "db.truncate", "db.direct_query"]
+        }
+      },
+      "covers": "Retention half of the ask: tables holding data to be kept max 2 years must have a scheduled cleanup task. Does not verify the 2-year value."
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "when a user deletes their account, their data is deleted everywhere", "why": "no check exists"},
+    {"part": "data kept no longer than 2 years (the actual period)", "why": "no check exists"},
+    {"part": "that the retention cleanup filters on a 2-year age", "why": "couldn't tell how; a task's where filter is not checked by table.coverage_required"},
+    {"part": "which tables hold personal data (needed to choose the retained tag)", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The retention tag is retained, the template's example, since no tag exists in the workspace",
+    "A scheduled task with db.del/db.bulk.delete counts as cleanup for the rule",
+    "The 2-year period is stated in the statement, not enforced by a param (no param takes a duration)",
+    "Tags gdpr and storage-limitation on the policy record the framework criterion; they do not claim compliance"
+  ],
+  "workspace_names_used": [
+    "users", "customers", "user_address", "sessions", "audit_log", "support_tickets", "payments",
+    "delete_user_account", "record_audit_event", "purge_expired_sessions", "account DELETE endpoint (app group)"
+  ],
+  "confusions": [
+    "Template tag example 'retained' is on no table in this workspace; the skill says a rule must not add a tag, so the policy selects nothing until the owner tags tables. Not clear whether the parser's warning is enough to flag this to the customer or whether a policy should be held until the tag exists.",
+    "The check's table_selector parameter (tables in scope) and the template's tags param are different things; the template fill tags is passed to the check's top-level tags scope, and I was not certain that is the intended mapping for table.coverage_required.",
+    "The skill says a deletion rule could be a candidate for object.test_coverage or a function-level check, but no check verifies that a deletion statement reaches every table holding a user's data; I could not find one."
+  ],
+  "wished_for": [
+    "A check that verifies a deletion function (or the account DELETE endpoint) reaches every table tagged personal data, or a way to scope table.coverage_required to a named function",
+    "A retention-period param or a check that reads the age filter in a cleanup task's where clause",
+    "Guidance on whether a policy should be written when its tag does not exist yet on any table (inert vs. held)",
+    "A recipe for GDPR storage limitation and right to erasure combining RET-002 with tagging conventions"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": ["RET-002.R1: tags \"retained\" is on no table on this branch, so it selects nothing (warning, exit 0)"],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy covers only the cleanup-task part of the retention ask. It does not enforce 2 years, it selects nothing until tables are tagged, and nothing checks that account deletion reaches all personal data. I did not run evaluate, so no outcome is verified."
+}

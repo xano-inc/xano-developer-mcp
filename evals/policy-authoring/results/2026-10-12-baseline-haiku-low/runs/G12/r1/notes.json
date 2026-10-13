@@ -1,0 +1,42 @@
+{
+  "goal_id": "G12",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): does not address prod/staging data flow or who gets into prod; not used",
+    "no_pii_in_responses (DATA-010): about what endpoints return to callers, not environment copies; not used",
+    "approved_vendors_only (VND-001): about outbound destinations; the ask is about data moving between environments, so it does not fit; not used",
+    "audit_log_protected (RET-001): about who writes the audit log; does not cover environment access; not used",
+    "sensitive_fields_marked (CONF-011) / confidential_tables_tagged (CONF-012): could tag or mark sensitive fields, but would not stop prod data reaching staging; not used",
+    "no_sensitive_data_in_logs (LOG-001): about logs, not environments; not used"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "no check exists"},
+    {"part": "devs can only get into prod through the on-call process, not on a whim", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Staging and production are separate environments the workspace might reference, but the workspace has no environment field or tag that marks them",
+    "Access to prod is controlled outside the workspace (identity provider, platform roles, on-call tooling)"
+  ],
+  "workspace_names_used": [
+    "tenants (table)",
+    "tenants.db_connection_string (field)",
+    "admin API group (tenants/{tenant_id} PATCH)",
+    "patients (table, with ssn, dob)",
+    "api/app/health_GET.xs and auth/login_POST.xs carry the public tag"
+  ],
+  "confusions": [
+    "The skill says the catalogue is the entire vocabulary, but nothing in it refers to environments, branches as data sources, or who can access prod, so the ask falls outside it entirely. The skill does not say what to do in that case beyond 'write no policy only when no part is checkable', which is the answer here.",
+    "The skill's step 5 ('cover every part of the request') and the 'write no policy' rule are only two sentences apart, and I had to infer that a partial fit with nothing checkable means no file.",
+    "The catalogue lists checks by id and label only in the skill; the full param schemas are in catalogue.json and are large (about 20k characters for the first three checks alone), so checking every check's params was costly."
+  ],
+  "wished_for": [
+    "A short 'what policies cannot express' list in the skill, so the assistant can say 'no check exists' quickly and accurately.",
+    "A check or scope for environment separation (for example, a rule that a branch tagged staging must not reference production-tagged tables or connection values).",
+    "A reference note on how Xano branches, environments and access roles relate to policies, since customers often ask about prod access."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No policy is written, and I am confident none of the current checks can enforce either part: none reads environments, data movement between environments, or people's access. So a policy does not achieve the goal. The reply explains what is out of reach and what would help."
+}

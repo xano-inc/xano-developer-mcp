@@ -1,0 +1,39 @@
+{
+  "goal_id": "G13",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: fits access control in general, but does not check training; the ask is about people, not endpoints",
+    "CONF-010 sensitive_tables_need_login: closest to 'touching customer data', but it checks login on endpoints, not training; no tag exists on the customer tables, so it would also match nothing yet",
+    "CONF-012 confidential_tables_tagged / CONV-023 tables_classified: tags are the only place a classification could live, but they describe data, not who has been trained",
+    "AUTH-020 own_records_only, AUTH-050 one_auth_table: access scoping, not training",
+    "CONV-022 owner_team_tagged: names an owner team, a people concept, but a tag cannot prove training was completed"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "everyone on the team has done their security awareness training", "why": "no check exists"},
+    {"part": "the team roster (who counts as a team member)", "why": "no check exists"},
+    {"part": "blocking access to customer data until training is complete", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'the team' means people with access to this Xano workspace",
+    "'customer data' means the tables holding customer, payment, order, support, patient or clinical data",
+    "the customer wants a policy that gates access, not a training report"
+  ],
+  "workspace_names_used": [
+    "customers", "payment_method", "customer_notes", "orders", "invoices", "support_tickets", "patients", "clinical_notes", "users", "audit_log", "policy_authoring_eval"
+  ],
+  "confusions": [
+    "The catalogue has no check about people, memberships, roles or training records. The skill's check list is all about objects, so it is unclear whether a 'team' or 'person' concept exists anywhere a policy can read.",
+    "The brief said to write no .xs file if no policy can do the ask, but the skill also says to write no policy only when no part is checkable. The customer's ask has no checkable part, so I followed the brief, but the two rules pull in different directions for mixed asks.",
+    "The skill says an object's own tags decide which policies apply, but tags cannot prove a human action such as training. It doesn't say whether a self-set tag is acceptable as a stand-in."
+  ],
+  "wished_for": [
+    "A short 'what policies cannot check' list in the skill, so I can tell a customer quickly that a request is outside what policies can enforce.",
+    "An example of how a policy reads an external attestation, or a clear statement that it can't.",
+    "A way to see workspace roles or members (read-only), so that a 'who may touch this data' request could be checked against them."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "I'm confident no check or combination of checks can verify security awareness training. Training completion is not stored in the workspace, and no check reads workspace members or roles. I didn't write a .xs file, so there was nothing to parse. The remaining uncertainty is whether a self-set tag could act as a proxy, which I didn't pursue, and whether the customer meant access control instead, which I flagged as an option."
+}

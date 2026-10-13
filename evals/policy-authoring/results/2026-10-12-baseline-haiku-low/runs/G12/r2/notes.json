@@ -1,0 +1,48 @@
+{
+  "goal_id": "G12",
+  "templates_considered": [
+    "AUTH-002 admin_endpoints_check_role: did not fit. Checks the caller's role in admin endpoints, not environment access or data copies.",
+    "AUTH-010 endpoints_need_login: did not fit. Login on endpoints is unrelated to prod/staging separation or on-call access.",
+    "CONF-010 sensitive_tables_need_login: did not fit. Needs a sensitivity tag on tables, and the workspace has none, so it would not express prod vs staging.",
+    "RET-001 audit_log_protected: did not fit. Restricts writes to the audit log, not data copies between environments or developer access to prod.",
+    "CONV-023 tables_classified: did not fit. Would tag every table with a classification, but does not say which tables are production or which environment they are in."
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "no check exists"},
+    {"part": "devs can only get into prod through the on-call process, not just because they feel like it", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Prod and staging are not represented in the workspace object definitions. Tenants (table tenants) have region, status and db_connection_string, but no environment field and no tags, so I could not tell which tenant or table is production.",
+    "request_human_approval and approval_requests are the support agent's proposed-action approval flow, not a developer access gate. I did not treat them as on-call approval.",
+    "'Prod' and 'staging' are environments outside the Xano branch model; I did not find a branch-based environment split in the pulled files."
+  ],
+  "workspace_names_used": [
+    "policy_authoring_eval",
+    "tenants",
+    "tenants.region",
+    "tenants.status",
+    "tenants.db_connection_string",
+    "orgs",
+    "approval_requests",
+    "request_human_approval",
+    "audit_log",
+    "record_audit_event"
+  ],
+  "confusions": [
+    "The catalogue has no check about environments, branches as environments, data copies between environments, or who may access production. The 'Where values go' and template sections did not point at any environment case, so a customer asking for prod/staging separation has no obvious starting point.",
+    "The skill says to write no policy only when no part is checkable, but it does not say what to do when the request is a process control (on-call approval). The honesty rules push against approximating it with an approval-call check, but the guidance does not say outright that such an approximation should not be written.",
+    "Tags are described as the way to scope rules, but the skill does not say how a team should mark production data when the workspace has no such tag. The customer would need a tagging convention first, and that is outside the policy.",
+    "The skill mentions workspace.object_required and table.coverage_required for 'required objects exist', which might be read as a way to require a staging or prod object. Neither says anything about environment separation, so I did not use them."
+  ],
+  "wished_for": [
+    "A check or scope that identifies production objects (for example an environment or data-classification tag on tables, and a check that the staging tenant or branch cannot reach prod data connections).",
+    "A recipe for process-level asks: what to write when the requirement is a human approval workflow rather than a code property, and how to tell the customer which part belongs outside Xano.",
+    "A template or example for data classification plus environment separation, even if it only covers tagging and a tag_required rule, so the customer has a starting point."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No check can see environments, data copies between them, or who gets into production, so neither part of the ask is checkable. No policy file was written. The reply explains what is missing and offers a tag-based policy once the customer defines a production tag."
+}

@@ -1,0 +1,89 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUTH-002.xs",
+    "AUTH-021.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUTH-002.xs",
+      "ok": true,
+      "key": "AUTH-002",
+      "title": "Admin endpoints check the caller's role",
+      "statement": "Every endpoint in the admin API group must call the role check function check_admin_role as its first statement, passing the logged-in user. That function stops the request unless the user's role is admin or support_lead. An endpoint that cannot make this call first is not exempt; fix the endpoint.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-002.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "check_admin_role"
+            ],
+            "placement": "first",
+            "must_reference": [
+              "$auth"
+            ],
+            "when": [],
+            "tags": [],
+            "api_groups": [
+              "admin"
+            ],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "AUTH-021.xs",
+      "ok": true,
+      "key": "AUTH-021",
+      "title": "Admin endpoints filter tenants by org",
+      "statement": "Every admin endpoint that reads or writes the tenants table must filter that access on org_id, so a request can only reach tenants of one org. A read or write that picks a tenant by id alone is reported; add an org_id predicate that the row must match.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-021.R1",
+          "title": "",
+          "check": "db.where_constraint_required",
+          "params": {
+            "table_selector": {
+              "names": [
+                "tenants"
+              ]
+            },
+            "field": "org_id",
+            "compare_to": "",
+            "tags": [],
+            "api_groups": [
+              "admin"
+            ],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "goal_id": "G01",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: fits. Title covers the ask; check object.auth_required; needs no fill.",
+    "AUTH-020 own_records_only: partial fit. Needs db.where_constraint_required on org_id, which covers cross-tenant reads, not the no-auth part. Not used.",
+    "DATA-010 no_pii_in_responses: partial fit. Checks returned fields, not whether the table is returned in full. Not used.",
+    "CONF-010 sensitive_tables_need_login: near fit, but needs a table_tags value. The invoices table has no tags, and inventing one is not allowed. Not used.",
+    "AUTH-040 protected_endpoints_run_middleware / AUTH-050 one_auth_table: not relevant to the ask."
+  ],
+  "templates_used": ["AUTH-010"],
+  "rules": [
+    {
+      "policy_key": "AUTH-010",
+      "check": "object.auth_required",
+      "params": {"tables": ["invoices"], "except_tags": ["public"]},
+      "covers": "Endpoints that return invoices must require login (the export_GET no-auth case)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Returns the full invoices table to any caller, across orgs, once logged in", "why": "no check exists"},
+    {"part": "Nobody ships such an endpoint, including at 2am (blocking enforcement)", "why": "other: enforcement set to advisory per template and skill default; switching to blocking is the owner's decision"}
+  ],
+  "assumptions": [
+    "Auth-less endpoints that read invoices are what the customer means by 'without auth'",
+    "table name 'invoices' from table/invoices.xs",
+    "except_tags 'public' from the template; no such tag exists in the workspace",
+    "Policy key AUTH-010 from the template, kept with the narrowed scope and a title that says so"
+  ],
+  "workspace_names_used": ["invoices", "invoices/export", "invoices_GET", "invoices/{invoice_id}", "users", "app", "org_id", "api/app/invoices/export_GET.xs"],
+  "confusions": [
+    "The template title 'Endpoints require login' is untrue once the rule is scoped to tables. I changed the title. The skill says a template start keeps its title; it's unclear whether a scoped variant should keep the key.",
+    "The skill says a rule title is needed only when the check label misleads, but the template's check label ('Endpoints require authentication') is still true of the scoped rule, so the choice of title is unclear.",
+    "The skill's 'tags' rule (only when a framework is named) was not clearly tied to the template's soc2 tags; I left tags out."
+  ],
+  "wished_for": [
+    "A recipe for 'this table must not be returned unfiltered' that combines object.auth_required with db.where_constraint_required, since the ask has two halves",
+    "A note on whether a scoped template keeps its key or needs a new one"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The rule catches the no-auth export endpoint and any future endpoint that reads invoices without login, and parses cleanly. It is not verified with xano policy evaluate (not permitted here), and it does not cover cross-tenant exposure once auth exists."
+}

@@ -1,0 +1,42 @@
+{
+  "goal_id": "G02",
+  "repeat": 2,
+  "label": "2026-10-12-baseline-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:24:33.583Z",
+  "wall_ms": 51228,
+  "duration_ms": 50178,
+  "cost_usd": 0.01705224,
+  "num_turns": 13,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "NAMING-010.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 1,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit; xano policy catalogue -o json > /dev/null && echo ok; xano workspace pull -d ./workspace >/dev/null 2>&1; ls -R ./workspace | head -100",
+    "cd ./workspace && ls function table | head -80; echo ---; ls policies 2>/dev/null; cd ..; xano policy list 2>&1 | head -40; echo ---; xano policy catalogue -o json | python3 -I -c 'import json,sys; d=json.load(sys.stdin); print(json.dumps([c for c in d.get(\"checks\",d) if isinstance(c,dict) and c.get…",
+    "xano policy catalogue -o json | python3 -I -c 'import json,sys; d=json.load(sys.stdin); print(type(d), list(d.keys()) if isinstance(d,dict) else len(d)); import re; s=json.dumps(d); i=s.find(\"object.naming\"); print(s[i-200:i+1200]); j=s.find(\"functions_snake_case\"); print(s[j-100:j+700])'; echo ---;…",
+    "xano policy catalogue -o json > /tmp/cat_G02.json 2>/dev/null; python3 -I -c '\nimport json\nd=json.load(open(\"/tmp/cat_G02.json\"))\nfor c in d[\"items\"]:\n    if c[\"id\"]==\"object.naming\": print(json.dumps(c,indent=1)[:6000])\nprint(\"NOT_CHECKABLE\", json.dumps(d[\"not_checkable\"],indent=1)[:3000])\nprint(\"R…",
+    "mkdir -p out/policies && cat > out/NAMING-010.xs <<'EOF'\npolicy \"NAMING-010\" {\n  title = \"Endpoints are snake_case and functions carry the client prefix\"\n  statement = \"Endpoint paths are lowercase snake_case, such as get_customer_profile. Functions are snake_case and start with the client prefix ac…",
+    "cd workspace && grep -rhoE \"^query [A-Za-z0-9_\\-/{}]+\" api | sort | uniq -c | awk '{print $3}' | tr '\\n' ' '; echo; grep -rhoE \"^function [A-Za-z0-9_]+\" function | tr '\\n' ' '; echo; grep -rhoE \"^table [A-Za-z0-9_]+\" table | tr '\\n' ' '; cd ..",
+    "cd workspace && grep -rhE \"^query \" api | sed -E 's/ verb=.*//' | sort | uniq | tr '\\n' ';'; echo; cd ..",
+    "cat > out/reply.md <<'EOF'\nI drafted one advisory policy, `NAMING-010`, that flags names breaking your convention. It never blocks anything. I have not published it or run an evaluation; those steps are still to do, and I can run them when you say so.\n\n**What it checks**\n\n- **Endpoints are lowercase…",
+    "rmdir out/policies && ls out"
+  ],
+  "final_message": "Wrote `out/NAMING-010.xs` (parses cleanly), `out/reply.md` and `out/notes.json`; confidence medium. The table-plural part is not checkable, and I did not run `evaluate`, so the predicted findings are unverified."
+}

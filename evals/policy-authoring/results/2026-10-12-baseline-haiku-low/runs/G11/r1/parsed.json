@@ -1,0 +1,133 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "LOG-010.xs",
+    "SEC-013.xs"
+  ],
+  "policies": [
+    {
+      "file": "LOG-010.xs",
+      "ok": true,
+      "key": "LOG-010",
+      "title": "External calls handle their own failures",
+      "statement": "Every external request sits inside a try block, so a vendor failure reaches error handling, and that try block has a catch branch with at least one statement in it. Checks api.request and stream.from_request only; a request that cannot fail this way is exempted by the policy owner, never by an exemption tag added in code.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "must_be_inside": [
+              "try_catch"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "LOG-010.R2",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "try_catch"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [],
+            "must_contain": [
+              "catch"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-013.xs",
+      "ok": true,
+      "key": "SEC-013",
+      "title": "External requests time out quickly",
+      "statement": "Every external request times out within 30 seconds, so one slow vendor cannot stall a workspace. Every api.request and stream.from_request sets its timeout explicitly; the runtime default does not count. A request that legitimately needs longer than 30 seconds is exempted by the policy owner, never by an exemption tag added in code.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "SEC-013.R1",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "min": null,
+            "max": 30,
+            "unit": "seconds",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "SEC-013.R2",
+          "title": "",
+          "check": "statement.param_required",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

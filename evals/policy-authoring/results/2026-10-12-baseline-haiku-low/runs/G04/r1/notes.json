@@ -1,0 +1,242 @@
+{
+  "goal_id": "G04",
+  "templates_considered": [
+    "endpoints_need_login AUTH-010: used, fits login requirement",
+    "no_pii_in_responses DATA-010: used, but template fill is fields; scoped to patients ssn and insurance id",
+    "no_sensitive_data_in_logs LOG-001: used as-is",
+    "sensitive_tables_need_login CONF-010: not used; needs table_tags, no table has a tag, so it would check nothing today",
+    "sensitive_fields_marked CONF-011: used",
+    "confidential_tables_tagged CONF-012: used with phi tag instead of template confidential, to match CONF-010 example vocabulary",
+    "views_hide_sensitive CONF-013: not used; no saved views in pulled workspace and fields already covered by CONF-011",
+    "audit_log_protected RET-001: used, audit_log and record_audit_event exist",
+    "tokens_expire SEC-014: used first rule only; no signed-token statements in workspace",
+    "no_secrets_in_code SEC-012: used as-is",
+    "retained_data_cleaned_up RET-002: not used; needs retained tag and I have no cleanup task reference",
+    "approved_vendors_only VND-001: not used; needs vendor list I do not have",
+    "own_records_only AUTH-020: not used; role-based clinician access is not user-owned records",
+    "admin_endpoints_check_role AUTH-002: not used; not asked for",
+    "tls_verification_on SEC-011: not used; no api.request in patient code and not asked",
+    "no_pii_in_responses DATA-010 limits: judged db.get full-row fetch as a fetch of ssn; unverified"
+  ],
+  "templates_used": [
+    "endpoints_need_login",
+    "no_pii_in_responses",
+    "no_sensitive_data_in_logs",
+    "sensitive_fields_marked",
+    "confidential_tables_tagged",
+    "audit_log_protected",
+    "tokens_expire",
+    "no_secrets_in_code"
+  ],
+  "rules": [
+    {
+      "policy_key": "AUTH-010",
+      "check": "object.auth_required",
+      "params": {
+        "except_tags": [
+          "public"
+        ]
+      },
+      "covers": "patients/appointments need login"
+    },
+    {
+      "policy_key": "DATA-010",
+      "check": "db.output_fields_forbidden",
+      "params": {
+        "object_kinds": [
+          "query"
+        ],
+        "fields": [
+          "patients.ssn",
+          "patients.insurance_member_id"
+        ]
+      },
+      "covers": "minimum necessary: identifiers returned by endpoints"
+    },
+    {
+      "policy_key": "LOG-001",
+      "check": "statement.expression_rule",
+      "params": {
+        "statements": [
+          "debug.log"
+        ],
+        "param_names": [
+          "value"
+        ],
+        "must_not_reference": [
+          "$input",
+          "$auth",
+          "$env"
+        ]
+      },
+      "covers": "no PHI in logs"
+    },
+    {
+      "policy_key": "CONF-011",
+      "check": "table.field_attribute_required",
+      "params": {
+        "field_names": [
+          "ssn",
+          "dob",
+          "insurance_member_id",
+          "note",
+          "diagnosis"
+        ],
+        "attribute": "sensitive",
+        "tables": [
+          "patients",
+          "clinical_notes"
+        ]
+      },
+      "covers": "PHI fields marked sensitive"
+    },
+    {
+      "policy_key": "CONF-012",
+      "check": "table.tag_required",
+      "params": {
+        "field_names": [
+          "ssn",
+          "dob",
+          "insurance_member_id",
+          "note",
+          "diagnosis"
+        ],
+        "tag": "phi",
+        "tables": [
+          "patients",
+          "clinical_notes"
+        ]
+      },
+      "covers": "PHI tables tagged"
+    },
+    {
+      "policy_key": "SEC-014",
+      "check": "statement.param_bound",
+      "params": {
+        "statements": [
+          "security.create_auth_token"
+        ],
+        "param_names": [
+          "expiration"
+        ],
+        "min": 1,
+        "max": 3600,
+        "unit": "seconds"
+      },
+      "covers": "automatic logoff via token expiry"
+    },
+    {
+      "policy_key": "RET-001",
+      "check": "workspace.object_required",
+      "params": {
+        "object_kind": "table",
+        "names": [
+          "audit_log"
+        ]
+      },
+      "covers": "audit log exists"
+    },
+    {
+      "policy_key": "RET-001",
+      "check": "table.write_location_restricted",
+      "params": {
+        "restricted_tables": [
+          "audit_log"
+        ],
+        "allowed_functions": [
+          "record_audit_event"
+        ]
+      },
+      "covers": "audit controls: only audit function writes"
+    },
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {},
+      "covers": "no hardcoded keys (encryption/API)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "Business associate agreements / approved vendors for PHI",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Access logging of who reads patient records (reads, not writes)",
+      "why": "no check exists"
+    },
+    {
+      "part": "Retention period and cleanup of clinical data",
+      "why": "needs runtime/org process; RET-002 needs a retained tag and task"
+    },
+    {
+      "part": "Clinician-only / role-based access to patients",
+      "why": "no check exists; AUTH-020 is per-owner records"
+    },
+    {
+      "part": "Encryption at rest, workforce training, risk analysis, breach notification",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Automatic logoff for sessions table rows (not only tokens)",
+      "why": "couldn't tell how; sessions expiry is in a nightly task, not checked"
+    },
+    {
+      "part": "Transmission security (TLS) for external calls",
+      "why": "other: not asked and no external calls to patient data seen"
+    }
+  ],
+  "assumptions": [
+    "tags phi and public: phi is my choice; public is the existing tag used by login/health/subscribe",
+    "db.get on patients fetches full row incl. ssn, so DATA-010 would flag patient_id_GET",
+    "dob is treated as PHI identifier for CONF-011/012 and as clinical-screen-needed (not in DATA-010)",
+    "patients table scope via tables param is by exact name",
+    "severity and enforcement: template severities, advisory"
+  ],
+  "workspace_names_used": [
+    "patients",
+    "clinical_notes",
+    "appointments",
+    "audit_log",
+    "record_audit_event",
+    "users",
+    "sessions",
+    "ssn",
+    "dob",
+    "insurance_member_id",
+    "note",
+    "diagnosis",
+    "patients.ssn",
+    "patients.insurance_member_id",
+    "security.create_auth_token",
+    "debug.log",
+    "public",
+    "appointments_GET",
+    "patient_id_GET",
+    "clinical_notes_POST",
+    "login_POST",
+    "charge_POST",
+    "customer_id_PATCH",
+    "delete_user_account",
+    "invoices/export_GET"
+  ],
+  "confusions": [
+    "Templates say the check needs table_tags/tags, but none of the workspace tables carry tags; no guidance on what to do when the tag vocabulary is empty",
+    "CONF-011 attribute syntax: skill shows attribute name only; I had no example of a sensitive field in XanoScript to confirm how the schema marks it, so I could not verify the current state",
+    "Whether db.output_fields_forbidden flags a whole-row db.get is not stated; I assumed yes",
+    "Skill says check templates via xano policy catalogue but kit/catalogue.json is the offline copy; I used the kit copy only",
+    "Skill rule 6 says propose tags separately; it is unclear whether a policy that will flag every table until tags exist should still be published active",
+    "CONF-010 and CONF-012 overlap in purpose; no guidance on which to use for PHI"
+  ],
+  "wished_for": [
+    "A HIPAA framework mapping or recipe listing which templates cover which HIPAA sections",
+    "An example of marking a schema field sensitive in XanoScript",
+    "A check for access logging of reads, or a template for it",
+    "A clear statement on whether db.get counts as fetching all fields",
+    "Guidance on starting from an empty tag vocabulary (which tag names to propose)"
+  ],
+  "parse_attempts": 9,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The drafts parse with no warnings and cover the technical gaps visible in the workspace, but HIPAA compliance is mostly process and runtime controls no check reads. Findings are predictions only; evaluate was not run. Several rules depend on tags that do not exist yet and on assumed behaviour of db.get and sensitive field marking."
+}

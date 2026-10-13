@@ -1,0 +1,49 @@
+{
+  "goal_id": "G03",
+  "templates_considered": [
+    "LOG-001 (no_sensitive_data_in_logs): fits the 'cardholder can't be logged' part; used as is",
+    "VND-001 (approved_vendors_only): fits the 'Stripe and Plaid only' part; used with hosts only",
+    "CONF-011 (sensitive_fields_marked): checks a field IS marked sensitive, not that a field is absent; does not express 'not stored raw'; not used",
+    "CONF-012 (confidential_tables_tagged): tags tables, does not forbid storage; not used",
+    "DATA-010 (no_pii_in_responses): about what endpoints fetch/return, not storage or logs; not used",
+    "SEC-012 (no_secrets_in_code): fits the twilio token literal found in acme_notify_sms, outside the ask; not written, proposed in reply",
+    "CONF-010 (sensitive_tables_need_login): relevant to payments access but not asked; not used"
+  ],
+  "templates_used": ["LOG-001", "VND-001"],
+  "rules": [
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data must not be logged (debug.log only)"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "only Stripe and Plaid as recipients; kinds, providers left empty so cloud, email and agent.llm providers are all reported"},
+    {"policy_key": "PCI-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number"], "forbidden": true}, "covers": "cardholder and bank data must not be stored raw (field-name based)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cardholder data must not be logged via datadog.log or other log sinks", "why": "other"},
+    {"part": "data is not stored raw (encryption cannot be verified; card data under other field names is missed)", "why": "no check exists"},
+    {"part": "PCI audit pass as a whole (controls, access reviews, network scope, process)", "why": "needs runtime/org process"},
+    {"part": "cardholder data must not be sent to a vendor not on the list, beyond host names (data inside an approved vendor's call is not inspected)", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "The approved vendor hosts are api.stripe.com and production.plaid.com, the two in use in the workspace",
+    "'Stored raw' means the field exists in a table with the name listed; the customer's field names match the workspace's",
+    "cardholder_name and bank fields are in scope for 'cardholder stuff'",
+    "Advisory enforcement is the right default; the customer did not specify blocking",
+    "Policy tag 'pci-dss' is an acceptable label; no specific PCI DSS requirement number was recorded"
+  ],
+  "workspace_names_used": ["payments", "card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number", "payments/charge", "payments/fraud_check", "clinical_notes", "acme_notify_sms", "api.stripe.com", "production.plaid.com", "api.riskscreen.example", "bank_accounts/link"],
+  "confusions": [
+    "outbound.vendor_allowlist: providers and hosts both 'empty means unreviewed'; not obvious whether omitting providers flags Stripe/Plaid under a cloud provider id, so I relied on hosts only",
+    "table.field_attribute_required: 'forbidden' with attribute unset is described as reporting every selected field, but the field-selection-plus-attribute semantics are spread across the description; I had to infer that attribute can stay empty",
+    "No check forbids a field by name with a pattern (e.g. any field matching card or pan); had to enumerate names, which is weaker",
+    "Template LOG-001 says add datadog.log for full coverage, but gives no datadog.log rule example; unclear whether to add it as a second rule",
+    "Policy tags: no guidance on whether tags should record framework criteria such as PCI DSS requirement numbers"
+  ],
+  "wished_for": [
+    "A check or param to forbid fields matching a name pattern (card*, *_cvv) across all tables",
+    "A template or recipe for 'data must not be stored' distinct from 'marked sensitive'",
+    "Guidance on vendor allowlists when a vendor is reached through a provider id versus a host",
+    "A PCI DSS or framework-to-check mapping in the catalogue"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The logging and vendor rules match the ask and use template checks, and all three files parse cleanly. Storage is checked by field name only, so renamed or differently-named card fields would be missed. The policies were not evaluated, so I have no run result, and a PCI audit pass depends on controls outside any policy."
+}

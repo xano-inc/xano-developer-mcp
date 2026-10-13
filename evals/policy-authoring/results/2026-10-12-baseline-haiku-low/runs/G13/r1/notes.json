@@ -1,0 +1,35 @@
+{
+  "goal_id": "G13",
+  "templates_considered": [
+    "sensitive_tables_need_login (CONF-010): closest fit for 'touching customer data' via object.tagged_table_access; checks login and audit call on endpoints reaching tagged tables, not training. Adjacent only; needs table tags the workspace lacks, so not used.",
+    "endpoints_need_login (AUTH-010): covers login generally, not the customer-data part; too broad, not used.",
+    "confidential_tables_tagged (CONF-012): would tag tables, which is a prerequisite, not the ask; not used.",
+    "tables_classified (CONV-023) and agreed_tag_vocabulary (CONV-020): tagging hygiene, unrelated to training; not used.",
+    "no other template: none mentions training, staff, people, or attestation."
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "everyone on the team has done security awareness training", "why": "no check exists"},
+    {"part": "before they are allowed to touch customer data", "why": "needs runtime/org process: the gate is a person's training status, which lives outside the workspace; the workspace's users table has no training field"},
+    {"part": "customer data identified in the workspace", "why": "other: no tables carry a sensitive or customer-data tag, so no check can scope to it until tags are agreed and applied"}
+  ],
+  "assumptions": [
+    "'customer data' maps to tables like customers, patients, clinical_notes, invoices, payments, which I read from the workspace but did not confirm are the customer's definition.",
+    "No policy file was written: the only checkable neighbours (login and audit on tagged tables) do not match the ask, and writing one would imply training is enforced."
+  ],
+  "workspace_names_used": ["users", "customers", "patients", "clinical_notes", "invoices", "payments", "audit_log", "orgs"],
+  "confusions": [
+    "The skill says to 'Write no policy only when no part is checkable' but does not say what to do when the checkable part is an adjacent control rather than what was asked. I judged that writing it would misrepresent coverage.",
+    "The catalogue has no concept of a people or attestation record, and the skill's honesty rules imply that but do not say it plainly for requests about people."
+  ],
+  "wished_for": [
+    "A worked example of declining a request where the core ask is not checkable, with a sample reply.",
+    "Guidance on whether to write a partial policy when only an adjacent control is checkable, and how to label it to the customer.",
+    "A way to tag or flag tables as customer-data in the workspace, or a recipe for proposing those tags."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "High confidence that no policy can enforce security training completion from the workspace: no check reads people or training records, and the workspace has no such field. Confidence is in the no-policy conclusion, not in any policy, since none was written."
+}

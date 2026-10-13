@@ -1,0 +1,111 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "CLIENT-NAMING.xs"
+  ],
+  "policies": [
+    {
+      "file": "CLIENT-NAMING.xs",
+      "ok": true,
+      "key": "CLIENT-NAMING",
+      "title": "Client naming conventions",
+      "statement": "Endpoint paths are lowercase snake_case, table names are plural, and function names start with the client prefix acme_. This policy flags a name that breaks the convention so the owner can decide; it blocks nothing. An existing name that is kept on purpose is exempted by the policy owner, not by renaming it.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "low",
+      "rules": [
+        {
+          "id": "CLIENT-NAMING.R1",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "endpoint_path",
+            "case_style": "snake_case",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CLIENT-NAMING.R2",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "[a-z0-9_]*s",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "table"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "CLIENT-NAMING.R3",
+          "title": "",
+          "check": "object.naming",
+          "params": {
+            "name_kind": "object",
+            "case_style": "",
+            "min_length": null,
+            "max_length": null,
+            "prefixes": [
+              "acme_"
+            ],
+            "suffixes": [],
+            "first_word_must_be": [],
+            "words_forbidden": [],
+            "pattern": "",
+            "version_required": false,
+            "foreign_key_name": "",
+            "foreign_key_list_name": "",
+            "allowed_names": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "function"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

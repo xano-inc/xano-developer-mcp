@@ -1,0 +1,57 @@
+{
+  "goal_id": "G11",
+  "templates_considered": [
+    "requests_have_timeout (SEC-013): fits. Title covers the timeout half of the ask. Its single rule uses statement.param_bound max 30, but an omitted timeout is judged at the 10s default, so it would not flag the exact outage case (no timeout at all). Used, with a param_required rule added.",
+    "external_calls_handle_errors (LOG-010): fits. Title covers the error-handling half. statement.containment try_catch on api.request. Used, with stream.from_request and webflow.request added to the statement list as the limits text suggests.",
+    "endpoints_need_login (AUTH-010): did not fit. Ask is not about authentication.",
+    "no_secrets_in_code (SEC-012): did not fit the ask, but relevant to a hardcoded credential I saw in acme_notify_sms.xs. Not written; mentioned to the customer.",
+    "no_sensitive_data_in_logs (LOG-001): did not fit the ask. Relevant to a debug.log of card data in charge_POST.xs. Not written; mentioned to the customer.",
+    "approved_vendors_only (VND-001): did not fit. Ask is about failure handling, not which vendors are approved."
+  ],
+  "templates_used": ["requests_have_timeout", "external_calls_handle_errors"],
+  "rules": [
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "timeout is 30s or less when set"},
+    {"policy_key": "SEC-013", "check": "statement.param_required", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"]}, "covers": "timeout must be written explicitly; the template alone would pass an omitted timeout"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "must_be_inside": ["try_catch"]}, "covers": "external call sits inside a try block so failures reach error handling"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "the error handling actually handles the failure (catch body does something sensible)", "why": "no check exists"},
+    {"part": "retry loop in task/retry_failed_webhooks.xs has no bound on attempts and no backoff", "why": "no check exists"},
+    {"part": "external calls via ai.external.mcp.* and db.external.* statements", "why": "other: not present in this workspace; the template's limits say to add them, but the param shapes for them are not clear to me. Not written."},
+    {"part": "whole app hang behaviour at runtime (threads, queues, scheduled tasks)", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The ask 'any external API call' maps to api.request, stream.from_request and webflow.request, the statements the templates name. I did not check for other external statement names in the catalogue beyond those.",
+    "webflow.request is a valid statement name; the parser raised no warning, but no webflow usage exists in the workspace to confirm it.",
+    "tags = [] is accepted; I left it in the files. The parser dropped it in its text output and did not complain.",
+    "Advisory enforcement and severity medium (the template defaults) are right for this customer; the customer did not state severity.",
+    "No scope params: the customer said any external call, so the rules apply to every object in the workspace."
+  ],
+  "workspace_names_used": [
+    "api.shipfast.example (in function/acme_get_tracking.xs, function/acme_sync_shipping_rates.xs, api/app/shipments/quote_POST.xs)",
+    "acme_get_tracking, acme_sync_shipping_rates, acme_notify_sms (functions)",
+    "issue_refund (ai/tool/issue_refund.xs)",
+    "retry_failed_webhooks (task/retry_failed_webhooks.xs)",
+    "shipments/quote, payments/fraud_check, payments/charge, bank-accounts/link (api endpoints)",
+    "api group 'app'"
+  ],
+  "confusions": [
+    "The template's SEC-013 rule (param_bound max 30) does not flag a missing timeout. The check judges an omitted timeout at its 10s default, so the template is silent on the exact outage in the ask. I had to find the statement.param_required combination from the check description, not from the template guidance. The template could say this explicitly.",
+    "The statement.containment description says the rule checks the try block only; the template's 'Fill' column says nothing and the summary ('confirms a try block') is not clear that the catch body is unchecked. I had to infer it.",
+    "statement.containment: how to ask for 'a catch that contains at least one statement' is only described in the skill's prose, not in the check's params. I did not write that rule because I was not sure it would apply the way I wanted to the try_catch statement itself, versus the selected statement.",
+    "The skill says 'a policy file carries no comments' and says severity is the policy's. Both are clear. But it did not say whether an empty tags array is valid or should be omitted; I left it in and the parser accepted it.",
+    "The 'xano policy parse' text output drops severity and tags from the printed form. The JSON output keeps them. This is not documented and made me doubt the file had saved the severity line until I checked the JSON.",
+    "The skill tells me to run xano policy evaluate after writing a policy. My brief forbids evaluate, so I could not verify which objects match; all expected findings are my prediction from reading the code."
+  ],
+  "wished_for": [
+    "A template or recipe for 'every external call has a timeout AND error handling', showing both rules on the same statement list.",
+    "A note in SEC-013 that an omitted timeout is judged at 10s and so passes max 30; pair it with param_required in the template itself.",
+    "An example of statement.containment with must_contain on try_catch, to check that catch has real work in it.",
+    "A list of every external statement name (api.request, stream.from_request, webflow.request, plus any others) in one place, rather than spread across template limits text.",
+    "Clarification on whether a rule's param_names works on a statement that does not declare the param (e.g. stream.from_request timeout semantics differ from api.request)."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both halves of the ask map to a check with a template, and the parser accepts both files. Medium, not high, because: the error-handling rule only confirms a try block, not that the handler works; retry loops and runtime hangs are not covered; and the predicted findings are from reading the code, since I was not allowed to run evaluate."
+}

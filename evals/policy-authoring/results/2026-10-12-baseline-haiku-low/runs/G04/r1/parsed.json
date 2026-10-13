@@ -1,0 +1,338 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "AUTH-010.xs",
+    "CONF-011.xs",
+    "CONF-012.xs",
+    "DATA-010.xs",
+    "LOG-001.xs",
+    "RET-001.xs",
+    "SEC-012.xs",
+    "SEC-014.xs"
+  ],
+  "policies": [
+    {
+      "file": "AUTH-010.xs",
+      "ok": true,
+      "key": "AUTH-010",
+      "title": "Endpoints require login",
+      "statement": "Every endpoint must require authentication, because patient and appointment data sits behind them (HIPAA Security Rule access control, 45 CFR 164.312(a)). An endpoint that must be public, such as login, signup, webhook or health, carries the `public` tag, signed off by the platform owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-010.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [
+              "public"
+            ],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONF-011.xs",
+      "ok": true,
+      "key": "CONF-011",
+      "title": "Sensitive fields are marked sensitive",
+      "statement": "The patient identifiers and clinical text fields must be marked sensitive in their table schema, so that Xano hides them from saved views and the field checks apply (HIPAA safeguard for PHI, 45 CFR 164.312). Only the listed fields are checked; other personal fields need a policy change.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CONF-011.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "ssn",
+              "dob",
+              "insurance_member_id",
+              "note",
+              "diagnosis"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "patients",
+              "clinical_notes"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "CONF-012.xs",
+      "ok": true,
+      "key": "CONF-012",
+      "title": "Tables holding PHI are tagged",
+      "statement": "Tables that hold protected health information (patient identifiers and clinical notes) must carry the `phi` tag, so that the access rules that follow the tag apply to them (HIPAA safeguard for PHI, 45 CFR 164.312). Tagging a table is the owner's decision.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "CONF-012.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "ssn",
+              "dob",
+              "insurance_member_id",
+              "note",
+              "diagnosis"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "phi",
+            "tags": [],
+            "api_groups": [],
+            "tables": [
+              "patients",
+              "clinical_notes"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "DATA-010.xs",
+      "ok": true,
+      "key": "DATA-010",
+      "title": "Endpoints don't return personal data",
+      "statement": "Endpoints must not fetch patient identifiers that the clinician screens do not need: Social Security numbers and insurance member IDs (HIPAA minimum necessary, 45 CFR 164.502(b)). An endpoint that truly needs one of these fields is exempted by the policy owner, not by the endpoint author.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "DATA-010.R1",
+          "title": "",
+          "check": "db.output_fields_forbidden",
+          "params": {
+            "fields": [
+              "patients.ssn",
+              "patients.insurance_member_id"
+            ],
+            "include_sensitive": true,
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Logs don't contain request, user or secret data",
+      "statement": "Debug logs must name the event, never the request input, the logged-in user or environment secrets, because logs can hold PHI and credentials (HIPAA audit and safeguard duties, 45 CFR 164.312). Log the event name and record id instead.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "The audit_log table must exist, and only the record_audit_event function may write to it, so that the record of who changed patient data cannot be edited by other code (HIPAA audit controls, 45 CFR 164.312(b)). This does not record reads of patient data; that needs a separate policy.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "audit_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "audit_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_audit_event"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-012.xs",
+      "ok": true,
+      "key": "SEC-012",
+      "title": "No secrets are hardcoded",
+      "statement": "Keys, tokens, passwords and credentials must never be written as literal values in an object; they belong in workspace environment variables (HIPAA security management and encryption safeguards, 45 CFR 164.312). The owner sets the value and rotates any exposed one.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "SEC-012.R1",
+          "title": "",
+          "check": "literal.credential_shape",
+          "params": {
+            "patterns": [],
+            "locations": [
+              "definition",
+              "agent_settings"
+            ],
+            "allowed_secrets": [],
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "SEC-014.xs",
+      "ok": true,
+      "key": "SEC-014",
+      "title": "Login tokens expire within an hour",
+      "statement": "Every login token must expire within one hour, so that an idle or stolen session cannot reach patient data later (HIPAA automatic logoff, 45 CFR 164.312(a)(2)(iii)). A token that signs another payload is exempted by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SEC-014.R1",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "security.create_auth_token"
+            ],
+            "param_names": [
+              "expiration"
+            ],
+            "min": 1,
+            "max": 3600,
+            "unit": "seconds",
+            "tags": [],
+            "api_groups": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

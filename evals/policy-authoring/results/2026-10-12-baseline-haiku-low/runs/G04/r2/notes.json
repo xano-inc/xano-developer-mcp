@@ -1,0 +1,86 @@
+{
+  "goal_id": "G04",
+  "templates_considered": [
+    "endpoints_need_login: used (AUTH-010), scoped to PHI tables with tables param",
+    "own_records_only: used (AUTH-020), R1 narrowed to patients via table_selector, org_id tenant field instead of user_id",
+    "no_self_promotion: not used, no user-role write path for patients in the ask",
+    "public_endpoints_harmless: not used, nothing in ask about public data changes",
+    "admin_endpoints_check_role: not used, no admin role request in ask",
+    "tokens_expire: not used, session lifetime not asked",
+    "writes_check_first: not used, too general for the ask",
+    "protected_endpoints_run_middleware: not used, no middleware in workspace named for PHI",
+    "one_auth_table: not used, users is the only auth table; not a HIPAA request",
+    "no_pii_in_responses: used (DATA-010), fields narrowed to ssn and insurance_member_id",
+    "sensitive_tables_need_login: used (CONF-010), table_tags phi; tag absent in workspace so it checks nothing yet",
+    "sensitive_fields_marked: used (CONF-011), field_names ssn dob insurance_member_id diagnosis",
+    "confidential_tables_tagged: used (CONF-012), tag changed from template confidential to phi to match CONF-010",
+    "views_hide_sensitive: not used, no saved views seen in pulled workspace",
+    "no_sensitive_data_in_logs: used (LOG-001), template rule unchanged",
+    "audit_log_protected: used (RET-001), template rule unchanged; audit_log and record_audit_event exist",
+    "retained_data_cleaned_up: not used, needs retained tag and a retention period the customer has not given",
+    "no_secrets_in_code: not used, general security not HIPAA-specific; no literal secret seen in the ask"
+  ],
+  "templates_used": [
+    "AUTH-010",
+    "AUTH-020",
+    "CONF-010",
+    "CONF-011",
+    "CONF-012",
+    "DATA-010",
+    "LOG-001",
+    "RET-001"
+  ],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"], "tables": ["patients", "appointments", "clinical_notes"]}, "covers": "endpoints reaching PHI must require login"},
+    {"policy_key": "AUTH-020", "check": "db.where_constraint_required", "params": {"field": "org_id", "compare_to": "$auth.org_id", "table_selector": {"names": ["patients"]}}, "covers": "patient reads limited to the user's own organisation"},
+    {"policy_key": "AUTH-020", "check": "db.write_from_input_forbidden", "params": {"fields": ["org_id"]}, "covers": "patient writes take org_id from login, not request"},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["phi"]}, "covers": "PHI tables only reached by logged-in endpoints; no-op until phi tag exists"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["ssn", "dob", "insurance_member_id", "diagnosis"], "attribute": "sensitive"}, "covers": "identifiers and clinical fields marked sensitive"},
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["ssn", "insurance_member_id", "diagnosis"], "tag": "phi"}, "covers": "tables holding PHI are classified"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["ssn", "insurance_member_id"], "object_kinds": ["query"]}, "covers": "minimum necessary: SSN and insurance ID not fetched by endpoints"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "PHI and request data kept out of debug logs"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit trail table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "audit trail written only through one function"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Business Associate Agreements with vendors", "why": "needs runtime/org process"},
+    {"part": "Risk analysis and risk management records", "why": "needs runtime/org process"},
+    {"part": "Staff access reviews, training and sign-off", "why": "needs runtime/org process"},
+    {"part": "Encryption at rest and in transit", "why": "no check exists"},
+    {"part": "Retention period for patient records and its cleanup task", "why": "couldn't tell how: RET-002 needs a retained tag and a period the customer has not given"},
+    {"part": "Breach notification procedure", "why": "needs runtime/org process"},
+    {"part": "Hiding sensitive fields in saved views", "why": "other: CONF-013 applies only if saved views exist, none seen in the pull"},
+    {"part": "Patient/user access audit (who read which patient)", "why": "no check exists: audit checks cover writes only, not reads"},
+    {"part": "Tagging PHI tables as phi", "why": "other: tagging is a workspace change, not done here, so CONF-010 is inert until someone does it"}
+  ],
+  "assumptions": [
+    "The phi tag is the classification for PHI tables; the customer must create and apply it",
+    "users.org_id is the tenant field for $auth.org_id",
+    "patients is the only table where org_id-based tenant filtering applies; appointments and clinical_notes have no org_id",
+    "Field names ssn, dob, insurance_member_id and diagnosis are unique enough that table.field_attribute_required and table.tag_required match only the intended tables",
+    "record_audit_event is the only approved writer of audit_log, per the table and function comments"
+  ],
+  "workspace_names_used": [
+    "patients", "appointments", "clinical_notes", "audit_log", "record_audit_event", "orgs", "users", "ssn", "dob", "insurance_member_id", "diagnosis", "org_id", "patients/{patient_id}", "appointments", "clinical_notes", "debug.log"
+  ],
+  "confusions": [
+    "CONF-012 template fixes tag confidential, but CONF-010 template takes its tag from the customer; I changed CONF-012 to phi for consistency, and the skill does not say whether a template's preset tag is a fill or a fixed value",
+    "The parse output omits severity medium from the printed policy (default value), which looked like a dropped line on first read",
+    "The skill says a dotted field name selects nested fields but the template examples use table-qualified names; unclear when table.field is needed in db.output_fields_forbidden",
+    "Scope tables param on object.auth_required is in the scope list, but the template for AUTH-010 has no scoping example, so I had to infer how it combines with the check",
+    "table_selector shape for db.where_constraint_required is documented only as object{names, tag, has_field, has_fk_to}; no example value given"
+  ],
+  "wished_for": [
+    "A guide to using scope params (tables, tags, api_groups) on templates such as AUTH-010, with a PHI example",
+    "A HIPAA framework mapping listing which checks cover which safeguard, and which safeguards have no check",
+    "An example of db.where_constraint_required with table_selector",
+    "A read-only way to see which objects a rule would match before a push, or a dry-run that does not require evaluate",
+    "A note that a tag not on any table produces a warning at parse time, to be called out in the template"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [
+    "CONF-010.R1: table_tags phi is on no table in this workspace (warning, expected until tagging)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The eight policies cover the checkable parts of the ask: login and tenant access for PHI endpoints, sensitive marking, field minimisation, log hygiene and audit writes. Two are inert until the customer tags tables phi (CONF-010, CONF-012 findings only). Most HIPAA requirements (BAAs, risk analysis, training, encryption, retention, breach notice) have no check. Nothing has been evaluated, so all matches are predictions from reading the code, and the policies cannot make the workspace HIPAA-safe."
+}

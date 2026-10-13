@@ -1,0 +1,80 @@
+{
+  "goal_id": "G11",
+  "templates_considered": [
+    "LOG-010 external_calls_handle_errors: fits 'some kind of error handling' around external calls; used as the base for the try_catch rule",
+    "SEC-013 requests_have_timeout: fits 'a timeout set'; used as the base, with max 30 from the template",
+    "SEC-011 tls_verification_on: does not fit; the ask is not about TLS",
+    "SEC-012 no_secrets_in_code: does not fit the ask; noticed a literal credential in a workspace URL (acme_notify_sms) and flagged it in the reply rather than adding it",
+    "VND-001 approved_vendors_only: does not fit; the ask is about timeouts and errors, not which vendors are allowed",
+    "CONV-040 / CONV-041, LOG-011, RET-010, etc.: no fit"
+  ],
+  "templates_used": ["LOG-010", "SEC-013"],
+  "rules": [
+    {
+      "policy_key": "SEC-013",
+      "check": "statement.param_bound",
+      "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"], "max": 30, "unit": "seconds"},
+      "covers": "external calls time out within 30 seconds (template rule, unchanged)"
+    },
+    {
+      "policy_key": "SEC-013",
+      "check": "statement.param_required",
+      "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["timeout"]},
+      "covers": "'has a timeout set': param_bound judges an omitted timeout at its 10s default and passes it, so an explicit-setting rule is needed to catch omitted timeouts"
+    },
+    {
+      "policy_key": "LOG-010",
+      "check": "statement.containment",
+      "params": {"statements": ["api.request", "stream.from_request"], "must_be_inside": ["try_catch"]},
+      "covers": "'some kind of error handling': external calls sit inside a try block so failures reach error handling (template rule, unchanged)"
+    },
+    {
+      "policy_key": "LOG-010",
+      "check": "statement.containment",
+      "params": {"statements": ["try_catch"], "must_contain": ["catch"], "min_count": 1},
+      "covers": "'some kind of error handling', added beyond the template: the try_catch has a non-empty catch branch, so a failure is not silently swallowed by an empty catch"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling is actually meaningful (fallback, clear error to caller, alerting) rather than just present", "why": "couldn't tell how; checks only that a catch branch has a statement, not what it does"},
+    {"part": "timeouts and error handling for db.external and ai.external.mcp calls", "why": "no check bounds their timeout; containment only covers them if listed, and none exist in the workspace"},
+    {"part": "the app hang itself: retry loops and blocking on a slow vendor across the whole app", "why": "needs runtime/org process; a timeout on each call does not bound a while-loop retry or total time across calls"},
+    {"part": "timeouts on webflow.request", "why": "included in the template's param_bound rule; no webflow.request exists in the workspace, so the rule can only match it if one is added"}
+  ],
+  "assumptions": [
+    "'external API call' means api.request and stream.from_request, the statements the templates name; webflow.request included for timeout only, as the template does",
+    "30 seconds is the right maximum, from the template; the customer did not give a number",
+    "the customer's vendor timeout needs are not known; a longer timeout may be needed for some vendor and would need an owner's exemption",
+    "advisory enforcement is the right starting point for a new policy, per the skill's guidance"
+  ],
+  "workspace_names_used": [
+    "shipments/quote_POST (api/app/shipments/quote_POST.xs)",
+    "payments/fraud_check_POST (timeout 15)",
+    "payments/charge_POST (timeout 20)",
+    "bank_accounts/link_POST (timeout 20)",
+    "acme_get_tracking (try_catch, timeout 60)",
+    "acme_sync_shipping_rates (no timeout, no try)",
+    "acme_notify_sms (no timeout, no try)",
+    "retry_failed_webhooks (task, no timeout, no try)",
+    "issue_refund (AI tool, timeout 20)",
+    "table/endpoint names were not needed by these two policies"
+  ],
+  "confusions": [
+    "The skill says a rule title is optional and only for misleading labels, but the template rules have titles; I dropped them, which may not match what the product expects in a template-based policy",
+    "param_bound's 'omitted param is judged at its runtime default' combined with SEC-013 template: the template alone passes an omitted timeout, which is not obvious from the template summary ('time out within 30 seconds'); I had to find the param_required check in the catalogue description to fix it",
+    "statement.containment's must_contain with 'catch' for a try_catch statement is described only for 'N statements of any kind'; I was not sure whether min_count 1 on 'catch' requires a statement or just a non-empty branch, and the skill's wording is for try_catch as the selected statement, which I used",
+    "xano policy parse rewrote or reformatted the file on disk: after parse, the policy files showed a different layout, and the LOG-010 min_count: 1 default was dropped from parse's rendered output; it was unclear whether parse writes back to the file or only prints",
+    "the skill says 'Write only names the catalogue and the workspace have', but webflow.request is in the template and not in the workspace; I kept it as the template does, which may be a rule warning in some setups (none reported by parse)",
+    "the ask says 'any external API call', but the catalogue has no check that bounds db.external or AI/MCP calls; the skill's containment limits note covers this in the template text, not in the rule params"
+  ],
+  "wished_for": [
+    "a single template that combines a timeout-set check and a timeout-max check, or a note on the SEC-013 template that an omitted timeout passes as written",
+    "guidance on whether must_contain 'catch' counts statements or only needs a non-empty branch",
+    "a note on whether xano policy parse writes back to the file",
+    "a template or example for 'external calls must have a timeout and a non-empty catch', since the customer's ask combines two templates"
+  ],
+  "parse_attempts": 6,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The two rules directly check the timeout and try-block parts of the ask, and the workspace has concrete calls they would flag, so they do address the customer's stated problem. Confidence is not higher because LOG-010 only checks that a catch branch is non-empty, not that it handles a vendor outage, and no check bounds retry loops or whole-app hangs, which is what actually took the app down. The policies also have not been run against the workspace (xano policy evaluate was forbidden in this run), so the predicted findings are from reading the code, not an evaluation."
+}

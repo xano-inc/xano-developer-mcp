@@ -1,0 +1,53 @@
+{
+  "goal_id": "G07",
+  "templates_considered": [
+    "AUTH-010 endpoints_need_login: fits 'require login'; used with except_tags public, which the workspace uses on 3 endpoints",
+    "AUTH-002 admin_endpoints_check_role: fits the role-check half of access control, but no admin-tagged endpoints exist, so it would match nothing; not written",
+    "AUTH-020 own_records_only: access-related, but needs a field choice and the request did not name owned data; not written",
+    "AUTH-050 one_auth_table: access-related, but not asked for; users table is the only obvious auth table; not written",
+    "RET-001 audit_log_protected: fits change evidence (who changed what); workspace has audit_log table and record_audit_event function; used",
+    "CHG-001 endpoints_have_tests: fits 'change management' keyword and SOC 2 testing evidence; used",
+    "CONV-022 owner_team_tagged / CONV-023 tables_classified: change-related ownership, but not what the customer asked; not written",
+    "LOG-001, DATA-010, CONF-*: data protection, not in the ask; not written"
+  ],
+  "templates_used": ["AUTH-010", "RET-001", "CHG-001"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "access control: endpoints require login, public ones exempted by tag"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "change evidence: an audit log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "change evidence: only the audit function writes the audit trail"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "change control: endpoints are tested before release (as far as tests show)"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "change control: tests for protected endpoints assert anonymous calls are rejected"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "access reviews (periodic review of who has access)", "why": "needs runtime/org process"},
+    {"part": "change approval: changes need a second person's sign-off", "why": "no check exists"},
+    {"part": "admin endpoints must check the caller's role", "why": "other: the template's rule depends on the admin tag, and no admin endpoint has it, so it would check nothing; not written, flagged to the customer"},
+    {"part": "only approved tools call request_human_approval", "why": "no check exists"},
+    {"part": "SOC 2 control was actually operating (evidence over time)", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'change controls' = tests on endpoints plus protected audit trail for data changes; this is my reading, not the customer's words",
+    "'access reviews' cannot be checked by a policy, so it is out of scope for the policy",
+    "public tag on health_GET, login_POST and newsletter subscribe_POST means intentionally public",
+    "CC6.1, CC7.2 and CC8.1 mapping of tags is my own choice, not from the catalogue",
+    "record_audit_event is the only approved writer of audit_log; customer_id_PATCH and delete_user_account call it, so no direct writes exist"
+  ],
+  "workspace_names_used": ["audit_log", "record_audit_event", "check_admin_role", "public", "admin", "users", "issue_refund", "request_human_approval", "health_GET", "auth/login_POST", "newsletter/subscribe_POST"],
+  "confusions": [
+    "The catalogue lists object.test_coverage with object_kinds as a param, but the skill's check catalogue section does not list object_kinds for it; I used it from the catalogue template example",
+    "The skill says a policy with no params omits params; the template rule for CHG-001 has test.assertion_required with empty params. I omitted params for that rule",
+    "The AUTH-002 template uses tags:['admin'] on the rule, but the skill's catalogue for object.statement_required does not list a tags param. I did not write it",
+    "Whether a template's rule keys like object_kinds are required by the check or only by the template example was unclear",
+    "Skill says to read policies under policies/ for exemption conventions, but the workspace has no policies/ directory; I used the public tag directly from the endpoints"
+  ],
+  "wished_for": [
+    "A recipe for 'change management' or 'SOC 2 CC8.1' that lists the checks that fit change controls, including approval-style checks",
+    "A check for periodic access review evidence, or at least a documented statement that it is not a policy check",
+    "The admin template example should say it needs the admin tag to exist, or the template should be marked as needing that tag",
+    "A list in the catalogue of which params each check accepts beyond the required ones (object.statement_required tags param is in the template but not in the skill's list)"
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies cover the access-control and audit-trail parts and the test part of change control, but nothing checks access reviews or change approval, and CHG-001 measures test presence rather than change control itself. Parse passed for all three, but no evaluation was run, so I cannot say what the findings will be."
+}

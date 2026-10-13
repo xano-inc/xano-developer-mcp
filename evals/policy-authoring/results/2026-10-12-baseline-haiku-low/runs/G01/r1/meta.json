@@ -1,0 +1,42 @@
+{
+  "goal_id": "G01",
+  "repeat": 1,
+  "label": "2026-10-12-baseline-haiku-low",
+  "model_requested": "haiku",
+  "model": "claude-haiku-5-5",
+  "effort": "low",
+  "kit": "baselines/2026-10-12/kit",
+  "started": "2026-10-13T03:24:33.578Z",
+  "wall_ms": 49085,
+  "duration_ms": 47807,
+  "cost_usd": 0.01660316,
+  "num_turns": 12,
+  "result_subtype": "success",
+  "is_error": false,
+  "exit_code": 0,
+  "timed_out": false,
+  "outputs": [
+    "AUTH-010.xs",
+    "notes.json",
+    "reply.md"
+  ],
+  "stray_policy_files": [],
+  "pulled_workspace": true,
+  "parse_calls": 6,
+  "permission_denials": [],
+  "forbidden_commands": [],
+  "reads_outside_workdir": [],
+  "bash_commands": [
+    "cat ./BRIEF.md; echo ---; ls -la",
+    "ls -R kit; cat kit/policy-templates.md; echo ---; cat kit/catalogue.json | head -c 20000",
+    "cd \"$(pwd)\" && xano workspace pull -d ./workspace 2>&1 | tail -5; echo ---; xano policy list 2>&1 | head -40; echo ---; ls -R workspace | head -100",
+    "cd \"$(pwd)\" && python3 -I -c \"\nimport json\nd=json.load(open('kit/catalogue.json'))\nprint(d.keys())\nfor t in d.get('templates',[]): print(t.get('id'), '|', t.get('title') or t.get('label'), '|', [r.get('check') for r in t.get('rules',[])])\n\" 2>&1 | head -60",
+    "cd \"$(pwd)\" && ls workspace/table; echo ---; cat workspace/api/app/invoices/export_GET.xs; echo ---; cat workspace/api/app/invoices_GET.xs; echo ---; cat workspace/api/app/invoices/invoice_id_GET.xs; echo ---; grep -rl \"invoice\" workspace | head -40",
+    "cd \"$(pwd)\" && cat workspace/table/invoices.xs; echo ---; cat workspace/api/app/app.xs; echo ---; cat workspace/workflow_test/invoices_require_login.xs; echo ---; grep -rn \"tags\" workspace | head -30; echo ---; grep -rln 'auth = ' workspace/api | wc -l; grep -rL 'auth = ' workspace/api --include=*.x…",
+    "cd \"$(pwd)\" && cat > out/AUTH-010.xs <<'EOF'\npolicy \"AUTH-010\" {\n  title = \"Endpoints require login\"\n  statement = \"Every endpoint that reads or writes the invoices table must require a login (an auth table). Invoices are customer financial data, and an endpoint that returns them without auth expose…",
+    "cd \"$(pwd)\" && sed -i '/tags = \\[\"soc2\", \"cc6.1\"\\]/d' out/AUTH-010.xs && xano policy parse out/AUTH-010.xs 2>&1; echo \"exit=$?\"; xano policy parse -o json out/AUTH-010.xs 2>&1 | grep -E 'rule_warnings|warning' ; echo ---; xano policy catalogue -o json 2>/dev/null | python3 -I -c \"import json,sys; d=…",
+    "cd \"$(pwd)\" && sed -i '' '/tags = \\[\"soc2\", \"cc6.1\"\\]/d' out/AUTH-010.xs && cat out/AUTH-010.xs && xano policy parse out/AUTH-010.xs 2>&1; echo \"exit=$?\"; xano policy parse -o json out/AUTH-010.xs 2>&1 | grep -E 'rule_warnings' ",
+    "cd \"$(pwd)\" && cat > out/reply.md <<'EOF'\nYes, most of this is checkable. I wrote one policy, `AUTH-010`, and checked that it parses. I have not pushed or evaluated it, so nothing is enforced yet.\n\n**What the policy does**\n\nIt takes the template \"Endpoints require login\" and scopes it to the `invoic…"
+  ],
+  "final_message": "Wrote `out/AUTH-010.xs` (parses with no warnings), `out/reply.md` and `out/notes.json`. Confidence: medium. The auth half is covered, the \"full table returned\" half has no check, and the policy is not yet evaluated."
+}

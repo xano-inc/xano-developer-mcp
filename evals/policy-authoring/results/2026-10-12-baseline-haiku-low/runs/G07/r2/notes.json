@@ -1,0 +1,49 @@
+{
+  "goal_id": "G07",
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): fits the 'login' part of change/access evidence; used",
+    "own_records_only (AUTH-020): access-control, but the ask is about evidence of reviews, not record ownership; not used",
+    "one_auth_table (AUTH-050): checks one auth table; relevant to access but not a review; not used",
+    "audit_log_protected (RET-001): fits 'who changed what' change evidence; used",
+    "endpoints_have_tests (CHG-001): fits change testing; used",
+    "tables_classified (CONV-023) / owner_team_tagged (CONV-022): ownership, needs tags the workspace lacks; not used",
+    "retained_data_cleaned_up (RET-002): not related to the ask; not used"
+  ],
+  "templates_used": ["endpoints_need_login", "audit_log_protected", "endpoints_have_tests"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"except_tags": ["public"]}, "covers": "access control: endpoints require login (access evidence, partial)"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "change tracking: audit log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "change tracking: only one function writes the audit log"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "change testing: endpoints covered by tests"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "change testing: tests assert something"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "access reviews (periodic review of who has access, with sign-off)", "why": "needs runtime/org process"},
+    {"part": "change controls: approval of a change before it goes live", "why": "no check exists"},
+    {"part": "evidence that tests pass (CHG-001 counts tests that exist, not passing ones)", "why": "no check exists"},
+    {"part": "the customer's understanding of what SOC 2 wants (they asked what the product means)", "why": "other"}
+  ],
+  "assumptions": [
+    "'change controls' in the product sense is best approximated by tests and the audit log; no check covers approvals",
+    "the 'public' tag is the exemption tag used for login, health and newsletter endpoints (read from the workspace)",
+    "audit_log is written only by record_audit_event (checked by reading files; grep of record_audit_event callers was not completed)",
+    "policy tags soc2 and cc numbers are free-form labels, not checked by the platform"
+  ],
+  "workspace_names_used": ["audit_log", "record_audit_event", "public", "users", "appointments_GET", "invoices/export_GET", "login_POST", "health_GET", "newsletter/subscribe_POST", "check_admin_role", "request_human_approval"],
+  "confusions": [
+    "The skill says 'a policy file carries no comments' and the catalogue's params are long; I did not find a single doc that maps SOC 2 criteria to checks, so I chose the mapping myself",
+    "The skill says to ask before writing a policy on an existing workspace; here the workspace has no policies, so I treated all three as new, but it is not explicit whether a template needing no fill is a 'change'",
+    "Check catalogue lists object.test_coverage object_kinds default, but the template passes object_kinds: [query]; unclear whether to keep the template's param value",
+    "The brief says to parse with the workspace; the 'warns about names' output was empty on all three, so I cannot tell whether a warning would have shown for a missing name"
+  ],
+  "wished_for": [
+    "A mapping from common audit frameworks (SOC 2 CC6/CC7/CC8, HIPAA) to templates and checks, with an explicit note of what no check covers (access reviews, change approval)",
+    "A recipe for 'access review evidence' and 'change control evidence' for non-technical users",
+    "Guidance on whether a policy evaluated by xano policy evaluate counts as a finding list the user can export as audit evidence",
+    "Example of how to show the public-tag exemption choice to a non-technical reviewer"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies parse and cover parts of the ask (login required, audit log writes restricted, tests exist), but none checks access reviews or change approval, and the evidence is a snapshot of configuration rather than proof of a review process. I did not run xano policy evaluate, so the predicted findings are unverified."
+}
