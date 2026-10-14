@@ -166,12 +166,25 @@ describe("policy documentation", () => {
     expect(text).toContain("`gdpr` GDPR, `pci_dss` PCI DSS)");
   });
 
+  it("says policy catalogue --template shows one template, each check lists its params, the head says what severity and enforcement do, and parse always shows severity", () => {
+    const cli = handleCliDocs({ topic: "policy" });
+    expect(cli).toContain("xano policy catalogue --template retained_data_has_age_limit");
+    expect(cli).toContain("--template to one template id");
+    expect(cli).toContain("an id of another kind names the flag that shows it");
+    expect(cli).toContain("an object param's parts by their dotted path, as referenced_by.age_field");
+    expect(cli).toContain("a Scope fields: line naming the scope fields it takes");
+    expect(cli).toContain("advisory, the default, only reports; an active blocking policy's findings stop a gated change");
+    expect(cli).toContain("orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants");
+    expect(cli).toContain("with the policy's severity always shown");
+  });
+
   it("says policy catalogue prints uses, recipes and what no check can see, and policy create refuses a recipe id", () => {
     const cli = handleCliDocs({ topic: "policy" });
-    expect(cli).toContain("Each check follows with its uses");
+    expect(cli).toContain("Each check follows with its own params under Params:");
+    expect(cli).toContain("and its uses (a goal in a customer's words");
     expect(cli).toContain("The catalogue ends with what no check can see");
     expect(cli).toContain("--recipe to one recipe id");
-    expect(cli).toContain("the two flags cannot be combined");
+    expect(cli).toContain("the three flags cannot be combined");
     expect(cli).toContain("xano policy catalogue --recipe protect_card_data");
     expect(cli).toContain("a recipe id given to --template is refused with the recipe's templates");
     // D41: recipes name the objects to build; create reads needs_any as a group and fills dotted needs.
