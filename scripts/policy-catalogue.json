@@ -275,7 +275,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -491,22 +491,28 @@
           "properties": {
             "names": {
               "type": "string[]",
-              "description": "Exact table names; any listed name matches. A name the branch lacks is a rule warning."
+              "description": "Exact table names; any listed name matches. A name the branch lacks is a rule warning.",
+              "example": [
+                "order"
+              ]
             },
             "tag": {
               "type": "string",
               "non_empty": true,
-              "description": "Exact tag required on the table (its own tags)."
+              "description": "Exact tag required on the table (its own tags).",
+              "example": "tenant_data"
             },
             "has_field": {
               "type": "string",
               "non_empty": true,
-              "description": "Exact field name required in the table schema."
+              "description": "Exact field name required in the table schema.",
+              "example": "org_id"
             },
             "has_fk_to": {
               "type": "string",
               "non_empty": true,
-              "description": "Exact name of a table referenced by a schema field."
+              "description": "Exact name of a table referenced by a schema field.",
+              "example": "organization"
             }
           },
           "example": {
@@ -559,7 +565,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -817,7 +823,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -1102,7 +1108,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -1333,7 +1339,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -1591,7 +1597,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -1797,7 +1803,8 @@
           "properties": {
             "<input name>": {
               "type": "string",
-              "description": "Required declared type, e.g. text, int, decimal, bool, email, timestamp or uuid."
+              "description": "Required declared type, e.g. text, int, decimal, bool, email, timestamp or uuid.",
+              "example": "email"
             }
           },
           "example": {
@@ -1857,7 +1864,8 @@
           "properties": {
             "<filter name>": {
               "type": "number",
-              "description": "Inclusive minimum for the filter's numeric literal argument."
+              "description": "Inclusive minimum for the filter's numeric literal argument.",
+              "example": 8
             }
           },
           "example": {
@@ -1907,7 +1915,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -2163,7 +2171,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -2595,7 +2603,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -2902,7 +2910,10 @@
           "properties": {
             "<setting>": {
               "type": "object",
-              "description": "A setting name for the object kind (settings lists them per kind) or a dotted storage path, mapped to one or more predicates. present/absent take booleans and include null values; gt/gte/lt/lte take numbers; in/not_in take a non-empty list."
+              "description": "A setting name for the object kind (settings lists them per kind) or a dotted storage path, mapped to one or more predicates. present/absent take booleans and include null values; gt/gte/lt/lte take numbers; in/not_in take a non-empty list.",
+              "example": {
+                "equals": "silent"
+              }
             }
           },
           "settings": {
@@ -3075,7 +3086,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -3374,19 +3385,29 @@
             "statement": {
               "type": "string",
               "non_empty": true,
-              "description": "Exact XanoScript statement name or stored alias."
+              "description": "Exact XanoScript statement name or stored alias.",
+              "example": "db.edit"
             },
             "tables": {
               "type": "string[]",
-              "description": "Exact names of tables the statement reads or writes, directly or through attached addons; any one matches."
+              "description": "Exact names of tables the statement reads or writes, directly or through attached addons; any one matches.",
+              "example": [
+                "employee"
+              ]
             },
             "fields": {
               "type": "string[]",
-              "description": "Exact assigned field names; any match qualifies. A dynamic whole-record assignment also qualifies."
+              "description": "Exact assigned field names; any match qualifies. A dynamic whole-record assignment also qualifies.",
+              "example": [
+                "salary"
+              ]
             },
             "hosts": {
               "type": "string[]",
-              "description": "Hostnames in a literal URL or literal URL prefix, matched case-insensitively; any one matches, and a leading dot matches a domain and its subdomains."
+              "description": "Hostnames in a literal URL or literal URL prefix, matched case-insensitively; any one matches, and a leading dot matches a domain and its subdomains.",
+              "example": [
+                "api.stripe.com"
+              ]
             }
           },
           "example": {
@@ -3427,7 +3448,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -3689,7 +3710,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -3955,7 +3976,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -4228,7 +4249,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -4453,7 +4474,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -4690,7 +4711,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -4984,7 +5005,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -5250,7 +5271,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -5483,7 +5504,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -5733,7 +5754,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -5953,15 +5974,24 @@
           "properties": {
             "statements": {
               "type": "string[]",
-              "description": "Statements that qualify, any one of them. Exact XanoScript name or stored alias."
+              "description": "Statements that qualify, any one of them. Exact XanoScript name or stored alias.",
+              "example": [
+                "precondition"
+              ]
             },
             "functions": {
               "type": "string[]",
-              "description": "Functions whose synchronous call qualifies, any one of them. Exact names; a name not on the branch is a rule warning."
+              "description": "Functions whose synchronous call qualifies, any one of them. Exact names; a name not on the branch is a rule warning.",
+              "example": [
+                "require_admin"
+              ]
             },
             "must_reference": {
               "type": "string[]",
-              "description": "References the before statement must contain. Matches each reference or its child paths, e.g. $auth matches $auth.id."
+              "description": "References the before statement must contain. Matches each reference or its child paths, e.g. $auth matches $auth.id.",
+              "example": [
+                "$auth"
+              ]
             }
           },
           "example": {
@@ -6017,7 +6047,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -6275,7 +6305,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -6549,7 +6579,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -6911,7 +6941,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -7202,7 +7232,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -7489,7 +7519,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -7759,7 +7789,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -8000,7 +8030,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -8193,12 +8223,14 @@
             "has_field": {
               "type": "string",
               "non_empty": true,
-              "description": "Exact field name required in the table schema."
+              "description": "Exact field name required in the table schema.",
+              "example": "created_at"
             },
             "has_fk_to": {
               "type": "string",
               "non_empty": true,
-              "description": "Exact name of a table referenced by a schema field."
+              "description": "Exact name of a table referenced by a schema field.",
+              "example": "user"
             }
           },
           "example": {
@@ -8213,19 +8245,30 @@
           "properties": {
             "object_kinds": {
               "type": "string[]",
-              "description": "Kinds that can provide coverage, among those that run statements: query, function, task, trigger, middleware, addon, tool, message. Empty or omitted means query, function, task and trigger."
+              "description": "Kinds that can provide coverage, among those that run statements: query, function, task, trigger, middleware, addon, tool, message. Empty or omitted means query, function, task and trigger.",
+              "example": [
+                "task"
+              ]
             },
             "tags": {
               "type": "string[]",
-              "description": "Require any of these exact tags on the covering object's own tags; empty permits any tag."
+              "description": "Require any of these exact tags on the covering object's own tags; empty permits any tag.",
+              "example": [
+                "retention"
+              ]
             },
             "statements": {
               "type": "string[]",
-              "description": "Statements the covering object must run on the table, any of them, e.g. db.del; empty accepts any reference. Exact names; a name that matches no statement is a rule warning."
+              "description": "Statements the covering object must run on the table, any of them, e.g. db.del; empty accepts any reference. Exact names; a name that matches no statement is a rule warning.",
+              "example": [
+                "db.del",
+                "db.bulk.delete"
+              ]
             },
             "same_table": {
               "type": "bool",
-              "description": "Also accept a database trigger attached to the table, even without an explicit table reference; with statements set it must still run one of them on the table."
+              "description": "Also accept a database trigger attached to the table, even without an explicit table reference; with statements set it must still run one of them on the table.",
+              "example": true
             },
             "max_age_days": {
               "type": "integer",
@@ -8237,7 +8280,7 @@
               "type": "string",
               "non_empty": true,
               "description": "The timestamp or date field of the deleted table that a row's age is measured from, and the cutoff must bound; default created_at. With age_field expires_at and max_age_days 30, the task must delete the rows whose expires_at is more than 30 days ago. Read only with max_age_days. A field no selected table has is a rule warning.",
-              "example": "created_at"
+              "example": "expires_at"
             }
           },
           "example": {
@@ -8909,7 +8952,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -9147,7 +9190,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -9456,7 +9499,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment, a literal or a path parameter (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name: orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants, and only orgs/*/tenants also selects orgs/mine/tenants; leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "admin"
           ]
@@ -12839,7 +12882,7 @@
           "blocking"
         ],
         "default": "advisory",
-        "description": "An advisory policy only reports. An active blocking policy's findings block a gated change."
+        "description": "An advisory policy only reports its findings. An active blocking policy's findings also stop a gated change that introduces them or changes the objects they are on: a merge, a set-live, a publish or push to the live branch, an archive import or a tenant deploy, unless someone allowed to override gives a reason."
       },
       "tags": {
         "type": "string[]",
