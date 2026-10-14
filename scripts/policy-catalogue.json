@@ -33,7 +33,7 @@
         "external_tools": {
           "type": "string[]",
           "required": false,
-          "description": "Approved external MCP tool names, matched exactly, that an enabled tool may run through ai.external.mcp.tool.run in its stack or a function it calls; empty reports every external tool run as not yet reviewed. A name computed at runtime is never approved. The server's host is approved separately, by outbound.vendor_allowlist.",
+          "description": "Approved tool names on external MCP servers, the servers outside this workspace that an enabled tool calls with ai.external.mcp.tool.run, in its stack or a function it calls. A name matches exactly, on whichever external server is called; the server's host is approved separately, by outbound.vendor_allowlist. An external server is not a workspace object and no scope selects it: object_kinds: [\"mcp_server\"] selects the MCP servers this workspace hosts, and never by a tag. Empty reports every external tool run as not yet reviewed; a name computed at runtime is never approved.",
           "default": [],
           "items": {
             "type": "string"
@@ -164,19 +164,20 @@
       ],
       "uses": [
         {
-          "goal": "The support agent may use only lookup_order and refund_order.",
+          "goal": "Agents use only lookup_order and refund_order, and only zendesk_search from Zendesk's MCP.",
           "params": {
-            "tags": [
-              "support-agent"
-            ],
             "object_kinds": [
               "agent"
             ],
             "tools": [
               "lookup_order",
               "refund_order"
+            ],
+            "external_tools": [
+              "zendesk_search"
             ]
-          }
+          },
+          "note": "external_tools names tools an approved tool calls on an external MCP server, matched on any server; approve only Zendesk's host with outbound.vendor_allowlist."
         },
         {
           "goal": "No MCP server exposes a tool that has not been reviewed.",
@@ -485,7 +486,7 @@
         "table_selector": {
           "type": "object",
           "required": false,
-          "description": "Tables whose reads and writes are judged; empty means every table that has field. Scope chooses which objects are inspected; table_selector chooses which of their reads and writes must be constrained. Use exact tag, field or referenced-table names; all conditions must match.",
+          "description": "Tables whose reads and writes are judged; empty means every table that has field. table_selector chooses which reads and writes of the inspected objects must be constrained, so names: [\"tenants\"] judges tenants' reads and writes and no other table's. Use exact tag, field or referenced-table names; all conditions must match.",
           "default": {},
           "properties": {
             "names": {
@@ -582,7 +583,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Tables by exact name, or objects reaching a named table directly or through called functions, attached addons and enabled agent or MCP tool mappings. db.direct_query reaches a table its static SQL names physically (mvpw<workspace>_<table id>). Scope limits what is reported, not what is read.",
+          "description": "Tables by exact name, or objects reaching a named table directly or through called functions, attached addons and enabled agent or MCP tool mappings. db.direct_query reaches a table its static SQL names physically (mvpw<workspace>_<table id>). Here tables only chooses which objects are inspected (those reaching a listed table), and every read and write table_selector selects in them is judged; to judge one table's reads and writes only, use table_selector. Scope limits what is reported, not what is read.",
           "example": [
             "patient"
           ]
@@ -3343,7 +3344,7 @@
         "placement": {
           "type": "string",
           "required": false,
-          "description": "any counts a match anywhere; unconditional one that always runs; first the first statement.",
+          "description": "any counts a match anywhere; unconditional one that always runs; first only the object's very first statement, so two rules requiring different first statements of the same objects conflict and one always fails (require one first and the other unconditional).",
           "default": "any",
           "values": [
             "any",
@@ -8181,7 +8182,7 @@
     {
       "id": "table.coverage_required",
       "label": "Tables are referenced by a required object",
-      "description": "Requires each selected table to be reached by an object that can run, such as a scheduled task that cleans it up. Scope selects the tables; referenced_by selects the covering objects. An object reaches a table directly or through called functions, attached addons and enabled agent or MCP tool mappings; disabled statements do not count. With referenced_by.statements set, only those statements aimed at the table as their primary table count, in the object or a function it calls; db.direct_query counts only with static SQL naming the table physically (mvpw<workspace>_<table id>) beside DELETE, TRUNCATE or DROP, and an addon never qualifies. A task can run only when active with a repeating schedule that has not ended, and a trigger unless inactive; a covering object that cannot run is named instead. Whether a schedule has ended is judged at the evaluation date, so a rule can start failing, and a merge gate start blocking, without a definition change once an end date passes. With referenced_by.max_age_days, a covering object counts only when it deletes the table's rows older than at most that many days by age_field: a db.bulk.delete whose where, on some OR branch, bounds the field with < or <= against now shifted into the past by a literal duration (timestamp_subtract_days and the other timestamp_add_*/timestamp_subtract_* filters, or a variable assigned once from now with add_secs_to_timestamp or a relative transform_timestamp such as \"-2 years\"), a db.del of a row read by such a where (directly or as a foreach item), or a db.truncate. Durations compare at nominal lengths (a month is 30 days, a year 365). Other conditions in that where are not judged, so a cleanup that also filters on status passes. A cutoff computed at runtime (an environment variable, input, function result or arithmetic) or in db.direct_query SQL is named as unverifiable and does not cover the table, and each covering object that falls short is named with why. The task's schedule adds up to one interval to how long a row is kept, and it is not judged. Only tables count as checked; covering objects are read whatever the rule's scope.",
+      "description": "Requires each selected table to be reached by an object that can run, such as a scheduled task that cleans it up. Scope selects the tables; referenced_by selects the covering objects. An object reaches a table directly or through called functions, attached addons and enabled agent or MCP tool mappings; disabled statements do not count. With referenced_by.statements set, only those statements aimed at the table as their primary table count, in the object or a function it calls; db.direct_query counts only with static SQL naming the table physically (mvpw<workspace>_<table id>) beside DELETE, TRUNCATE or DROP, and an addon never qualifies. A task can run only when active with a repeating schedule that has not ended, and a trigger unless inactive; a covering object that cannot run is named instead. Whether a schedule has ended is judged at the evaluation date, so a rule can start failing, and a merge gate start blocking, without a definition change once an end date passes. With referenced_by.max_age_days, a covering object counts only when it deletes the table's rows older than at most that many days, a row's age measured from its age_field value (created_at unless set): a db.bulk.delete whose where, on some OR branch, bounds the field with < or <= against now shifted into the past by a literal duration (timestamp_subtract_days and the other timestamp_add_*/timestamp_subtract_* filters, or a variable assigned once from now with add_secs_to_timestamp or a relative transform_timestamp such as \"-2 years\"), a db.del of a row read by such a where (directly or as a foreach item), or a db.truncate. Durations compare at nominal lengths (a month is 30 days, a year 365). Other conditions in that where are not judged, so a cleanup that also filters on status passes. A cutoff computed at runtime (an environment variable, input, function result or arithmetic) or in db.direct_query SQL is named as unverifiable and does not cover the table, and each covering object that falls short is named with why. The task's schedule adds up to one interval to how long a row is kept, and it is not judged. Only tables count as checked; covering objects are read whatever the rule's scope.",
       "params": {
         "table_selector": {
           "type": "object",
@@ -8229,13 +8230,13 @@
             "max_age_days": {
               "type": "integer",
               "minimum": 1,
-              "description": "Count a covering object only when it deletes the table's rows older than at most this many days by age_field: a db.bulk.delete whose where bounds the field below now minus a literal duration, a db.del of a row read by such a where (directly or as a foreach item), or a db.truncate. With statements empty, every delete counts (db.del, db.bulk.delete, db.truncate, db.direct_query); statements may list only those. A cutoff computed at runtime or in SQL is unverifiable. Unset keeps the plain coverage check.",
+              "description": "Count a covering object only when it deletes the table's rows older than at most this many days, a row's age measured from its age_field value: a db.bulk.delete whose where bounds the field below now minus a literal duration, a db.del of a row read by such a where (directly or as a foreach item), or a db.truncate. With statements empty, every delete counts (db.del, db.bulk.delete, db.truncate, db.direct_query); statements may list only those. A cutoff computed at runtime or in SQL is unverifiable. Unset keeps the plain coverage check.",
               "example": 730
             },
             "age_field": {
               "type": "string",
               "non_empty": true,
-              "description": "The timestamp or date field of the deleted table the cutoff must bound; default created_at. Read only with max_age_days. A field no selected table has is a rule warning.",
+              "description": "The timestamp or date field of the deleted table that a row's age is measured from, and the cutoff must bound; default created_at. With age_field expires_at and max_age_days 30, the task must delete the rows whose expires_at is more than 30 days ago. Read only with max_age_days. A field no selected table has is a rule warning.",
               "example": "created_at"
             }
           },
