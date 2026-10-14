@@ -86,21 +86,71 @@ describe("policy documentation", () => {
     expect(read("../../skills/xano-policies/SKILL.md")).toContain('`topic: "policy-templates"`');
   });
 
-  it("gives each recipe goal-first, with what to do first, its templates in order, its own rules and what no rule there can see", () => {
+  it("gives each recipe goal-first, with the objects to build, what the user fills, its templates in order, its own rules and what no rule there can see", () => {
     const templates = xanoscriptDocs({ topic: "policy-templates" }).documentation;
     const recipes = templates.slice(templates.indexOf("## Recipes"), templates.indexOf("## What no check can see"));
     expect(recipes).toContain("Nothing creates a recipe");
     expect(recipes).toContain("### Protect payment card data\n\n`protect_card_data` · PCI DSS.");
-    expect(recipes).toContain("First:\n\n- Send card details straight to your payment processor");
+    // D41: the enforcement objects in words, each with the rule params its name fills; no prerequisites.
+    expect(recipes).toContain("Build (the enforcement the rules point at):\n\n- **function** `charge_card`: Charges through the payment processor");
+    expect(recipes).toContain("- **function** `require_approval`: ");
+    expect(recipes).toContain("Fills `rules[2].before.functions`.");
+    expect(recipes).toContain("The user's own objects and choices fill `approved_vendors_only.hosts`, `approved_vendors_only.providers`");
+    expect(recipes).toContain("### Keep admin endpoints for admins\n\n`role_based_access`");
+    expect(recipes).toContain("`rate_limiting`");
+    expect(recipes).toContain("Show the user one plan");
+    expect(recipes).not.toContain("First:");
     expect(recipes).toContain("1. `no_secrets_in_code` (`SEC-012`): No secrets are hardcoded\n2. `approved_vendors_only` (`VND-001`)");
-    expect(recipes).toContain('- Card numbers and security codes are never stored: `table.field_attribute_required` with `{"field_names":["card_number","cvv","cvc","pan"],"forbidden":true}`.');
-    expect(recipes).toContain("Fill `functions`, `when.tables`.");
-    expect(recipes).toContain("No rule here can see: Spend caps; Agent tool allowlists; Task retries; Runtime data and copies between environments (see What no check can see).");
+    expect(recipes).toContain('- `rules[0]` Card numbers and security codes are never stored: `table.field_attribute_required` with `{"field_names":["card_number","cvv","cvc","pan"],"forbidden":true}`.');
+    expect(recipes).toContain("Fill `before.functions`.");
+    expect(recipes).toContain("No rule here can see: Spend caps; Task retries; Runtime data and copies between environments (see What no check can see).");
     // A recipe is named for its goal, never a framework.
     expect(recipes).not.toMatch(/^### .*(HIPAA|PCI|GDPR|SOC 2)/m);
-    expect(templates).toMatch(/^- \*\*Scope by endpoint path prefix\*\* \(`path_prefix_scope`\): .*not yet by a path prefix/m);
+    // Path scope, agent tool allowlists and retention age are checks now (D41), so no topic says otherwise.
+    expect(templates).not.toContain("`path_prefix_scope`");
+    expect(templates).toMatch(/^- \*\*Which roles exist and who holds them\*\* \(`role_design`\)/m);
     // Only the platform's own note speaks of compliance, to say the tags confer none.
     expect(templates).not.toMatch(/(?<!don't )makes? (a|the|your) workspace compliant/);
+  });
+
+  it("joins a rule's needs as it requires them: every need outside its needs_any group, and one of the group", () => {
+    const templates = xanoscriptDocs({ topic: "policy-templates" }).documentation;
+    expect(templates).toMatch(/^\| `admin_endpoints_check_role` \| `AUTH-002` \| .* \| `functions` \(e\.g\. `\["require_admin"\]`\), and `tags` \(e\.g\. `\["admin"\]`\) or `paths` \(e\.g\. `\["admin"\]`\) \|/m);
+    expect(templates).toMatch(/^\| `approved_vendors_only` \| .* \| `hosts` \(e\.g\. .*\) or `providers` \(e\.g\. /m);
+    // A dotted need names a property of an object param, with the template's example for it.
+    expect(templates).toMatch(/^\| `retained_data_has_age_limit` \| `RET-003` \| .* \| `tags` \(e\.g\. `\["retained"\]`\), `referenced_by\.max_age_days` \(e\.g\. `730`\) \|/m);
+    expect(templates).toContain("`functions`, and `tags` or `paths`");
+    const prose = policies();
+    expect(prose).toContain("a list of two or more of its `needs` (`[]` when it groups none)");
+    expect(prose).toContain("RET-003 needs `referenced_by.max_age_days`");
+    expect(prose).not.toContain("needs_any: true");
+    expect(prose).not.toContain("prerequisites");
+  });
+
+  it("scopes by what the platform knows (paths, endpoint_auth) and by tags for what it does not", async () => {
+    const text = policies();
+    const generated = text.slice(text.indexOf("<!-- BEGIN GENERATED: scope -->"), text.indexOf("<!-- END GENERATED: scope -->"));
+    expect(generated).toMatch(/^- `paths` \(string\[\]\) — Endpoints whose path inside their API group/m);
+    expect(generated).toMatch(/^- `except_paths` \(string\[\]\) — Exclude endpoints whose path/m);
+    expect(text).toContain("Scope by what the platform already knows, then by tags for what it does not.");
+    expect(text).toContain("Tags are for what the platform does not know: data classes, owner teams, deliberate exceptions.");
+    expect(text).toContain("`api_groups`, `paths`, `verbs` and `endpoint_auth` select endpoints only");
+    expect(text).not.toContain("Prefer tags to names.");
+    const generator = await import(new URL("../../scripts/gen-policy-check-docs.mjs", import.meta.url).href);
+    expect(generator.joinNeeds({ needs: ["functions", "tags", "paths"], needs_any: ["tags", "paths"] }, (n: string) => n)).toBe("functions, and tags or paths");
+    expect(generator.joinNeeds({ needs: ["hosts", "providers"], needs_any: true }, (n: string) => n)).toBe("hosts or providers");
+    expect(generator.joinNeeds({ needs: ["tags", "referenced_by.max_age_days"], needs_any: [] }, (n: string) => n)).toBe("tags, referenced_by.max_age_days");
+  });
+
+  it("says a policy request is one plan and one yes, and that building it is authoring, not fixing", () => {
+    const prose = policies().replace(/\s+/g, " ");
+    const authoring = prose.slice(prose.indexOf("## Authoring workflow"), prose.indexOf("1. Read the branch's existing policies"));
+    expect(authoring).toContain("**A policy request is one plan and one yes.**");
+    expect(authoring).toContain("show ONE plan: the objects to build, the changes to existing objects (tags, field attributes, attaching middleware), the policy (its key, and each rule with the names it points at) and what stays unchecked.");
+    expect(authoring).toContain("Build nothing before the user says yes; after one yes, build all of it in the same change, objects before the policy that names them");
+    expect(authoring).toContain("The yes covers exactly what the plan listed; anything else is asked again.");
+    expect(prose).toContain("These rules are for fixing a finding. Building what a plan the user said yes to lists is authoring (Authoring workflow), not a fix.");
+    expect(prose).not.toContain("propose it separately");
   });
 
   it("serves each check's uses, the statement names and object.settings_forbidden's settings in the policies topic", () => {

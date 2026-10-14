@@ -1,6 +1,213 @@
 {
   "items": [
     {
+      "id": "agent.tool_allowlist",
+      "label": "Agents and MCP servers enable only approved tools",
+      "description": "Reports AI agents and MCP servers that enable a tool that is not approved, and enabled tools that run an external MCP tool that is not approved. A tool is enabled when its entry in the agent's or server's tools list is active, whether it is exposed as a tool or a resource; an inactive entry is not judged, and neither are an MCP server's prompts. A tool is approved when tools names it or it carries one of tool_tags (its own tags); with both empty, every enabled tool is reported as not yet reviewed. An entry whose tool no longer exists is reported. An external MCP tool an enabled tool runs with ai.external.mcp.tool.run, in its stack or a function it calls, must be named in external_tools, and empty external_tools reports every such run as not yet reviewed; a tool name computed at runtime is reported as unverifiable, since it lets the agent run any tool of that server. The external server's host is judged by outbound.vendor_allowlist. Tool chains are not followed: a tool.call or ai.agent.run inside a tool is judged on that tool or agent as its own object. A finding lists at most 10 problems, then how many more. A tool's stack and the functions it calls are read whatever the rule's scope.",
+      "params": {
+        "tools": {
+          "type": "string[]",
+          "required": false,
+          "description": "Approved workspace tools, by exact name; any enabled tool listed here passes. A name no tool on the branch has is a rule warning. Empty, with tool_tags empty too, reports every enabled tool as not yet reviewed.",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "lookup_order",
+            "refund_order"
+          ]
+        },
+        "tool_tags": {
+          "type": "string[]",
+          "required": false,
+          "description": "A tool carrying any of these exact tags (its own tags) is approved, so a reviewer approves a tool once by tagging it. A tag no tool carries is a rule warning.",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "agent-approved"
+          ]
+        },
+        "external_tools": {
+          "type": "string[]",
+          "required": false,
+          "description": "Approved external MCP tool names, matched exactly, that an enabled tool may run through ai.external.mcp.tool.run in its stack or a function it calls; empty reports every external tool run as not yet reviewed. A name computed at runtime is never approved. The server's host is approved separately, by outbound.vendor_allowlist.",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "search_web"
+          ]
+        },
+        "tags": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Include only objects carrying any listed exact tag. Uses the object's own tags, not the tags of tables it reads; endpoints also carry their API group's tags. Scope limits what is reported, not what is read.",
+          "example": [
+            "pci"
+          ]
+        },
+        "tables": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Tables by exact name, or objects reaching a named table directly or through called functions, attached addons and enabled agent or MCP tool mappings. db.direct_query reaches a table its static SQL names physically (mvpw<workspace>_<table id>). Scope limits what is reported, not what is read.",
+          "example": [
+            "patient"
+          ]
+        },
+        "except_tags": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude objects with any listed exact tag; this wins over every other scope field. Endpoints also carry their API group's tags. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "public"
+          ]
+        },
+        "object_kinds": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string",
+            "values": [
+              "table",
+              "query",
+              "function",
+              "workflow_test",
+              "api_group",
+              "task",
+              "trigger",
+              "middleware",
+              "addon",
+              "channel",
+              "message",
+              "tool",
+              "agent",
+              "mcp_server",
+              "workspace"
+            ]
+          },
+          "description": "Include only these object kinds, from those the check inspects. Empty keeps every kind the check supports. Scope limits what is reported, not what is read.",
+          "example": [
+            "query"
+          ]
+        },
+        "reaching_table_tags": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Include only objects reaching a table carrying any listed exact tag, directly or through called functions, attached addons and enabled agent or MCP tool mappings; db.direct_query reaches a table its static SQL names physically. The table's own tags. Scope limits what is reported, not what is read.",
+          "example": [
+            "phi"
+          ]
+        }
+      },
+      "category": "security",
+      "object_kinds": [
+        "agent",
+        "mcp_server"
+      ],
+      "requires_one_of": [],
+      "scope_fields": [
+        {
+          "name": "tags"
+        },
+        {
+          "name": "tables"
+        },
+        {
+          "name": "except_tags"
+        },
+        {
+          "name": "object_kinds"
+        },
+        {
+          "name": "reaching_table_tags"
+        }
+      ],
+      "fix_hint": "Approving a tool for an agent or MCP server is the policy owner's decision: report the tool and ask. To remove it, set active = false on its entry in the agent's or server's tools list, or delete the entry. Never add it to tools, tool_tags or external_tools yourself, and never tag a tool to approve it unless the owner asked for exactly that.",
+      "keywords": [
+        "ai",
+        "agent",
+        "mcp",
+        "mcp server",
+        "tool",
+        "toolset",
+        "allowlist",
+        "whitelist",
+        "approved tools",
+        "which tools",
+        "tool permissions",
+        "llm",
+        "excessive agency",
+        "prompt injection",
+        "external mcp",
+        "proxy"
+      ],
+      "uses": [
+        {
+          "goal": "The support agent may use only lookup_order and refund_order.",
+          "params": {
+            "tags": [
+              "support-agent"
+            ],
+            "object_kinds": [
+              "agent"
+            ],
+            "tools": [
+              "lookup_order",
+              "refund_order"
+            ]
+          }
+        },
+        {
+          "goal": "No MCP server exposes a tool that has not been reviewed.",
+          "params": {
+            "object_kinds": [
+              "mcp_server"
+            ],
+            "tool_tags": [
+              "reviewed"
+            ]
+          },
+          "note": "A reviewer approves a tool once by tagging it reviewed."
+        },
+        {
+          "goal": "Agents reaching patient data use only approved tools.",
+          "params": {
+            "reaching_table_tags": [
+              "phi"
+            ],
+            "tool_tags": [
+              "phi-approved"
+            ],
+            "external_tools": [
+              "search_web"
+            ]
+          },
+          "note": "external_tools approves the one external MCP tool those tools may run."
+        }
+      ]
+    },
+    {
       "id": "db.output_fields_forbidden",
       "label": "Statements do not fetch listed fields",
       "description": "Reports database reads and writes that fetch a listed field, or a field marked sensitive, from their table. It reads the output list of db.query, db.get, db.add, db.edit, db.patch and db.add_or_edit statements. Judges what each statement fetches into the object's stack, not the final response, so a field fetched but never returned is still reported. Sensitive means marked sensitive in the schema or password-typed; a password field is not reported when the record is used only through its other fields, a null check, or security.check_password, and returning or copying the whole record is reported. An absent or default output fetches every field, and an object or list field without narrowed children fetches every field inside it. Every nesting depth of the stack is inspected, and a dotted entry reaches inside a paged result (items.email). A field is only forbidden on a table that has it, and an output entry is attributed only through the statement's own declarations: a field of its own table, its own or a declared join alias as a prefix (user.email), or a literal eval alias; table.field restricts a name to that table. An entry whose provenance cannot be resolved (a runtime value, a computed eval, an undeclared prefix) is not reported, count, exists and aggregate queries fetch no record, and db.direct_query is not checked. Addons attached to the object's statements, and to statements in functions it calls, are always inspected against the addon's own table, narrowed by the attaching statement's selection. A function the object calls is followed, whatever the rule's scope, and what it fetches is reported on the caller; fixing the function clears every caller, and exempting a function with except_tags also exempts what callers reach through it. Middleware and tool mappings are not followed: each is judged as its own object. Exemption is per object: an exempted object is exempt for every listed field.",
@@ -55,9 +262,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -171,6 +402,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -309,9 +546,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -422,6 +683,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -537,9 +804,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -650,6 +941,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -792,9 +1089,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -912,6 +1233,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -972,7 +1299,7 @@
     {
       "id": "object.auth_required",
       "label": "Endpoints require authentication",
-      "description": "Requires each endpoint and realtime message handler in scope to require a login (an auth table); a handler naming none is reported like a public endpoint. Exclude deliberate public ones with except_tags. An endpoint also carries its API group's tags; api_groups and verbs narrow the rule to endpoints. Checks the saved authentication setting; authorization logic is not evaluated.",
+      "description": "Requires each endpoint and realtime message handler in scope to require a login (an auth table); a handler naming none is reported like a public endpoint. Exclude deliberate public ones with except_tags. An endpoint also carries its API group's tags; api_groups, paths and verbs narrow the rule to endpoints, and except_paths exempts endpoints by path. Checks the saved authentication setting; authorization logic is not evaluated.",
       "params": {
         "tags": {
           "type": "string[]",
@@ -993,9 +1320,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -1088,6 +1439,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -1221,9 +1578,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -1340,6 +1721,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -1507,9 +1894,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -1624,6 +2035,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -1733,9 +2150,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -1845,6 +2286,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -1888,6 +2335,22 @@
               "query"
             ]
           }
+        },
+        {
+          "goal": "Everything under /internal runs the IP allowlist first.",
+          "params": {
+            "middleware": [
+              "ip_allowlist"
+            ],
+            "phase": "pre",
+            "paths": [
+              "internal"
+            ],
+            "object_kinds": [
+              "query"
+            ]
+          },
+          "note": "paths selects every endpoint under the path, new ones included, with no tag needed."
         }
       ]
     },
@@ -2119,9 +2582,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -2249,6 +2736,24 @@
         },
         {
           "name": "api_groups",
+          "applies_when": {
+            "name_kind": [
+              "endpoint_path",
+              "input"
+            ]
+          }
+        },
+        {
+          "name": "paths",
+          "applies_when": {
+            "name_kind": [
+              "endpoint_path",
+              "input"
+            ]
+          }
+        },
+        {
+          "name": "except_paths",
           "applies_when": {
             "name_kind": [
               "endpoint_path",
@@ -2557,9 +3062,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -2648,6 +3177,22 @@
         },
         {
           "name": "api_groups",
+          "applies_when": {
+            "object_kind": [
+              "query"
+            ]
+          }
+        },
+        {
+          "name": "paths",
+          "applies_when": {
+            "object_kind": [
+              "query"
+            ]
+          }
+        },
+        {
+          "name": "except_paths",
           "applies_when": {
             "object_kind": [
               "query"
@@ -2869,9 +3414,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -2983,6 +3552,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -3042,13 +3617,32 @@
               ]
             }
           }
+        },
+        {
+          "goal": "Admin endpoints check the role first.",
+          "params": {
+            "paths": [
+              "admin"
+            ],
+            "functions": [
+              "require_admin"
+            ],
+            "placement": "first",
+            "must_reference": [
+              "$auth"
+            ],
+            "object_kinds": [
+              "query"
+            ]
+          },
+          "note": "admin selects every endpoint under /admin, never /administrator; except_paths exempts one, such as admin/login."
         }
       ]
     },
     {
       "id": "object.tag_required",
       "label": "Objects carry a tag from a required set",
-      "description": "Requires each object in scope to carry at least one tag from tag_set, such as an owner team or a data classification. An endpoint also counts its API group's tags, so tagging the group covers every endpoint in it. An API group in scope is judged on its own tags, so tagging only its endpoints does not satisfy it. No other tags are inherited: a function does not take its callers' tags, and a message handler does not take its channel's. Tags match exactly: case and spaces matter. Use one rule per set. With no object_kinds, every kind must carry one, workflow tests, addons, messages and API groups included; set object_kinds to the kinds the convention is about. To require the tag only on some objects, narrow the scope: object_kinds, tags (for example, objects tagged pii must also carry a reviewer tag) or endpoint_auth. api_groups, verbs and endpoint_auth select endpoints only, so the API group object itself is then not inspected; tables and reaching_table_tags select tables and objects whose stacks reach them, so API groups, channels and workflow tests are then not inspected. Studio saves tags in lowercase, so list tags in lowercase unless they are created through the API. Every object in scope counts as checked. For a tag required only on tables that hold listed fields, use table.tag_required.",
+      "description": "Requires each object in scope to carry at least one tag from tag_set, such as an owner team or a data classification. An endpoint also counts its API group's tags, so tagging the group covers every endpoint in it. An API group in scope is judged on its own tags, so tagging only its endpoints does not satisfy it. No other tags are inherited: a function does not take its callers' tags, and a message handler does not take its channel's. Tags match exactly: case and spaces matter. Use one rule per set. With no object_kinds, every kind must carry one, workflow tests, addons, messages and API groups included; set object_kinds to the kinds the convention is about. To require the tag only on some objects, narrow the scope: object_kinds, tags (for example, objects tagged pii must also carry a reviewer tag) or endpoint_auth. api_groups, paths, verbs and endpoint_auth select endpoints only, so the API group object itself is then not inspected; tables and reaching_table_tags select tables and objects whose stacks reach them, so API groups, channels and workflow tests are then not inspected. Studio saves tags in lowercase, so list tags in lowercase unless they are created through the API. Every object in scope counts as checked. For a tag required only on tables that hold listed fields, use table.tag_required.",
       "params": {
         "tag_set": {
           "type": "string[]",
@@ -3082,9 +3676,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -3203,6 +3821,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -3256,7 +3880,7 @@
     {
       "id": "object.tag_vocabulary",
       "label": "Tags follow the agreed vocabulary",
-      "description": "Reports tags outside the workspace's tag vocabulary, such as PII beside pii. Set allowed_tags for a fixed list, case_style and prefixes for an open style, or both to accept a tag that is listed or follows the style. With no style set, only listed tags are accepted. Tags match exactly: case and spaces matter, and no style accepts a tag that starts or ends with whitespace. Each tag is judged on the object where it is written: an API group's tags are judged on the group, and only when api_group is among the kinds the rule inspects, so a rule narrowed to endpoints skips them. Scope tags and except_tags still read an endpoint's API group tags, so an API group carrying an excepted tag exempts every endpoint in it. api_groups, verbs and endpoint_auth select endpoints only, so the API group object itself is then not inspected; tables and reaching_table_tags select tables and objects whose stacks reach them, so API groups, channels and workflow tests are then not inspected. Every unaccepted tag on an object is reported in one finding, with a suggestion when it differs from a listed tag only in case, separators or surrounding spaces. A finding lists at most 10 tags, then how many more, and its allow lists every unaccepted tag that has no suggestion. Tags other rules rely on, such as exemption tags in their except_tags, must be listed too or follow the style. Studio saves tags in lowercase, so list tags in lowercase unless they are created through the API. Only objects that carry at least one tag count as checked.",
+      "description": "Reports tags outside the workspace's tag vocabulary, such as PII beside pii. Set allowed_tags for a fixed list, case_style and prefixes for an open style, or both to accept a tag that is listed or follows the style. With no style set, only listed tags are accepted. Tags match exactly: case and spaces matter, and no style accepts a tag that starts or ends with whitespace. Each tag is judged on the object where it is written: an API group's tags are judged on the group, and only when api_group is among the kinds the rule inspects, so a rule narrowed to endpoints skips them. Scope tags and except_tags still read an endpoint's API group tags, so an API group carrying an excepted tag exempts every endpoint in it. api_groups, paths, verbs and endpoint_auth select endpoints only, so the API group object itself is then not inspected; tables and reaching_table_tags select tables and objects whose stacks reach them, so API groups, channels and workflow tests are then not inspected. Every unaccepted tag on an object is reported in one finding, with a suggestion when it differs from a listed tag only in case, separators or surrounding spaces. A finding lists at most 10 tags, then how many more, and its allow lists every unaccepted tag that has no suggestion. Tags other rules rely on, such as exemption tags in their except_tags, must be listed too or follow the style. Studio saves tags in lowercase, so list tags in lowercase unless they are created through the API. Only objects that carry at least one tag count as checked.",
       "params": {
         "allowed_tags": {
           "type": "string[]",
@@ -3318,9 +3942,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -3443,6 +4091,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -3561,9 +4215,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -3672,6 +4350,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -3756,9 +4440,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -3868,6 +4576,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -3963,9 +4677,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -4073,6 +4811,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -4227,9 +4971,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -4343,6 +5111,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -4429,7 +5203,7 @@
     {
       "id": "stack.disabled_statement_forbidden",
       "label": "Stacks hold no disabled statements",
-      "description": "Reports statements switched off with disabled anywhere in an object's stack. That includes statements inside conditionals, switches, loops, groups, try/catch, transactions and post-process blocks, and switched-off else-if branches and switch cases. Disabled code never runs, but it is still stored, exported and reviewed. A disabled block is reported once, with the number of statements inside it. A comment is a note, so a disabled comment passes. A statement listed in allowed_statements may stay disabled. Each object is judged on its own stack: disabled code in a function is reported on the function, not on the endpoints that call it, so a rule scoped to endpoints only (api_groups, verbs, endpoint_auth) leaves functions out. Workflow tests are judged too. Only the disabled switch on statements, else-if branches and switch cases is read; filters, response entries and middleware attachments keep their own.",
+      "description": "Reports statements switched off with disabled anywhere in an object's stack. That includes statements inside conditionals, switches, loops, groups, try/catch, transactions and post-process blocks, and switched-off else-if branches and switch cases. Disabled code never runs, but it is still stored, exported and reviewed. A disabled block is reported once, with the number of statements inside it. A comment is a note, so a disabled comment passes. A statement listed in allowed_statements may stay disabled. Each object is judged on its own stack: disabled code in a function is reported on the function, not on the endpoints that call it, so a rule scoped to endpoints only (api_groups, paths, verbs, endpoint_auth) leaves functions out. Workflow tests are judged too. Only the disabled switch on statements, else-if branches and switch cases is read; filters, response entries and middleware attachments keep their own.",
       "params": {
         "allowed_statements": {
           "type": "string[]",
@@ -4463,9 +5237,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -4578,6 +5376,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -4666,9 +5470,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -4783,6 +5611,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -4886,9 +5720,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -4999,6 +5857,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -5140,9 +6004,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -5253,6 +6141,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -5368,9 +6262,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -5481,6 +6399,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -5612,9 +6536,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -5729,6 +6677,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -5944,9 +6898,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -6059,6 +7037,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -6141,7 +7125,7 @@
     {
       "id": "statement.param_bound",
       "label": "A numeric parameter stays within bounds",
-      "description": "Requires a numeric statement setting, such as a timeout or a token lifetime, to stay between a minimum and a maximum. The listed params must lie within the inclusive bounds. An omitted param is judged at its runtime default. A variable assigned only literals, and a literal argument passed to a function, are resolved; arithmetic is not evaluated, and a value that cannot be resolved is reported. A numeric param is read as the runtime casts it (\"3600\" is 3600), and a value the runtime refuses passes, since the statement then never runs. Bounds use the param's native units. A statement with none of the params set and no runtime default is reported. A statement in a called function is judged through each caller, an argument resolved from what that caller passes; exempting a function with except_tags stops following it. A function in scope is also judged on its own, where a value read from its input is unresolvable only when no in-scope object calls it, so scope changes how a function is judged. Called functions are read whatever the rule's scope.",
+      "description": "Requires a numeric statement setting, such as a timeout or a token lifetime, to stay between a minimum and a maximum. The listed params must lie within the inclusive bounds. An omitted param is judged at its runtime default. A variable assigned only literals, and a literal argument passed to a function, are resolved; arithmetic is not evaluated, and a value that cannot be resolved is reported. A value taken from an int or decimal input the object receives that declares a literal max filter (|max:100) counts as at most that max, for the max bound only. A numeric param is read as the runtime casts it (\"3600\" is 3600), and a value the runtime refuses passes, since the statement then never runs. Bounds use the param's native units. A statement with none of the params set and no runtime default is reported. A statement in a called function is judged through each caller, an argument resolved from what that caller passes; exempting a function with except_tags stops following it. A function in scope is also judged on its own, where a value read from its input is unresolvable only when no in-scope object calls it, so scope changes how a function is judged. Called functions are read whatever the rule's scope.",
       "params": {
         "statements": {
           "type": "string[]",
@@ -6205,9 +7189,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -6321,6 +7329,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -6462,9 +7476,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -6575,6 +7613,12 @@
         },
         {
           "name": "api_groups"
+        },
+        {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
         },
         {
           "name": "tables"
@@ -6702,9 +7746,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -6817,6 +7885,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -6913,9 +7987,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -7022,6 +8120,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables",
           "applies_when": {
             "auth_tables": "non_empty"
@@ -7077,7 +8181,7 @@
     {
       "id": "table.coverage_required",
       "label": "Tables are referenced by a required object",
-      "description": "Requires each selected table to be reached by an object that can run, such as a scheduled task that cleans it up. Scope selects the tables; referenced_by selects the covering objects. An object reaches a table directly or through called functions, attached addons and enabled agent or MCP tool mappings; disabled statements do not count. With referenced_by.statements set, only those statements aimed at the table as their primary table count, in the object or a function it calls; db.direct_query counts only with static SQL naming the table physically (mvpw<workspace>_<table id>) beside DELETE, TRUNCATE or DROP, and an addon never qualifies. A task can run only when active with a repeating schedule that has not ended, and a trigger unless inactive; a covering object that cannot run is named instead. Whether a schedule has ended is judged at the evaluation date, so a rule can start failing, and a merge gate start blocking, without a definition change once an end date passes. Only tables count as checked; covering objects are read whatever the rule's scope.",
+      "description": "Requires each selected table to be reached by an object that can run, such as a scheduled task that cleans it up. Scope selects the tables; referenced_by selects the covering objects. An object reaches a table directly or through called functions, attached addons and enabled agent or MCP tool mappings; disabled statements do not count. With referenced_by.statements set, only those statements aimed at the table as their primary table count, in the object or a function it calls; db.direct_query counts only with static SQL naming the table physically (mvpw<workspace>_<table id>) beside DELETE, TRUNCATE or DROP, and an addon never qualifies. A task can run only when active with a repeating schedule that has not ended, and a trigger unless inactive; a covering object that cannot run is named instead. Whether a schedule has ended is judged at the evaluation date, so a rule can start failing, and a merge gate start blocking, without a definition change once an end date passes. With referenced_by.max_age_days, a covering object counts only when it deletes the table's rows older than at most that many days by age_field: a db.bulk.delete whose where, on some OR branch, bounds the field with < or <= against now shifted into the past by a literal duration (timestamp_subtract_days and the other timestamp_add_*/timestamp_subtract_* filters, or a variable assigned once from now with add_secs_to_timestamp or a relative transform_timestamp such as \"-2 years\"), a db.del of a row read by such a where (directly or as a foreach item), or a db.truncate. Durations compare at nominal lengths (a month is 30 days, a year 365). Other conditions in that where are not judged, so a cleanup that also filters on status passes. A cutoff computed at runtime (an environment variable, input, function result or arithmetic) or in db.direct_query SQL is named as unverifiable and does not cover the table, and each covering object that falls short is named with why. The task's schedule adds up to one interval to how long a row is kept, and it is not judged. Only tables count as checked; covering objects are read whatever the rule's scope.",
       "params": {
         "table_selector": {
           "type": "object",
@@ -7121,6 +8225,18 @@
             "same_table": {
               "type": "bool",
               "description": "Also accept a database trigger attached to the table, even without an explicit table reference; with statements set it must still run one of them on the table."
+            },
+            "max_age_days": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Count a covering object only when it deletes the table's rows older than at most this many days by age_field: a db.bulk.delete whose where bounds the field below now minus a literal duration, a db.del of a row read by such a where (directly or as a foreach item), or a db.truncate. With statements empty, every delete counts (db.del, db.bulk.delete, db.truncate, db.direct_query); statements may list only those. A cutoff computed at runtime or in SQL is unverifiable. Unset keeps the plain coverage check.",
+              "example": 730
+            },
+            "age_field": {
+              "type": "string",
+              "non_empty": true,
+              "description": "The timestamp or date field of the deleted table the cutoff must bound; default created_at. Read only with max_age_days. A field no selected table has is a rule warning.",
+              "example": "created_at"
             }
           },
           "example": {
@@ -7189,7 +8305,7 @@
           "name": "except_tags"
         }
       ],
-      "fix_hint": "A placeholder object satisfies the check, not the policy; ask what it must do. Never rename an existing object to match a name the rule lists.",
+      "fix_hint": "A placeholder object satisfies the check, not the policy; ask what it must do. Never rename an existing object to match a name the rule lists. How long data is kept is the owner's decision: ask before changing a cleanup task's cutoff or adding one. Write the cutoff in the delete's where as created_at < now with a literal subtract filter (now|timestamp_subtract_days:730), or a variable assigned once from now|add_secs_to_timestamp.",
       "keywords": [
         "retention",
         "purge",
@@ -7222,6 +8338,21 @@
               ]
             }
           }
+        },
+        {
+          "goal": "Event logs are deleted after two years.",
+          "params": {
+            "tags": [
+              "retained"
+            ],
+            "referenced_by": {
+              "object_kinds": [
+                "task"
+              ],
+              "max_age_days": 730
+            }
+          },
+          "note": "The task's delete must bound created_at by now minus at most 730 days, written with a timestamp filter; a cutoff from $env is reported as unverifiable."
         },
         {
           "goal": "The erasure function deletes from every table tagged personal.",
@@ -7765,9 +8896,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -7880,6 +9035,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -7952,7 +9113,7 @@
     {
       "id": "test.assertion_required",
       "label": "Tests assert anonymous calls are rejected",
-      "description": "Requires, for each endpoint that requires a login, a test that calls it without one and asserts that it is rejected. A tokenless endpoint unit test counts too. Anonymous means no token (or a literal null, empty or false one) and no Authorization header in literal headers; a computed token or headers may authenticate. The rejection is asserted by expect.to_throw wrapping the call with the text Unauthorized, Authentication Required or Unauthorized - Authentication Required (whole, any case; an empty text would accept any failure), or by a later expect.to_equal or expect.to_contain on the call result's code or message with ERROR_CODE_UNAUTHORIZED or one of those texts; an endpoint unit test with no token counts with such a to_throw expectation. A workflow test's api.call applies the endpoint's auth as an HTTP request does: a call with no token is refused, binding the code and message, or raising inside expect.to_throw. Endpoints that do not require authentication are skipped: they cannot reject an anonymous call. Tests are read, not run; every workflow test and the endpoints' unit tests are read whatever the rule's scope, and an inactive workflow test counts for nothing.",
+      "description": "Requires, for each endpoint that requires a login, a test that calls it without one and asserts that it is rejected. A tokenless endpoint unit test counts too. Anonymous means no token (or a literal null, empty or false one) and no Authorization header in literal headers; a computed token or headers may authenticate. The rejection is asserted by expect.to_throw wrapping the call with the text Unauthorized, Authentication Required or Unauthorized - Authentication Required (whole, any case; an empty text would accept any failure), or by a later expect.to_equal or expect.to_contain on the call result's code or message with ERROR_CODE_UNAUTHORIZED or one of those texts; an endpoint unit test with no token counts with such a to_throw expectation. A workflow test's api.call does not yet enforce the endpoint's auth when called without a token, so such a test fails at run time until the platform does; an endpoint unit test observes the rejection today. Endpoints that do not require authentication are skipped: they cannot reject an anonymous call. Tests are read, not run; every workflow test and the endpoints' unit tests are read whatever the rule's scope, and an inactive workflow test counts for nothing.",
       "params": {
         "tags": {
           "type": "string[]",
@@ -7973,9 +9134,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -8052,6 +9237,12 @@
           "name": "api_groups"
         },
         {
+          "name": "paths"
+        },
+        {
+          "name": "except_paths"
+        },
+        {
           "name": "tables"
         },
         {
@@ -8067,7 +9258,7 @@
           "name": "reaching_table_tags"
         }
       ],
-      "fix_hint": "Add a workflow test that calls it with no token inside expect.to_throw \"Unauthorized\" (or asserts the result's code is ERROR_CODE_UNAUTHORIZED), or an endpoint unit test with no token expecting to_throw \"Unauthorized\".",
+      "fix_hint": "Add an endpoint unit test with no token expecting to_throw \"Unauthorized\", or a workflow test calling it with no token inside expect.to_throw \"Unauthorized\".",
       "keywords": [
         "test",
         "assert",
@@ -8252,9 +9443,33 @@
           "items": {
             "type": "string"
           },
-          "description": "Endpoints in these API groups, matched by exact display or canonical name. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "description": "Endpoints in these API groups, matched by exact display or canonical name. The canonical name is the part after api: in the group's URL, written without api: (https://x.xano.io/api:Wc2fF8c4/billing is group Wc2fF8c4, with billing in paths); a URL or an api: prefix is refused. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
           "example": [
             "Public"
+          ]
+        },
+        "paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Endpoints whose path inside their API group starts with any listed path. Matching: segment by segment as a prefix, so admin selects admin and admin/users/{id}, never administrator; * stands for exactly one segment (*/admin matches v1/admin); a {param} segment of the endpoint matches any value (users/me selects users/{id}), and a {param} in an entry matches only a path parameter, of any name (orgs/{id} selects orgs/{org_id}); leading and trailing / are ignored; matching is case-sensitive, as requests are routed. No URLs, api: prefixes, regex or **; select the API group with api_groups. A path no endpoint has is a rule warning. Selects endpoints only: every other object kind is excluded. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin"
+          ]
+        },
+        "except_paths": {
+          "type": "string[]",
+          "required": false,
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Exclude endpoints whose path matches any listed path, matched as paths matches: segment by segment as a prefix (admin/login exempts admin/login and every path below it), * for exactly one segment, {param} for a path parameter, leading and trailing / ignored, case-sensitive. Applied after every other scope field has selected them. Other object kinds are not affected. Empty adds no exclusions. Scope limits what is reported, not what is read.",
+          "example": [
+            "admin/login"
           ]
         },
         "tables": {
@@ -8329,6 +9544,22 @@
         },
         {
           "name": "api_groups",
+          "applies_when": {
+            "object_kind": [
+              "query"
+            ]
+          }
+        },
+        {
+          "name": "paths",
+          "applies_when": {
+            "object_kind": [
+              "query"
+            ]
+          }
+        },
+        {
+          "name": "except_paths",
           "applies_when": {
             "object_kind": [
               "query"
@@ -8458,7 +9689,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -8506,7 +9737,7 @@
           "needs": [
             "fields"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -8560,7 +9791,7 @@
           "needs": [
             "field"
           ],
-          "needs_any": false
+          "needs_any": []
         },
         {
           "title": "New records take their owner from the login, not the request",
@@ -8575,7 +9806,7 @@
           "needs": [
             "fields"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -8612,7 +9843,7 @@
           "check": "literal.credential_shape",
           "params": {},
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -8655,7 +9886,10 @@
             "hosts",
             "providers"
           ],
-          "needs_any": true
+          "needs_any": [
+            "hosts",
+            "providers"
+          ]
         }
       ]
     },
@@ -8695,7 +9929,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -8742,7 +9976,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -8754,7 +9988,7 @@
         "hipaa"
       ],
       "title": "Admin endpoints check the caller's role",
-      "summary": "Every endpoint tagged admin calls your role-check function as its first statement, passing the logged-in user.",
+      "summary": "Every admin endpoint, under your admin path or carrying your admin tag, calls your role-check function as its first statement, passing the logged-in user.",
       "key": "AUTH-002",
       "severity": "critical",
       "keywords": [
@@ -8766,12 +10000,20 @@
         "authorization",
         "privilege",
         "guard",
-        "staff"
+        "staff",
+        "admin path",
+        "/admin"
       ],
-      "limits": "Confirms the call is written first, not what the function decides; an endpoint missing the admin tag is not examined.",
+      "limits": "Confirms the call is written first, not what the function decides; selected by path, a new endpoint under it is examined as soon as it exists, while selected by tag, an endpoint missing the tag is not examined.",
       "examples": {
         "functions": [
           "require_admin"
+        ],
+        "tags": [
+          "admin"
+        ],
+        "paths": [
+          "admin"
         ]
       },
       "rules": [
@@ -8783,17 +10025,19 @@
             "must_reference": [
               "$auth"
             ],
-            "tags": [
-              "admin"
-            ],
             "object_kinds": [
               "query"
             ]
           },
           "needs": [
-            "functions"
+            "functions",
+            "tags",
+            "paths"
           ],
-          "needs_any": false
+          "needs_any": [
+            "tags",
+            "paths"
+          ]
         }
       ]
     },
@@ -8830,7 +10074,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -8877,7 +10121,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -8921,7 +10165,7 @@
             "unit": "seconds"
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         },
         {
           "title": "Signed tokens expire",
@@ -8943,7 +10187,7 @@
           "needs": [
             "max"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -8970,7 +10214,7 @@
         "401",
         "negative test"
       ],
-      "limits": "Inspects test definitions without running them, so a test that exists but fails still counts; an assertion must follow each call, but what it asserts is not checked.",
+      "limits": "Inspects test definitions without running them, so a test that exists but fails still counts; an assertion must follow each call, but what it asserts is not checked. A workflow test cannot yet observe an anonymous call's rejection (api.call runs a protected endpoint anonymously), so that test fails until the platform enforces auth there; an endpoint unit test called without a token and expecting the rejection works today.",
       "examples": {},
       "rules": [
         {
@@ -8982,14 +10226,14 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         },
         {
           "title": "",
           "check": "test.assertion_required",
           "params": {},
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9029,7 +10273,7 @@
           "needs": [
             "table_tags"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9069,7 +10313,7 @@
           "needs": [
             "field_names"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9104,7 +10348,7 @@
           "needs": [
             "field_names"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9137,7 +10381,7 @@
           "check": "table.view_hide_required",
           "params": {},
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9186,7 +10430,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9223,7 +10467,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9259,7 +10503,7 @@
             }
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9300,7 +10544,7 @@
             "unit": "seconds"
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9327,7 +10571,7 @@
         "timeout",
         "memory"
       ],
-      "limits": "Reads each list, stream and aggregate query's paging setting; a page size taken from request input is reported as unverifiable, even when the input declares a max. Direct SQL and external database queries are not checked. A query its where narrows to a few rows is still reported when it does not page; exempt it with except_tags.",
+      "limits": "Reads each list, stream and aggregate query's paging setting; a page size taken from an int input with a literal max filter is judged at that max, and one from any other input is reported as unverifiable. Direct SQL and external database queries are not checked. A query its where narrows to a few rows is still reported when it does not page; exempt it with except_tags.",
       "examples": {},
       "rules": [
         {
@@ -9348,7 +10592,55 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
+        }
+      ]
+    },
+    {
+      "id": "agents_use_approved_tools",
+      "category": "integrations",
+      "frameworks": [],
+      "title": "AI agents use only approved tools",
+      "summary": "Every AI agent and MCP server enables only the tools you approve, by name or by an approval tag, and those tools run only the external MCP tools you approve.",
+      "key": "AI-001",
+      "severity": "high",
+      "keywords": [
+        "ai",
+        "agent",
+        "mcp",
+        "mcp server",
+        "tool",
+        "allowlist",
+        "approved tools",
+        "which tools",
+        "llm",
+        "prompt injection",
+        "excessive agency",
+        "tool access",
+        "external mcp"
+      ],
+      "limits": "Judges which tools are enabled and which external MCP tools they name, not what a tool does or what the agent is told; a tool that calls another tool or agent is judged on its own, and an external tool name computed at runtime is reported as unverifiable.",
+      "examples": {
+        "tool_tags": [
+          "agent-approved"
+        ],
+        "tools": [
+          "lookup_order"
+        ]
+      },
+      "rules": [
+        {
+          "title": "",
+          "check": "agent.tool_allowlist",
+          "params": {},
+          "needs": [
+            "tools",
+            "tool_tags"
+          ],
+          "needs_any": [
+            "tools",
+            "tool_tags"
+          ]
         }
       ]
     },
@@ -9398,7 +10690,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9446,7 +10738,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9486,7 +10778,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         },
         {
           "title": "",
@@ -9499,7 +10791,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9535,7 +10827,7 @@
           "needs": [
             "middleware"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9564,7 +10856,7 @@
           "check": "table.auth_table_rules",
           "params": {},
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9612,7 +10904,7 @@
           "needs": [
             "names"
           ],
-          "needs_any": false
+          "needs_any": []
         },
         {
           "title": "Only the audit function writes it",
@@ -9622,7 +10914,7 @@
             "restricted_tables",
             "allowed_functions"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9674,7 +10966,59 @@
           "needs": [
             "tags"
           ],
-          "needs_any": false
+          "needs_any": []
+        }
+      ]
+    },
+    {
+      "id": "retained_data_has_age_limit",
+      "category": "data_protection",
+      "frameworks": [
+        "soc2",
+        "gdpr"
+      ],
+      "title": "Retained data is deleted after a set number of days",
+      "summary": "Every table carrying your retained-data tag is cleaned up by a scheduled task that deletes its rows older than the retention period you set, judged by their created_at.",
+      "key": "RET-003",
+      "severity": "medium",
+      "keywords": [
+        "retention period",
+        "how long",
+        "days",
+        "age",
+        "expire after",
+        "keep for",
+        "delete after",
+        "older than",
+        "purge",
+        "cleanup",
+        "data lifecycle",
+        "storage limitation",
+        "gdpr"
+      ],
+      "limits": "Reads the cutoff each cleanup task's delete filters on, written with now and a literal duration; a cutoff from an environment variable, input or SQL is reported as unverifiable. Other conditions in the delete are not judged, and the task's schedule adds up to one interval to how long a row is kept.",
+      "examples": {
+        "tags": [
+          "retained"
+        ],
+        "referenced_by.max_age_days": 730
+      },
+      "rules": [
+        {
+          "title": "Retained rows are deleted once they are too old",
+          "check": "table.coverage_required",
+          "params": {
+            "referenced_by": {
+              "object_kinds": [
+                "task"
+              ]
+            }
+          },
+          "needs": [
+            "tags",
+            "referenced_by.max_age_days"
+          ],
+          "needs_any": []
         }
       ]
     },
@@ -9706,7 +11050,7 @@
           "check": "trigger.write_trigger_effects",
           "params": {},
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9741,7 +11085,7 @@
             "case_style": "snake_case"
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9779,7 +11123,7 @@
             "foreign_key_list_name": "{table}_ids"
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9817,7 +11161,7 @@
             "version_required": true
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9853,7 +11197,7 @@
             "case_style": "snake_case"
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9885,7 +11229,7 @@
           "needs": [
             "allowed_tags"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9917,7 +11261,7 @@
             "case_style": "kebab-case"
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -9956,7 +11300,7 @@
           "needs": [
             "tag_set"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -10000,7 +11344,7 @@
           "needs": [
             "tag_set"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -10039,7 +11383,7 @@
             "min_length": 20
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -10081,7 +11425,7 @@
             ]
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -10118,7 +11462,7 @@
             "max_nesting": 3
           },
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -10150,21 +11494,21 @@
           "check": "stack.disabled_statement_forbidden",
           "params": {},
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         },
         {
           "title": "",
           "check": "object.unused_input_forbidden",
           "params": {},
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         },
         {
           "title": "",
           "check": "stack.unused_variable_forbidden",
           "params": {},
           "needs": [],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     },
@@ -10209,7 +11553,7 @@
           "needs": [
             "field_names"
           ],
-          "needs_any": false
+          "needs_any": []
         }
       ]
     }
@@ -10282,11 +11626,48 @@
       "frameworks": [
         "hipaa"
       ],
-      "prerequisites": [
-        "Choose one tag for tables holding health data (such as phi) and add it to them: CONF-010 and the access-record rule judge nothing until a table carries it. Use the same tag as CONF-012's tag, so a new table with those fields is caught.",
-        "List the fields that hold health data by exact name (diagnosis, dob, ssn) for CONF-011, CONF-012 and DATA-010.",
-        "Write one function that records each access, passing the logged-in user (such as log_phi_access), and name it in the access-record rule.",
-        "Approve the vendors that may receive health data (hosts, providers) for VND-001."
+      "builds": [
+        {
+          "kind": "tag",
+          "name": "phi",
+          "role": "Added to every table holding health data and to no other: CONF-012 requires it on a table with a health field, CONF-010 a login on whatever reaches such a table, and the access-record rule selects by it.",
+          "fills": [
+            "confidential_tables_tagged.tag",
+            "sensitive_tables_need_login.table_tags",
+            "rules[0].reaching_table_tags"
+          ]
+        },
+        {
+          "kind": "field_attribute",
+          "name": "sensitive",
+          "role": "Set on each health field (diagnosis, dob, ssn), as CONF-011 requires; DATA-010 and CONF-013 then keep those fields out of responses and saved views.",
+          "fills": []
+        },
+        {
+          "kind": "table",
+          "name": "phi_access_log",
+          "role": "One row per access to a health record: who ($auth.id), which record and when. RET-001 requires it and lets only log_phi_access write it.",
+          "fills": [
+            "audit_log_protected.names",
+            "audit_log_protected.restricted_tables"
+          ]
+        },
+        {
+          "kind": "function",
+          "name": "log_phi_access",
+          "role": "Takes the record read and adds a phi_access_log row with db.add, the user from $auth. Every endpoint, tool and task reaching a phi table calls it unconditionally (the access-record rule).",
+          "fills": [
+            "rules[0].functions",
+            "audit_log_protected.allowed_functions"
+          ]
+        }
+      ],
+      "user_fills": [
+        "confidential_tables_tagged.field_names",
+        "sensitive_fields_marked.field_names",
+        "no_pii_in_responses.fields",
+        "approved_vendors_only.hosts",
+        "approved_vendors_only.providers"
       ],
       "templates": [
         "confidential_tables_tagged",
@@ -10338,11 +11719,25 @@
       "frameworks": [
         "pci_dss"
       ],
-      "prerequisites": [
-        "Send card details straight to your payment processor and keep only its token, so no table needs a card field: the card-field rule reports any table that declares one.",
-        "Approve your processor's hosts (such as api.stripe.com) for VND-001.",
-        "Keep the processor's keys in environment variables: SEC-012 reports one written in code.",
-        "List the card-adjacent fields you do store (card_last4, billing_address) for CONF-011 and DATA-010."
+      "builds": [
+        {
+          "kind": "function",
+          "name": "charge_card",
+          "role": "Charges through the payment processor with api.request, using the processor's card token and its key from $env, and stores only the token and card_last4. VND-001 holds it to the processor's hosts, SEC-012 finds no key in code, and the card-field rule no card number in any table.",
+          "fills": []
+        },
+        {
+          "kind": "field_attribute",
+          "name": "sensitive",
+          "role": "Set on the card-adjacent fields you keep (card_last4, billing_address), as CONF-011 requires; DATA-010 then keeps them out of responses.",
+          "fills": []
+        }
+      ],
+      "user_fills": [
+        "approved_vendors_only.hosts",
+        "approved_vendors_only.providers",
+        "sensitive_fields_marked.field_names",
+        "no_pii_in_responses.fields"
       ],
       "templates": [
         "no_secrets_in_code",
@@ -10378,7 +11773,7 @@
     {
       "id": "personal_data_erasure",
       "title": "Erase and expire personal data",
-      "summary": "Tables holding personal data are cleaned up on a schedule and reached by one function that erases a person's records, and personal fields stay marked and out of responses and logs.",
+      "summary": "Tables holding personal data are cleaned up on a schedule once their rows reach your retention period and reached by one function that erases a person's records, and personal fields stay marked and out of responses and logs.",
       "keywords": [
         "erasure",
         "right to be forgotten",
@@ -10394,14 +11789,63 @@
       "frameworks": [
         "gdpr"
       ],
-      "prerequisites": [
-        "Tag the tables to clean up on a schedule (such as retained) for RET-002, and the tables holding personal data (such as personal) for the erasure rule: both judge only tagged tables.",
-        "Write one function that erases a person's records and tag it (such as erasure); name that tag in the erasure rule. Add db.edit or db.patch to its statements where a table is anonymised rather than deleted.",
-        "Choose each table's retention period inside its cleanup task: no rule reads the age it deletes at.",
-        "List the personal fields by exact name for CONF-011 and DATA-010."
+      "builds": [
+        {
+          "kind": "function",
+          "name": "erase_user_data",
+          "role": "Deletes a person's records from every personal-data table with db.del or db.bulk.delete (add db.edit or db.patch to the erasure rule where a table is anonymised instead). The erasure rule requires it to reach each table tagged personal.",
+          "fills": []
+        },
+        {
+          "kind": "tag",
+          "name": "erasure",
+          "role": "Added to erase_user_data: the erasure rule counts only functions carrying it.",
+          "fills": [
+            "rules[0].referenced_by.tags"
+          ]
+        },
+        {
+          "kind": "endpoint",
+          "name": "account/erase",
+          "role": "A logged-in DELETE endpoint that calls erase_user_data for $auth.id, so a person can ask for erasure; no rule checks who calls the function.",
+          "fills": []
+        },
+        {
+          "kind": "tag",
+          "name": "personal",
+          "role": "Added to every table holding personal data: the erasure rule requires erase_user_data to reach each one.",
+          "fills": [
+            "rules[0].tags"
+          ]
+        },
+        {
+          "kind": "task",
+          "name": "purge_expired_records",
+          "role": "Runs on a repeating schedule and deletes each retained table's rows whose created_at is older than the retention period, with db.bulk.delete (or a query, a foreach and db.del) whose where compares created_at with now minus a literal number of days. RET-003 requires an active task deleting each table tagged retained at that age or younger, so the period is never read from an environment variable.",
+          "fills": []
+        },
+        {
+          "kind": "tag",
+          "name": "retained",
+          "role": "Added to every table whose records expire: RET-003 judges only tables carrying it.",
+          "fills": [
+            "retained_data_has_age_limit.tags"
+          ]
+        },
+        {
+          "kind": "field_attribute",
+          "name": "sensitive",
+          "role": "Set on each personal field, as CONF-011 requires; DATA-010 then keeps those fields out of responses.",
+          "fills": []
+        }
+      ],
+      "user_fills": [
+        "retained_data_has_age_limit.referenced_by.max_age_days",
+        "sensitive_fields_marked.field_names",
+        "no_pii_in_responses.fields"
       ],
       "templates": [
-        "retained_data_cleaned_up",
+        "retained_data_has_age_limit",
         "sensitive_fields_marked",
         "no_pii_in_responses",
         "no_sensitive_data_in_logs"
@@ -10428,7 +11872,6 @@
         }
       ],
       "limits": [
-        "retention_age",
         "runtime_data",
         "people_and_training"
       ]
@@ -10452,9 +11895,17 @@
         "juniors"
       ],
       "frameworks": [],
-      "prerequisites": [
-        "Tag large legacy endpoints and functions (such as legacy) and list the tag in CONV-040's except_tags until they are split."
+      "builds": [
+        {
+          "kind": "tag",
+          "name": "legacy",
+          "role": "Added to large legacy endpoints and functions until they are split: CONV-040 skips them through except_tags.",
+          "fills": [
+            "endpoints_stay_short.except_tags"
+          ]
+        }
       ],
+      "user_fills": [],
       "templates": [
         "external_calls_handle_errors",
         "endpoints_have_tests",
@@ -10499,9 +11950,33 @@
         "soc2",
         "hipaa"
       ],
-      "prerequisites": [
-        "Create the audit log table (such as audit_log) and one function that writes an entry, passing the logged-in user (such as record_audit_event), for RET-001 and the audit rules.",
-        "Name the tables whose changes are audited, by exact name, in each audit rule."
+      "builds": [
+        {
+          "kind": "table",
+          "name": "audit_log",
+          "role": "One row per change: who ($auth.id), the table, the record, the action and when. RET-001 requires it and lets only record_audit_event write it, and the last rule keeps every entry from being edited or deleted.",
+          "fills": [
+            "audit_log_protected.names",
+            "audit_log_protected.restricted_tables",
+            "rules[3].restricted_tables"
+          ]
+        },
+        {
+          "kind": "function",
+          "name": "record_audit_event",
+          "role": "Takes the table, record id and action and adds an audit_log row with db.add, the user from $auth. Every edit, patch and delete of an audited table calls it unconditionally (the first three rules).",
+          "fills": [
+            "audit_log_protected.allowed_functions",
+            "rules[0].functions",
+            "rules[1].functions",
+            "rules[2].functions"
+          ]
+        }
+      ],
+      "user_fills": [
+        "rules[0].when.tables",
+        "rules[1].when.tables",
+        "rules[2].when.tables"
       ],
       "templates": [
         "audit_log_protected"
@@ -10571,14 +12046,13 @@
       ],
       "limits": [
         "access_reviews_and_approvals",
-        "runtime_data",
-        "retention_age"
+        "runtime_data"
       ]
     },
     {
       "id": "ai_cost_and_agent_safety",
       "title": "Keep AI calls affordable and agents safe",
-      "summary": "AI calls stay out of loops, reads are paged, agents use approved model providers, AI tools are described and cannot delete records, and deletes and emails wait for an approval check.",
+      "summary": "AI calls stay out of loops, reads are paged, agents use approved model providers and enable only approved tools, AI tools are described and cannot delete records, and deletes and emails wait for an approval check.",
       "keywords": [
         "ai",
         "llm",
@@ -10595,12 +12069,38 @@
         "human in the loop"
       ],
       "frameworks": [],
-      "prerequisites": [
-        "Approve the model providers your agents may use (openai, anthropic) and the hosts AI calls may reach, for VND-001.",
-        "Write one function that checks a person approved the action (such as require_approval), call it before each delete and email, and name it in the approval rule."
+      "builds": [
+        {
+          "kind": "table",
+          "name": "approvals",
+          "role": "Who asked for an action on which record, who approved it and when; require_approval reads it, and no rule checks the table itself.",
+          "fills": []
+        },
+        {
+          "kind": "function",
+          "name": "require_approval",
+          "role": "Looks up an approvals row for the action, approved by someone other than the requester, and stops with precondition when there is none. The approval rule requires a call to it before every delete and email.",
+          "fills": [
+            "rules[2].before.functions"
+          ]
+        },
+        {
+          "kind": "tag",
+          "name": "agent-approved",
+          "role": "Added to each tool the user approves for agents and MCP servers in the plan they say yes to: AI-001 accepts a tool carrying it, and reports any other tool an agent or server enables.",
+          "fills": [
+            "agents_use_approved_tools.tool_tags"
+          ]
+        }
+      ],
+      "user_fills": [
+        "approved_vendors_only.hosts",
+        "approved_vendors_only.providers",
+        "agents_use_approved_tools.tools"
       ],
       "templates": [
         "approved_vendors_only",
+        "agents_use_approved_tools",
         "reads_are_paged",
         "requests_have_timeout",
         "ai_tools_described"
@@ -10654,9 +12154,144 @@
       ],
       "limits": [
         "spend_caps",
-        "agent_tool_allowlists",
         "task_retries",
         "runtime_data"
+      ]
+    },
+    {
+      "id": "rate_limiting",
+      "title": "Limit how often endpoints can be called",
+      "summary": "A rate-limit middleware runs before every public endpoint and every endpoint in your login API group, and no middleware swallows its own error, so a caller past the limit is refused.",
+      "keywords": [
+        "rate limit",
+        "rate limiting",
+        "throttle",
+        "throttling",
+        "brute force",
+        "too many requests",
+        "429",
+        "login attempts",
+        "abuse",
+        "bot",
+        "spam",
+        "ddos",
+        "credential stuffing"
+      ],
+      "frameworks": [],
+      "builds": [
+        {
+          "kind": "middleware",
+          "name": "rate_limit",
+          "role": "Runs before the endpoint and calls redis.ratelimit keyed by the caller ($env.$remote_ip, or $auth.id once logged in) with a max per ttl window and an error past it; its exception policy is critical or rethrow, as LOG-011 requires, so the refusal reaches the caller. Both rules require it attached and active.",
+          "fills": [
+            "rules[0].middleware",
+            "rules[1].middleware"
+          ]
+        },
+        {
+          "kind": "attach_middleware",
+          "name": "rate_limit",
+          "role": "Attached as pre middleware to the API groups holding public endpoints and to the login API group; an endpoint with its own middleware list needs it there too.",
+          "fills": []
+        }
+      ],
+      "user_fills": [
+        "rules[1].api_groups"
+      ],
+      "templates": [
+        "middleware_surfaces_errors"
+      ],
+      "rules": [
+        {
+          "title": "Public endpoints run the rate limit first",
+          "check": "object.middleware_required",
+          "params": {
+            "phase": "pre",
+            "endpoint_auth": "none",
+            "object_kinds": [
+              "query"
+            ]
+          },
+          "needs": [
+            "middleware"
+          ]
+        },
+        {
+          "title": "Login endpoints run the rate limit first",
+          "check": "object.middleware_required",
+          "params": {
+            "phase": "pre",
+            "object_kinds": [
+              "query"
+            ]
+          },
+          "needs": [
+            "middleware",
+            "api_groups"
+          ]
+        }
+      ],
+      "limits": [
+        "rate_limit_behaviour",
+        "infrastructure"
+      ]
+    },
+    {
+      "id": "role_based_access",
+      "title": "Keep admin endpoints for admins",
+      "summary": "Every admin endpoint, under the admin path or carrying the admin tag, calls one role-check function as its first statement, passing the logged-in user, and no request can write a user's role.",
+      "keywords": [
+        "role",
+        "roles",
+        "rbac",
+        "role based access",
+        "admin only",
+        "permissions",
+        "authorization",
+        "privilege",
+        "staff only",
+        "least privilege",
+        "access control"
+      ],
+      "frameworks": [
+        "soc2",
+        "hipaa"
+      ],
+      "builds": [
+        {
+          "kind": "field",
+          "name": "role",
+          "role": "An enum field on the user table holding each user's role; require_role reads it, and AUTH-030 keeps any request from writing it.",
+          "fills": []
+        },
+        {
+          "kind": "function",
+          "name": "require_role",
+          "role": "Reads the logged-in user's role (db.get on the user table by $auth.id) and stops with precondition unless it is the role passed in. AUTH-002 requires it as the first statement of every admin endpoint, referencing $auth.",
+          "fills": [
+            "admin_endpoints_check_role.functions"
+          ]
+        },
+        {
+          "kind": "tag",
+          "name": "admin",
+          "role": "Only when the admin endpoints share no path prefix, added to the admin API group (its endpoints carry it) or to each admin endpoint, and AUTH-002 selects by it. When they share one, such as /admin, AUTH-002 selects by its paths instead and no tag is added.",
+          "fills": [
+            "admin_endpoints_check_role.tags"
+          ]
+        }
+      ],
+      "user_fills": [
+        "admin_endpoints_check_role.paths"
+      ],
+      "templates": [
+        "admin_endpoints_check_role",
+        "no_self_promotion"
+      ],
+      "rules": [],
+      "limits": [
+        "role_design",
+        "access_reviews_and_approvals"
       ]
     }
   ],
@@ -10755,43 +12390,31 @@
       ]
     },
     {
-      "id": "retention_age",
-      "topic": "Retention age",
-      "why": "A check confirms a cleanup task deletes from each retained table, but not yet how old a record is when it goes: the age lives in the task's own query.",
+      "id": "rate_limit_behaviour",
+      "topic": "What a rate limit allows",
+      "why": "A check confirms the rate-limit middleware is attached and active, not the limit it sets, the key it counts by, or a caller that spreads requests across keys; those happen at run time.",
       "keywords": [
-        "retention period",
-        "how long",
-        "days",
-        "age",
-        "expire after",
-        "keep for",
-        "retention schedule"
+        "rate limit value",
+        "requests per minute",
+        "limit too high",
+        "bypass",
+        "per ip",
+        "per user",
+        "burst"
       ]
     },
     {
-      "id": "agent_tool_allowlists",
-      "topic": "Agent tool allowlists",
-      "why": "No check limits which tools an AI agent or MCP server may expose yet; a rule can forbid statements inside tools.",
+      "id": "role_design",
+      "topic": "Which roles exist and who holds them",
+      "why": "Rules confirm admin endpoints call the role check and that no request writes a role, not which roles the business needs, whether the check compares the right one, or how roles are granted and taken away.",
       "keywords": [
-        "tool allowlist",
-        "agent tools",
-        "mcp tools",
-        "which tools",
-        "toolset",
-        "tool permissions"
-      ]
-    },
-    {
-      "id": "path_prefix_scope",
-      "topic": "Scope by endpoint path prefix",
-      "why": "A rule selects endpoints by tag, API group, verb or auth, not yet by a path prefix such as /admin: tag those endpoints or their API group instead.",
-      "keywords": [
-        "path prefix",
-        "/admin",
-        "url prefix",
-        "route prefix",
-        "path starts with",
-        "endpoint path"
+        "which roles",
+        "role assignment",
+        "grant role",
+        "revoke",
+        "least privilege",
+        "role matrix",
+        "who is admin"
       ]
     }
   ],

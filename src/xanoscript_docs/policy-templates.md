@@ -4,8 +4,8 @@ The platform's starting points for a new policy, and its recipes for goals that 
 
 ## Using a template
 
-- **Prefer a template.** Before writing a new policy, look for a template that covers the request, and when one fits, start from it rather than inventing a key and rules: use its key (with a free `-2`, `-3`… suffix when the branch already has that key), its title, its summary as the `statement`, its severity and its rules, and keep `active = true` with `enforcement = "advisory"`. Then change only what the request asks for. When a recipe covers the goal, follow it (see Recipes): it names the templates to create, in order, and the rules to add.
-- **Fill every need.** "Fill" names the parameter paths each rule leaves empty (one of them is enough where they are joined by "or"). The example shows a value that fits: the template's own, else the check's catalogue example. It is a hint, never a value to copy, so fill each need with the workspace's own names.
+- **Prefer a template.** Before writing a new policy, look for a template that covers the request, and when one fits, start from it rather than inventing a key and rules: use its key (with a free `-2`, `-3`… suffix when the branch already has that key), its title, its summary as the `statement`, its severity and its rules, and keep `active = true` with `enforcement = "advisory"`. Then change only what the request asks for. When a recipe covers the goal, follow it (see Recipes): it names the objects to build, the templates to create, in order, and the rules to add.
+- **Fill every need.** "Fill" names the parameter paths each rule leaves empty: every one is required, except that of a group joined by "or" one is enough (`functions`, and `tags` or `paths`). A path with a dot names a property of an object parameter (`referenced_by.max_age_days`, filled inside `referenced_by`). The example shows a value that fits: the template's own, else the check's catalogue example. It is a hint, never a value to copy, so fill each need with the workspace's own names.
 - **Checks** names the checks the template's rules use; read a check's parameters, and the goals each one serves, in the `policies` topic's check catalogue.
 - **Frameworks** names the framework tags a template carries, a second way to find it. Framework tags point to templates on related topics. They don't make a workspace compliant, and Xano doesn't track changes to these frameworks.
 - With the CLI, `xano policy create --template <id>` creates the policy from the instance's template.
@@ -18,7 +18,7 @@ The platform's starting points for a new policy, and its recipes for goals that 
 | `own_records_only` | `AUTH-020` | critical | Users only reach their own records | `db.where_constraint_required`, `db.write_from_input_forbidden` | R1: `field` (e.g. `"user_id"`); R2: `fields` (e.g. `["user_id"]`) | SOC 2, HIPAA |
 | `no_self_promotion` | `AUTH-030` | critical | Users can't make themselves admin | `db.write_from_input_forbidden` | _nothing_ | SOC 2, HIPAA |
 | `public_endpoints_harmless` | `AUTH-003` | high | Public endpoints can't change data | `stack.statement_forbidden` | _nothing_ |  |
-| `admin_endpoints_check_role` | `AUTH-002` | critical | Admin endpoints check the caller's role | `object.statement_required` | `functions` (e.g. `["require_admin"]`) | SOC 2, HIPAA |
+| `admin_endpoints_check_role` | `AUTH-002` | critical | Admin endpoints check the caller's role | `object.statement_required` | `functions` (e.g. `["require_admin"]`), and `tags` (e.g. `["admin"]`) or `paths` (e.g. `["admin"]`) | SOC 2, HIPAA |
 | `tokens_expire` | `SEC-014` | high | Login tokens expire within an hour | `statement.param_bound` | R2: `max` (e.g. `3600`) | SOC 2, HIPAA |
 | `writes_check_first` | `BIZ-001` | high | Endpoints check the caller before writing | `stack.statement_order` | _nothing_ |  |
 | `protected_endpoints_run_middleware` | `AUTH-040` | high | Protected endpoints run your auth middleware | `object.middleware_required` | `middleware` (e.g. `["access_context"]`) |  |
@@ -36,6 +36,7 @@ The platform's starting points for a new policy, and its recipes for goals that 
 | `no_sensitive_data_in_logs` | `LOG-001` | high | Logs don't contain request, user or secret data | `statement.expression_rule` | _nothing_ | SOC 2, HIPAA, GDPR, PCI DSS |
 | `audit_log_protected` | `RET-001` | high | Only the audit function writes the audit log | `workspace.object_required`, `table.write_location_restricted` | R1: `names` (e.g. `["audit_log"]`); R2: `restricted_tables` (e.g. `["audit_log"]`), `allowed_functions` (e.g. `["record_audit_event"]`) | SOC 2, HIPAA |
 | `retained_data_cleaned_up` | `RET-002` | medium | Retained data has a cleanup task | `table.coverage_required` | `tags` (e.g. `["retained"]`) | SOC 2, GDPR |
+| `retained_data_has_age_limit` | `RET-003` | medium | Retained data is deleted after a set number of days | `table.coverage_required` | `tags` (e.g. `["retained"]`), `referenced_by.max_age_days` (e.g. `730`) | SOC 2, GDPR |
 
 ## Secrets
 
@@ -51,6 +52,7 @@ The platform's starting points for a new policy, and its recipes for goals that 
 | `tls_verification_on` | `SEC-011` | high | External requests verify TLS certificates | `statement.param_forbidden` | _nothing_ | SOC 2, HIPAA, PCI DSS |
 | `external_calls_handle_errors` | `LOG-010` | medium | External calls handle their own failures | `statement.containment` | _nothing_ |  |
 | `requests_have_timeout` | `SEC-013` | medium | External requests time out quickly | `statement.param_bound` | _nothing_ |  |
+| `agents_use_approved_tools` | `AI-001` | high | AI agents use only approved tools | `agent.tool_allowlist` | `tools` (e.g. `["lookup_order"]`) or `tool_tags` (e.g. `["agent-approved"]`) |  |
 
 ## Reliability
 
@@ -89,7 +91,7 @@ The platform's starting points for a new policy, and its recipes for goals that 
 
 ## Recipes
 
-A recipe covers a goal that takes several templates, such as protecting payment card data. Nothing creates a recipe: do what it asks first, create each of its templates as its own policy in the order given, then put its own rules together in one policy of your own, filling what each needs. It ends with what no rule in it can see; say so when the request reaches that far. The catalogue serves them as `recipes`.
+A recipe covers a goal that takes several templates, such as protecting payment card data. Most goals have three parts, and a recipe names each: the enforcement (the objects that do the work at run time, under Build), the coverage (the templates and rules that keep it wired in everywhere) and the gap (what no rule in it can see). Nothing creates a recipe. Show the user one plan: the objects to build and the changes to existing ones, each with the workspace's own names, the policies (each template as its own policy, in the order given, then the recipe's own rules together in one policy of your own) and what stays unchecked. After one yes, build all of it in the same change, objects before the policies that name them. A fill names the rule param an object's name goes in: `<template id>.<param>` for a template's rule, `rules[<n>].<param>` for the recipe's own rule n (from 0). Say so when the request reaches into the gap. The catalogue serves them as `recipes`.
 
 Framework tags point to templates on related topics. They don't make a workspace compliant, and Xano doesn't track changes to these frameworks.
 
@@ -99,12 +101,14 @@ Framework tags point to templates on related topics. They don't make a workspace
 
 Keywords: health, phi, ephi, patient, medical, clinical, diagnosis, hipaa, healthcare.
 
-First:
+Build (the enforcement the rules point at):
 
-- Choose one tag for tables holding health data (such as phi) and add it to them: CONF-010 and the access-record rule judge nothing until a table carries it. Use the same tag as CONF-012's tag, so a new table with those fields is caught.
-- List the fields that hold health data by exact name (diagnosis, dob, ssn) for CONF-011, CONF-012 and DATA-010.
-- Write one function that records each access, passing the logged-in user (such as log_phi_access), and name it in the access-record rule.
-- Approve the vendors that may receive health data (hosts, providers) for VND-001.
+- **tag** `phi`: Added to every table holding health data and to no other: CONF-012 requires it on a table with a health field, CONF-010 a login on whatever reaches such a table, and the access-record rule selects by it. Fills `confidential_tables_tagged.tag`, `sensitive_tables_need_login.table_tags`, `rules[0].reaching_table_tags`.
+- **field_attribute** `sensitive`: Set on each health field (diagnosis, dob, ssn), as CONF-011 requires; DATA-010 and CONF-013 then keep those fields out of responses and saved views.
+- **table** `phi_access_log`: One row per access to a health record: who ($auth.id), which record and when. RET-001 requires it and lets only log_phi_access write it. Fills `audit_log_protected.names`, `audit_log_protected.restricted_tables`.
+- **function** `log_phi_access`: Takes the record read and adds a phi_access_log row with db.add, the user from $auth. Every endpoint, tool and task reaching a phi table calls it unconditionally (the access-record rule). Fills `rules[0].functions`, `audit_log_protected.allowed_functions`.
+
+The user's own objects and choices fill `confidential_tables_tagged.field_names`, `sensitive_fields_marked.field_names`, `no_pii_in_responses.fields`, `approved_vendors_only.hosts`, `approved_vendors_only.providers`.
 
 Templates, in order, one policy each:
 
@@ -120,7 +124,7 @@ Templates, in order, one policy each:
 
 Rules no template covers, together in one policy of your own:
 
-- Objects reaching health tables always record the access: `object.statement_required` with `{"placement":"unconditional"}`. Fill `functions`, `reaching_table_tags`.
+- `rules[0]` Objects reaching health tables always record the access: `object.statement_required` with `{"placement":"unconditional"}`. Fill `functions`, `reaching_table_tags`.
 
 No rule here can see: People and training; Access reviews and change approvals; Runtime data and copies between environments; Infrastructure and network (see What no check can see).
 
@@ -130,12 +134,12 @@ No rule here can see: People and training; Access reviews and change approvals; 
 
 Keywords: card, credit card, payment, pan, cvv, cardholder, pci, checkout, stripe, tokenization.
 
-First:
+Build (the enforcement the rules point at):
 
-- Send card details straight to your payment processor and keep only its token, so no table needs a card field: the card-field rule reports any table that declares one.
-- Approve your processor's hosts (such as api.stripe.com) for VND-001.
-- Keep the processor's keys in environment variables: SEC-012 reports one written in code.
-- List the card-adjacent fields you do store (card_last4, billing_address) for CONF-011 and DATA-010.
+- **function** `charge_card`: Charges through the payment processor with api.request, using the processor's card token and its key from $env, and stores only the token and card_last4. VND-001 holds it to the processor's hosts, SEC-012 finds no key in code, and the card-field rule no card number in any table.
+- **field_attribute** `sensitive`: Set on the card-adjacent fields you keep (card_last4, billing_address), as CONF-011 requires; DATA-010 then keeps them out of responses.
+
+The user's own objects and choices fill `approved_vendors_only.hosts`, `approved_vendors_only.providers`, `sensitive_fields_marked.field_names`, `no_pii_in_responses.fields`.
 
 Templates, in order, one policy each:
 
@@ -148,35 +152,40 @@ Templates, in order, one policy each:
 
 Rules no template covers, together in one policy of your own:
 
-- Card numbers and security codes are never stored: `table.field_attribute_required` with `{"field_names":["card_number","cvv","cvc","pan"],"forbidden":true}`.
+- `rules[0]` Card numbers and security codes are never stored: `table.field_attribute_required` with `{"field_names":["card_number","cvv","cvc","pan"],"forbidden":true}`.
 
 No rule here can see: People and training; Access reviews and change approvals; Runtime data and copies between environments; Infrastructure and network (see What no check can see).
 
 ### Erase and expire personal data
 
-`personal_data_erasure` · GDPR. Tables holding personal data are cleaned up on a schedule and reached by one function that erases a person's records, and personal fields stay marked and out of responses and logs.
+`personal_data_erasure` · GDPR. Tables holding personal data are cleaned up on a schedule once their rows reach your retention period and reached by one function that erases a person's records, and personal fields stay marked and out of responses and logs.
 
 Keywords: erasure, right to be forgotten, delete my data, retention, personal data, purge, dsar, privacy, gdpr, anonymise.
 
-First:
+Build (the enforcement the rules point at):
 
-- Tag the tables to clean up on a schedule (such as retained) for RET-002, and the tables holding personal data (such as personal) for the erasure rule: both judge only tagged tables.
-- Write one function that erases a person's records and tag it (such as erasure); name that tag in the erasure rule. Add db.edit or db.patch to its statements where a table is anonymised rather than deleted.
-- Choose each table's retention period inside its cleanup task: no rule reads the age it deletes at.
-- List the personal fields by exact name for CONF-011 and DATA-010.
+- **function** `erase_user_data`: Deletes a person's records from every personal-data table with db.del or db.bulk.delete (add db.edit or db.patch to the erasure rule where a table is anonymised instead). The erasure rule requires it to reach each table tagged personal.
+- **tag** `erasure`: Added to erase_user_data: the erasure rule counts only functions carrying it. Fills `rules[0].referenced_by.tags`.
+- **endpoint** `account/erase`: A logged-in DELETE endpoint that calls erase_user_data for $auth.id, so a person can ask for erasure; no rule checks who calls the function.
+- **tag** `personal`: Added to every table holding personal data: the erasure rule requires erase_user_data to reach each one. Fills `rules[0].tags`.
+- **task** `purge_expired_records`: Runs on a repeating schedule and deletes each retained table's rows whose created_at is older than the retention period, with db.bulk.delete (or a query, a foreach and db.del) whose where compares created_at with now minus a literal number of days. RET-003 requires an active task deleting each table tagged retained at that age or younger, so the period is never read from an environment variable.
+- **tag** `retained`: Added to every table whose records expire: RET-003 judges only tables carrying it. Fills `retained_data_has_age_limit.tags`.
+- **field_attribute** `sensitive`: Set on each personal field, as CONF-011 requires; DATA-010 then keeps those fields out of responses.
+
+The user's own objects and choices fill `retained_data_has_age_limit.referenced_by.max_age_days`, `sensitive_fields_marked.field_names`, `no_pii_in_responses.fields`.
 
 Templates, in order, one policy each:
 
-1. `retained_data_cleaned_up` (`RET-002`): Retained data has a cleanup task
+1. `retained_data_has_age_limit` (`RET-003`): Retained data is deleted after a set number of days
 2. `sensitive_fields_marked` (`CONF-011`): Sensitive fields are marked sensitive
 3. `no_pii_in_responses` (`DATA-010`): Endpoints don't return personal data
 4. `no_sensitive_data_in_logs` (`LOG-001`): Logs don't contain request, user or secret data
 
 Rules no template covers, together in one policy of your own:
 
-- The erasure function reaches every personal-data table: `table.coverage_required` with `{"referenced_by":{"object_kinds":["function"],"statements":["db.del","db.bulk.delete"]}}`. Fill `tags`, `referenced_by.tags`.
+- `rules[0]` The erasure function reaches every personal-data table: `table.coverage_required` with `{"referenced_by":{"object_kinds":["function"],"statements":["db.del","db.bulk.delete"]}}`. Fill `tags`, `referenced_by.tags`.
 
-No rule here can see: Retention age; Runtime data and copies between environments; People and training (see What no check can see).
+No rule here can see: Runtime data and copies between environments; People and training (see What no check can see).
 
 ### Keep code easy to review
 
@@ -184,9 +193,9 @@ No rule here can see: Retention age; Runtime data and copies between environment
 
 Keywords: code review, review, quality, clean code, maintainable, lint, best practice, tests, readable, error handling, breaking prod, juniors.
 
-First:
+Build (the enforcement the rules point at):
 
-- Tag large legacy endpoints and functions (such as legacy) and list the tag in CONV-040's except_tags until they are split.
+- **tag** `legacy`: Added to large legacy endpoints and functions until they are split: CONV-040 skips them through except_tags. Fills `endpoints_stay_short.except_tags`.
 
 Templates, in order, one policy each:
 
@@ -198,7 +207,7 @@ Templates, in order, one policy each:
 
 Rules no template covers, together in one policy of your own:
 
-- Functions say what they do: `object.description_required` with `{"object_kinds":["function"],"min_length":20}`.
+- `rules[0]` Functions say what they do: `object.description_required` with `{"object_kinds":["function"],"min_length":20}`.
 
 No rule here can see: Access reviews and change approvals; People and training (see What no check can see).
 
@@ -208,10 +217,12 @@ No rule here can see: Access reviews and change approvals; People and training (
 
 Keywords: audit, audit trail, who changed, change history, history, tamper, accountability, activity log, log changes.
 
-First:
+Build (the enforcement the rules point at):
 
-- Create the audit log table (such as audit_log) and one function that writes an entry, passing the logged-in user (such as record_audit_event), for RET-001 and the audit rules.
-- Name the tables whose changes are audited, by exact name, in each audit rule.
+- **table** `audit_log`: One row per change: who ($auth.id), the table, the record, the action and when. RET-001 requires it and lets only record_audit_event write it, and the last rule keeps every entry from being edited or deleted. Fills `audit_log_protected.names`, `audit_log_protected.restricted_tables`, `rules[3].restricted_tables`.
+- **function** `record_audit_event`: Takes the table, record id and action and adds an audit_log row with db.add, the user from $auth. Every edit, patch and delete of an audited table calls it unconditionally (the first three rules). Fills `audit_log_protected.allowed_functions`, `rules[0].functions`, `rules[1].functions`, `rules[2].functions`.
+
+The user's own objects and choices fill `rules[0].when.tables`, `rules[1].when.tables`, `rules[2].when.tables`.
 
 Templates, in order, one policy each:
 
@@ -219,38 +230,87 @@ Templates, in order, one policy each:
 
 Rules no template covers, together in one policy of your own:
 
-- Edits of audited tables call the audit function: `object.statement_required` with `{"placement":"unconditional","when":{"statement":"db.edit"}}`. Fill `functions`, `when.tables`.
-- Patches of audited tables call the audit function: `object.statement_required` with `{"placement":"unconditional","when":{"statement":"db.patch"}}`. Fill `functions`, `when.tables`.
-- Deletes from audited tables call the audit function: `object.statement_required` with `{"placement":"unconditional","when":{"statement":"db.del"}}`. Fill `functions`, `when.tables`.
-- Audit entries are never edited or deleted: `table.write_location_restricted` with `{"statements":["db.edit","db.patch","db.add_or_edit","db.del","db.truncate","db.bulk.update","db.bulk.patch","db.bulk.delete"]}`. Fill `restricted_tables`.
+- `rules[0]` Edits of audited tables call the audit function: `object.statement_required` with `{"placement":"unconditional","when":{"statement":"db.edit"}}`. Fill `functions`, `when.tables`.
+- `rules[1]` Patches of audited tables call the audit function: `object.statement_required` with `{"placement":"unconditional","when":{"statement":"db.patch"}}`. Fill `functions`, `when.tables`.
+- `rules[2]` Deletes from audited tables call the audit function: `object.statement_required` with `{"placement":"unconditional","when":{"statement":"db.del"}}`. Fill `functions`, `when.tables`.
+- `rules[3]` Audit entries are never edited or deleted: `table.write_location_restricted` with `{"statements":["db.edit","db.patch","db.add_or_edit","db.del","db.truncate","db.bulk.update","db.bulk.patch","db.bulk.delete"]}`. Fill `restricted_tables`.
 
-No rule here can see: Access reviews and change approvals; Runtime data and copies between environments; Retention age (see What no check can see).
+No rule here can see: Access reviews and change approvals; Runtime data and copies between environments (see What no check can see).
 
 ### Keep AI calls affordable and agents safe
 
-`ai_cost_and_agent_safety`. AI calls stay out of loops, reads are paged, agents use approved model providers, AI tools are described and cannot delete records, and deletes and emails wait for an approval check.
+`ai_cost_and_agent_safety`. AI calls stay out of loops, reads are paged, agents use approved model providers and enable only approved tools, AI tools are described and cannot delete records, and deletes and emails wait for an approval check.
 
 Keywords: ai, llm, agent, cost, spend, tokens, mcp, tool, openai, anthropic, runaway, approval, human in the loop.
 
-First:
+Build (the enforcement the rules point at):
 
-- Approve the model providers your agents may use (openai, anthropic) and the hosts AI calls may reach, for VND-001.
-- Write one function that checks a person approved the action (such as require_approval), call it before each delete and email, and name it in the approval rule.
+- **table** `approvals`: Who asked for an action on which record, who approved it and when; require_approval reads it, and no rule checks the table itself.
+- **function** `require_approval`: Looks up an approvals row for the action, approved by someone other than the requester, and stops with precondition when there is none. The approval rule requires a call to it before every delete and email. Fills `rules[2].before.functions`.
+- **tag** `agent-approved`: Added to each tool the user approves for agents and MCP servers in the plan they say yes to: AI-001 accepts a tool carrying it, and reports any other tool an agent or server enables. Fills `agents_use_approved_tools.tool_tags`.
+
+The user's own objects and choices fill `approved_vendors_only.hosts`, `approved_vendors_only.providers`, `agents_use_approved_tools.tools`.
 
 Templates, in order, one policy each:
 
 1. `approved_vendors_only` (`VND-001`): Data only goes to approved vendors
-2. `reads_are_paged` (`PERF-001`): Endpoints never return every row
-3. `requests_have_timeout` (`SEC-013`): External requests time out quickly
-4. `ai_tools_described` (`CONV-030`): AI tools and their inputs are described
+2. `agents_use_approved_tools` (`AI-001`): AI agents use only approved tools
+3. `reads_are_paged` (`PERF-001`): Endpoints never return every row
+4. `requests_have_timeout` (`SEC-013`): External requests time out quickly
+5. `ai_tools_described` (`CONV-030`): AI tools and their inputs are described
 
 Rules no template covers, together in one policy of your own:
 
-- AI calls are not made inside loops: `statement.containment` with `{"statements":["ai.agent.run","ai.external.mcp.tool.run"],"must_not_be_inside":["foreach","for","while"]}`.
-- AI tools cannot delete records: `stack.statement_forbidden` with `{"statements":["db.del","db.bulk.delete","db.truncate"],"object_kinds":["tool"]}`.
-- Deletes and emails wait for an approval check: `stack.statement_order` with `{"after":["db.del","db.bulk.delete","util.send_email"]}`. Fill `before.functions`.
+- `rules[0]` AI calls are not made inside loops: `statement.containment` with `{"statements":["ai.agent.run","ai.external.mcp.tool.run"],"must_not_be_inside":["foreach","for","while"]}`.
+- `rules[1]` AI tools cannot delete records: `stack.statement_forbidden` with `{"statements":["db.del","db.bulk.delete","db.truncate"],"object_kinds":["tool"]}`.
+- `rules[2]` Deletes and emails wait for an approval check: `stack.statement_order` with `{"after":["db.del","db.bulk.delete","util.send_email"]}`. Fill `before.functions`.
 
-No rule here can see: Spend caps; Agent tool allowlists; Task retries; Runtime data and copies between environments (see What no check can see).
+No rule here can see: Spend caps; Task retries; Runtime data and copies between environments (see What no check can see).
+
+### Limit how often endpoints can be called
+
+`rate_limiting`. A rate-limit middleware runs before every public endpoint and every endpoint in your login API group, and no middleware swallows its own error, so a caller past the limit is refused.
+
+Keywords: rate limit, rate limiting, throttle, throttling, brute force, too many requests, 429, login attempts, abuse, bot, spam, ddos, credential stuffing.
+
+Build (the enforcement the rules point at):
+
+- **middleware** `rate_limit`: Runs before the endpoint and calls redis.ratelimit keyed by the caller ($env.$remote_ip, or $auth.id once logged in) with a max per ttl window and an error past it; its exception policy is critical or rethrow, as LOG-011 requires, so the refusal reaches the caller. Both rules require it attached and active. Fills `rules[0].middleware`, `rules[1].middleware`.
+- **attach_middleware** `rate_limit`: Attached as pre middleware to the API groups holding public endpoints and to the login API group; an endpoint with its own middleware list needs it there too.
+
+The user's own objects and choices fill `rules[1].api_groups`.
+
+Templates, in order, one policy each:
+
+1. `middleware_surfaces_errors` (`LOG-011`): Middleware doesn't swallow errors
+
+Rules no template covers, together in one policy of your own:
+
+- `rules[0]` Public endpoints run the rate limit first: `object.middleware_required` with `{"phase":"pre","endpoint_auth":"none","object_kinds":["query"]}`. Fill `middleware`.
+- `rules[1]` Login endpoints run the rate limit first: `object.middleware_required` with `{"phase":"pre","object_kinds":["query"]}`. Fill `middleware`, `api_groups`.
+
+No rule here can see: What a rate limit allows; Infrastructure and network (see What no check can see).
+
+### Keep admin endpoints for admins
+
+`role_based_access` · SOC 2, HIPAA. Every admin endpoint, under the admin path or carrying the admin tag, calls one role-check function as its first statement, passing the logged-in user, and no request can write a user's role.
+
+Keywords: role, roles, rbac, role based access, admin only, permissions, authorization, privilege, staff only, least privilege, access control.
+
+Build (the enforcement the rules point at):
+
+- **field** `role`: An enum field on the user table holding each user's role; require_role reads it, and AUTH-030 keeps any request from writing it.
+- **function** `require_role`: Reads the logged-in user's role (db.get on the user table by $auth.id) and stops with precondition unless it is the role passed in. AUTH-002 requires it as the first statement of every admin endpoint, referencing $auth. Fills `admin_endpoints_check_role.functions`.
+- **tag** `admin`: Only when the admin endpoints share no path prefix, added to the admin API group (its endpoints carry it) or to each admin endpoint, and AUTH-002 selects by it. When they share one, such as /admin, AUTH-002 selects by its paths instead and no tag is added. Fills `admin_endpoints_check_role.tags`.
+
+The user's own objects and choices fill `admin_endpoints_check_role.paths`.
+
+Templates, in order, one policy each:
+
+1. `admin_endpoints_check_role` (`AUTH-002`): Admin endpoints check the caller's role
+2. `no_self_promotion` (`AUTH-030`): Users can't make themselves admin
+
+No rule here can see: Which roles exist and who holds them; Access reviews and change approvals (see What no check can see).
 
 ## What no check can see
 
@@ -262,6 +322,5 @@ Policies read the workspace's stored definitions. A request about any of these g
 - **Infrastructure and network** (`infrastructure`): Hosting, network segmentation, encryption at rest, backups, vulnerability scans and penetration tests are controls of Xano or your hosting provider, not workspace definitions. Keywords: network, firewall, segmentation, encryption at rest, backup, penetration test, vulnerability scan, hosting, infrastructure.
 - **Spend caps** (`spend_caps`): No check reads what AI calls or vendors cost, or caps spend, yet; a rule can keep AI calls out of loops and reads paged. Keywords: spend, cost cap, budget, billing, token usage, usage cap, quota, rate of spend.
 - **Task retries** (`task_retries`): Tasks have no retry setting a check could read, so how often a failed task runs again is not checked yet. Keywords: retry, retries, backoff, failed task, rerun, dead letter.
-- **Retention age** (`retention_age`): A check confirms a cleanup task deletes from each retained table, but not yet how old a record is when it goes: the age lives in the task's own query. Keywords: retention period, how long, days, age, expire after, keep for, retention schedule.
-- **Agent tool allowlists** (`agent_tool_allowlists`): No check limits which tools an AI agent or MCP server may expose yet; a rule can forbid statements inside tools. Keywords: tool allowlist, agent tools, mcp tools, which tools, toolset, tool permissions.
-- **Scope by endpoint path prefix** (`path_prefix_scope`): A rule selects endpoints by tag, API group, verb or auth, not yet by a path prefix such as /admin: tag those endpoints or their API group instead. Keywords: path prefix, /admin, url prefix, route prefix, path starts with, endpoint path.
+- **What a rate limit allows** (`rate_limit_behaviour`): A check confirms the rate-limit middleware is attached and active, not the limit it sets, the key it counts by, or a caller that spreads requests across keys; those happen at run time. Keywords: rate limit value, requests per minute, limit too high, bypass, per ip, per user, burst.
+- **Which roles exist and who holds them** (`role_design`): Rules confirm admin endpoints call the role check and that no request writes a role, not which roles the business needs, whether the check compares the right one, or how roles are granted and taken away. Keywords: which roles, role assignment, grant role, revoke, least privilege, role matrix, who is admin.

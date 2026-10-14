@@ -17,7 +17,7 @@ export const POLICIES_MD = fileURLToPath(new URL('../src/xanoscript_docs/policie
 export const TEMPLATES_MD = fileURLToPath(new URL('../src/xanoscript_docs/policy-templates.md', import.meta.url));
 
 /** Parameters every check shares, all top-level; the Scoping section documents them once. */
-const SCOPE_KEYS = ['tags', 'api_groups', 'tables', 'verbs', 'endpoint_auth', 'except_tags', 'object_kinds', 'reaching_table_tags'];
+const SCOPE_KEYS = ['tags', 'api_groups', 'paths', 'except_paths', 'tables', 'verbs', 'endpoint_auth', 'except_tags', 'object_kinds', 'reaching_table_tags'];
 
 /** The sentence every scope parameter's description ends with; the Scoping section states it once. */
 const SCOPE_READS = 'Scope limits what is reported, not what is read.';
@@ -76,12 +76,13 @@ function statements(groups) {
 }
 
 function scope(items) {
-  const params = items[0]?.params ?? {};
-  const missing = SCOPE_KEYS.filter(key => !params[key]);
+  // Not every check takes every field (agent.tool_allowlist inspects no endpoint), so each is read from the first check that does.
+  const shapes = Object.fromEntries(SCOPE_KEYS.map(key => [key, items.find(it => it.params?.[key])?.params[key]]));
+  const missing = SCOPE_KEYS.filter(key => !shapes[key]);
   if (missing.length) throw new Error(`The catalogue does not publish the shared scope parameters: ${missing.join(', ')}.`);
   const lines = [SCOPE_READS, ''];
   for (const key of SCOPE_KEYS) {
-    const shape = params[key];
+    const shape = shapes[key];
     const values = shape.values ?? shape.items?.values;
     const description = String(shape.description).replace(SCOPE_READS, '').trim();
     lines.push(`- \`${key}\` (${shape.type}) — ${description}${values ? ` One of ${values.map(code).join(', ')}.` : ''}`);
@@ -126,13 +127,31 @@ function needExample(template, items, check, path) {
   return schema?.example;
 }
 
+/**
+ * A rule's `needs_any` group: the needs of which one is enough (two or more, or none). The catalogue
+ * serves a list; an older one served `true` for "every need".
+ */
+function needsAnyGroup(rule) {
+  const needs = rule.needs ?? [];
+  const group = rule.needs_any === true ? needs : Array.isArray(rule.needs_any) ? needs.filter(need => rule.needs_any.includes(need)) : [];
+  return group.length > 1 ? group : [];
+}
+
+/** Needs as the rule requires them: every one outside the group, then the group as one choice (`functions, and tags or paths`). */
+export function joinNeeds(rule, render = code) {
+  const group = needsAnyGroup(rule);
+  const required = (rule.needs ?? []).filter(need => !group.includes(need)).map(render);
+  const choice = group.length ? `${group.slice(0, -1).map(render).join(', ')} or ${render(group.at(-1))}` : '';
+  if (!choice) return required.join(', ');
+  return required.length ? `${required.join(', ')}, and ${choice}` : choice;
+}
+
 /** A rule's needs, each with the example that fits it, joined as the rule requires them. */
 function needsList(template, items, rule) {
-  const needs = rule.needs.map(path => {
+  return joinNeeds(rule, path => {
     const example = needExample(template, items, rule.check, path);
     return `${code(path)}${example === undefined ? '' : ` (e.g. ${code(JSON.stringify(example))})`}`;
   });
-  return needs.join(rule.needs_any ? ' or ' : ', ');
 }
 
 /** What a template leaves to fill, rule by rule, each need with the example that fits it. */
@@ -148,7 +167,7 @@ function needsCell(template, items) {
 /** Framework tag ids as their served labels. */
 const frameworkLabels = (ids, frameworks) => (ids ?? []).map(id => frameworks.find(framework => framework.id === id)?.label ?? id);
 
-/** The Recipes section: each goal with what to do first, its templates in order, its own rules and what none of them can see. */
+/** The Recipes section: each goal with the objects to build, what the user fills, its templates in order, its own rules and what none of them can see. */
 function recipesSection(catalogue, items) {
   const recipes = catalogue.recipes ?? [];
   if (!recipes.length) return [];
@@ -159,14 +178,21 @@ function recipesSection(catalogue, items) {
     '',
     '## Recipes',
     '',
-    'A recipe covers a goal that takes several templates, such as protecting payment card data. Nothing creates a recipe: do what it asks first, create each of its templates as its own policy in the order given, then put its own rules together in one policy of your own, filling what each needs. It ends with what no rule in it can see; say so when the request reaches that far. The catalogue serves them as `recipes`.',
+    'A recipe covers a goal that takes several templates, such as protecting payment card data. Most goals have three parts, and a recipe names each: the enforcement (the objects that do the work at run time, under Build), the coverage (the templates and rules that keep it wired in everywhere) and the gap (what no rule in it can see). Nothing creates a recipe. Show the user one plan: the objects to build and the changes to existing ones, each with the workspace\'s own names, the policies (each template as its own policy, in the order given, then the recipe\'s own rules together in one policy of your own) and what stays unchecked. After one yes, build all of it in the same change, objects before the policies that name them. A fill names the rule param an object\'s name goes in: `<template id>.<param>` for a template\'s rule, `rules[<n>].<param>` for the recipe\'s own rule n (from 0). Say so when the request reaches into the gap. The catalogue serves them as `recipes`.',
   ];
   if (catalogue.template_frameworks_note) out.push('', catalogue.template_frameworks_note);
   for (const recipe of recipes) {
     const tags = frameworkLabels(recipe.frameworks, frameworks);
     out.push('', `### ${recipe.title}`, '', `${code(recipe.id)}${tags.length ? ` · ${tags.join(', ')}` : ''}. ${recipe.summary}`);
     if (recipe.keywords?.length) out.push('', `Keywords: ${recipe.keywords.join(', ')}.`);
-    if (recipe.prerequisites?.length) out.push('', 'First:', '', ...recipe.prerequisites.map(line => `- ${line}`));
+    if (recipe.builds?.length) {
+      out.push('', 'Build (the enforcement the rules point at):', '');
+      for (const build of recipe.builds) {
+        const fills = build.fills?.length ? ` Fills ${build.fills.map(code).join(', ')}.` : '';
+        out.push(`- **${build.kind}** ${code(build.name)}: ${build.role}${fills}`);
+      }
+    }
+    if (recipe.user_fills?.length) out.push('', `The user's own objects and choices fill ${recipe.user_fills.map(code).join(', ')}.`);
     if (recipe.templates?.length) {
       out.push('', 'Templates, in order, one policy each:', '');
       recipe.templates.forEach((id, index) => {
@@ -176,11 +202,11 @@ function recipesSection(catalogue, items) {
     }
     if (recipe.rules?.length) {
       out.push('', 'Rules no template covers, together in one policy of your own:', '');
-      for (const rule of recipe.rules) {
-        // No example here: a check's own example is often unrelated, and the recipe's prerequisites name the values.
-        const fill = rule.needs?.length ? ` Fill ${rule.needs.map(code).join(', ')}.` : '';
-        out.push(`- ${rule.title}: ${code(rule.check)} with ${code(JSON.stringify(rule.params ?? {}))}.${fill}`);
-      }
+      recipe.rules.forEach((rule, index) => {
+        // No example here: a check's own example is often unrelated, and the builds and user fills name the values.
+        const fill = rule.needs?.length ? ` Fill ${joinNeeds(rule)}.` : '';
+        out.push(`- ${code(`rules[${index}]`)} ${rule.title}: ${code(rule.check)} with ${code(JSON.stringify(Array.isArray(rule.params) ? {} : rule.params ?? {}))}.${fill}`);
+      });
     }
     if (recipe.limits?.length) {
       const topics = recipe.limits.map(id => notCheckable.find(item => item.id === id)?.topic ?? id);
@@ -218,8 +244,8 @@ export function renderTemplates(catalogue) {
     '',
     '## Using a template',
     '',
-    '- **Prefer a template.** Before writing a new policy, look for a template that covers the request, and when one fits, start from it rather than inventing a key and rules: use its key (with a free `-2`, `-3`… suffix when the branch already has that key), its title, its summary as the `statement`, its severity and its rules, and keep `active = true` with `enforcement = "advisory"`. Then change only what the request asks for. When a recipe covers the goal, follow it (see Recipes): it names the templates to create, in order, and the rules to add.',
-    '- **Fill every need.** "Fill" names the parameter paths each rule leaves empty (one of them is enough where they are joined by "or"). The example shows a value that fits: the template\'s own, else the check\'s catalogue example. It is a hint, never a value to copy, so fill each need with the workspace\'s own names.',
+    '- **Prefer a template.** Before writing a new policy, look for a template that covers the request, and when one fits, start from it rather than inventing a key and rules: use its key (with a free `-2`, `-3`… suffix when the branch already has that key), its title, its summary as the `statement`, its severity and its rules, and keep `active = true` with `enforcement = "advisory"`. Then change only what the request asks for. When a recipe covers the goal, follow it (see Recipes): it names the objects to build, the templates to create, in order, and the rules to add.',
+    '- **Fill every need.** "Fill" names the parameter paths each rule leaves empty: every one is required, except that of a group joined by "or" one is enough (`functions`, and `tags` or `paths`). A path with a dot names a property of an object parameter (`referenced_by.max_age_days`, filled inside `referenced_by`). The example shows a value that fits: the template\'s own, else the check\'s catalogue example. It is a hint, never a value to copy, so fill each need with the workspace\'s own names.',
     '- **Checks** names the checks the template\'s rules use; read a check\'s parameters, and the goals each one serves, in the `policies` topic\'s check catalogue.',
     `- **Frameworks** names the framework tags a template carries, a second way to find it.${catalogue.template_frameworks_note ? ` ${catalogue.template_frameworks_note}` : ''}`,
     '- With the CLI, `xano policy create --template <id>` creates the policy from the instance\'s template.',
