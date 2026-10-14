@@ -168,12 +168,21 @@ describe("policy documentation", () => {
 
   it("says policy catalogue prints uses, recipes and what no check can see, and policy create refuses a recipe id", () => {
     const cli = handleCliDocs({ topic: "policy" });
-    expect(cli).toContain("each followed by its uses");
+    expect(cli).toContain("Each check follows with its uses");
     expect(cli).toContain("The catalogue ends with what no check can see");
     expect(cli).toContain("--recipe to one recipe id");
     expect(cli).toContain("the two flags cannot be combined");
     expect(cli).toContain("xano policy catalogue --recipe protect_card_data");
     expect(cli).toContain("a recipe id given to --template is refused with the recipe's templates");
+    // D41: recipes name the objects to build; create reads needs_any as a group and fills dotted needs.
+    expect(cli).toContain("the enforcement objects to build (each object's kind, name and role, and the rule params its name fills");
+    expect(cli).not.toContain("what to set up first");
+    expect(cli).toContain("an empty group by its options (1.tags or 1.paths)");
+    expect(cli).toContain("--param 'referenced_by.max_age_days=730'");
+    // The summary's head and the template rules (usability round 1).
+    expect(cli).toContain("The summary opens with an index");
+    expect(cli).toContain("Fill: functions, and tags or paths");
+    expect(cli).toContain("--help shows a minimal policy file");
   });
 
   it("says an indexed reference is read as the part before its first [, with a rule warning on a rule entry", () => {
