@@ -1,0 +1,65 @@
+{
+  "goal_id": "G03",
+  "objects_built": [],
+  "objects_changed": [
+    {"kind": "table", "name": "payments", "file": "workspace/table/payments.xs", "change": "added tag pci; marked card_number, card_cvv, card_expiry, cardholder_name, bank_account_number, bank_routing_number as sensitive"},
+    {"kind": "table", "name": "payment_method", "file": "workspace/table/payment_method.xs", "change": "added tag pci; marked card_last4 as sensitive"}
+  ],
+  "templates_considered": [
+    "protect_card_data (recipe): used as the plan basis; its charge_card function not built because payments/charge already calls Stripe directly and a wrapper would duplicate it",
+    "no_secrets_in_code SEC-012: fit, used as-is",
+    "approved_vendors_only VND-001: fit, filled hosts with api.stripe.com and production.plaid.com",
+    "tls_verification_on SEC-011: fit, used as-is",
+    "sensitive_fields_marked CONF-011: fit, filled field_names",
+    "no_pii_in_responses DATA-010: fit, filled fields",
+    "no_sensitive_data_in_logs LOG-001: fit, used as-is; covers debug.log only, so datadog.log added in PCI-CARD-001",
+    "protect_health_data / erase and expire personal data recipes: did not fit this ask",
+    "retained_data_has_age_limit RET-003 and retention recipes: no retention goal in the ask",
+    "audit_log_protected RET-001: did not fit; no audit function or audit_log table in the workspace"
+  ],
+  "templates_used": ["no_secrets_in_code", "approved_vendors_only", "tls_verification_on", "sensitive_fields_marked", "no_pii_in_responses", "no_sensitive_data_in_logs"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "no hardcoded Stripe/Plaid keys"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"kinds": ["http"], "hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "card data only to Stripe and Plaid"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "TLS verified on card/bank traffic"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name", "card_last4", "bank_account_number", "bank_routing_number"], "attribute": "sensitive"}, "covers": "card fields marked sensitive"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number"], "object_kinds": ["query"]}, "covers": "card data not returned to callers"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "card data not logged via debug.log"},
+    {"policy_key": "PCI-CARD-001", "check": "table.tag_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name"], "tag": "pci"}, "covers": "tables holding card fields are tagged"},
+    {"policy_key": "PCI-CARD-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "cvv", "cvc", "pan"], "forbidden": true}, "covers": "no raw card number or CVV stored"},
+    {"policy_key": "PCI-CARD-001", "check": "statement.expression_rule", "params": {"statements": ["datadog.log"], "param_names": ["message", "attributes"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "card data not logged via datadog.log"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cardholder data cannot be stored raw: existing payments table stores card_number and card_cvv", "why": "needs runtime/org process"},
+    {"part": "existing payments/charge writes raw card data; policies report it but do not remove it", "why": "other"},
+    {"part": "cardholder data cannot be sent to unapproved vendor: payments/fraud_check uses riskscreen.example", "why": "other"},
+    {"part": "what Stripe or Plaid do with data after it leaves; what sent payloads contain", "why": "needs runtime/org process"},
+    {"part": "PCI scope, access reviews, encryption at rest, network controls, training", "why": "needs runtime/org process"},
+    {"part": "audit trail of card access", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "Stripe and Plaid hosts are api.stripe.com and production.plaid.com; sandbox hosts not approved",
+    "Bank account numbers are sensitive and kept out of responses but not forbidden from storage, since the ask names cardholder data",
+    "Vendor allowlist applies to all outbound http in the workspace, not only card flows",
+    "Recipe's charge_card function not needed: payments/charge already calls Stripe",
+    "pci tag name chosen by me; no tag vocabulary exists in the workspace"
+  ],
+  "workspace_names_used": ["payments", "payment_method", "payments/charge", "payments/fraud_check", "card_number", "card_cvv", "card_expiry", "cardholder_name", "card_last4", "bank_account_number", "bank_routing_number", "stripe_payment_intent_id", "STRIPE_SECRET_KEY", "PLAID_SECRET", "api.riskscreen.example"],
+  "confusions": [
+    "Field attribute syntax for sensitive ({sensitive = true} after the type) is not shown in the skill, templates or catalogue; I guessed it and the dry run accepted it",
+    "Table tag syntax (tags = [...] inside the table block) is not documented in the kit; inferred from workflow_test files and accepted by dry run",
+    "Recipe says datadog.log should be covered alongside debug.log in LOG-001, but the template's own rule is debug.log only; I put datadog.log in PCI-CARD-001",
+    "Recipe's build list assumes a new charge_card function; for a workspace whose charge endpoint already calls the processor, the recipe does not say whether to refactor it or leave it",
+    "Whether a policy can be built when the existing code already violates it is not addressed: the ask is 'pass the audit' but the policies will report failures today"
+  ],
+  "wished_for": [
+    "Worked example of a sensitive field and a table tag in XanoScript",
+    "Guidance on existing violations when a recipe is applied to a workspace that already breaks it (report vs. fix)",
+    "A check for raw storage of named fields that also says which object writes them"
+  ],
+  "parse_attempts": 7,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Policies parse, dry run is clean, and the enforcement fields are wired in; but they are advisory and currently report real violations (raw card storage, card logging, non-approved vendor). Nothing has been evaluated, and the policies cannot see runtime data or org controls, so they will not by themselves pass a PCI audit."
+}

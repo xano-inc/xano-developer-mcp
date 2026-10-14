@@ -1,0 +1,73 @@
+{
+  "goal_id": "G07",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "One row per change to a sensitive table: actor, table, record, action, time. Written only by record_audit_event."},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "Adds one audit_log row. Only writer of audit_log (RET-001). Called unconditionally after each edit/patch/delete of audited tables."},
+    {"kind": "function", "name": "require_role", "file": "workspace/function/require_role.xs", "role": "Loads the user by id and stops with accessdenied unless their stored role equals the role passed in. Called first by admin endpoints."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "me", "file": "workspace/api/app/me_PATCH.xs", "change": "Added function.run record_audit_event after db.patch users."},
+    {"kind": "query", "name": "customers/{customer_id}", "file": "workspace/api/app/customers/customer_id_PATCH.xs", "change": "Added record_audit_event after db.patch customers."},
+    {"kind": "query", "name": "refunds/{refund_id}/approve", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "Added record_audit_event after db.edit refunds."},
+    {"kind": "query", "name": "tenants/{tenant_id}", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "Added require_role (admin) as first statement; added record_audit_event after db.edit tenants."},
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Added record_audit_event after db.del users."},
+    {"kind": "query", "name": "tenants", "file": "workspace/api/admin/tenants_GET.xs", "change": "Added require_role (admin) as first statement."},
+    {"kind": "query", "name": "users", "file": "workspace/api/admin/users_GET.xs", "change": "Added require_role (admin) as first statement. Locks out support_lead, which the endpoint comment suggests was intended."},
+    {"kind": "query", "name": "orgs/{org_id}/tenants", "file": "workspace/api/admin/orgs/org_id/tenants_GET.xs", "change": "Added require_role (admin) as first statement."},
+    {"kind": "query", "name": "admin/stats", "file": "workspace/api/app/admin/stats_GET.xs", "change": "Added require_role (admin) as first statement. Lives in app group under admin/ path."}
+  ],
+  "templates_considered": [
+    "audit_changes: fits. Used its record_audit_event/audit_log pattern, but narrowed to four tables and used a custom policy for the statement rules.",
+    "audit_log_protected (RET-001): fits. Used as-is.",
+    "role_based_access (AUTH-002 + AUTH-030): fits. Used both; my admin rule needed api_groups as well as paths because the admin group's endpoint paths do not start with admin.",
+    "access_reviews_and_approvals (not_checkable): does not fit. No check exists; disclosed in reply.",
+    "people_and_training, runtime_data, infrastructure (not_checkable): do not fit the ask as stated; disclosed in reply."
+  ],
+  "templates_used": ["audit_changes", "audit_log_protected", "role_based_access"],
+  "rules": [
+    {"policy_key": "CHG-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["users", "customers", "refunds", "tenants"]}}, "covers": "Edits of sensitive tables are audited"},
+    {"policy_key": "CHG-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["users", "customers", "refunds", "tenants"]}}, "covers": "Patches of sensitive tables are audited"},
+    {"policy_key": "CHG-010", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["users", "customers", "refunds", "tenants"]}}, "covers": "Deletes from sensitive tables are audited"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "The audit log exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "Only the audit function writes the audit log"},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "Admin API group endpoints check the caller's role first"},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_role"], "placement": "first", "must_reference": ["$auth"], "paths": ["admin"], "object_kinds": ["query"]}, "covers": "Endpoints under the admin path check the caller's role first"},
+    {"policy_key": "AUTH-030", "check": "db.write_from_input_forbidden", "params": {"fields": ["role"]}, "covers": "No write takes role from input. Expected to flag the me PATCH endpoint."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Access reviews: evidence that someone reviewed who holds which role", "why": "no check exists"},
+    {"part": "Change approvals: evidence that a second person approved each change", "why": "needs runtime/org process"},
+    {"part": "Audit coverage of tables beyond users, customers, refunds, tenants", "why": "other: scope chosen to keep the change small; extendable"},
+    {"part": "Audit of deletes done inside functions (delete_user_account is inside a function, not an endpoint)", "why": "other: object.statement_required does not judge function objects; the call exists but is not policy-checked"},
+    {"part": "Whether audit rows are complete and tamper-evident at runtime", "why": "needs runtime/org process"},
+    {"part": "Support_lead access to the admin users endpoint", "why": "other: product decision, not a policy question"}
+  ],
+  "assumptions": [
+    "role value 'admin' is the only role allowed on admin endpoints.",
+    "Sensitive tables for the audit are users, customers, refunds and tenants; chosen from table names and the admin/PII nature of the endpoints.",
+    "Keys CHG-010, AUTH-002 and AUTH-030 are unused in the workspace; RET-001 was not in use either. Pull showed no policies folder.",
+    "A function.run with an input object is the way to pass arguments, as account_DELETE does.",
+    "The app-group admin/stats endpoint should also require admin, because it sits under the admin path."
+  ],
+  "workspace_names_used": [
+    "users", "customers", "refunds", "tenants", "orgs", "delete_user_account", "me", "customers/{customer_id}", "refunds/{refund_id}/approve", "tenants/{tenant_id}", "admin", "admin/stats", "orgs/{org_id}/tenants", "users", "tenants", "account", "support_lead"
+  ],
+  "confusions": [
+    "The templates say AUTH-002 selects admin endpoints by paths, but the admin API group's endpoints have paths like tenants and users, not admin. The template's guidance does not say that an api_groups rule is also needed in that case. I had to infer it.",
+    "object.statement_required lists object kinds [query, tool, task, message], so a rule on db.del cannot see a function that deletes. The skill does not say this next to the statement rules; I found it only in the kinds list.",
+    "The skill's audit_changes recipe says rules[3] uses table.write_location_restricted with all write statements, but RET-001's template already covers the same restriction. It is unclear whether the two should both be in a policy.",
+    "Whether a rule on a workspace object (workspace.object_required for a table) passes when the object is a table being added in the same push: the parse warning says it is not on the branch, which is expected but reads like a failure."
+  ],
+  "wished_for": [
+    "A worked example of a SOC 2 change-control policy that also covers approvals, with a clear statement of which parts a check cannot do.",
+    "A recipe for admin endpoints in an api group whose endpoint paths do not start with the group name.",
+    "A note in object.statement_required that function objects are not judged, with the rule to use for function-level audit calls."
+  ],
+  "parse_attempts": 6,
+  "parse_errors_seen": [
+    "sed -i without a backup suffix failed on macOS (my shell error, not a parse error)."
+  ],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The change audit and admin role check are enforced in stored definitions and the rules point at them. Dry run is clean. But policies only prove the definitions route changes through the audit function and gate admin endpoints; they cannot show that anyone reviewed a change or an access list, which is the auditor's core ask. I did not run policy evaluation, so the findings on the live workspace are unverified; AUTH-030 is expected to flag me PATCH."
+}

@@ -1,6 +1,6 @@
 # Policy-authoring eval: 2026-10-13-d40kit-build-haiku-low
 
-Model haiku, effort low, kit `baselines/2026-10-13-d40/kit`, 48 runs, rubric v6, scored against workspace 9040.
+Model haiku, effort low, kit `baselines/2026-10-13-d40/kit`, 48 runs, rubric v7, scored against workspace 9040.
 
 **Total 591/645 (92%)** (bonus +29 not counted, penalties -2); by aspect build 74/84, enforcement 86/108, coverage 251/264, plan 100/105, honesty 82/84; builds that validate 38/48; plan written first 45/48; real push attempts 0; policy files parse-clean 116/116; unknown-name warnings after the build 0; cost $1.22; mean wall time 87 s per run.
 

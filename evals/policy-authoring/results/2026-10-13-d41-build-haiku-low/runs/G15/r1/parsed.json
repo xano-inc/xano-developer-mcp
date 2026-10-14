@@ -1,0 +1,117 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/LOG-011.xs",
+    "build/policies/RATE-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/LOG-011.xs",
+      "ok": true,
+      "key": "LOG-011",
+      "title": "Middleware doesn't swallow errors",
+      "statement": "No middleware is set to swallow the exceptions it catches. Middleware such as rate_limit must surface its errors so the refusal reaches the caller.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-011.R1",
+          "title": "Middleware surfaces the exceptions it catches",
+          "check": "object.settings_forbidden",
+          "params": {
+            "object_kind": "middleware",
+            "when": {
+              "exception_policy": {
+                "equals": "silent"
+              }
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/RATE-001.xs",
+      "ok": true,
+      "key": "RATE-001",
+      "title": "Public endpoints and login are rate limited",
+      "statement": "Every public endpoint, and the login and signup endpoints, must run the rate_limit middleware before their stack. A new public endpoint that does not run it is a blocking finding: attach rate_limit to its API group, or ask the policy owner before exempting it.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RATE-001.R1",
+          "title": "Public endpoints run the rate limit first",
+          "check": "object.middleware_required",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "none",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RATE-001.R2",
+          "title": "Login endpoints run the rate limit first",
+          "check": "object.middleware_required",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "tags": [],
+            "api_groups": [
+              "app"
+            ],
+            "paths": [
+              "auth"
+            ],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RATE-001.R1",
+          "text": "Middleware \"rate_limit\" is not on this branch, so no object can satisfy this rule."
+        },
+        {
+          "rule_id": "RATE-001.R2",
+          "text": "Middleware \"rate_limit\" is not on this branch, so no object can satisfy this rule."
+        }
+      ]
+    }
+  ]
+}

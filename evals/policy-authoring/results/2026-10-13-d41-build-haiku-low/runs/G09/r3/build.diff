@@ -1,0 +1,103 @@
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -12,7 +12,11 @@
+     db.bulk.delete sessions {
+       where = $db.sessions.user_id == $input.user_id
+     } as $sessions
+-  
++
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.user_id == $input.user_id
++    } as $tickets
++
+     db.del users {
+       field_name = "id"
+       field_value = $input.user_id
+@@ -20,5 +24,6 @@
+   }
+ 
+   response = {deleted: true}
++  tags = ["erasure"]
+   guid = "iWtAL7j6O0pMpjKQBxol3qm35T8"
+ }
+\ No newline at end of file
+--- a/table/sessions.xs
++++ b/table/sessions.xs
+@@ -1,6 +1,7 @@
+ // Login sessions; expired ones are purged nightly.
+ table sessions {
+   auth = false
++  tags = ["personal"]
+ 
+   schema {
+     int id
+--- a/table/support_tickets.xs
++++ b/table/support_tickets.xs
+@@ -1,6 +1,7 @@
+ // Customer support conversations, summarised nightly by the AI summariser.
+ table support_tickets {
+   auth = false
++  tags = ["personal", "retained"]
+ 
+   schema {
+     int id
+--- a/table/user_address.xs
++++ b/table/user_address.xs
+@@ -1,6 +1,7 @@
+ // Saved postal addresses of users.
+ table user_address {
+   auth = false
++  tags = ["personal"]
+ 
+   schema {
+     int id
+--- a/table/users.xs
++++ b/table/users.xs
+@@ -1,6 +1,7 @@
+ // People who sign in. role is admin, support_lead, manager, staff, member or viewer; org_id is the tenant they belong to.
+ table users {
+   auth = true
++  tags = ["personal"]
+ 
+   schema {
+     int id
+--- a/policies/GDPR-001.xs
++++ b/policies/GDPR-001.xs
+@@ -0,0 +1,24 @@
++policy "GDPR-001" {
++  title = "Personal data is erased with the account and expires after 2 years"
++  statement = "When a user deletes their account, every personal-data table is deleted from by the erasure function delete_user_account. Support ticket rows are deleted after 730 days by the scheduled task purge_old_support_tickets. Order and payment records are not covered: they are kept under financial record-keeping duties, and the owner decides their retention."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["gdpr", "gdpr-art-5-1-e", "gdpr-art-17"]
++
++  rule {
++    check = "table.coverage_required"
++    params = {
++      tags: ["personal"],
++      referenced_by: {object_kinds: ["function"], tags: ["erasure"], statements: ["db.del", "db.bulk.delete"]}
++    }
++  }
++
++  rule {
++    check = "table.coverage_required"
++    params = {
++      tags: ["retained"],
++      referenced_by: {object_kinds: ["task"], max_age_days: 730}
++    }
++  }
++}
+--- a/task/purge_old_support_tickets.xs
++++ b/task/purge_old_support_tickets.xs
+@@ -0,0 +1,10 @@
++// Deletes support tickets older than two years, so ticket data is not kept longer than the retention period.
++task purge_old_support_tickets {
++  stack {
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.created_at < (now|timestamp_subtract_days:730)
++    } as $purged
++  }
++
++  schedule = [{starts_on: 2026-01-01 04:00:00+0000, freq: 86400}]
++}

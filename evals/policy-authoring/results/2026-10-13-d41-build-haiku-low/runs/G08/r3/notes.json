@@ -1,0 +1,84 @@
+{
+  "goal_id": "G08",
+  "objects_built": [],
+  "objects_changed": [
+    {
+      "kind": "function",
+      "name": "acme_notify_sms",
+      "file": "workspace/function/acme_notify_sms.xs",
+      "change": "Replaced literal Twilio account SID and auth token in the api.request URL with $env.TWILIO_ACCOUNT_SID and $env.TWILIO_AUTH_TOKEN concatenated into the URL. Credentials stay in URL form, not a Basic auth header, because I did not confirm a base64 filter in XanoScript."
+    }
+  ],
+  "templates_considered": [
+    "no_secrets_in_code (SEC-012): fits exactly, literal.credential_shape covers the contractor's Twilio key",
+    "approved_vendors_only (VND-001): not asked",
+    "no_sensitive_data_in_logs (LOG-001): not asked"
+  ],
+  "templates_used": [
+    "no_secrets_in_code"
+  ],
+  "rules": [
+    {
+      "policy_key": "SEC-012",
+      "check": "literal.credential_shape",
+      "params": {},
+      "covers": "No API key, token or private key written as a literal in any object definition (the contractor's Twilio key case)"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "Passwords written as plain literals (password = \"...\") with no recognisable credential shape",
+      "why": "no check exists"
+    },
+    {
+      "part": "Requirement that secrets come from environment variables rather than just not being literal",
+      "why": "no check exists"
+    },
+    {
+      "part": "Secrets in env values, agent settings, exports or logs",
+      "why": "other: template uses default definition location only; widening locations is the owner's call"
+    },
+    {
+      "part": "Rotating the Twilio token that was exposed",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Setting TWILIO_* environment variables in each environment",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Preventing someone from pasting a key in the first place (blocking)",
+      "why": "other: policy is advisory; blocking is the owner's choice"
+    }
+  ],
+  "assumptions": [
+    "$env.TWILIO_ACCOUNT_SID and $env.TWILIO_AUTH_TOKEN are the env var names to use",
+    "The ask covers the whole workspace, not only functions and endpoints",
+    "The 'From' number +15550100 is not a secret and stays literal"
+  ],
+  "workspace_names_used": [
+    "acme_notify_sms",
+    "SEC-012 (new)",
+    "no_secrets_in_code (template)",
+    "RESEND_API_KEY",
+    "SHIPFAST_API_KEY",
+    "STRIPE_SECRET_KEY",
+    "PLAID_CLIENT_ID",
+    "PLAID_SECRET"
+  ],
+  "confusions": [
+    "The template's 'Fill' column is empty and gives no params, so I used {} as the template shows; the skill's guidance that generic passwords are outside literal.credential_shape is implied, not stated.",
+    "No guidance on how to express Basic auth or base64 in XanoScript for a credential-bearing request; I used URL concatenation rather than guess a filter name.",
+    "The template's 'Fill' column says nothing, and the ask's 'passwords' half does not map to any check; the skill does not say plainly that generic password literals are outside literal.credential_shape."
+  ],
+  "wished_for": [
+    "A check or param that requires a value to come from $env (or a named env var), so 'must come from environment variables' can be enforced rather than inferred from absence of literals.",
+    "A pattern or literal_keys-style option for generic password assignments (password/passwd/secret keys set to a non-empty literal string).",
+    "An example recipe for calling an API with Basic auth from $env in XanoScript."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The template matches the stated risk of a known-shape key pasted into code, and the dry run is clean. It does not catch plain-text passwords or enforce that secrets come from env vars, and it is advisory only. The existing Twilio violation is fixed in the same change."
+}

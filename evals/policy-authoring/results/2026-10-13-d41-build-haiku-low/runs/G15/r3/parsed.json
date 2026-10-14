@@ -1,0 +1,118 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/LOG-011.xs",
+    "build/policies/RATE-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/LOG-011.xs",
+      "ok": true,
+      "key": "LOG-011",
+      "title": "Middleware doesn't swallow errors",
+      "statement": "No middleware may set its exception policy to silent, because a silent middleware hides the errors it catches. The rate_limit middleware must surface its refusal to the caller.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-011.R1",
+          "title": "",
+          "check": "object.settings_forbidden",
+          "params": {
+            "object_kind": "middleware",
+            "when": {
+              "exception_policy": {
+                "equals": "silent"
+              }
+            },
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/RATE-010.xs",
+      "ok": true,
+      "key": "RATE-010",
+      "title": "Public endpoints and login/signup run the rate limit first",
+      "statement": "Every public endpoint, and the login and signup endpoints, must run the rate_limit middleware before their stack, so a caller who hits them too often is refused. Attach the middleware to the API group rather than per endpoint. The limit value and the counting key are not checked here.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RATE-010.R1",
+          "title": "",
+          "check": "object.middleware_required",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "none",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RATE-010.R2",
+          "title": "",
+          "check": "object.middleware_required",
+          "params": {
+            "middleware": [
+              "rate_limit"
+            ],
+            "phase": "pre",
+            "tags": [],
+            "api_groups": [
+              "app"
+            ],
+            "paths": [
+              "auth/login",
+              "auth/signup"
+            ],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RATE-010.R1",
+          "text": "Middleware \"rate_limit\" is not on this branch, so no object can satisfy this rule."
+        },
+        {
+          "rule_id": "RATE-010.R2",
+          "text": "Middleware \"rate_limit\" is not on this branch, so no object can satisfy this rule."
+        }
+      ]
+    }
+  ]
+}

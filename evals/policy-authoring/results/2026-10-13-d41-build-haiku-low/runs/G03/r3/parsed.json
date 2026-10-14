@@ -1,0 +1,367 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/CONF-011.xs",
+    "build/policies/DATA-010.xs",
+    "build/policies/LOG-001.xs",
+    "build/policies/PCI-CARD-001.xs",
+    "build/policies/SEC-011.xs",
+    "build/policies/SEC-012.xs",
+    "build/policies/VND-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/CONF-011.xs",
+      "ok": true,
+      "key": "CONF-011",
+      "title": "Sensitive fields are marked sensitive",
+      "statement": "The card and bank fields are marked sensitive wherever a table declares them, so DATA-010 and the saved-view checks keep them out of responses and views. Fields: card_number, card_cvv, card_expiry, cardholder_name, card_last4, bank_account_number, bank_routing_number. A field added later under a different name is not found by this rule; add it to the list.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "CONF-011.R1",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "card_expiry",
+              "cardholder_name",
+              "card_last4",
+              "bank_account_number",
+              "bank_routing_number"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/DATA-010.xs",
+      "ok": true,
+      "key": "DATA-010",
+      "title": "Endpoints don't return personal data",
+      "statement": "No endpoint returns card or bank fields: card_number, card_cvv, card_expiry, cardholder_name, bank_account_number or bank_routing_number. Callers that need a payment's status read stripe_payment_intent_id and status instead. Changing this list is the policy owner's decision.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "DATA-010.R1",
+          "title": "",
+          "check": "db.output_fields_forbidden",
+          "params": {
+            "fields": [
+              "card_number",
+              "card_cvv",
+              "card_expiry",
+              "cardholder_name",
+              "bank_account_number",
+              "bank_routing_number"
+            ],
+            "include_sensitive": true,
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/LOG-001.xs",
+      "ok": true,
+      "key": "LOG-001",
+      "title": "Logs don't contain request, user or secret data",
+      "statement": "Debug logs never reference request input, the logged-in user or environment values, so card numbers, CVVs and cardholder names never reach the log. Logging an event (for example that a charge was attempted, with the invoice id) is allowed; logging the request body is not. Applies to debug.log here; datadog.log is covered by PCI-CARD-001.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "LOG-001.R1",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/PCI-CARD-001.xs",
+      "ok": true,
+      "key": "PCI-CARD-001",
+      "title": "Cardholder data is tagged, never stored raw, and kept out of logs",
+      "statement": "Cardholder data is kept out of the workspace's stored schema and logs. Any table with a card number, CVV, expiry or cardholder name carries the pci tag. No table stores a full card number (card_number, pan) or a security code (card_cvv, cvv, cvc); a card is held only as a processor token and its last four digits. Datadog log messages and attributes never reference request input, the logged-in user or environment values. Stored raw card data is reported here until it is removed: removing it is the owner's decision because it changes stored data.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "PCI-CARD-001.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "card_expiry",
+              "cardholder_name"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "pci",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "PCI-CARD-001.R2",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "cvv",
+              "cvc",
+              "pan"
+            ],
+            "field_types": [],
+            "attribute": "",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": true,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "PCI-CARD-001.R3",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "datadog.log"
+            ],
+            "param_names": [
+              "message",
+              "attributes"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/SEC-011.xs",
+      "ok": true,
+      "key": "SEC-011",
+      "title": "External requests verify TLS certificates",
+      "statement": "Every external request verifies the TLS certificate and host name of the server it talks to. Cardholder data and bank details travel only over verified TLS, so no api.request or stream.from_request may turn off verify_peer or verify_host.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "SEC-011.R1",
+          "title": "",
+          "check": "statement.param_forbidden",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "verify_peer",
+              "verify_host"
+            ],
+            "values": [
+              false
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/SEC-012.xs",
+      "ok": true,
+      "key": "SEC-012",
+      "title": "No secrets are hardcoded",
+      "statement": "API keys, tokens, private keys and credentialed URLs are never written as literals in an object's definition. The payment processor and bank-link keys are read from workspace environment variables (for example $env.STRIPE_SECRET_KEY and $env.PLAID_SECRET). A literal found here must be moved to an environment variable and the exposed value rotated; a value reviewed as safe is exempted only by its fingerprint, by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "SEC-012.R1",
+          "title": "",
+          "check": "literal.credential_shape",
+          "params": {
+            "patterns": [],
+            "locations": [
+              "definition",
+              "agent_settings"
+            ],
+            "allowed_secrets": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/VND-001.xs",
+      "ok": true,
+      "key": "VND-001",
+      "title": "Data only goes to approved vendors",
+      "statement": "Outbound requests go only to the vendors on the approved list: Stripe (api.stripe.com) for card payments and Plaid (production.plaid.com) for bank links. Any other host, including the fraud-screening vendor at api.riskscreen.example, is reported until the policy owner approves it or the call is removed. Approving a vendor is the policy owner's decision: do not add a host to this list without their sign-off.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "VND-001.R1",
+          "title": "",
+          "check": "outbound.vendor_allowlist",
+          "params": {
+            "kinds": [
+              "http"
+            ],
+            "hosts": [
+              "api.stripe.com",
+              "production.plaid.com"
+            ],
+            "providers": [],
+            "env_hosts": [],
+            "literal_urls_forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

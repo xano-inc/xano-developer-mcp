@@ -1,0 +1,29 @@
+{
+  "key": "416c8792df770649",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:28.006Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy ERASE-001",
+        "create policy RET-003",
+        "update table sessions",
+        "update table support_tickets",
+        "update table user_address",
+        "update table users",
+        "update function delete_user_account",
+        "create task purge_expired_support_tickets"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

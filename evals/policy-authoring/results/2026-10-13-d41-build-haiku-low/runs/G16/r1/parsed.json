@@ -1,0 +1,94 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/ACCESS-MGR-001.xs",
+    "build/policies/AUTH-030.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/ACCESS-MGR-001.xs",
+      "ok": true,
+      "key": "ACCESS-MGR-001",
+      "title": "Refund approval and price changes are manager only",
+      "statement": "Approving a refund and changing a product price require the manager role. Each of those endpoints calls the require_manager check first, with the logged-in user, so staff can view but not change. A user who cannot be a manager is refused; this policy does not exempt any endpoint.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "ACCESS-MGR-001.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "first",
+            "must_reference": [
+              "$auth"
+            ],
+            "when": [],
+            "tags": [],
+            "api_groups": [
+              "app"
+            ],
+            "paths": [
+              "refunds/{refund_id}/approve",
+              "products/{product_id}/price"
+            ],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "ACCESS-MGR-001.R1",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/AUTH-030.xs",
+      "ok": true,
+      "key": "AUTH-030",
+      "title": "Users can't make themselves admin",
+      "statement": "No request may write a user's role. Role is set by an administrator outside request input, never taken from what a caller sends.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AUTH-030.R1",
+          "title": "",
+          "check": "db.write_from_input_forbidden",
+          "params": {
+            "statements": [],
+            "fields": [
+              "role"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

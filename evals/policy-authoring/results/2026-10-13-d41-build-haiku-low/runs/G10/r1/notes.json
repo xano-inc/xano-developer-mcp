@@ -1,0 +1,58 @@
+{
+  "goal_id": "G10",
+  "objects_built": [
+    {"kind": "table", "name": "approvals", "file": "workspace/table/approvals.xs", "role": "Records each human-approved action on a target (action, target, status, requested_by, approved_by). Read by require_approval; nothing in the build writes approved rows."},
+    {"kind": "function", "name": "require_approval", "file": "workspace/function/require_approval.xs", "role": "Stops with precondition unless an approvals row with status approved exists for the given action and target. Enforces the human-approval gate before email."}
+  ],
+  "objects_changed": [
+    {"kind": "tool", "name": "send_customer_email", "file": "workspace/ai/tool/send_customer_email.xs", "change": "Added function.run require_approval (action send_customer_email, target = input.to) before util.send_email."}
+  ],
+  "templates_considered": [
+    "AI-001 agents_use_approved_tools: fits the tool allowlist ask directly; used.",
+    "PERF-001, SEC-013, CONV-030, VND-001: no part of the ask; not used.",
+    "SEC-010 no_destructive_sql: covers truncate and raw SQL only, not db.del; not used, delete rule written as extra rule instead.",
+    "Recipe 'Keep AI calls affordable and agents safe': matched the ask closely (approval function, approvals table, tool delete rule, email ordering). Followed its build shape but did not add its loop rule, tool-tag approach or vendor rule, which the ask did not cover."
+  ],
+  "templates_used": ["AI-001"],
+  "rules": [
+    {"policy_key": "AI-001", "check": "agent.tool_allowlist", "params": {"tools": ["lookup_order", "send_customer_email", "issue_refund"], "object_kinds": ["agent"]}, "covers": "agents call only tools the customer explicitly gave them"},
+    {"policy_key": "AGENT-GUARD", "check": "stack.statement_forbidden", "params": {"statements": ["db.del", "db.bulk.delete", "db.truncate"], "object_kinds": ["tool"]}, "covers": "AI agents can't delete anything (tool stacks, including functions they call)"},
+    {"policy_key": "AGENT-GUARD", "check": "stack.statement_order", "params": {"before": {"functions": ["require_approval"]}, "after": ["util.send_email"], "object_kinds": ["tool"]}, "covers": "agents email customers only after a human approval check"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "A human approves each email; approver is a different person from the requester", "why": "needs runtime/org process"},
+    {"part": "No approval UI or endpoint to write approvals rows", "why": "other: out of this plan; customer must build or decide"},
+    {"part": "Email or delete outside AI tools (ordinary endpoints, non-agent functions)", "why": "other: the ask named agents; rules scoped to tool object kind"},
+    {"part": "Which tools the customer explicitly approves; issue_refund on the list is an assumption", "why": "needs runtime/org process"},
+    {"part": "Refund amount limits and spend", "why": "no check exists"},
+    {"part": "Removal of delete_customer_note from the agent", "why": "other: an existing-object change the customer must decide; policy reports it instead"},
+    {"part": "What the model asks at run time", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The agent's current tool list minus delete_customer_note is the customer's explicit approval, so issue_refund is approved.",
+    "require_approval is a precondition on an approvals row with status approved; the approver-vs-requester check was omitted.",
+    "Tool-level email and delete rules are what 'agents' means; an agent calling a non-tool function is covered only if the tool's stack reaches it.",
+    "Policies left advisory and active, since the skill says a new policy is advisory unless the owner chooses blocking.",
+    "Object files were written without guid lines; dry run accepted them."
+  ],
+  "workspace_names_used": ["Support Agent", "support_agent", "lookup_order", "delete_customer_note", "send_customer_email", "issue_refund", "customer_notes", "payments", "send_customer_email", "acme_send_invoice_email", "delete_user_account", "acme_notify_sms"],
+  "confusions": [
+    "The skill's recipe for AI agents says the approval function is required 'before every delete and email', but the stack.statement_order check only tests placement inside one stack. It was unclear whether it follows called functions; I did not verify that.",
+    "The template table's AI-001 fill says tools or tool_tags; the recipe also suggests tool_tags agent-approved. Unclear whether to tag tools or list names when the ask does not name the approved set; I chose the name list to avoid editing tags.",
+    "Whether a new policy's tags = [] is needed; the parser dropped it from output. Unclear whether omitting tags is the default.",
+    "No example in the skill shows a precondition or function.run shape for a required-approval gate; I copied function.run from account_DELETE.xs and precondition from login_POST.xs.",
+    "The skill says an extra_rule can use either AI-agent rules over tool stacks or agent settings; it did not say how an agent's own enabled-tool list interacts with a tool-stack rule."
+  ],
+  "wished_for": [
+    "A worked recipe for 'human approves before the AI acts' that includes the approval table, the function, the approver-is-not-requester check, and the approval endpoint.",
+    "A note on whether stack.statement_order and stack.statement_forbidden follow function.run calls and at what depth.",
+    "A dry-run or evaluate hint on whether a function not yet on the branch satisfies a rule after push; the parser warning was clear but the consequence was not stated."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "Rule warning AGENT-GUARD.R2: Function require_approval is not on this branch (expected: created in this change)"
+  ],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Deletes by agent tools are forbidden and email from tools needs a require_approval call before it, both verified only as dry-run and parse, not evaluated. Approval is only checked as a row's existence, nothing writes approved rows yet, and the policies are advisory. The tool allowlist is only as strong as the list the customer confirms."
+}

@@ -1,0 +1,54 @@
+{
+  "goal_id": "G10",
+  "objects_built": [
+    {"kind": "table", "name": "approvals", "file": "workspace/table/approvals.xs", "role": "stores actions awaiting human approval, with approved_by and approved_at"},
+    {"kind": "function", "name": "require_approval", "file": "workspace/function/require_approval.xs", "role": "precondition that stops unless an approvals row matches the action and is approved"},
+    {"kind": "query", "name": "approvals/{approval_id}/approve", "file": "workspace/api/app/approvals/approval_id/approve_POST.xs", "role": "lets a logged-in user approve a row (the human step)"}
+  ],
+  "objects_changed": [
+    {"kind": "agent", "name": "Support Agent", "file": "workspace/ai/agent/support_agent.xs", "change": "removed delete_customer_note from tools"},
+    {"kind": "tool", "name": "send_customer_email", "file": "workspace/ai/tool/send_customer_email.xs", "change": "added approval_id input and function.run require_approval before util.send_email"}
+  ],
+  "templates_considered": [
+    "agents_use_approved_tools (AI-001): fits, used with the support agent's tool names",
+    "ai_cost_and_agent_safety recipe: fits the goal; its tool-delete and approval-order rules were used as the basis of AI-010, its other templates (VND-001, PERF-001, SEC-013, CONV-030) do not address the ask",
+    "no_destructive_sql (SEC-010): did not fit, it targets raw SQL and truncate in endpoints, not tool deletes"
+  ],
+  "templates_used": ["agents_use_approved_tools"],
+  "rules": [
+    {"policy_key": "AI-001", "check": "agent.tool_allowlist", "params": {"tools": ["lookup_order", "issue_refund", "send_customer_email"]}, "covers": "agent may only call tools the customer explicitly gave"},
+    {"policy_key": "AI-010", "check": "stack.statement_forbidden", "params": {"statements": ["db.del", "db.bulk.delete", "db.truncate"], "object_kinds": ["tool"]}, "covers": "agent tools cannot delete"},
+    {"policy_key": "AI-010", "check": "stack.statement_order", "params": {"before": {"functions": ["require_approval"]}, "after": ["util.send_email"], "object_kinds": ["tool"]}, "covers": "emails from agent tools wait for human approval"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "a human actually approving before an email (who approves, whether they reviewed it)", "why": "needs runtime/org process"},
+    {"part": "delete_customer_note tool object still contains db.del and will be flagged", "why": "other: left file in place, needs owner decision to delete"},
+    {"part": "creation of approvals rows and the agent passing approval_id", "why": "other: not in the ask's wording, not built; agent prompt not changed"},
+    {"part": "emails sent outside agent tools (acme_send_invoice_email, newsletter)", "why": "other: policy scoped to tool objects, these are not agent-reachable"},
+    {"part": "refund tool (issue_refund) not gated by approval", "why": "other: not in the ask"},
+    {"part": "who may approve (any logged-in user can approve)", "why": "no check exists"},
+    {"part": "agent runtime behaviour and records it touches", "why": "runtime/org process"}
+  ],
+  "assumptions": [
+    "'delete anything' applies to agent tools; delete_user_account is only reachable from DELETE /account",
+    "'tools I haven't explicitly given them' means the four tools on the Support Agent",
+    "refund stays allowed because the customer listed it",
+    "human approval is modelled as an approvals row whose approved_by is set",
+    "advisory enforcement is the right default for a new policy"
+  ],
+  "workspace_names_used": ["Support Agent", "support-agent", "send_customer_email", "delete_customer_note", "lookup_order", "issue_refund", "util.send_email", "acme_send_invoice_email", "users", "support/chat"],
+  "confusions": [
+    "The catalogue's stack.statement_order warns that a before must be a statement or function name; a new function not yet on the branch gives a parse warning, which is expected but not said in the skill",
+    "The template recipe 'ai_cost_and_agent_safety' assumes an approvals table and require_approval function already exist in its build step, but nothing says which fields they need; I designed the schema myself",
+    "Unclear whether stack.statement_forbidden with object_kinds tool flags a tool object the agent no longer enables; I assume yes, because the rule reads objects directly"
+  ],
+  "wished_for": [
+    "A recipe example of a human approval flow end to end: request row created, approval endpoint, agent retry with approval_id",
+    "A note on whether a tool object that no agent enables is still judged by statement_forbidden rules"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": ["Rule warning: Function \"require_approval\" is not on this branch (expected, function is new in this change)"],
+  "dry_run_problems_seen": ["none reported; dry run exited 0 with 2 policies, 1 table, 1 function, 1 endpoint, agent and tool updates"],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The delete and tool-allowlist parts are enforced by policy checks that read the objects directly, so they should hold. The email part depends on the tool calling require_approval, which only a human-run approval flow makes useful; the policy cannot see who approved or whether the agent ever passes a valid approval_id. The leftover delete tool will be flagged until deleted."
+}

@@ -1,0 +1,25 @@
+{
+  "key": "62cb20b838438d28",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:00:40.666Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy LOG-001",
+        "create policy PCI-001",
+        "create policy VND-001",
+        "update query payments/charge POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

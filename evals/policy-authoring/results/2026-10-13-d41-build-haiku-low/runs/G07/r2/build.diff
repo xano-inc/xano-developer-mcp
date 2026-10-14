@@ -1,0 +1,300 @@
+--- a/api/admin/orgs/org_id/tenants_GET.xs
++++ b/api/admin/orgs/org_id/tenants_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
+     db.query tenants {
+       where = $db.tenants.org_id == $input.org_id
+       return = {type: "list"}
+--- a/api/admin/tenants/tenant_id_PATCH.xs
++++ b/api/admin/tenants/tenant_id_PATCH.xs
+@@ -11,6 +11,10 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
+     db.get tenants {
+       field_name = "id"
+       field_value = $input.tenant_id
+@@ -21,6 +25,10 @@
+       field_value = $input.tenant_id
+       data = {status: $input.status, region: $input.region}
+     } as $tenant
++
++    function.run record_audit_event {
++      input = {user_id: $auth.id, table_name: "tenants", record_id: $input.tenant_id, action: "edit"}
++    } as $audit
+   }
+ 
+   response = $tenant
+--- a/api/admin/tenants_GET.xs
++++ b/api/admin/tenants_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
+     db.query tenants {
+       return = {type: "list"}
+     } as $tenants
+--- a/api/admin/users_GET.xs
++++ b/api/admin/users_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
+     db.query users {
+       sort = {users.created_at: "desc"}
+       return = {type: "list", paging: {page: $input.page, per_page: 50}}
+--- a/api/app/admin/stats_GET.xs
++++ b/api/app/admin/stats_GET.xs
+@@ -7,6 +7,10 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id}
++    } as $role_check
++
+     db.query tenants {
+       return = {type: "count"}
+     } as $tenant_count
+--- a/api/app/customers/customer_id_PATCH.xs
++++ b/api/app/customers/customer_id_PATCH.xs
+@@ -15,6 +15,10 @@
+       field_value = $input.customer_id
+       data = {email: $input.email, phone: $input.phone}
+     } as $customer
++
++    function.run record_audit_event {
++      input = {user_id: $auth.id, table_name: "customers", record_id: $input.customer_id, action: "patch"}
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -6,7 +6,6 @@
+   input {
+     text name?
+     text phone?
+-    text role?
+     bool marketing_opt_in?
+   }
+ 
+@@ -14,8 +13,12 @@
+     db.patch users {
+       field_name = "id"
+       field_value = $auth.id
+-      data = $input[""]
++      data = {name: $input.name, phone: $input.phone, marketing_opt_in: $input.marketing_opt_in}
+     } as $me
++
++    function.run record_audit_event {
++      input = {user_id: $auth.id, table_name: "users", record_id: $auth.id, action: "patch"}
++    } as $audit
+   }
+ 
+   response = $me
+--- a/api/app/products/product_id/price_PATCH.xs
++++ b/api/app/products/product_id/price_PATCH.xs
+@@ -14,6 +14,10 @@
+       field_value = $input.product_id
+       data = {price: $input.price}
+     } as $product
++
++    function.run record_audit_event {
++      input = {user_id: $auth.id, table_name: "products", record_id: $input.product_id, action: "patch"}
++    } as $audit
+   }
+ 
+   response = $product
+--- a/api/app/refunds/refund_id/approve_POST.xs
++++ b/api/app/refunds/refund_id/approve_POST.xs
+@@ -13,6 +13,10 @@
+       field_value = $input.refund_id
+       data = {status: "approved", approved_by: $auth.id}
+     } as $refund
++
++    function.run record_audit_event {
++      input = {user_id: $auth.id, table_name: "refunds", record_id: $input.refund_id, action: "edit"}
++    } as $audit
+   }
+ 
+   response = $refund
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -17,6 +17,10 @@
+       field_name = "id"
+       field_value = $input.user_id
+     }
++
++    function.run record_audit_event {
++      input = {user_id: $input.user_id, table_name: "users", record_id: $input.user_id, action: "delete"}
++    } as $audit
+   }
+ 
+   response = {deleted: true}
+--- a/function/record_audit_event.xs
++++ b/function/record_audit_event.xs
+@@ -0,0 +1,22 @@
++// Adds one audit_log row for an edit or delete. The only function that writes audit_log.
++function record_audit_event {
++  input {
++    int user_id
++    text table_name
++    int record_id
++    text action
++  }
++
++  stack {
++    db.add audit_log {
++      data = {
++        user_id    : $input.user_id
++        table_name : $input.table_name
++        record_id  : $input.record_id
++        action     : $input.action
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/function/require_role.xs
++++ b/function/require_role.xs
+@@ -0,0 +1,20 @@
++// Stops the request unless the user is an admin. Admin endpoints call it first.
++function require_role {
++  input {
++    int user_id
++  }
++
++  stack {
++    db.get users {
++      field_name = "id"
++      field_value = $input.user_id
++    } as $user
++
++    precondition ($user.role == "admin") {
++      error_type = "accessdenied"
++      error = "Admins only."
++    }
++  }
++
++  response = $user
++}
+--- a/policies/AUDIT-EDITS.xs
++++ b/policies/AUDIT-EDITS.xs
+@@ -0,0 +1,18 @@
++policy "AUDIT-EDITS" {
++  title = "Edits of audited records call the audit function"
++  statement = "Every endpoint that edits or patches a tenant, refund, user, customer or product must call record_audit_event unconditionally in its own stack, so the change is recorded in audit_log. Deletes inside functions are not inspected by this policy. Related to SOC 2 CC8.1 (change management). A pass shows the stored definitions matched when it ran, not that every change is recorded."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc8.1"]
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: {statement: "db.edit", tables: ["tenants", "refunds"]} }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: {statement: "db.patch", tables: ["users", "customers", "products"]} }
++  }
++}
+--- a/policies/AUTH-002.xs
++++ b/policies/AUTH-002.xs
+@@ -0,0 +1,18 @@
++policy "AUTH-002" {
++  title = "Admin endpoints check the caller's role"
++  statement = "Every endpoint in the admin API group, and every endpoint under the admin path, must call require_role first, passing the logged-in user, so only admins reach them. Related to SOC 2 CC6.3 (role-based access). A pass shows the stored definitions matched when it ran. It does not show that the admin role is right or who holds it."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc6.3"]
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["require_role"], placement: "first", must_reference: ["$auth"], api_groups: ["admin"], object_kinds: ["query"] }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["require_role"], placement: "first", must_reference: ["$auth"], paths: ["admin"], object_kinds: ["query"] }
++  }
++}
+--- a/policies/AUTH-030.xs
++++ b/policies/AUTH-030.xs
+@@ -0,0 +1,13 @@
++policy "AUTH-030" {
++  title = "Users can't make themselves admin"
++  statement = "No write may take the role field straight from request input, so a caller cannot promote their own account. Related to SOC 2 CC6.3 (role-based access). A pass shows the stored definitions matched when it ran."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc6.3"]
++
++  rule {
++    check = "db.write_from_input_forbidden"
++    params = { fields: ["role"] }
++  }
++}
+--- a/policies/RET-001.xs
++++ b/policies/RET-001.xs
+@@ -0,0 +1,18 @@
++policy "RET-001" {
++  title = "Only the audit function writes the audit log"
++  statement = "The audit_log table must exist, and only record_audit_event may write it, so no entry can be edited or deleted by other code. Related to SOC 2 CC8.1 (change management). A pass shows the stored definitions matched when it ran, not that the audit trail is complete."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc8.1"]
++
++  rule {
++    check = "workspace.object_required"
++    params = { object_kind: "table", names: ["audit_log"] }
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = { restricted_tables: ["audit_log"], allowed_functions: ["record_audit_event"] }
++  }
++}
+--- a/table/audit_log.xs
++++ b/table/audit_log.xs
+@@ -0,0 +1,18 @@
++// One row per edit or delete of a business record: who made it, which table and record, the action and when. Written only by record_audit_event.
++table audit_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    int user_id? {
++      table = "users"
++    }
++
++    text table_name
++    int record_id
++    text action
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

@@ -1,0 +1,44 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/SEC-012.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/SEC-012.xs",
+      "ok": true,
+      "key": "SEC-012",
+      "title": "No secrets are hardcoded",
+      "statement": "No API key, token, password or private key may be written into a function, endpoint, task, middleware, tool or any other object. Secrets come from workspace environment variables ($env), set per environment by the owner. An object that cannot comply is fixed, not exempted; an exemption needs the policy owner's approval.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "SEC-012.R1",
+          "title": "",
+          "check": "literal.credential_shape",
+          "params": {
+            "patterns": [],
+            "locations": [
+              "definition",
+              "agent_settings"
+            ],
+            "allowed_secrets": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

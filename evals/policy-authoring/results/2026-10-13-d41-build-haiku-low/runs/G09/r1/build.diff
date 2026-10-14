@@ -1,0 +1,169 @@
+--- a/api/app/account_DELETE.xs
++++ b/api/app/account_DELETE.xs
+@@ -8,7 +8,7 @@
+ 
+   stack {
+     function.run delete_user_account {
+-      input = {user_id: $auth.id}
++      input = {user_id: $auth.id, email: $auth.email}
+     } as $result
+   }
+ 
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -2,17 +2,41 @@
+ function delete_user_account {
+   input {
+     int user_id
++    text email
+   }
+ 
+   stack {
+     db.bulk.delete user_address {
+       where = $db.user_address.user_id == $input.user_id
+     } as $addresses
+-  
++
+     db.bulk.delete sessions {
+       where = $db.sessions.user_id == $input.user_id
+     } as $sessions
+-  
++
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.user_id == $input.user_id
++    } as $tickets
++
++    db.bulk.delete newsletter_subscribers {
++      where = $db.newsletter_subscribers.email == $input.email
++    } as $subscriptions
++
++    db.query orders {
++      where = $db.orders.user_id == $input.user_id
++      return = {type: "list"}
++    } as $user_orders
++
++    foreach ($user_orders) {
++      each as $order {
++        db.edit orders {
++          field_name = "id"
++          field_value = $order.id
++          data = {user_id: null}
++        } as $unlinked
++      }
++    }
++
+     db.del users {
+       field_name = "id"
+       field_value = $input.user_id
+@@ -20,5 +44,6 @@
+   }
+ 
+   response = {deleted: true}
++  tags = ["erasure"]
+   guid = "iWtAL7j6O0pMpjKQBxol3qm35T8"
+-}
+\ No newline at end of file
++}
+--- a/table/newsletter_subscribers.xs
++++ b/table/newsletter_subscribers.xs
+@@ -11,5 +11,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal", "retained"]
+   guid = "j189RCXCaWsxB1lbKjPDDQ84D60"
+ }
+\ No newline at end of file
+--- a/table/orders.xs
++++ b/table/orders.xs
+@@ -22,5 +22,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal", "retained"]
+   guid = "v2aQ5cSL0t7ukef8Xcqs6hxtuBU"
+ }
+\ No newline at end of file
+--- a/table/sessions.xs
++++ b/table/sessions.xs
+@@ -14,5 +14,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal"]
+   guid = "uuVqMevo2LCQDx36M046KfLjBzk"
+ }
+\ No newline at end of file
+--- a/table/support_tickets.xs
++++ b/table/support_tickets.xs
+@@ -21,5 +21,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal", "retained"]
+   guid = "BOYHPB_-O75NDfyqlRdIIzUD2_w"
+ }
+\ No newline at end of file
+--- a/table/user_address.xs
++++ b/table/user_address.xs
+@@ -16,5 +16,6 @@
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
++  tags = ["personal"]
+   guid = "yG7Wa2mH-Ofb57UmPidQ1UWjMYM"
+ }
+\ No newline at end of file
+--- a/table/users.xs
++++ b/table/users.xs
+@@ -27,5 +27,6 @@
+     {type: "btree", field: [{name: "org_id", op: "asc"}]}
+   ]
+ 
++  tags = ["personal"]
+   guid = "xU8Al0G-VGO1TKLY5LrNKIOkGUE"
+ }
+\ No newline at end of file
+--- a/policies/GDPR-010.xs
++++ b/policies/GDPR-010.xs
+@@ -0,0 +1,18 @@
++policy "GDPR-010" {
++  title = "Account deletion reaches personal data, and personal data expires after 2 years"
++  statement = "When a user deletes their account, every table holding personal data is erased or unlinked by delete_user_account, which is tagged erasure. Rows in tables tagged retained are deleted by a scheduled task once they are more than 730 days old. Related to GDPR Art. 5(1)(e) storage limitation and Art. 17 right to erasure; this policy checks the stored definitions only and does not show that the data was deleted."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["gdpr", "art-5-1-e", "art-17"]
++
++  rule {
++    check = "table.coverage_required"
++    params = {tags: ["personal"], referenced_by: {object_kinds: ["function"], tags: ["erasure"], statements: ["db.del", "db.bulk.delete", "db.edit"]}}
++  }
++
++  rule {
++    check = "table.coverage_required"
++    params = {tags: ["retained"], referenced_by: {object_kinds: ["task"], max_age_days: 730, age_field: "created_at"}}
++  }
++}
+--- a/task/purge_expired_personal_data.xs
++++ b/task/purge_expired_personal_data.xs
+@@ -0,0 +1,19 @@
++// Deletes support tickets, newsletter sign-ups and orders older than 730 days (2 years) every night.
++task purge_expired_personal_data {
++  stack {
++    db.bulk.delete support_tickets {
++      where = $db.support_tickets.created_at < now|timestamp_subtract_days:730
++    } as $expired_tickets
++
++    db.bulk.delete newsletter_subscribers {
++      where = $db.newsletter_subscribers.created_at < now|timestamp_subtract_days:730
++    } as $expired_subscribers
++
++    db.bulk.delete orders {
++      where = $db.orders.created_at < now|timestamp_subtract_days:730
++    } as $expired_orders
++  }
++
++  schedule = [{starts_on: 2026-01-01 04:00:00+0000, freq: 86400}]
++  guid = "7kRq2TzVw9LbNs4XeHc1GdPm6Ua"
++}

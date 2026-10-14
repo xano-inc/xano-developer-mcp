@@ -1,0 +1,48 @@
+{
+  "goal_id": "G03",
+  "objects_built": [],
+  "objects_changed": [
+    {"kind": "query", "name": "payments/charge POST", "file": "workspace/api/app/payments/charge_POST.xs", "change": "Removed debug.log that wrote the raw card input (card_number, card_cvv, card_expiry, cardholder_name) to logs. Nothing else changed."}
+  ],
+  "templates_considered": [
+    "approved_vendors_only (VND-001): fits; used with hosts only",
+    "no_sensitive_data_in_logs (LOG-001): fits; used as-is",
+    "sensitive_fields_marked (CONF-011): considered, not used; it requires a sensitive attribute, not a ban on storing the fields",
+    "no_pii_in_responses (DATA-010): considered, not used; the ask is about storage and logs, not responses",
+    "no_secrets_in_code (SEC-012): considered, not used; outside the three asks, but acme_notify_sms has a literal Twilio credential",
+    "protect_card_data recipe: followed partly; its charge_card function and sensitive-field steps assume a new card flow I did not build"
+  ],
+  "templates_used": ["approved_vendors_only", "no_sensitive_data_in_logs"],
+  "rules": [
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": ["api.stripe.com", "production.plaid.com"]}, "covers": "cardholder and bank data only go to Stripe and Plaid"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "cardholder data cannot be logged"},
+    {"policy_key": "PCI-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name", "pan", "cvv", "cvc"], "forbidden": true}, "covers": "cardholder data cannot be stored raw"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "bank account and routing numbers must not be stored raw or sent to unapproved vendors", "why": "other", "note": "customer said cardholder stuff; bank fields not in the rule. Needs a decision."},
+    {"part": "card data must not be sent to unapproved vendors as a request parameter (fraud_check sends card_number to api.riskscreen.example)", "why": "no check exists", "note": "VND-001 checks the host, not the payload. No check reads what a param carries."},
+    {"part": "data encrypted at rest, vendor contracts, who approved vendors, access reviews", "why": "needs runtime/org process"},
+    {"part": "card data in logs through datadog.log or values read back from the database", "why": "no check exists", "note": "LOG-001 only traces debug.log and does not follow DB reads"}
+  ],
+  "assumptions": [
+    "Cardholder data means card_number, card_cvv, card_expiry, cardholder_name (and pan/cvv/cvc as synonyms).",
+    "Stripe host is api.stripe.com; Plaid host is production.plaid.com (the only Plaid host in the workspace).",
+    "Removing the charge debug.log is an acceptable change to the existing object; the field storage is left for the owner.",
+    "Advisory is the right enforcement for new policies, per the skill."
+  ],
+  "workspace_names_used": ["payments/charge", "payments", "card_number", "card_cvv", "card_expiry", "cardholder_name", "api.stripe.com", "production.plaid.com", "payments/fraud_check", "api.riskscreen.example", "clinical_notes_POST", "acme_notify_sms", "bank_accounts/link", "invoices", "payment_method"],
+  "confusions": [
+    "The skill says a policy is one per file with a rule block; the brief says to build 'policy files', so I had to decide how to group rules. Used one policy per concern.",
+    "The protect_card_data recipe lists a function charge_card and a sensitive field attribute as build steps. It assumes a new card flow; this workspace already has one, so I did not follow those steps.",
+    "outbound.vendor_allowlist: an empty providers list reports every AI, email and cloud call as unreviewed. That is the right outcome for 'Stripe and Plaid only', but the skill's example does not say so plainly."
+  ],
+  "wished_for": [
+    "A check that reads what a request param carries (for example a field name like card_number passed to an external host), so the fraud_check case is caught by policy.",
+    "A way to run xano policy evaluate in a dry run to show the findings before push; the brief forbids it here, so I could not confirm the expected findings."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three rules are correct and parse, and the dry run is clean. But they only cover the ask partly: bank data is out, the payments table still stores raw card data until the owner changes it, and a card number sent to a vendor (fraud_check) is not caught by any check. I did not evaluate, so I have not confirmed the findings."
+}

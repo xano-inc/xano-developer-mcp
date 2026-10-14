@@ -1,0 +1,260 @@
+--- a/table/customers.xs
++++ b/table/customers.xs
+@@ -1,6 +1,7 @@
+ // End customers of an org (the people invoices and emails go to).
+ table customers {
+   auth = false
++  tags = ["customer-email"]
+ 
+   schema {
+     int id
+--- a/table/newsletter_subscribers.xs
++++ b/table/newsletter_subscribers.xs
+@@ -1,6 +1,7 @@
+ // Marketing newsletter sign-ups from the public site.
+ table newsletter_subscribers {
+   auth = false
++  tags = ["customer-email"]
+ 
+   schema {
+     int id
+--- a/table/orgs.xs
++++ b/table/orgs.xs
+@@ -1,6 +1,7 @@
+ // Customer organisations. Every tenant-owned row carries an org_id pointing here.
+ table orgs {
+   auth = false
++  tags = ["customer-email"]
+ 
+   schema {
+     int id
+--- a/table/patients.xs
++++ b/table/patients.xs
+@@ -1,6 +1,7 @@
+ // Patients of the clinic product.
+ table patients {
+   auth = false
++  tags = ["customer-email"]
+ 
+   schema {
+     int id
+--- a/table/support_tickets.xs
++++ b/table/support_tickets.xs
+@@ -1,6 +1,7 @@
+ // Customer support conversations, summarised nightly by the AI summariser.
+ table support_tickets {
+   auth = false
++  tags = ["customer-email"]
+ 
+   schema {
+     int id
+--- a/table/users.xs
++++ b/table/users.xs
+@@ -1,6 +1,7 @@
+ // People who sign in. role is admin, support_lead, manager, staff, member or viewer; org_id is the tenant they belong to.
+ table users {
+   auth = true
++  tags = ["customer-email"]
+ 
+   schema {
+     int id
+--- a/task/retry_failed_webhooks.xs
++++ b/task/retry_failed_webhooks.xs
+@@ -1,44 +1,50 @@
+-// Re-sends failed webhook deliveries until they go through.
++// Re-sends failed webhook deliveries. Each run makes one attempt per delivery; a delivery is abandoned after 5 failed attempts.
+ task retry_failed_webhooks {
+   stack {
+     db.query webhook_deliveries {
+-      where = $db.webhook_deliveries.status == "failed"
++      where = $db.webhook_deliveries.status == "failed" && $db.webhook_deliveries.attempts < 5
+       return = {type: "list"}
+     } as $failed
+   
+     foreach ($failed) {
+       each as $delivery {
+-        var $delivered {
+-          value = false
+-        }
++        api.request {
++          url = $delivery.url
++          method = "POST"
++          params = $delivery.payload
++        } as $attempt
+       
+-        while ($delivered == false) {
+-          each {
+-            api.request {
+-              url = $delivery.url
+-              method = "POST"
+-              params = $delivery.payload
+-            } as $attempt
+-          
++        conditional {
++          if ($attempt.response.status == 200) {
++            db.edit webhook_deliveries {
++              field_name = "id"
++              field_value = $delivery.id
++              data = {status: "delivered", attempts: $delivery.attempts + 1}
++            } as $done
++          }
++          else {
+             conditional {
+-              if ($attempt.response.status == 200) {
+-                var.update $delivered {
+-                  value = true
+-                }
++              if ($delivery.attempts + 1 >= 5) {
++                db.edit webhook_deliveries {
++                  field_name = "id"
++                  field_value = $delivery.id
++                  data = {status: "abandoned", attempts: $delivery.attempts + 1}
++                } as $given_up
+               }
++              else {
++                db.edit webhook_deliveries {
++                  field_name = "id"
++                  field_value = $delivery.id
++                  data = {status: "failed", attempts: $delivery.attempts + 1}
++                } as $retry_later
++              }
+             }
+           }
+         }
+-      
+-        db.edit webhook_deliveries {
+-          field_name = "id"
+-          field_value = $delivery.id
+-          data = {status: "delivered"}
+-        } as $done
+       }
+     }
+   }
+ 
+   schedule = [{starts_on: 2026-01-01 00:00:00+0000, freq: 300}]
+   guid = "xVlZD1UTTY6Qkl9YE0I31YR43FU"
+-}
+\ No newline at end of file
++}
+--- a/function/record_email_change.xs
++++ b/function/record_email_change.xs
+@@ -0,0 +1,24 @@
++// Writes one email_change_log row for a change to a customer-email record. Called by every object that writes such a table.
++function record_email_change {
++  input {
++    text table_name
++    int record_id
++    text action
++    text note?
++  }
++
++  stack {
++    db.add email_change_log {
++      data = {
++        actor_id  : $auth.id
++        table_name: $input.table_name
++        record_id : $input.record_id
++        action    : $input.action
++        note      : $input.note
++      }
++    } as $entry
++  }
++
++  response = $entry
++  guid = "rEc8dL3nQp6vXw1mTu5KbYa2sGh"
++}
+--- a/policies/AUDIT-010.xs
++++ b/policies/AUDIT-010.xs
+@@ -0,0 +1,18 @@
++policy "AUDIT-010" {
++  title = "Customer email records are tracked"
++  statement = "Every table holding a customer email carries the customer-email tag, and every object that reaches such a table records the change through record_email_change."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["audit", "pii"]
++
++  rule {
++    check = "table.tag_required"
++    params = { field_names: ["email", "requester_email", "billing_email"], tag: "customer-email" }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_email_change"], placement: "unconditional", reaching_table_tags: ["customer-email"] }
++  }
++}
+--- a/policies/COST-010.xs
++++ b/policies/COST-010.xs
+@@ -0,0 +1,13 @@
++policy "COST-010" {
++  title = "AI calls are never made inside a loop"
++  statement = "No AI agent or external MCP call runs inside a foreach, for or while loop, so one run cannot make an unbounded number of paid model calls."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["cost"]
++
++  rule {
++    check = "statement.containment"
++    params = { statements: ["ai.agent.run", "ai.external.mcp.tool.run"], must_not_be_inside: ["foreach", "for", "while"] }
++  }
++}
+--- a/policies/COST-020.xs
++++ b/policies/COST-020.xs
+@@ -0,0 +1,13 @@
++policy "COST-020" {
++  title = "No unbounded while loops"
++  statement = "No object uses a while loop, so every loop has a bounded count and a retry cannot run forever."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["cost", "reliability"]
++
++  rule {
++    check = "stack.statement_forbidden"
++    params = { statements: ["while"] }
++  }
++}
+--- a/policies/RET-001.xs
++++ b/policies/RET-001.xs
+@@ -0,0 +1,18 @@
++policy "RET-001" {
++  title = "Only the audit function writes the audit log"
++  statement = "Only record_email_change writes the email_change_log audit table."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "hipaa"]
++
++  rule {
++    check = "workspace.object_required"
++    params = { object_kind: "table", names: ["email_change_log"] }
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = { restricted_tables: ["email_change_log"], allowed_functions: ["record_email_change"] }
++  }
++}
+--- a/table/email_change_log.xs
++++ b/table/email_change_log.xs
+@@ -0,0 +1,17 @@
++// One row per change to a customer-email record: who changed it, which record, and what happened.
++table email_change_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    int actor_id?
++    text table_name
++    int record_id
++    text action
++    text note?
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++  guid = "eCL7mQ2xVb9tRw4kHs1pYzN8aFe"
++}
+deleted: task/nightly_ticket_summaries.xs

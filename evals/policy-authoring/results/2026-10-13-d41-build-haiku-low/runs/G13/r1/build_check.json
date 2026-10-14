@@ -1,0 +1,20 @@
+{
+  "key": "fe280a56476d92e6",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:39.992Z",
+  "check": {
+    "dry_run": {
+      "ran": false,
+      "status": null,
+      "blocked": [],
+      "unresolved": [],
+      "operations": [],
+      "error": null
+    },
+    "language_server": {
+      "ran": false,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

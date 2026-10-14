@@ -1,0 +1,94 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUTH-002.xs",
+    "build/policies/AUTH-020.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUTH-002.xs",
+      "ok": true,
+      "key": "AUTH-002",
+      "title": "Admin endpoints check the caller's role",
+      "statement": "Every endpoint under the /admin path calls the require_admin_role function as its first statement, passing the logged-in user. The function stops the request unless the user's role is admin or support_lead.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-002.R1",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_admin_role"
+            ],
+            "placement": "first",
+            "must_reference": [
+              "$auth"
+            ],
+            "when": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [
+              "admin"
+            ],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AUTH-002.R1",
+          "text": "Function \"require_admin_role\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/AUTH-020.xs",
+      "ok": true,
+      "key": "AUTH-020",
+      "title": "Tenant reads and writes filter by org_id",
+      "statement": "Every read and write of the tenants table filters on org_id, so no request reaches tenant rows across orgs without an org_id filter.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-020.R1",
+          "title": "",
+          "check": "db.where_constraint_required",
+          "params": {
+            "table_selector": {
+              "names": [
+                "tenants"
+              ]
+            },
+            "field": "org_id",
+            "compare_to": "",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

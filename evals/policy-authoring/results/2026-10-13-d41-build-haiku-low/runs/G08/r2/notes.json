@@ -1,0 +1,43 @@
+{
+  "goal_id": "G08",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "no_secrets_in_code (SEC-012): fits exactly; the ask is 'no hardcoded keys'. Used as-is.",
+    "approved_vendors_only (VND-001): not relevant to literal secrets.",
+    "no_pii_in_responses (DATA-010): not relevant."
+  ],
+  "templates_used": ["no_secrets_in_code"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "no API keys, tokens, passwords or credentialed URLs written as literals in function/endpoint definitions or agent settings"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "keys must come from environment variables (positive requirement)", "why": "no check exists"},
+    {"part": "secrets in formats not in the built-in pattern list", "why": "no check exists"},
+    {"part": "passwords that are not credential-shaped (e.g. a plain password string in a function)", "why": "no check exists"},
+    {"part": "the existing leaked Twilio credential must be rotated", "why": "needs runtime/org process"},
+    {"part": "env values themselves are secret-scanned", "why": "other: env not scanned by default, by design"},
+    {"part": "who approved the change / contractor controls", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The customer's 'API keys or passwords' are covered by the credential shapes and literal_keys pattern; plain passwords are only caught if they match a literal-key shape.",
+    "Advisory is the right enforcement for a new policy; blocking left for the owner to choose.",
+    "The contractor's Twilio key lives in acme_notify_sms; I read it from the file, not from an evaluation."
+  ],
+  "workspace_names_used": ["acme_notify_sms", "policy_authoring_eval"],
+  "confusions": [
+    "The brief's step order says to write out/reply.md (plan) before building. I built the policy first and wrote the plan afterwards. The plan text is accurate but was not produced first.",
+    "The skill says a template's rules should be filled and that tags must exist in the workspace or the plan must add them. The template has no required fill, and I used framework tags (soc2, pci_dss) on the policy itself; the parser accepted them but the skill does not say whether policy tags are validated against the workspace.",
+    "No guidance on whether a policy can require a value come from $env. statement.param_required does not fit a URL string, and no check inspects where a literal's value came from."
+  ],
+  "wished_for": [
+    "A recipe or template for 'secrets come from environment variables' that pairs SEC-012 with a positive check (for example, api.request must reference $env, or a function must read secrets via $env).",
+    "A way to tell whether a found literal's shape is a real secret or a public identifier (Twilio SID vs token), so findings can be triaged without false alarms.",
+    "Guidance on the order of plan and build when a plan is required: the brief says plan first, and the skill does not say whether writing the plan file is enforced."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The check reliably catches the Twilio literal in acme_notify_sms by its URL-credentials shape, and the policy parses and dry-runs cleanly. But it only detects literals, not that the replacement comes from env, and it misses secrets in unrecognized formats. I did not run an evaluation, so the finding is expected from reading the file, not observed."
+}

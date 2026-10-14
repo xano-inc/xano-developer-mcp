@@ -1,0 +1,94 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/GDPR-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/GDPR-010.xs",
+      "ok": true,
+      "key": "GDPR-010",
+      "title": "Account deletion reaches personal data, and personal data expires after 2 years",
+      "statement": "When a user deletes their account, every table holding personal data is erased or unlinked by delete_user_account, which is tagged erasure. Rows in tables tagged retained are deleted by a scheduled task once they are more than 730 days old. Related to GDPR Art. 5(1)(e) storage limitation and Art. 17 right to erasure; this policy checks the stored definitions only and does not show that the data was deleted.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "GDPR-010.R1",
+          "title": "",
+          "check": "table.coverage_required",
+          "params": {
+            "table_selector": [],
+            "referenced_by": {
+              "object_kinds": [
+                "function"
+              ],
+              "tags": [
+                "erasure"
+              ],
+              "statements": [
+                "db.del",
+                "db.bulk.delete",
+                "db.edit"
+              ]
+            },
+            "tags": [
+              "personal"
+            ],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "GDPR-010.R2",
+          "title": "",
+          "check": "table.coverage_required",
+          "params": {
+            "table_selector": [],
+            "referenced_by": {
+              "object_kinds": [
+                "task"
+              ],
+              "max_age_days": 730,
+              "age_field": "created_at"
+            },
+            "tags": [
+              "retained"
+            ],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "GDPR-010.R1",
+          "text": "tags \"personal\" is on no table on this branch, so it selects nothing."
+        },
+        {
+          "rule_id": "GDPR-010.R1",
+          "text": "referenced_by.tags \"erasure\" is on no function on this branch, so no object covers a table through it."
+        },
+        {
+          "rule_id": "GDPR-010.R2",
+          "text": "tags \"retained\" is on no table on this branch, so it selects nothing."
+        }
+      ]
+    }
+  ]
+}

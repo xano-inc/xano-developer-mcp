@@ -1,0 +1,327 @@
+--- a/ai/tool/issue_refund.xs
++++ b/ai/tool/issue_refund.xs
+@@ -13,13 +13,24 @@
+       field_value = $input.payment_id
+     } as $payment
+   
+-    api.request {
+-      url = "https://api.stripe.com/v1/refunds"
+-      method = "POST"
+-      params = {payment_intent: $payment.stripe_payment_intent_id}
+-      headers = ["Authorization: Bearer " ~ $env.STRIPE_SECRET_KEY]
+-      timeout = 20
+-    } as $refund
++    try_catch {
++      try {
++        api.request {
++          url = "https://api.stripe.com/v1/refunds"
++          method = "POST"
++          params = {payment_intent: $payment.stripe_payment_intent_id}
++          headers = ["Authorization: Bearer " ~ $env.STRIPE_SECRET_KEY]
++          timeout = 20
++        } as $refund
++      }
++
++      catch {
++        throw {
++          name = "refund_vendor_unavailable"
++          value = "The payment provider did not respond. The refund was not issued."
++        }
++      }
++    }
+   }
+ 
+   response = {refunded: true}
+--- a/api/app/bank_accounts/link_POST.xs
++++ b/api/app/bank_accounts/link_POST.xs
+@@ -10,17 +10,28 @@
+   }
+ 
+   stack {
+-    api.request {
+-      url = "https://production.plaid.com/item/public_token/exchange"
+-      method = "POST"
+-      params = {
+-        client_id   : $env.PLAID_CLIENT_ID
+-        secret      : $env.PLAID_SECRET
+-        public_token: $input.public_token
++    try_catch {
++      try {
++        api.request {
++          url = "https://production.plaid.com/item/public_token/exchange"
++          method = "POST"
++          params = {
++            client_id   : $env.PLAID_CLIENT_ID
++            secret      : $env.PLAID_SECRET
++            public_token: $input.public_token
++          }
++
++          timeout = 20
++        } as $exchange
+       }
+-    
+-      timeout = 20
+-    } as $exchange
++
++      catch {
++        throw {
++          name = "bank_vendor_unavailable"
++          value = "The bank linking provider did not respond. The account was not linked."
++        }
++      }
++    }
+   }
+ 
+   response = {linked: true}
+--- a/api/app/payments/charge_POST.xs
++++ b/api/app/payments/charge_POST.xs
+@@ -17,19 +17,30 @@
+       value = "charge attempt " ~ ($input|json_encode)
+     }
+   
+-    api.request {
+-      url = "https://api.stripe.com/v1/payment_intents"
+-      method = "POST"
+-      params = {
+-        amount  : $input.amount
+-        currency: "usd"
+-        confirm : true
++    try_catch {
++      try {
++        api.request {
++          url = "https://api.stripe.com/v1/payment_intents"
++          method = "POST"
++          params = {
++            amount  : $input.amount
++            currency: "usd"
++            confirm : true
++          }
++
++          headers = ["Authorization: Bearer " ~ $env.STRIPE_SECRET_KEY]
++          timeout = 20
++        } as $intent
+       }
+-    
+-      headers = ["Authorization: Bearer " ~ $env.STRIPE_SECRET_KEY]
+-      timeout = 20
+-    } as $intent
+-  
++
++      catch {
++        throw {
++          name = "payment_vendor_unavailable"
++          value = "The payment provider did not respond. The card was not charged."
++        }
++      }
++    }
++
+     db.add payments {
+       data = {
+         invoice_id              : $input.invoice_id
+--- a/api/app/payments/fraud_check_POST.xs
++++ b/api/app/payments/fraud_check_POST.xs
+@@ -9,12 +9,23 @@
+   }
+ 
+   stack {
+-    api.request {
+-      url = "https://api.riskscreen.example/v1/score"
+-      method = "POST"
+-      params = {card: $input.card_number, amount: $input.amount}
+-      timeout = 15
+-    } as $score
++    try_catch {
++      try {
++        api.request {
++          url = "https://api.riskscreen.example/v1/score"
++          method = "POST"
++          params = {card: $input.card_number, amount: $input.amount}
++          timeout = 15
++        } as $score
++      }
++
++      catch {
++        throw {
++          name = "fraud_vendor_unavailable"
++          value = "The fraud check did not respond. The payment was not attempted."
++        }
++      }
++    }
+   }
+ 
+   response = $score.response.result
+--- a/api/app/shipments/quote_POST.xs
++++ b/api/app/shipments/quote_POST.xs
+@@ -9,12 +9,24 @@
+   }
+ 
+   stack {
+-    api.request {
+-      url = "https://api.shipfast.example/v2/quote"
+-      method = "POST"
+-      params = {order: $input.order_id, postcode: $input.postcode}
+-      headers = ["Authorization: Bearer " ~ $env.SHIPFAST_API_KEY]
+-    } as $quote
++    try_catch {
++      try {
++        api.request {
++          url = "https://api.shipfast.example/v2/quote"
++          method = "POST"
++          params = {order: $input.order_id, postcode: $input.postcode}
++          headers = ["Authorization: Bearer " ~ $env.SHIPFAST_API_KEY]
++          timeout = 30
++        } as $quote
++      }
++
++      catch {
++        throw {
++          name = "shipping_vendor_unavailable"
++          value = "The shipping vendor did not respond. No quote is available right now."
++        }
++      }
++    }
+   }
+ 
+   response = $quote.response.result
+--- a/function/acme_get_tracking.xs
++++ b/function/acme_get_tracking.xs
+@@ -11,7 +11,7 @@
+           url = "https://api.shipfast.example/v2/track/" ~ $input.tracking_number
+           method = "GET"
+           headers = ["Authorization: Bearer " ~ $env.SHIPFAST_API_KEY]
+-          timeout = 60
++          timeout = 30
+         } as $tracking
+       }
+     
+--- a/function/acme_notify_sms.xs
++++ b/function/acme_notify_sms.xs
+@@ -6,11 +6,23 @@
+   }
+ 
+   stack {
+-    api.request {
+-      url = "https://AC5f1b2c3d4e:twilio-auth-token-not-real@api.twilio.com/2010-04-01/Accounts/AC5f1b2c3d4e/Messages.json"
+-      method = "POST"
+-      params = {To: $input.to, From: "+15550100", Body: $input.body}
+-    } as $sms
++    try_catch {
++      try {
++        api.request {
++          url = "https://AC5f1b2c3d4e:twilio-auth-token-not-real@api.twilio.com/2010-04-01/Accounts/AC5f1b2c3d4e/Messages.json"
++          method = "POST"
++          params = {To: $input.to, From: "+15550100", Body: $input.body}
++          timeout = 30
++        } as $sms
++      }
++
++      catch {
++        throw {
++          name = "sms_vendor_unavailable"
++          value = "The SMS vendor did not respond. The message was not sent."
++        }
++      }
++    }
+   }
+ 
+   response = $sms.response.result
+--- a/function/acme_sync_shipping_rates.xs
++++ b/function/acme_sync_shipping_rates.xs
+@@ -24,12 +24,23 @@
+   
+     foreach ($carriers) {
+       each as $carrier {
+-        api.request {
+-          url = "https://api.shipfast.example/v2/rates/" ~ $carrier
+-          method = "GET"
+-          headers = ["Authorization: Bearer " ~ $env.SHIPFAST_API_KEY]
+-        } as $rates
+-      
++        try_catch {
++          try {
++            api.request {
++              url = "https://api.shipfast.example/v2/rates/" ~ $carrier
++              method = "GET"
++              headers = ["Authorization: Bearer " ~ $env.SHIPFAST_API_KEY]
++              timeout = 30
++            } as $rates
++          }
++
++          catch {
++            var $rates {
++              value = {response: {status: 503, result: null}}
++            }
++          }
++        }
++
+         conditional {
+           if ($rates.response.status == 200) {
+             foreach ($rates.response.result.zones) {
+--- a/task/retry_failed_webhooks.xs
++++ b/task/retry_failed_webhooks.xs
+@@ -14,12 +14,24 @@
+       
+         while ($delivered == false) {
+           each {
+-            api.request {
+-              url = $delivery.url
+-              method = "POST"
+-              params = $delivery.payload
+-            } as $attempt
+-          
++            try_catch {
++              try {
++                api.request {
++                  url = $delivery.url
++                  method = "POST"
++                  params = $delivery.payload
++                  timeout = 30
++                } as $attempt
++              }
++
++              catch {
++                throw {
++                  name = "webhook_vendor_unavailable"
++                  value = "A webhook endpoint did not respond. The retry run stopped."
++                }
++              }
++            }
++
+             conditional {
+               if ($attempt.response.status == 200) {
+                 var.update $delivered {
+--- a/policies/LOG-010.xs
++++ b/policies/LOG-010.xs
+@@ -0,0 +1,12 @@
++policy "LOG-010" {
++  title = "External calls handle their own failures"
++  statement = "Every external call (api.request, stream.from_request, webflow.request, api.microservice, api.lambda, the ai.external.mcp statements and the db.external direct queries) must sit inside a try block, so a vendor failure reaches error handling. The catch branch must decide what the caller sees. A call that cannot be wrapped is raised with the policy owner, never exempted by the author."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "statement.containment"
++    params = {statements: ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda", "ai.external.mcp.tool.run", "ai.external.mcp.tool.list", "ai.external.mcp.server_details", "db.external.postgres.direct_query", "db.external.mysql.direct_query", "db.external.mssql.direct_query", "db.external.oracle.direct_query", "db.external.snowflake.direct_query"], must_be_inside: ["try_catch"]}
++  }
++}
+--- a/policies/SEC-013.xs
++++ b/policies/SEC-013.xs
+@@ -0,0 +1,17 @@
++policy "SEC-013" {
++  title = "External requests time out quickly"
++  statement = "Every external request (api.request, stream.from_request, webflow.request, api.microservice, api.lambda) must set a timeout of at most 30 seconds, so one slow vendor cannot stall the workspace. A request that cannot take a timeout is raised with the policy owner, never exempted by the author."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "statement.param_bound"
++    params = {statements: ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda"], param_names: ["timeout"], max: 30, unit: "seconds"}
++  }
++
++  rule {
++    check = "statement.param_required"
++    params = {statements: ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda"], param_names: ["timeout"]}
++  }
++}

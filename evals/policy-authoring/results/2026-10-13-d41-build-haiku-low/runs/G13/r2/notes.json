@@ -1,0 +1,35 @@
+{
+  "goal_id": "G13",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "protected_endpoints_run_middleware: partial fit for gating customer-data endpoints on a training check, but it only confirms the middleware is attached, not that training happened",
+    "endpoints_need_login / sensitive_tables_need_login: do not address training",
+    "sensitive_fields_marked / confidential_tables_tagged: classify data, do not address people"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "everyone on the team has completed security awareness training", "why": "no check exists"},
+    {"part": "who counts as the team / membership", "why": "needs runtime/org process"},
+    {"part": "blocking anyone without training from customer data", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Customer-data tables are patients, clinical_notes, customers, payments, payment_method, orders, invoices, users, support_tickets (names from workspace/table/)",
+    "Nothing in the workspace records team members or training, so no object could carry the fact"
+  ],
+  "workspace_names_used": ["patients", "customers", "payments", "clinical_notes", "invoices", "policy_authoring_eval"],
+  "confusions": [
+    "The skill says the catalogue is the entire vocabulary and lists people_and_training under not-checkable, which made the no-build decision straightforward. It was not clear whether a partial gate-plus-policy is in scope when the core ask is uncheckable; the brief says build nothing if no policy can do the ask, and I followed that.",
+    "The skill file is long (about 111KB output when read whole); the sections needed were hard to find without grepping."
+  ],
+  "wished_for": [
+    "A short decision rule in the skill: when the ask is not checkable, what partial coverage (if any) to offer and whether to build it",
+    "A template or recipe for gating data endpoints on an external attestation flag, with the honest limits stated"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The ask is about people's training, which policies cannot read (catalogue not_checkable: people_and_training). No object exists in the workspace that could carry the fact, so no rule can enforce it. I built nothing, as the brief specifies for an uncheckable ask."
+}

@@ -1,0 +1,54 @@
+{
+  "goal_id": "G09",
+  "objects_built": [
+    {"kind": "task", "name": "purge_old_support_tickets", "file": "workspace/task/purge_old_support_tickets.xs", "role": "Daily deletes support_tickets rows with created_at older than 730 days (retention cleanup for retained tag)"}
+  ],
+  "objects_changed": [
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Added db.bulk.delete support_tickets where user_id == input.user_id; added tags = [\"erasure\"]"},
+    {"kind": "table", "name": "users", "file": "workspace/table/users.xs", "change": "Added tags = [\"personal\"]"},
+    {"kind": "table", "name": "user_address", "file": "workspace/table/user_address.xs", "change": "Added tags = [\"personal\"]"},
+    {"kind": "table", "name": "sessions", "file": "workspace/table/sessions.xs", "change": "Added tags = [\"personal\"]"},
+    {"kind": "table", "name": "support_tickets", "file": "workspace/table/support_tickets.xs", "change": "Added tags = [\"personal\", \"retained\"]"}
+  ],
+  "templates_considered": [
+    "retained_data_has_age_limit (RET-003): fit, used for the 730-day retention rule",
+    "recipe 'Erase and expire personal data' (GDPR): fit as the basis; its build used erase_user_data, a new endpoint, and sensitive field attributes, which I left out because DELETE /account and delete_user_account already exist and the ask does not cover field classification",
+    "CONF-011 / DATA-010 / LOG-001: in the GDPR recipe, not used; the ask does not mention field classification, response content or logs",
+    "RET-002 (retained data has a cleanup task): not used; RET-003 already requires a task with a max-age cutoff"
+  ],
+  "templates_used": ["RET-003", "recipe:erase-and-expire-personal-data (partial: extra erasure rule only)"],
+  "rules": [
+    {"policy_key": "GDPR-001", "check": "table.coverage_required", "params": {"tags": ["personal"], "referenced_by": {"object_kinds": ["function"], "tags": ["erasure"], "statements": ["db.del", "db.bulk.delete"]}}, "covers": "When a user deletes their account, every personal table is deleted from by the erasure function"},
+    {"policy_key": "GDPR-001", "check": "table.coverage_required", "params": {"tags": ["retained"], "referenced_by": {"object_kinds": ["task"], "max_age_days": 730}}, "covers": "Customer data is not kept longer than 2 years (support tickets only)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Orders, payments, invoices, refunds keep user references after account deletion", "why": "needs runtime/org process"},
+    {"part": "2-year limit on user accounts and customers (inactivity clock, which date counts)", "why": "couldn't tell how"},
+    {"part": "Completeness of erasure (right rows, user notified)", "why": "no check exists"},
+    {"part": "Copies at AI summariser, mail/payment vendors, backups, logs, other tenants/branches", "why": "no check exists"},
+    {"part": "Who may call DELETE /account", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "Support tickets belong to the user when user_id is set; tickets with only requester_email are not linked and are not deleted on erasure",
+    "2-year retention is measured from created_at for support_tickets",
+    "Financial records (orders, payments, invoices, refunds) are out of scope for deletion pending the owner's decision",
+    "Tag placement: tags = [...] line after auth = false / auth = true in table files, and after response in function files (accepted by dry-run)"
+  ],
+  "workspace_names_used": ["delete_user_account", "purge_expired_sessions", "users", "user_address", "sessions", "support_tickets", "orders", "payments", "invoices", "refunds", "customers", "account_DELETE"],
+  "confusions": [
+    "Skill recipe for GDPR erasure assumes no erasure endpoint exists; here DELETE /account and delete_user_account already exist, so the recipe's build list does not apply directly",
+    "Warnings for tags that the plan itself creates ('is on no table on this branch') are expected but the skill says never accept a warning; no guidance on warnings for tags added in the same change",
+    "Skill does not show how to set tags on functions or tasks in XanoScript; I inferred tags = [...] placement from the workspace's workflow_test and endpoint files",
+    "No guidance on how to write guid for new objects; I left guid out of the new task file and dry-run accepted it"
+  ],
+  "wished_for": [
+    "A short example of tags placement for table, function and task XanoScript files",
+    "Guidance on whether a retention rule should count from created_at, last_login_at, or both, for user-linked data",
+    "A recipe variant for an account that already has an erasure endpoint"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy checks that a personal-tagged table is deleted from by a tagged function and that support tickets have a 730-day cleanup task. It does not cover orders, payments or the inactive-user 2-year limit, and it cannot see whether erasure is complete or what vendors keep. Dry run passed, but evaluate has not been run, so findings are unknown."
+}

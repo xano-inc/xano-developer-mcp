@@ -1,0 +1,98 @@
+--- a/ai/tool/send_customer_email.xs
++++ b/ai/tool/send_customer_email.xs
+@@ -14,6 +14,10 @@
+   }
+ 
+   stack {
++    function.run require_approval {
++      input = {action: "send_customer_email", target: $input.to}
++    } as $approval
++
+     util.send_email {
+       api_key = $env.RESEND_API_KEY
+       service_provider = "resend"
+--- a/function/require_approval.xs
++++ b/function/require_approval.xs
+@@ -0,0 +1,21 @@
++// Stops the caller unless a human has approved this action on this target in the approvals table.
++function require_approval {
++  input {
++    text action
++    text target
++  }
++
++  stack {
++    db.query approvals {
++      where = $db.approvals.action == $input.action && $db.approvals.target == $input.target && $db.approvals.status == "approved"
++      return = {type: "single"}
++    } as $approval
++
++    precondition ($approval != null) {
++      error_type = "accessdenied"
++      error = "No human approval for this action yet."
++    }
++  }
++
++  response = $approval
++}
+--- a/policies/AGENT-GUARD.xs
++++ b/policies/AGENT-GUARD.xs
+@@ -0,0 +1,18 @@
++policy "AGENT-GUARD" {
++  title = "AI tools can't delete, and their emails wait for a human approval"
++  statement = "AI tools never delete records, directly or through a function they call. Every tool that sends an email calls require_approval first, which stops unless a human has approved that action on that recipient in the approvals table. A tool that needs to delete must be redesigned with its owner, not exempted."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = []
++
++  rule {
++    check = "stack.statement_forbidden"
++    params = {statements: ["db.del", "db.bulk.delete", "db.truncate"], object_kinds: ["tool"]}
++  }
++
++  rule {
++    check = "stack.statement_order"
++    params = {before: {functions: ["require_approval"]}, after: ["util.send_email"], object_kinds: ["tool"]}
++  }
++}
+--- a/policies/AI-001.xs
++++ b/policies/AI-001.xs
+@@ -0,0 +1,13 @@
++policy "AI-001" {
++  title = "AI agents use only approved tools"
++  statement = "Every AI agent enables only the tools the owner has approved by name. Any other tool an agent enables is reported, and the owner decides whether to approve it or remove it from the agent."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = []
++
++  rule {
++    check = "agent.tool_allowlist"
++    params = {tools: ["lookup_order", "send_customer_email", "issue_refund"], object_kinds: ["agent"]}
++  }
++}
+--- a/table/approvals.xs
++++ b/table/approvals.xs
+@@ -0,0 +1,21 @@
++// A human's approval of one action on one target, such as sending an email to a customer. require_approval reads it.
++table approvals {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    text action
++    text target
++    enum status?=requested {
++      values = ["requested", "approved", "rejected"]
++    }
++
++    text requested_by?
++    text approved_by?
++  }
++
++  index = [
++    {type: "btree", field: [{name: "action"}, {name: "target"}]}
++  ]
++}

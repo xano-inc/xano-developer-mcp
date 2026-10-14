@@ -1,0 +1,52 @@
+{
+  "goal_id": "G11",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "external_calls_handle_errors (LOG-010): fits; every external call inside try_catch. Used, with the statement list widened to stream.from_request, webflow.request, ai.external.mcp.* and db.external.*.direct_query.",
+    "requests_have_timeout (SEC-013): fits. Used, with a param_required rule added because the template's param_bound alone passes an omitted timeout at its 10s default.",
+    "tls_verification_on (SEC-011): not asked for; the ask is timeout and error handling.",
+    "approved_vendors_only (VND-001): not asked for; the ask is about timeouts and error handling.",
+    "middleware_surfaces_errors (LOG-011): no middleware in the ask; the ask covers external calls, not middleware."
+  ],
+  "templates_used": ["external_calls_handle_errors", "requests_have_timeout"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "ai.external.mcp.tool.run", "ai.external.mcp.tool.list", "ai.external.mcp.server_details", "db.external.mysql.direct_query", "db.external.postgres.direct_query", "db.external.mssql.direct_query", "db.external.oracle.direct_query", "db.external.snowflake.direct_query"], "must_be_inside": ["try_catch"]}, "covers": "every external call sits in a try block so a vendor failure reaches error handling"},
+    {"policy_key": "SEC-013", "check": "statement.param_required", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"]}, "covers": "every external HTTP call writes its own timeout (added so an omitted timeout does not pass on the 10s default)"},
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "no external HTTP call waits longer than 30 seconds, so one slow vendor cannot stall the app"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "the catch block actually handles the failure (fallback, error response, logging)", "why": "no check exists"},
+    {"part": "timeouts on MCP and external database calls", "why": "no check exists; those statements take no timeout parameter"},
+    {"part": "the app actually stops hanging when a vendor goes down, at run time", "why": "needs runtime/org process; policies read stored definitions only"},
+    {"part": "retry behaviour: retry_failed_webhooks retries an external call in a while loop with no timeout or try", "why": "no check exists (task retries)"},
+    {"part": "whether the 30-second ceiling is the right number for each vendor", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The ask 'any external API call' means every outbound statement the LOG-010 limits text names: api.request, stream.from_request, webflow.request, ai.external.mcp.*, db.external.*.direct_query.",
+    "The 30-second ceiling from the SEC-013 template is acceptable for the customer; the ask did not give a number.",
+    "Enforcement stays policy-only: existing call sites are reported, not edited, because changing payment and refund failure paths is a customer decision.",
+    "Policies are advisory, per the skill's default for new policies, since the customer asked for a policy and not for blocking."
+  ],
+  "workspace_names_used": [
+    "function/acme_get_tracking", "function/acme_sync_shipping_rates", "function/acme_notify_sms", "ai/tool/issue_refund", "task/retry_failed_webhooks", "api/app/shipments/quote_POST", "api/app/payments/fraud_check_POST", "api/app/payments/charge_POST", "api/app/bank_accounts/link_POST", "shipfast vendor host api.shipfast.example"
+  ],
+  "confusions": [
+    "The LOG-010 limit text says to add ai.external.mcp.* and db.external.*.direct_query to cover every outbound call, but statement.containment takes no wildcards. I had to infer exact names (db.external.<engine>.direct_query, ai.external.mcp.tool.run/list, server_details) from the catalogue's text. A list of exact external statement names in the templates doc would remove the guess.",
+    "SEC-013's template rule (param_bound, max 30) passes an omitted timeout at its 10s default. The customer's words were 'has a timeout set', which the template does not require. I added param_required; the template doc does not suggest pairing the two.",
+    "xano policy parse's pretty-print omits severity and tags, while -o json shows them. Easy to misread as dropped fields.",
+    "Running xano workspace push -d ./workspace from inside the workspace folder silently reports 'No changes to push' rather than an error about the path. Easy to misread as a clean dry run.",
+    "The skill says a template's rules should be used as written and only the asked-for part changed, but widening a template's statement list is a change to the template's coverage. I did it because the ask said 'any external API call'; the doc does not say whether that is an allowed change."
+  ],
+  "wished_for": [
+    "An exact list of external-call statement names (api.request, stream.from_request, webflow.request, ai.external.mcp.*, db.external.*.direct_query) in the templates doc, marked as which ones take a timeout.",
+    "A recipe for external-call resilience that pairs timeout (explicit, bounded) and try_catch around each call, with the note that param_bound alone passes defaults.",
+    "A check or note on whether a catch block is non-empty or does something; LOG-010 passes an empty catch.",
+    "A way to see findings for the draft policies before pushing without running evaluate, or a note that dry-run does not evaluate them."
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": ["ENOENT: relative path 'workspace/policies/SEC-013.xs' after my shell cwd moved into workspace (my path mistake, not a policy error)"],
+  "dry_run_problems_seen": ["First dry run from inside workspace/ reported 'No changes to push' because -d ./workspace resolved to the wrong folder; re-ran from project root and got policy +2 created."],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The two policies parse and dry-run clean, and they check the two things the ask names: each external call sits in a try_catch, and each HTTP call sets a timeout no longer than 30s. Confidence is only medium because the try_catch check does not read the catch block, MCP and database calls cannot be given a timeout, retry loops are not checked, and the expected findings come from reading the code, not from a policy evaluate. Nine existing call sites will be flagged; the code itself is unchanged."
+}

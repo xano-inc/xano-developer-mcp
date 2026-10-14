@@ -1,0 +1,55 @@
+--- a/middleware/rate_limit.xs
++++ b/middleware/rate_limit.xs
+@@ -0,0 +1,13 @@
++// Limits how often one caller can hit an endpoint. Keyed by IP before login, by user after.
++middleware rate_limit {
++  stack {
++    redis.ratelimit {
++      key = ($auth.id ? $auth.id : $env.$remote_ip)
++      max = 10
++      ttl = 60
++      error = "Too many requests. Try again shortly."
++    } as $limit
++  }
++
++  exception_policy = "critical"
++}
+--- a/policies/LOG-011.xs
++++ b/policies/LOG-011.xs
+@@ -0,0 +1,13 @@
++policy "LOG-011" {
++  title = "Middleware doesn't swallow errors"
++  statement = "No middleware is set to swallow the exceptions it catches. Middleware such as rate_limit must surface its errors so the refusal reaches the caller."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    title = "Middleware surfaces the exceptions it catches"
++    check = "object.settings_forbidden"
++    params = {object_kind: "middleware", when: {exception_policy: {equals: "silent"}}}
++  }
++}
+--- a/policies/RATE-001.xs
++++ b/policies/RATE-001.xs
+@@ -0,0 +1,20 @@
++policy "RATE-001" {
++  title = "Public endpoints and login are rate limited"
++  statement = "Every public endpoint, and the login and signup endpoints, must run the rate_limit middleware before their stack. A new public endpoint that does not run it is a blocking finding: attach rate_limit to its API group, or ask the policy owner before exempting it."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["rate-limit"]
++
++  rule {
++    title = "Public endpoints run the rate limit first"
++    check = "object.middleware_required"
++    params = {middleware: ["rate_limit"], phase: "pre", endpoint_auth: "none", object_kinds: ["query"]}
++  }
++
++  rule {
++    title = "Login endpoints run the rate limit first"
++    check = "object.middleware_required"
++    params = {middleware: ["rate_limit"], phase: "pre", api_groups: ["app"], paths: ["auth"], object_kinds: ["query"]}
++  }
++}

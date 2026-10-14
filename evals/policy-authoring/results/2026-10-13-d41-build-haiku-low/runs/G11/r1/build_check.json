@@ -1,0 +1,32 @@
+{
+  "key": "eb7d173cb0ebf437",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:35.524Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy LOG-010",
+        "create policy SEC-013",
+        "update tool issue_refund",
+        "update function acme_get_tracking",
+        "update function acme_notify_sms",
+        "update function acme_sync_shipping_rates",
+        "update task retry_failed_webhooks",
+        "update query bank-accounts/link POST",
+        "update query payments/charge POST",
+        "update query payments/fraud_check POST",
+        "update query shipments/quote POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

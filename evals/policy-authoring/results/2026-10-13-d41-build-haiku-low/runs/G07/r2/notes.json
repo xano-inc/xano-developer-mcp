@@ -1,0 +1,78 @@
+{
+  "goal_id": "G07",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "One row per edit or patch of a business record: user, table, record, action, time. Written only by record_audit_event."},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "Adds an audit_log row. The only object allowed to write audit_log (RET-001)."},
+    {"kind": "function", "name": "require_role", "file": "workspace/function/require_role.xs", "role": "Reads the caller's role by id and stops with precondition unless role is admin. Called first by admin endpoints (AUTH-002)."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "users", "file": "workspace/api/admin/users_GET.xs", "change": "Added function.run require_role as first statement, with $auth.id."},
+    {"kind": "query", "name": "tenants", "file": "workspace/api/admin/tenants_GET.xs", "change": "Added require_role as first statement."},
+    {"kind": "query", "name": "orgs/{org_id}/tenants", "file": "workspace/api/admin/orgs/org_id/tenants_GET.xs", "change": "Added require_role as first statement."},
+    {"kind": "query", "name": "tenants/{tenant_id}", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "Added require_role as first statement; record_audit_event after db.edit tenants."},
+    {"kind": "query", "name": "admin/stats", "file": "workspace/api/app/admin/stats_GET.xs", "change": "Added require_role as first statement (path under admin, app group)."},
+    {"kind": "query", "name": "me", "file": "workspace/api/app/me_PATCH.xs", "change": "Removed role input; replaced data=$input[\"\"] (whole input) with explicit name, phone, marketing_opt_in; added record_audit_event after db.patch users. Fixes privilege escalation: role was writable from input."},
+    {"kind": "query", "name": "refunds/{refund_id}/approve", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "Added record_audit_event after db.edit refunds."},
+    {"kind": "query", "name": "customers/{customer_id}", "file": "workspace/api/app/customers/customer_id_PATCH.xs", "change": "Added record_audit_event after db.patch customers."},
+    {"kind": "query", "name": "products/{product_id}/price", "file": "workspace/api/app/products/product_id/price_PATCH.xs", "change": "Added record_audit_event after db.patch products."},
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Added record_audit_event after db.del users. Not inspected by any rule: statement_required does not check functions."}
+  ],
+  "templates_considered": [
+    "audit_log_protected (RET-001): fits; used for audit_log write restriction.",
+    "admin_endpoints_check_role (AUTH-002): fits; used.",
+    "no_self_promotion (AUTH-030): fits; used.",
+    "audit_changes recipe (Record who changed what): followed for audit_log, record_audit_event and extra rules; its db.del rule dropped because the only db.del on users is inside a function, which statement_required does not inspect.",
+    "role_based_access recipe: followed for require_role, AUTH-002 and AUTH-030; no tag used for admin, scoped by api_groups and paths instead.",
+    "endpoints_have_tests (CHG-001): did not fit the ask; no tests in workspace and the ask is about change control, not test coverage. Not used.",
+    "access_reviews_and_approvals (recipe gap note): no check exists."
+  ],
+  "templates_used": ["audit_log_protected", "admin_endpoints_check_role", "no_self_promotion"],
+  "rules": [
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "Audit trail table exists (change record)"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "Only the audit function writes audit entries; no edit or delete of entries"},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_role"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["admin"], "object_kinds": ["query"]}, "covers": "Admin API endpoints check role first (access control)"},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_role"], "placement": "first", "must_reference": ["$auth"], "paths": ["admin"], "object_kinds": ["query"]}, "covers": "Endpoints under admin path (admin/stats) check role first"},
+    {"policy_key": "AUTH-030", "check": "db.write_from_input_forbidden", "params": {"fields": ["role"]}, "covers": "Users cannot write their own role from request input (access control)"},
+    {"policy_key": "AUDIT-EDITS", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["tenants", "refunds"]}}, "covers": "Edits of tenants and refunds are recorded in audit_log (change record)"},
+    {"policy_key": "AUDIT-EDITS", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["users", "customers", "products"]}}, "covers": "Patches of users, customers and products are recorded in audit_log (change record)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Change approval: that a person reviewed and approved a change before it went live", "why": "no check exists"},
+    {"part": "Access reviews: periodic review of who has access, and of roles", "why": "no check exists"},
+    {"part": "Which roles exist, who holds admin, and whether admin-only is the right rule for support/manager/staff", "why": "needs runtime/org process"},
+    {"part": "Creates (db.add) on audited tables are not recorded", "why": "other: not in the recipe's edit/delete scope; would need calls in signup and customer create"},
+    {"part": "Deletes inside functions (delete_user_account db.del users) are not checked by any rule", "why": "no check exists: statement_required only inspects query, tool, task and message objects"},
+    {"part": "Whether code changes are tested or reviewed before deploy", "why": "no check exists for review; CHG-001 test coverage not included (out of this ask)"},
+    {"part": "Runtime access logs, data copies between environments, and infrastructure", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Admin access means role = admin only; support_lead, manager and staff lose admin endpoints.",
+    "Audited tables are tenants, refunds, users, customers and products: the tables edited or deleted by existing endpoints.",
+    "Admin API group is canonical 'admin'; admin/stats is under the admin path in the app group.",
+    "Removing role from me PATCH input is acceptable; callers sending it will be ignored.",
+    "audit_log.user_id is the acting user; for delete_user_account it is the deleted user (self-delete)."
+  ],
+  "workspace_names_used": ["users", "role", "tenants", "refunds", "customers", "products", "orgs", "admin", "app", "me", "delete_user_account", "admin/stats", "tenants/{tenant_id}", "orgs/{org_id}/tenants", "customers/{customer_id}", "products/{product_id}/price", "refunds/{refund_id}/approve", "$auth.id"],
+  "confusions": [
+    "statement_required lists object kinds [query, tool, task, message] in the catalogue, but the recipe 'Record who changed what' puts deletes inside functions as the enforcement. The recipe does not say that the function's own deletes cannot be checked; I had to drop that rule.",
+    "Recipe's AUTH-002 build says 'tag admin' and 'paths'. The workspace admin group is an API group, so I used api_groups plus paths instead; the recipe does not say which to prefer when both exist.",
+    "Template AUTH-002 parameter examples show require_admin; the recipe uses require_role. I chose require_role to match the recipe.",
+    "Warning 'Function X is not on this branch' appears for objects created in the same change; it is expected but reads like an error when reviewing a dry run.",
+    "The skill says a rule can name an object kind of 'function' for statement rules; catalogue entry for object.statement_required does not list function, so the choice is not obvious from the skill alone."
+  ],
+  "wished_for": [
+    "A check or statement rule that inspects deletes and writes inside called functions (or an explicit placement for functions in object.statement_required).",
+    "A check for change approval, or a documented way to represent an approval as a tag or table that a rule can read.",
+    "A recipe variant for SOC 2 CC6.x access reviews that says plainly it is not checkable, with a suggested non-policy evidence source.",
+    "An example of a precondition-based role check function in XanoScript to copy."
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [
+    "Rule warning: AUTH-002.R1 api_groups only matches endpoints; fixed by adding object_kinds query.",
+    "Rule warnings: functions not on this branch for AUTH-002, AUDIT-EDITS, RET-001; expected because they are created in this change.",
+    "Dry run exited 0 with no blocked objects."
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies check that edits to five tables call the audit function, that admin endpoints call a role check first, and that role cannot be written from input. None of that is evidence of change approval or access reviews, which the customer's auditor asks for. Deletes inside functions and creates are not audited. Admin-only is an assumption. Nothing is blocking, and the policies are advisory."
+}

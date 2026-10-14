@@ -1,0 +1,53 @@
+{
+  "goal_id": "G15",
+  "objects_built": [
+    {"kind": "middleware", "name": "rate_limit", "file": "workspace/middleware/rate_limit.xs", "role": "Pre-stack limiter via redis.ratelimit keyed by $auth.id or $env.$remote_ip; exception_policy critical. Statement params are guessed."}
+  ],
+  "objects_changed": [],
+  "templates_considered": [
+    "middleware_surfaces_errors (LOG-011): fits, the rate limiter must not swallow its refusal; built as its own policy file",
+    "rate_limiting recipe: fits the ask; used for the build list and the two extra rules",
+    "endpoints_need_login (AUTH-010): considered, not used, the ask is about rate limits not auth"
+  ],
+  "templates_used": ["middleware_surfaces_errors"],
+  "rules": [
+    {"policy_key": "RATE-001", "check": "object.middleware_required", "params": {"middleware": ["rate_limit"], "phase": "pre", "endpoint_auth": "none", "object_kinds": ["query"]}, "covers": "every public endpoint, new ones included, runs the limiter first"},
+    {"policy_key": "RATE-001", "check": "object.middleware_required", "params": {"middleware": ["rate_limit"], "phase": "pre", "api_groups": ["app"], "paths": ["auth"], "object_kinds": ["query"]}, "covers": "login and signup run the limiter first"},
+    {"policy_key": "LOG-011", "check": "object.settings_forbidden", "params": {"object_kind": "middleware", "when": {"exception_policy": {"equals": "silent"}}}, "covers": "the limiter's refusal reaches the caller"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "the limit value (requests per window)", "why": "no check exists"},
+    {"part": "the key the limiter counts by, and callers spreading across IPs", "why": "no check exists"},
+    {"part": "real client IP behind proxy; Redis availability", "why": "needs runtime/org process"},
+    {"part": "non-endpoint entry points (tasks, functions, AI tools)", "why": "other"},
+    {"part": "attaching rate_limit to the app API group", "why": "couldn't tell how: the XanoScript form was not found, so the attachment was not built"}
+  ],
+  "assumptions": [
+    "login and signup are in api_group app under paths auth/login and auth/signup, per the pulled files",
+    "all customer endpoints sit in group app, so attaching there would cover public endpoints",
+    "limit of 10 requests per 60 seconds is a placeholder",
+    "RATE-001 set to advisory rather than the planned blocking, since the attachment is missing"
+  ],
+  "workspace_names_used": ["app", "auth/login", "auth/signup", "users", "rate_limit"],
+  "confusions": [
+    "The kit's recipe says to attach rate_limit to the API group, but gives no XanoScript for an api_group middleware attachment. Tried middleware = {pre: [\"rate_limit\"]} (object[] error), {pre: [{name: ...}]} (silently ignored, group shown unchanged), and [{name, phase}] (Invalid block: name). Reverted.",
+    "No example of a middleware file's XanoScript shape or of redis.ratelimit's parameter names in the skill or kit; the file was written by analogy and the dry run accepts it, but param validity is unconfirmed.",
+    "Silent drop: a middleware line on api_group that is not recognised produces no error and no change in the dry run preview; that is easy to miss."
+  ],
+  "wished_for": [
+    "A worked XanoScript example of attaching middleware to an API group and to an endpoint",
+    "A worked middleware file example including redis.ratelimit with its params",
+    "A dry-run warning when a middleware attachment is silently ignored"
+  ],
+  "parse_attempts": 6,
+  "parse_errors_seen": [
+    "api_group app: Expecting static:object[], got static:text[]",
+    "api_group app: Invalid block: name"
+  ],
+  "dry_run_problems_seen": [
+    "api_group app blocked on middleware attachment syntax (twice)",
+    "api_group app update disappeared from preview with the {pre: [{name}]} form, no warning"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies and the middleware parse and dry-run clean, but the limiter is not attached to any endpoint, so the policy would currently flag every public endpoint and no request is limited. The middleware body is guessed. The attachment must be done in Studio or with a confirmed syntax before the goal is met."
+}

@@ -1,0 +1,121 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/PCI-CHD-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/PCI-CHD-001.xs",
+      "ok": true,
+      "key": "PCI-CHD-001",
+      "title": "Cardholder data is not logged, not stored raw, and not sent to unapproved vendors",
+      "statement": "Objects tagged cardholder never log request input. Card numbers, security codes, expiry and cardholder names are never stored in a table. Objects tagged cardholder send requests only to Stripe and Plaid.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "PCI-CHD-001.R1",
+          "title": "Cardholder objects never log request input",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [
+              "cardholder"
+            ],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "PCI-CHD-001.R2",
+          "title": "Card numbers and security codes are never stored",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "card_number",
+              "card_cvv",
+              "card_expiry",
+              "cardholder_name"
+            ],
+            "field_types": [],
+            "attribute": "",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": true,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "PCI-CHD-001.R3",
+          "title": "Cardholder objects send requests only to Stripe and Plaid",
+          "check": "outbound.vendor_allowlist",
+          "params": {
+            "kinds": [
+              "http"
+            ],
+            "hosts": [
+              "api.stripe.com",
+              "production.plaid.com"
+            ],
+            "providers": [],
+            "env_hosts": [],
+            "literal_urls_forbidden": false,
+            "tags": [
+              "cardholder"
+            ],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "PCI-CHD-001.R1",
+          "text": "tags \"cardholder\" is on no object this rule inspects on this branch, so it selects nothing."
+        },
+        {
+          "rule_id": "PCI-CHD-001.R3",
+          "text": "tags \"cardholder\" is on no object this rule inspects on this branch, so it selects nothing."
+        }
+      ]
+    }
+  ]
+}

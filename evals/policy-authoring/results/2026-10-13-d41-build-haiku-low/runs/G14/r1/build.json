@@ -1,0 +1,24 @@
+{
+  "pulled": true,
+  "added": [
+    "function/record_email_change.xs",
+    "policies/AUDIT-010.xs",
+    "policies/COST-010.xs",
+    "policies/COST-020.xs",
+    "policies/RET-001.xs",
+    "table/email_change_log.xs"
+  ],
+  "modified": [
+    "table/customers.xs",
+    "table/newsletter_subscribers.xs",
+    "table/orgs.xs",
+    "table/patients.xs",
+    "table/support_tickets.xs",
+    "table/users.xs",
+    "task/retry_failed_webhooks.xs"
+  ],
+  "deleted": [
+    "task/nightly_ticket_summaries.xs"
+  ],
+  "other_files": []
+}

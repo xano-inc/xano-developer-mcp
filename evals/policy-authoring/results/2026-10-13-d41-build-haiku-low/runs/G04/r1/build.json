@@ -1,0 +1,18 @@
+{
+  "pulled": true,
+  "added": [
+    "function/log_phi_access.xs",
+    "policies/HIPAA-PHI-001.xs",
+    "table/phi_access_log.xs"
+  ],
+  "modified": [
+    "api/app/appointments_GET.xs",
+    "api/app/clinical_notes_POST.xs",
+    "api/app/patients/patient_id_GET.xs",
+    "table/appointments.xs",
+    "table/clinical_notes.xs",
+    "table/patients.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

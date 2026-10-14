@@ -1,0 +1,58 @@
+{
+  "goal_id": "G03",
+  "objects_built": [],
+  "objects_changed": [
+    {"kind": "query", "name": "payments/charge POST", "file": "workspace/api/app/payments/charge_POST.xs", "change": "Removed debug.log of $input (logged card data). Removed card_number, card_cvv, card_expiry, cardholder_name from db.add payments. Added tags = [\"cardholder\"]."},
+    {"kind": "query", "name": "payments/fraud_check POST", "file": "workspace/api/app/payments/fraud_check_POST.xs", "change": "Added tags = [\"cardholder\"]. No code change; it sends card_number to api.riskscreen.example, which is left for the owner to decide."},
+    {"kind": "tool", "name": "issue_refund", "file": "workspace/ai/tool/issue_refund.xs", "change": "Added tags = [\"cardholder\"]. Calls Stripe only."},
+    {"kind": "query", "name": "bank-accounts/link POST", "file": "workspace/api/app/bank_accounts/link_POST.xs", "change": "Added tags = [\"cardholder\"]. Calls Plaid only. Assumes bank data is in scope."}
+  ],
+  "templates_considered": [
+    "approved_vendors_only: fits rule 3 (hosts allowlist). Not used as a template because I wrote the policy file directly and scoped it by tag; its params match the rule I wrote.",
+    "no_sensitive_data_in_logs: fits the logging goal. Not used because I could not read its definition: `xano policy catalogue --template` is not a valid flag, and the template is not in kit/. I used statement.expression_rule directly.",
+    "sensitive_fields_marked: did not fit. It marks fields sensitive, but the ask is to forbid storage of card fields, not to mark them.",
+    "no_pii_in_responses: did not fit. charge_POST returns the whole payment record, but the card columns are not marked sensitive and the ask did not cover responses.",
+    "protect_card_data recipe: partly fit. It assumes a new charge_card function that stores only a token, which would have meant rebuilding charge_POST. The plan changes charge_POST in place, so the recipe was used as a reference only."
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "PCI-CHD-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input"], "tags": ["cardholder"]}, "covers": "Cardholder data is not logged"},
+    {"policy_key": "PCI-CHD-001", "check": "table.field_attribute_required", "params": {"field_names": ["card_number", "card_cvv", "card_expiry", "cardholder_name"], "forbidden": true}, "covers": "Cardholder data is not stored raw (card fields; schema only)"},
+    {"policy_key": "PCI-CHD-001", "check": "outbound.vendor_allowlist", "params": {"kinds": ["http"], "hosts": ["api.stripe.com", "production.plaid.com"], "tags": ["cardholder"]}, "covers": "Cardholder data goes only to Stripe and Plaid"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Card data already stored in existing rows of payments", "why": "runtime/org process"},
+    {"part": "Cardholder data is not stored raw: the existing card columns still exist in table/payments.xs, so rule 2 will fail until they are removed; removing them loses data", "why": "other"},
+    {"part": "Bank account numbers and routing numbers in storage", "why": "other"},
+    {"part": "Whether cardholder data reaches vendors through paths that are not tagged cardholder", "why": "couldn't tell how"},
+    {"part": "Whether the charge actually reaches Stripe with card details (charge_POST sends only amount, currency, confirm)", "why": "other"},
+    {"part": "Logs at runtime, encryption, network, people, access reviews, approvals", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "Cardholder scope is card fields plus the bank link endpoint, marked with the tag cardholder.",
+    "Stripe host is api.stripe.com and Plaid host is production.plaid.com, as in the code.",
+    "Enforcement is advisory; blocking is the owner's choice.",
+    "The tag name cardholder is new and not in the workspace yet; the parse warning confirms it is only missing from the live branch.",
+    "Removing card fields from charge_POST's write is the intent; the schema stays, since removing fields loses data."
+  ],
+  "workspace_names_used": ["payments", "payment_method", "charge_POST", "fraud_check_POST", "issue_refund", "link_POST", "card_number", "card_cvv", "card_expiry", "cardholder_name", "bank_account_number", "bank_routing_number", "api.stripe.com", "production.plaid.com", "api.riskscreen.example", "acme_notify_sms", "debug.log"],
+  "confusions": [
+    "The skill's policy-check section says to use `xano policy catalogue --template <id>`, but the CLI rejects --template. Only the summary lists templates. Templates' full rules are not readable from the CLI, so the template definitions in kit/ and the summary were the only source.",
+    "The skill says a new policy should be written with `xano policy create --template`, but my brief forbids create and says to write policy files directly. The file format and params were clear enough from the skill's examples, but the mapping from template to rules was not spelled out.",
+    "The table.field_attribute_required fix hint says removing a field loses data and to ask first. That leaves a conflict: the recipe asks for no card fields, but dropping columns is a data decision. I left it for the owner.",
+    "The catalogue's recipe protect_card_data assumes a token-based design (charge_card stores only the token). The customer's workspace stores card fields directly, so the recipe does not fit the existing code."
+  ],
+  "wished_for": [
+    "A way to see template rule definitions from the CLI (for example `xano policy catalogue --template <id> -o json`), since the brief lists templates but not their params in the kit.",
+    "An example of tagging an object in XanoScript that the policy scope reads, and whether tags on tables are read by tables-based scope.",
+    "Guidance on whether a policy that is written to match tags should warn when no object carries the tag yet on the live branch, because the parse warning looked like a bug at first.",
+    "A check or param that forbids specific field names from being stored at the schema level for a set of tables only, without a field name list covering all cases."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [
+    "Parse warned: rule PCI-CHD-001.R1 and R3 select nothing on the live branch because tag cardholder is not yet on any object. Expected; the dry run showed the tagged objects updating."
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy checks the three parts of the ask at the definition level: no logging of cardholder input, no storage of card fields in the schema, and no non-Stripe/Plaid outbound calls from cardholder-tagged objects. Confidence is low for the audit goal because existing stored rows still hold card data, the card columns remain in the schema, the fraud-check vendor is not approved, the charge flow may not send card details, and runtime, logs, and infrastructure controls are outside what policies can see."
+}

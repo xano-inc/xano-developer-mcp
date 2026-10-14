@@ -1,0 +1,31 @@
+{
+  "key": "f2abba392ec2b803",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:26.710Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy GDPR-010",
+        "update table newsletter_subscribers",
+        "update table orders",
+        "update table sessions",
+        "update table support_tickets",
+        "update table user_address",
+        "update table users",
+        "update function delete_user_account",
+        "create task purge_expired_personal_data",
+        "update query account DELETE"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

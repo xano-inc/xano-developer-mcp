@@ -1,0 +1,26 @@
+{
+  "key": "30dfde8fad711db5",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:30.853Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AGENT-GUARD",
+        "create policy AI-001",
+        "create table approvals",
+        "update tool send_customer_email",
+        "create function require_approval"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

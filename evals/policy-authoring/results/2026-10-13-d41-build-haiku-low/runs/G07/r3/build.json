@@ -1,0 +1,18 @@
+{
+  "pulled": true,
+  "added": [
+    "function/record_audit_event.xs",
+    "policies/AUDIT-001.xs",
+    "policies/AUDIT-002.xs",
+    "table/audit_log.xs"
+  ],
+  "modified": [
+    "api/admin/tenants/tenant_id_PATCH.xs",
+    "api/app/customers/customer_id_PATCH.xs",
+    "api/app/me_PATCH.xs",
+    "api/app/refunds/refund_id/approve_POST.xs",
+    "function/delete_user_account.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

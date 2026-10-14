@@ -1,0 +1,70 @@
+--- a/api/app/app.xs
++++ b/api/app/app.xs
+@@ -2,5 +2,6 @@
+ api_group app {
+   canonical = "app"
+   swagger = {active: false}
++  middleware = {pre: [{name: "rate_limit"}]}
+   guid = "iiMRk2q0C4ABm9XQMKzv5iE-43U"
+ }
+\ No newline at end of file
+--- a/middleware/rate_limit.xs
++++ b/middleware/rate_limit.xs
+@@ -0,0 +1,20 @@
++// Limits how often one caller can reach an endpoint: 60 requests per minute per IP. Past the limit the caller gets an error. Attached as pre middleware to the app API group.
++middleware rate_limit {
++  input {
++  }
++
++  stack {
++    redis.ratelimit {
++      key = $env.$remote_ip
++      max = 60
++      ttl = 60
++    } as $limit
++
++    precondition ($limit.allowed) {
++      error_type = "accessdenied"
++      error = "Too many requests. Try again later."
++    }
++  }
++
++  exception = "critical"
++}
+--- a/policies/LOG-011.xs
++++ b/policies/LOG-011.xs
+@@ -0,0 +1,13 @@
++policy "LOG-011" {
++  title = "Middleware doesn't swallow errors"
++  statement = "No middleware may set its exception policy to silent, because a silent middleware hides the errors it catches. The rate_limit middleware must surface its refusal to the caller."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = ["rate-limit"]
++
++  rule {
++    check = "object.settings_forbidden"
++    params = {object_kind: "middleware", when: {exception_policy: {equals: "silent"}}}
++  }
++}
+--- a/policies/RATE-010.xs
++++ b/policies/RATE-010.xs
+@@ -0,0 +1,18 @@
++policy "RATE-010" {
++  title = "Public endpoints and login/signup run the rate limit first"
++  statement = "Every public endpoint, and the login and signup endpoints, must run the rate_limit middleware before their stack, so a caller who hits them too often is refused. Attach the middleware to the API group rather than per endpoint. The limit value and the counting key are not checked here."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["rate-limit"]
++
++  rule {
++    check = "object.middleware_required"
++    params = {middleware: ["rate_limit"], phase: "pre", endpoint_auth: "none", object_kinds: ["query"]}
++  }
++
++  rule {
++    check = "object.middleware_required"
++    params = {middleware: ["rate_limit"], phase: "pre", api_groups: ["app"], paths: ["auth/login", "auth/signup"], object_kinds: ["query"]}
++  }
++}

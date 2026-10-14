@@ -1,0 +1,103 @@
+--- a/ai/tool/issue_refund.xs
++++ b/ai/tool/issue_refund.xs
+@@ -23,5 +23,6 @@
+   }
+ 
+   response = {refunded: true}
++  tags = ["cardholder"]
+   guid = "0LVSXuT5e_J68rDMjk8YcK3YCRk"
+ }
+\ No newline at end of file
+--- a/api/app/bank_accounts/link_POST.xs
++++ b/api/app/bank_accounts/link_POST.xs
+@@ -24,5 +24,6 @@
+   }
+ 
+   response = {linked: true}
++  tags = ["cardholder"]
+   guid = "TwfOehCPkAH9ys0Sep05eBawBvE"
+ }
+\ No newline at end of file
+--- a/api/app/payments/charge_POST.xs
++++ b/api/app/payments/charge_POST.xs
+@@ -13,10 +13,6 @@
+   }
+ 
+   stack {
+-    debug.log {
+-      value = "charge attempt " ~ ($input|json_encode)
+-    }
+-  
+     api.request {
+       url = "https://api.stripe.com/v1/payment_intents"
+       method = "POST"
+@@ -34,10 +30,6 @@
+       data = {
+         invoice_id              : $input.invoice_id
+         amount                  : $input.amount
+-        card_number             : $input.card_number
+-        card_cvv                : $input.card_cvv
+-        card_expiry             : $input.card_expiry
+-        cardholder_name         : $input.cardholder_name
+         stripe_payment_intent_id: $intent.response.result.id
+         status                  : "succeeded"
+       }
+@@ -45,5 +37,6 @@
+   }
+ 
+   response = $payment
++  tags = ["cardholder"]
+   guid = "BNAn_W_szr0DTgVUjmP5wcdQ1UM"
+ }
+\ No newline at end of file
+--- a/api/app/payments/fraud_check_POST.xs
++++ b/api/app/payments/fraud_check_POST.xs
+@@ -18,5 +18,6 @@
+   }
+ 
+   response = $score.response.result
++  tags = ["cardholder"]
+   guid = "1fSzcV4uUP3SHO7VRsYTugtXVxc"
+ }
+\ No newline at end of file
+--- a/policies/PCI-CHD-001.xs
++++ b/policies/PCI-CHD-001.xs
+@@ -0,0 +1,38 @@
++policy "PCI-CHD-001" {
++  title = "Cardholder data is not logged, not stored raw, and not sent to unapproved vendors"
++  statement = "Objects tagged cardholder never log request input. Card numbers, security codes, expiry and cardholder names are never stored in a table. Objects tagged cardholder send requests only to Stripe and Plaid."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss"]
++
++  rule {
++    title = "Cardholder objects never log request input"
++    check = "statement.expression_rule"
++    params = {
++      statements: ["debug.log"]
++      param_names: ["value"]
++      must_not_reference: ["$input"]
++      tags: ["cardholder"]
++    }
++  }
++
++  rule {
++    title = "Card numbers and security codes are never stored"
++    check = "table.field_attribute_required"
++    params = {
++      field_names: ["card_number", "card_cvv", "card_expiry", "cardholder_name"]
++      forbidden: true
++    }
++  }
++
++  rule {
++    title = "Cardholder objects send requests only to Stripe and Plaid"
++    check = "outbound.vendor_allowlist"
++    params = {
++      kinds: ["http"]
++      hosts: ["api.stripe.com", "production.plaid.com"]
++      tags: ["cardholder"]
++    }
++  }
++}

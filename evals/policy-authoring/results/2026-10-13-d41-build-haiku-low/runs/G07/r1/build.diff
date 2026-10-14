@@ -1,0 +1,286 @@
+--- a/api/admin/orgs/org_id/tenants_GET.xs
++++ b/api/admin/orgs/org_id/tenants_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id, role: "admin"}
++    } as $role_check
++
+     db.query tenants {
+       where = $db.tenants.org_id == $input.org_id
+       return = {type: "list"}
+--- a/api/admin/tenants/tenant_id_PATCH.xs
++++ b/api/admin/tenants/tenant_id_PATCH.xs
+@@ -11,16 +11,24 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id, role: "admin"}
++    } as $role_check
++
+     db.get tenants {
+       field_name = "id"
+       field_value = $input.tenant_id
+     } as $before
+-  
++
+     db.edit tenants {
+       field_name = "id"
+       field_value = $input.tenant_id
+       data = {status: $input.status, region: $input.region}
+     } as $tenant
++
++    function.run record_audit_event {
++      input = {actor_id: $auth.id, table_name: "tenants", record_id: $tenant.id, action: "edit"}
++    } as $audit
+   }
+ 
+   response = $tenant
+--- a/api/admin/tenants_GET.xs
++++ b/api/admin/tenants_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id, role: "admin"}
++    } as $role_check
++
+     db.query tenants {
+       return = {type: "list"}
+     } as $tenants
+--- a/api/admin/users_GET.xs
++++ b/api/admin/users_GET.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id, role: "admin"}
++    } as $role_check
++
+     db.query users {
+       sort = {users.created_at: "desc"}
+       return = {type: "list", paging: {page: $input.page, per_page: 50}}
+--- a/api/app/admin/stats_GET.xs
++++ b/api/app/admin/stats_GET.xs
+@@ -7,6 +7,10 @@
+   }
+ 
+   stack {
++    function.run require_role {
++      input = {user_id: $auth.id, role: "admin"}
++    } as $role_check
++
+     db.query tenants {
+       return = {type: "count"}
+     } as $tenant_count
+--- a/api/app/customers/customer_id_PATCH.xs
++++ b/api/app/customers/customer_id_PATCH.xs
+@@ -15,6 +15,10 @@
+       field_value = $input.customer_id
+       data = {email: $input.email, phone: $input.phone}
+     } as $customer
++
++    function.run record_audit_event {
++      input = {actor_id: $auth.id, table_name: "customers", record_id: $customer.id, action: "patch"}
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -16,6 +16,10 @@
+       field_value = $auth.id
+       data = $input[""]
+     } as $me
++
++    function.run record_audit_event {
++      input = {actor_id: $auth.id, table_name: "users", record_id: $me.id, action: "patch"}
++    } as $audit
+   }
+ 
+   response = $me
+--- a/api/app/refunds/refund_id/approve_POST.xs
++++ b/api/app/refunds/refund_id/approve_POST.xs
+@@ -13,6 +13,10 @@
+       field_value = $input.refund_id
+       data = {status: "approved", approved_by: $auth.id}
+     } as $refund
++
++    function.run record_audit_event {
++      input = {actor_id: $auth.id, table_name: "refunds", record_id: $refund.id, action: "edit"}
++    } as $audit
+   }
+ 
+   response = $refund
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -17,6 +17,10 @@
+       field_name = "id"
+       field_value = $input.user_id
+     }
++
++    function.run record_audit_event {
++      input = {actor_id: $input.user_id, table_name: "users", record_id: $input.user_id, action: "delete"}
++    } as $audit
+   }
+ 
+   response = {deleted: true}
+--- a/function/record_audit_event.xs
++++ b/function/record_audit_event.xs
+@@ -0,0 +1,22 @@
++// Adds one audit_log row recording a change: the user who made it, the table, the record and the action. Called by every endpoint and function that edits, patches or deletes a sensitive table.
++function record_audit_event {
++  input {
++    int actor_id?
++    text table_name
++    int record_id?
++    text action
++  }
++
++  stack {
++    db.add audit_log {
++      data = {
++        actor_id  : $input.actor_id
++        table_name: $input.table_name
++        record_id : $input.record_id
++        action    : $input.action
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/function/require_role.xs
++++ b/function/require_role.xs
+@@ -0,0 +1,21 @@
++// Stops the call with access denied unless the user's stored role is the role passed in. Admin endpoints call it first, with the logged-in user.
++function require_role {
++  input {
++    int user_id
++    text role
++  }
++
++  stack {
++    db.get users {
++      field_name = "id"
++      field_value = $input.user_id
++    } as $user
++
++    precondition ($user.role == $input.role) {
++      error_type = "accessdenied"
++      error = "You do not have access to this area."
++    }
++  }
++
++  response = {allowed: true}
++}
+--- a/policies/AUTH-002.xs
++++ b/policies/AUTH-002.xs
+@@ -0,0 +1,18 @@
++policy "AUTH-002" {
++  title = "Admin endpoints check the caller's role"
++  statement = "Every endpoint in the admin API group, and every endpoint under the admin path, calls require_role as its first statement, passing the logged-in user. An admin endpoint without that check is reported; ask the policy owner before exempting one."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc6.3"]
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["require_role"], placement: "first", must_reference: ["$auth"], api_groups: ["admin"], object_kinds: ["query"]}
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["require_role"], placement: "first", must_reference: ["$auth"], paths: ["admin"], object_kinds: ["query"]}
++  }
++}
+--- a/policies/AUTH-030.xs
++++ b/policies/AUTH-030.xs
+@@ -0,0 +1,13 @@
++policy "AUTH-030" {
++  title = "Users can't make themselves admin"
++  statement = "No database write takes the role field from request input, so a signed-in user cannot grant themselves a role. Writes that copy a whole request body into a user record are reported."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc6.3"]
++
++  rule {
++    check = "db.write_from_input_forbidden"
++    params = {fields: ["role"]}
++  }
++}
+--- a/policies/CHG-010.xs
++++ b/policies/CHG-010.xs
+@@ -0,0 +1,23 @@
++policy "CHG-010" {
++  title = "Changes to sensitive tables are audited"
++  statement = "Every endpoint, function and task that edits, patches or deletes a row in users, customers, refunds or tenants calls record_audit_event unconditionally, so each change leaves a row in audit_log. An endpoint that cannot record a change is reported, not exempted: ask the policy owner before adding an exemption."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc8.1"]
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["record_audit_event"], placement: "unconditional", when: {statement: "db.edit", tables: ["users", "customers", "refunds", "tenants"]}}
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["record_audit_event"], placement: "unconditional", when: {statement: "db.patch", tables: ["users", "customers", "refunds", "tenants"]}}
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {functions: ["record_audit_event"], placement: "unconditional", when: {statement: "db.del", tables: ["users", "customers", "refunds", "tenants"]}}
++  }
++}
+--- a/policies/RET-001.xs
++++ b/policies/RET-001.xs
+@@ -0,0 +1,18 @@
++policy "RET-001" {
++  title = "Only the audit function writes the audit log"
++  statement = "The audit_log table exists and is written only by record_audit_event. No other endpoint, function or task may add, edit or delete an audit entry, so the change history cannot be altered by other code."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "cc7.2"]
++
++  rule {
++    check = "workspace.object_required"
++    params = {object_kind: "table", names: ["audit_log"]}
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = {restricted_tables: ["audit_log"], allowed_functions: ["record_audit_event"]}
++  }
++}
+--- a/table/audit_log.xs
++++ b/table/audit_log.xs
+@@ -0,0 +1,18 @@
++// One row per change to a sensitive table: who made it, which table and record, what action and when. Written only by record_audit_event.
++table audit_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    int actor_id?
++    text table_name
++    int record_id?
++    text action
++  }
++
++  index = [
++    {type: "primary", field: [{name: "id"}]}
++    {type: "btree", field: [{name: "table_name", op: "asc"}]}
++  ]
++}

@@ -1,0 +1,25 @@
+// Approves a refund request so it can be paid out.
+query "refunds/{refund_id}/approve" verb=POST {
+  api_group = "app"
+  auth = "users"
+  tags = ["manager-only"]
+
+  input {
+    int refund_id
+  }
+
+  stack {
+    function.run require_manager {
+      input = {}
+    } as $manager
+
+    db.edit refunds {
+      field_name = "id"
+      field_value = $input.refund_id
+      data = {status: "approved", approved_by: $auth.id}
+    } as $refund
+  }
+
+  response = $refund
+  guid = "wFTfZrX0Y6sr1TXTqk_5nVktMk8"
+}

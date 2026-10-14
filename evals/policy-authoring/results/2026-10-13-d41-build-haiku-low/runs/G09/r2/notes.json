@@ -1,0 +1,163 @@
+{
+  "goal_id": "G09",
+  "objects_built": [
+    {
+      "kind": "task",
+      "name": "purge_expired_support_tickets",
+      "file": "workspace/task/purge_expired_support_tickets.xs",
+      "role": "Nightly delete of support_tickets older than 730 days"
+    }
+  ],
+  "objects_changed": [
+    {
+      "kind": "function",
+      "name": "delete_user_account",
+      "file": "workspace/function/delete_user_account.xs",
+      "change": "Adds db.bulk.delete on support_tickets by user_id; adds tags [erasure]"
+    },
+    {
+      "kind": "table",
+      "name": "users",
+      "file": "workspace/table/users.xs",
+      "change": "tags [personal]"
+    },
+    {
+      "kind": "table",
+      "name": "user_address",
+      "file": "workspace/table/user_address.xs",
+      "change": "tags [personal]"
+    },
+    {
+      "kind": "table",
+      "name": "sessions",
+      "file": "workspace/table/sessions.xs",
+      "change": "tags [personal]"
+    },
+    {
+      "kind": "table",
+      "name": "support_tickets",
+      "file": "workspace/table/support_tickets.xs",
+      "change": "tags [personal, retained]"
+    }
+  ],
+  "templates_considered": [
+    "personal_data_erasure (recipe): fits the erasure goal; its erase_user_data/account/erase names don't match the workspace's delete_user_account/DELETE /account, so I used the existing function instead",
+    "retained_data_has_age_limit (RET-003): fits the two-year cutoff",
+    "sensitive_fields_marked (CONF-011): considered, not used; could not confirm field attribute syntax",
+    "no_pii_in_responses (DATA-010): considered, not used; outside the erasure ask"
+  ],
+  "templates_used": [
+    "RET-003"
+  ],
+  "rules": [
+    {
+      "policy_key": "RET-003",
+      "check": "table.coverage_required",
+      "params": {
+        "tags": [
+          "retained"
+        ],
+        "referenced_by": {
+          "object_kinds": [
+            "task"
+          ],
+          "max_age_days": 730
+        }
+      },
+      "covers": "Two-year retention for support_tickets"
+    },
+    {
+      "policy_key": "ERASE-001",
+      "check": "table.coverage_required",
+      "params": {
+        "tags": [
+          "personal"
+        ],
+        "referenced_by": {
+          "object_kinds": [
+            "function"
+          ],
+          "tags": [
+            "erasure"
+          ],
+          "statements": [
+            "db.del",
+            "db.bulk.delete"
+          ]
+        }
+      },
+      "covers": "Erasure function reaches every personal table"
+    },
+    {
+      "policy_key": "ERASE-001",
+      "check": "object.auth_required",
+      "params": {
+        "object_kinds": [
+          "query"
+        ],
+        "paths": [
+          "account"
+        ]
+      },
+      "covers": "Deletion endpoint requires login"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "Erasure of customers, orders, invoices, payments, refunds (retained for tax/accounting?)",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Health data: patients, clinical_notes, appointments",
+      "why": "other"
+    },
+    {
+      "part": "newsletter_subscribers, customer_notes, payment_method (not keyed by user id)",
+      "why": "other"
+    },
+    {
+      "part": "Plain-text card_number/card_cvv in payments",
+      "why": "no check exists"
+    },
+    {
+      "part": "Backups, logs, vendor copies",
+      "why": "no check exists"
+    },
+    {
+      "part": "Two-year cutoffs for tables other than support_tickets",
+      "why": "needs runtime/org process"
+    }
+  ],
+  "assumptions": [
+    "'customer data' means user-linked data in this workspace; end-customer tables treated as business records pending owner decision",
+    "Tables take tags via a tags = [...] line after auth, matching endpoint tag syntax",
+    "Functions take tags via a tags = [...] line before guid",
+    "Two-year = 730 days, as in the templates"
+  ],
+  "workspace_names_used": [
+    "delete_user_account",
+    "users",
+    "user_address",
+    "sessions",
+    "support_tickets",
+    "account (DELETE endpoint)",
+    "payments",
+    "card_number",
+    "card_cvv"
+  ],
+  "confusions": [
+    "Recipe personal_data_erasure names erase_user_data and account/erase, which don't exist here; no guidance for adapting it to an existing deletion function",
+    "No example in the docs or workspace of the XanoScript syntax for table or function tags, so I assumed the endpoint syntax",
+    "No example of the sensitive field attribute syntax in the workspace, so CONF-011 could not be applied",
+    "Parse warned that tags/functions I add in this change don't exist on the branch yet; expected but it reads like a failure"
+  ],
+  "wished_for": [
+    "XanoScript syntax examples for table tags, function tags and field sensitive attribute",
+    "Recipe option that works with an existing deletion function instead of creating erase_user_data"
+  ],
+  "parse_attempts": 5,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Policies cover the erasure function's reach to tagged tables and a two-year purge on one table. Most personal data (end-customer, health, newsletter, payment) is outside the erasure path and the purge, and the policies cannot check runtime behaviour, backups or vendor copies."
+}

@@ -1,0 +1,14 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/CHG-001.xs",
+    "policies/CONV-040.xs",
+    "policies/CONV-050.xs",
+    "policies/LOG-010.xs",
+    "policies/PERF-001.xs",
+    "policies/REVIEW-001.xs"
+  ],
+  "modified": [],
+  "deleted": [],
+  "other_files": []
+}

@@ -1,0 +1,50 @@
+{
+  "goal_id": "G16",
+  "objects_built": [
+    {"kind": "function", "name": "require_manager", "file": "workspace/function/require_manager.xs", "role": "loads the caller from users and raises accessdenied unless role == manager; called first by the approve and price endpoints"}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "refunds/{refund_id}/approve POST", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "added function.run require_manager as first statement"},
+    {"kind": "query", "name": "products/{product_id}/price PATCH", "file": "workspace/api/app/products/product_id/price_PATCH.xs", "change": "added function.run require_manager as first statement"},
+    {"kind": "query", "name": "me PATCH", "file": "workspace/api/app/me_PATCH.xs", "change": "removed role input; replaced data = $input[\"\"] with explicit name, phone, marketing_opt_in so the body cannot write role"}
+  ],
+  "templates_considered": [
+    "no_self_promotion: fit, used as written for the role-write rule",
+    "admin_endpoints_check_role: partial fit; it requires a role function for admin endpoints, but the ask is about manager-only refund and price endpoints, so it does not apply directly",
+    "endpoints_need_login: did not fit; endpoints already require login"
+  ],
+  "templates_used": ["no_self_promotion"],
+  "rules": [
+    {"policy_key": "AUTH-030", "check": "db.write_from_input_forbidden", "params": {"fields": ["role"]}, "covers": "no request input can set a user's role, so no one can make themselves manager"},
+    {"policy_key": "MGR-010", "check": "object.statement_required", "params": {"functions": ["require_manager"], "placement": "first", "must_reference": ["$auth"], "paths": ["refunds/*/approve", "products/*/price"], "object_kinds": ["query"]}, "covers": "refund approval and price change endpoints call the manager check first"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "AI tool issue_refund can refund without a manager", "why": "couldn't tell how: the tool has no user context to check against, and no check reads tool-level auth"},
+    {"part": "who may be made manager (role assignment by admins or direct data edits)", "why": "needs runtime/org process"},
+    {"part": "correctness of require_manager's logic", "why": "no check exists that tests function logic beyond it being called first"},
+    {"part": "staff can view refunds and products", "why": "no change needed; read endpoints already scoped by org, not a policy gap"},
+    {"part": "admin role treated as manager or not", "why": "other: ask was ambiguous, built strict manager-only"}
+  ],
+  "assumptions": [
+    "role values are exactly the enum in table/users.xs, with manager spelled as in that enum",
+    "approve and price endpoints are the only refund-approval and price-change paths; grep found no others",
+    "staff are users with role staff; signup does not take role and defaults to member",
+    "policies are advisory, so they report rather than block"
+  ],
+  "workspace_names_used": ["users", "refunds", "products", "me", "refunds/{refund_id}/approve", "products/{product_id}/price", "issue_refund", "api_group app", "auth table users", "orgs"],
+  "confusions": [
+    "me_PATCH uses data = $input[\"\"], which is an unusual form; it was not clear whether the whole-record check reads it as a whole-record write, so I replaced it explicitly",
+    "the scope paths for statement_required use a * segment for {refund_id}; the skill says {param} in an entry matches only path parameters, and * is the safer choice, but it was not obvious which form to use",
+    "the parse warning for a function that is new in the same change looks like a failure but is expected; the guidance says names being built will show as missing, and that could be stated more directly"
+  ],
+  "wished_for": [
+    "an example of object.statement_required with placement first and a function taking the caller id, to confirm the shape",
+    "a template or recipe for role-gated endpoints (manager-only actions), since no_self_promotion and admin_endpoints_check_role only cover part of it",
+    "a way to scope a check to tool-level auth for AI tools"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The self-promotion path is closed by removing role from me and by AUTH-030, and the approve and price endpoints call the gate first (MGR-010 checks that). But the policies are advisory, the gate's logic is unchecked, the AI issue_refund tool still refunds without a manager, and admin is locked out by the strict manager check. The dry run is clean, but nothing has been pushed or tested."
+}

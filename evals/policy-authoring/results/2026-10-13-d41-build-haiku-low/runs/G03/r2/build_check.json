@@ -1,0 +1,26 @@
+{
+  "key": "91727749f0bce3c8",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:00:42.853Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy PCI-CHD-001",
+        "update tool issue_refund",
+        "update query bank-accounts/link POST",
+        "update query payments/charge POST",
+        "update query payments/fraud_check POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "pulled": true,
+  "added": [
+    "api/app/approvals/approval_id/approve_POST.xs",
+    "function/require_approval.xs",
+    "policies/AI-001.xs",
+    "policies/AI-010.xs",
+    "table/approvals.xs"
+  ],
+  "modified": [
+    "ai/agent/support_agent.xs",
+    "ai/tool/send_customer_email.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

@@ -1,0 +1,40 @@
+{
+  "goal_id": "G01",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "AUTH-010: fits (endpoints require login); used, narrowed to tables: [\"invoices\"] instead of except_tags public",
+    "AUTH-040: middleware required; rejected, no middleware is needed for an auth check",
+    "DATA-010: output fields; rejected, the ask is about auth, not which fields are returned",
+    "PERF-001: paging cap; rejected for this ask, mentioned in gap, the user asked about auth"
+  ],
+  "templates_used": ["AUTH-010"],
+  "rules": [
+    {"policy_key": "AUTH-010", "check": "object.auth_required", "params": {"tables": ["invoices"]}, "covers": "any endpoint that reaches the invoices table, directly or through a function, must require login; catches invoices/export which has no auth"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "returns the full invoices table (no paging/row limit)", "why": "other"},
+    {"part": "auth is correct: who logs in, row scoping by org", "why": "couldn't tell how"},
+    {"part": "nobody ships without it, including at 2am: enforcement is advisory, so findings do not block", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "invoices is the table name the customer means (workspace/table/invoices.xs)",
+    "advisory is the right default for a new policy per the skill; the customer's wish to prevent is noted, blocking is left to the owner",
+    "template tags soc2/cc6.1 dropped: customer named no framework"
+  ],
+  "workspace_names_used": ["invoices", "invoices/export", "invoices_GET", "invoices/{invoice_id}", "app", "export_GET.xs"],
+  "confusions": [
+    "The skill says a template's rules must be kept; AUTH-010's template rule uses except_tags public. Replacing it with tables scope was a judgement call, and the skill does not say whether to keep both.",
+    "The brief says to write the plan to out/reply.md before building, and the skill says the plan goes in the reply. I wrote out/plan.md first, then folded it into reply.md. Both files now exist.",
+    "The brief says a policy goal needs enforcement objects; for an auth-only check none are needed. The brief's three-part framing does not say what to do when enforcement is empty."
+  ],
+  "wished_for": [
+    "A way to see the findings of a dry run, not just the create line. Evaluate is forbidden here, so I cannot confirm which objects AUTH-010 will flag and must predict the export endpoint from reading the file.",
+    "An example of an auth-only policy scoped to tables, to confirm the tables param shape without guessing."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The check reads auth settings on endpoints reaching invoices, which covers the ask and the export endpoint. It is advisory, so it reports rather than prevents, and the dry run only shows the create line. Whether it flags export_GET is a prediction from reading the file, not an evaluate result."
+}

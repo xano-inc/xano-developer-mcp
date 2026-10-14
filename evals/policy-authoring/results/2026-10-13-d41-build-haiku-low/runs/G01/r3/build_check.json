@@ -1,0 +1,22 @@
+{
+  "key": "56c25382d51bcf74",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:00:35.762Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AUTH-010"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": false,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

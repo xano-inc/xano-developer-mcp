@@ -1,0 +1,57 @@
+{
+  "goal_id": "G05",
+  "objects_built": [
+    {"kind": "function", "name": "require_role", "file": "workspace/function/require_role.xs", "role": "Reads the logged-in user's role by id and stops with precondition unless it is admin or support_lead"}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "tenants", "file": "workspace/api/admin/tenants_GET.xs", "change": "Added function.run require_role as first statement, input user_id: $auth.id"},
+    {"kind": "query", "name": "orgs/{org_id}/tenants", "file": "workspace/api/admin/orgs/org_id/tenants_GET.xs", "change": "Added function.run require_role as first statement, input user_id: $auth.id"},
+    {"kind": "query", "name": "tenants/{tenant_id}", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "Added function.run require_role as first statement, input user_id: $auth.id"},
+    {"kind": "query", "name": "users", "file": "workspace/api/admin/users_GET.xs", "change": "Added function.run require_role as first statement, input user_id: $auth.id"},
+    {"kind": "query", "name": "admin/stats", "file": "workspace/api/app/admin/stats_GET.xs", "change": "Added function.run require_role as first statement, input user_id: $auth.id (URL is under /admin though its group is app)"}
+  ],
+  "templates_considered": [
+    "admin_endpoints_check_role (AUTH-002): fits the role-check ask; used",
+    "own_records_only (AUTH-020): covers user-owned records, not tenant org scope; did not fit",
+    "no_self_promotion (AUTH-030): covers writes of role from request input; the ask does not mention it; not used",
+    "endpoints_need_login (AUTH-010): endpoints already use auth=users; not asked; not used"
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"api_groups": ["admin"], "functions": ["require_role"], "placement": "first", "must_reference": ["$auth"], "object_kinds": ["query"]}, "covers": "Every endpoint in the admin API group calls the role check first"},
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"paths": ["admin"], "functions": ["require_role"], "placement": "first", "must_reference": ["$auth"], "object_kinds": ["query"]}, "covers": "Any endpoint whose path starts with admin, including app/admin/stats"},
+    {"policy_key": "TENANT-010", "check": "db.where_constraint_required", "params": {"field": "org_id", "table_selector": {"names": ["tenants"]}}, "covers": "Every read and write of tenants filters on org_id"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Role list is exactly admin or support_lead", "why": "no check exists"},
+    {"part": "org_id filter value matches the caller's org (tenant isolation against request-supplied org_id)", "why": "no check exists; compare_to would also block cross-org support staff, so it needs an owner decision"},
+    {"part": "Who holds which role and how roles are granted", "why": "needs runtime/org process"},
+    {"part": "Only admin endpoints are checked; a new admin endpoint outside api/admin with no /admin path is not seen", "why": "other: scoping is by group and path"}
+  ],
+  "assumptions": [
+    "'/admin' means the admin API group (canonical admin) plus any endpoint whose URL path starts with admin, so app/admin/stats is included",
+    "'filtering by org_id' means a where condition on org_id; the endpoints' request-supplied org_id is not checked against the caller",
+    "The role check should run before any db call, so it is the first statement; the precondition message is generic",
+    "Advisory enforcement is right for a new policy per the skill; the customer decides whether to make it blocking"
+  ],
+  "workspace_names_used": ["admin (api group)", "tenants", "users", "orgs", "role", "org_id", "admin/stats", "tenants/{tenant_id}", "orgs/{org_id}/tenants", "users (table)", "policy_authoring_eval"],
+  "confusions": [
+    "The skill's AUTH-002 example uses tags or paths; for a whole API group the catalogue has api_groups, which the template text does not mention for this check. I used api_groups plus a second rule for paths.",
+    "Scope params are written as top-level params in the rule. Worked, but the skill's 'Fill' list does not say which scope params a template may take.",
+    "I wrote the precondition condition as a var with || in its value. I did not find a worked XanoScript example of an OR in a precondition in this workspace; I assumed the var form is valid. Dry-run accepted the function.",
+    "The dry run listed three creates but none of the five endpoint updates. I could not tell whether it omits updates or did not detect the edits. Not explained by the docs I had."
+  ],
+  "wished_for": [
+    "A check or param that says a function's role list matches a given set (or that the role check compares the right field)",
+    "A worked example of a policy whose rules scope an API group and a path together, or the rule for OR-ing scopes",
+    "Dry-run output that lists updated endpoints, not only creates"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [
+    "Function \"require_role\" not on this branch (parse warning; expected before push, cleared by the dry run's CREATE)",
+    "Dry run listed no UPDATE lines for the five modified endpoints"
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The role check is enforced as first statement on all admin endpoints, so the 'before doing anything else' part is covered by AUTH-002. The role set itself and the org_id value are not checked, so the goal is only partly met. Tenant rule only checks that a filter exists, not that it matches the caller. No evaluate was run, so no platform findings are confirmed."
+}

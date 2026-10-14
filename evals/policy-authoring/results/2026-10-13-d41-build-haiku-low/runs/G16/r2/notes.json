@@ -1,0 +1,51 @@
+{
+  "goal_id": "G16",
+  "objects_built": [
+    {"kind": "function", "name": "require_manager", "file": "workspace/function/require_manager.xs", "role": "Loads the logged-in user by $auth.id and stops with accessdenied unless role is manager or admin. Called first by refund approval and price change endpoints."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "me PATCH", "file": "workspace/api/app/me_PATCH.xs", "change": "Removed role from input; replaced data = $input[\"\"] with an explicit field list (name, phone, marketing_opt_in)."},
+    {"kind": "query", "name": "refunds/{refund_id}/approve POST", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "Added tag manager-only; function.run require_manager as first statement."},
+    {"kind": "query", "name": "products/{product_id}/price PATCH", "file": "workspace/api/app/products/product_id/price_PATCH.xs", "change": "Added tag manager-only; function.run require_manager as first statement."}
+  ],
+  "templates_considered": [
+    "no_self_promotion (AUTH-030): fits the role-escalation half of the ask; used unchanged except fields narrowed to role.",
+    "admin_endpoints_check_role (AUTH-002): did not fit; it selects by admin path or tag, and the ask's endpoints are not admin endpoints.",
+    "role_based_access recipe: did not fit as a whole; it is built around admin endpoints and a role field check, not manager-only write endpoints. Its AUTH-030 part is the same as no_self_promotion."
+  ],
+  "templates_used": ["no_self_promotion"],
+  "rules": [
+    {"policy_key": "AUTH-030", "check": "db.write_from_input_forbidden", "params": {"fields": ["role"]}, "covers": "A signed-in user cannot write their own role through request input (me_PATCH)."},
+    {"policy_key": "ROLE-010", "check": "stack.statement_order", "params": {"before": {"functions": ["require_manager"]}, "after": ["db.edit", "db.patch", "db.add", "db.del"], "tables": ["refunds", "products"]}, "covers": "Any object writing refunds or products must call require_manager before the write, including future endpoints."},
+    {"policy_key": "ROLE-010", "check": "object.statement_required", "params": {"functions": ["require_manager"], "placement": "first", "tags": ["manager-only"]}, "covers": "The refund approval and price change endpoints call require_manager as their first statement."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "issue_refund AI tool can refund payments without a manager", "why": "couldn't tell how: a tool has no $auth, so require_manager cannot run inside it; the right fix is a product decision"},
+    {"part": "Staff can view (read-only) refunds and products", "why": "no check exists for read access"},
+    {"part": "Who holds the manager role, and how it is granted or revoked", "why": "needs runtime/org process"},
+    {"part": "Staff cannot change other data", "why": "not in the ask beyond refunds, prices and role; no check reads runtime authorisation of other writes"}
+  ],
+  "assumptions": [
+    "manager role name is exactly \"manager\"; \"admin\" also allowed (ask says managers only; flagged to customer).",
+    "Price change means writes to the products table; refund approval means writes to the refunds table.",
+    "Staff can already view refunds and products via existing GET endpoints (refunds_GET, products_GET), so no change was needed there."
+  ],
+  "workspace_names_used": ["users", "role", "refunds", "products", "me PATCH", "refunds/{refund_id}/approve POST", "products/{product_id}/price PATCH", "issue_refund", "require_manager (new)", "manager-only (new tag)"],
+  "confusions": [
+    "The brief says to write the policy 'naming the objects you build', but the policy params have no clear way to scope to a function by name beyond functions:[...]; it was not obvious whether the function name must match the stored XanoScript name exactly. Used function name require_manager.",
+    "The role_based_access recipe and admin_endpoints_check_role template assume a shared admin path or tag. Nothing in the skill covers a non-admin role gate on arbitrary endpoints; I had to compose stack.statement_order and object.statement_required by hand.",
+    "The no_self_promotion template's fields example includes is_admin, which does not exist in this workspace; it produced a 'field not on any table' warning. The template gives no guidance on dropping fields that do not exist.",
+    "The stack.statement_order params doc says tables selects objects reaching a table, not just objects writing it. It was not clear whether reaching includes read-only endpoints (it does, and they pass since they have no after statement). Worth stating in the check description.",
+    "Function call syntax in the workspace is function.run <name> { input = {...} } as $x; for a function taking no input I passed input = {}. Unverified whether an empty input is required."
+  ],
+  "wished_for": [
+    "A template or recipe for 'only role X may run these endpoints' that is not tied to admin paths.",
+    "A way for an AI tool to carry an authenticated user (or to be scoped to a role) so guards can apply to tools as well as endpoints.",
+    "Guidance on handling template fields that name objects absent from this workspace."
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Policies parse and the dry run is clean, and the role field escalation and the two manager-only endpoints are covered. Confidence stops short of high because the issue_refund tool is outside what the policy can enforce, role assignment is outside the workspace, and the checks read definitions only, so a real manager check at run time is not proven by a policy."
+}

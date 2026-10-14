@@ -1,0 +1,80 @@
+{
+  "goal_id": "G14",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "One row per change to a customer-email table: actor, table, record id, action, time. Written only by record_audit_event."},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "Adds one audit_log row via db.add. Every audited write calls it unconditionally after the write."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "customers POST", "file": "workspace/api/app/customers_POST.xs", "change": "Added function.run record_audit_event (create) after db.add customers; actor $auth.id"},
+    {"kind": "query", "name": "customers/{customer_id} PATCH", "file": "workspace/api/app/customers/customer_id_PATCH.xs", "change": "Added function.run record_audit_event (update) after db.patch customers; actor $auth.id"},
+    {"kind": "query", "name": "auth/signup POST", "file": "workspace/api/app/auth/signup_POST.xs", "change": "Added function.run record_audit_event (create) after db.add users; actor is the new user's id"},
+    {"kind": "query", "name": "me PATCH", "file": "workspace/api/app/me_PATCH.xs", "change": "Added function.run record_audit_event (update) after db.patch users; actor $auth.id"},
+    {"kind": "query", "name": "newsletter/subscribe POST", "file": "workspace/api/app/newsletter/subscribe_POST.xs", "change": "Added function.run record_audit_event (create) after db.add newsletter_subscribers; no actor (public)"},
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Added function.run record_audit_event (delete) after db.del users; actor is the deleted user's id"},
+    {"kind": "function", "name": "summarize_ticket", "file": "workspace/function/summarize_ticket.xs", "change": "Added function.run record_audit_event (update) after db.edit support_tickets; no actor"},
+    {"kind": "task", "name": "nightly_ticket_summaries", "file": "workspace/task/nightly_ticket_summaries.xs", "change": "Added function.run record_audit_event (update) after db.edit support_tickets inside the foreach; no actor. The AI call inside the foreach is left as is and is a COST-001 finding."}
+  ],
+  "templates_considered": [
+    "RET-001 audit_log_protected: fits the audit-log part of the Record who changed what recipe; used as written",
+    "CONF-011 sensitive_fields_marked: considered for the email fields; not used, the ask did not request field attributes",
+    "CONF-012 confidential_tables_tagged: considered for tagging email tables; not used, the policy names the tables directly instead of tagging them",
+    "DATA-010 no_pii_in_responses: considered; not used, the ask is about who changed what, not responses",
+    "AUTH-040 protected_endpoints_run_middleware / LOG-011 middleware_surfaces_errors: considered for the cost goal; not used, no middleware in the ask",
+    "SEC-013 requests_have_timeout: considered for the retry loop; not used, it bounds timeouts, not retry counts",
+    "PERF-001 reads_are_paged: considered for AI cost; not used, the cost was from AI calls in a loop, not from read size",
+    "CONV-030 ai_tools_described / AI-001 agents_use_approved_tools: considered for the AI cost goal; not used, not asked"
+  ],
+  "templates_used": ["audit_log_protected"],
+  "rules": [
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["ai.agent.run", "ai.external.mcp.tool.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI call inside a loop cost $900"},
+    {"policy_key": "COST-001", "check": "stack.statement_forbidden", "params": {"statements": ["while"], "object_kinds": ["task"]}, "covers": "background task retrying forever (approximation: bans the while loop shape only)"},
+    {"policy_key": "AUDIT-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "who changed what: audit table exists (RET-001)"},
+    {"policy_key": "AUDIT-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "who changed what: only the audit function writes or edits the audit log (RET-001)"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.add", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: inserts into customer-email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: edits of customer-email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: patches of customer-email tables are audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "users", "newsletter_subscribers", "support_tickets", "patients"]}}, "covers": "who changed what: deletes from customer-email tables are audited"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Spend cap on AI calls (what the $900 bill actually needed)", "why": "no check exists"},
+    {"part": "Background task retries that never stop (general case)", "why": "no check exists; the while rule catches only the while-loop shape"},
+    {"part": "Bulk writes (db.bulk.*, db.add_or_edit, db.truncate) on customer-email tables are audited", "why": "no check exists for the required-call rule on bulk statements; the rule set only names db.add, db.edit, db.patch, db.del"},
+    {"part": "Functions that write customer-email tables are judged by the call rules", "why": "check limits: object.statement_required inspects query, tool, task and message only"},
+    {"part": "Audit entries record old and new values", "why": "no check reads what the audit row stores; the schema is my design, not a policy requirement"},
+    {"part": "Who can read the audit log", "why": "needs runtime/org process; policies read definitions, not who queries a table"}
+  ],
+  "assumptions": [
+    "Tables that store customer emails: customers, users, newsletter_subscribers, support_tickets (requester_email), patients (email). orgs.billing_email excluded.",
+    "users are customers as well as staff, since the users table holds sign-in emails for end users",
+    "Audit rows record who (actor), what table, which record, what action and when; no before/after values",
+    "A missing actor (public signup, newsletter, scheduled task, function with no caller identity) is recorded as null",
+    "A while loop in a task is the forever-retry shape; banning it in tasks is acceptable as a first rule",
+    "Both policies advisory and active, per the brief and skill default for new policies"
+  ],
+  "workspace_names_used": [
+    "customers", "users", "newsletter_subscribers", "support_tickets", "patients", "orgs",
+    "customers POST", "customers/{customer_id} PATCH", "auth/signup POST", "me PATCH", "newsletter/subscribe POST",
+    "delete_user_account", "summarize_ticket", "nightly_ticket_summaries", "retry_failed_webhooks",
+    "api_group app", "auth table users"
+  ],
+  "confusions": [
+    "The skill's Build/recipe for 'Record who changed what' names tags as the selector, but object.statement_required's when has no tag selector (only tables), so the audited table list is written by name",
+    "The brief says object.statement_required scope is by object kind, but the catalogue lists its kinds as query, tool, task, message; the skill's stack list includes function, so it was unclear whether functions are judged. Confirmed by reading the catalogue entry, not by running a policy",
+    "The skill's recipes mention 'audit log only written by record_audit_event' via workspace.object_required + table.write_location_restricted, which needs the table and function to exist on the branch; the parse warnings for those names are expected but unclear to a reader",
+    "No guidance on whether a function that writes is inspected by object.statement_required when called from an endpoint"
+  ],
+  "wished_for": [
+    "A template or check for bounded retries: a task whose loop has a counter or a max-attempts limit",
+    "A check or recipe for spend, e.g. AI calls capped per run or per task, even if only as a tag-driven rule",
+    "A way to select tables by tag inside object.statement_required's when (for example when.table_tags), so the audited list is one tag instead of a hand-written list",
+    "A recipe example with a function-level write (a function that edits a table), showing whether the call rules judge functions"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [
+    "Parse warnings for AUDIT-001 that audit_log and record_audit_event are not on the branch: expected, because this change creates them",
+    "Dry run exit 0; no blocked objects; no missing references reported"
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The audit rules and their enforcement are concrete and the dry run passes, so the who-changed-what part should hold for the listed tables and single-record writes. The cost part is partial: it catches the AI-in-a-loop shape and the while-loop retry shape, but nothing caps spend or bounds retries in general. Neither policy has been evaluated (the brief forbids evaluate), so I have no finding list and cannot confirm which objects are flagged. The table list and the audit row schema are my judgement."
+}

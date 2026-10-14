@@ -1,0 +1,115 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AI-001.xs",
+    "build/policies/AI-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AI-001.xs",
+      "ok": true,
+      "key": "AI-001",
+      "title": "AI agents use only approved tools",
+      "statement": "Each AI agent enables only the tools on the approved list. A new tool needs its name added to the list by its owner before an agent can enable it.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AI-001.R1",
+          "title": "",
+          "check": "agent.tool_allowlist",
+          "params": {
+            "tools": [
+              "lookup_order",
+              "issue_refund",
+              "send_customer_email"
+            ],
+            "tool_tags": [],
+            "external_tools": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/AI-010.xs",
+      "ok": true,
+      "key": "AI-010",
+      "title": "Agent tools cannot delete, and emails wait for approval",
+      "statement": "AI agent tools never delete records. Every email a tool sends must run after the require_approval check, which stops unless a human has approved the action. An approval is given through the approvals endpoint.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AI-010.R1",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.del",
+              "db.bulk.delete",
+              "db.truncate"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AI-010.R2",
+          "title": "",
+          "check": "stack.statement_order",
+          "params": {
+            "before": {
+              "functions": [
+                "require_approval"
+              ]
+            },
+            "after": [
+              "util.send_email"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AI-010.R2",
+          "text": "Function \"require_approval\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    }
+  ]
+}

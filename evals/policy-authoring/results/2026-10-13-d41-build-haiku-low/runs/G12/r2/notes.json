@@ -1,0 +1,36 @@
+{
+  "goal_id": "G12",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "runtime data / copies between environments: not checkable per catalogue not_checkable 'runtime_data'; no template fits",
+    "access_reviews_and_approvals (not_checkable): on-call access is not in object definitions; no template fits",
+    "no_pii_in_responses (DATA-010): does not stop data copies between environments; rejected as an approximation",
+    "retained_data_has_age_limit / tables_classified / agreed_tag_vocabulary: tagging tables does not keep records out of staging; rejected as an approximation"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "no check exists"},
+    {"part": "devs can only get into prod through the on-call process", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "The customer's 'staging' and 'prod' are environments or branches of this workspace, and the ask is about what the policy can see, not about the specific names."
+  ],
+  "workspace_names_used": [
+    "policy_authoring_eval"
+  ],
+  "confusions": [
+    "The skill says 'write no policy only when no part is checkable', but the catalogue's not_checkable list does not say whether a branch or environment is in scope for the runtime_data topic. I took the 'copies between branches/environments' wording as covering this ask, which I think is right, but the boundary is not stated precisely.",
+    "The brief asked for a plan before building and a customer yes, while also saying to build without asking again. For a no-build outcome that tension does not arise, but the brief does not say what to do when the whole ask is uncheckable beyond 'build nothing'."
+  ],
+  "wished_for": [
+    "A pointer in the catalogue to which 'staging' or 'environment' names the policy can scope on, if any, so a reviewer can see whether branch-level scoping is even possible.",
+    "An explicit template or recipe for 'prevent prod access outside a process' that says it is a not-checkable goal, so the customer gets the same answer every time."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "Neither part of the ask can be enforced by a policy: record copies and access grants are outside object definitions, per the skill's not-checkable list. Confidence that a policy achieves the goal is low by construction; I built nothing, so there is no output for the customer to rely on beyond the explanation in reply.md."
+}

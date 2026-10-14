@@ -1,0 +1,24 @@
+// Approves a refund request so it can be paid out.
+query "refunds/{refund_id}/approve" verb=POST {
+  api_group = "app"
+  auth = "users"
+
+  input {
+    int refund_id
+  }
+
+  stack {
+    db.edit refunds {
+      field_name = "id"
+      field_value = $input.refund_id
+      data = {status: "approved", approved_by: $auth.id}
+    } as $refund
+
+    function.run record_audit_event {
+      input = {table_name: "refunds", record_id: $input.refund_id, action: "edit"}
+    } as $audit
+  }
+
+  response = $refund
+  guid = "wFTfZrX0Y6sr1TXTqk_5nVktMk8"
+}

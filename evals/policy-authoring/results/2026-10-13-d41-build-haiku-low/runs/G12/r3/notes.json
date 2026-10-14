@@ -1,0 +1,40 @@
+{
+  "goal_id": "G12",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "RET-001: audit log write restriction; does not cover environment copies or dev access, so not used",
+    "AUTH-002: admin endpoints check the caller's role; covers app admin endpoints, not developer access to prod, so not used",
+    "AUTH-030: users can't make themselves admin; app users, not developers, so not used",
+    "AUTH-010: endpoints require login; end-user auth, not developer access, so not used",
+    "VND-001: data only to approved vendors; restricts hosts, not production-to-staging copies, so not used",
+    "table.write_location_restricted (no template): restricts writers, not copies, so not used"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "no check exists"},
+    {"part": "devs can only get into prod through the on-call process", "why": "needs runtime/org process"},
+    {"part": "which objects are production vs staging (no environment marking in the workspace)", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "'prod' and 'staging' are environments represented outside the stored object definitions (separate workspaces/branches/databases), not as a field in the schema",
+    "tenants.region and tenants.status do not mark an environment as production or staging"
+  ],
+  "workspace_names_used": ["tenants", "orgs", "policy_authoring_eval"],
+  "confusions": [
+    "The brief says to plan then build, but the ask cannot be built as policy; the skill's rule that no policy is written when no part is checkable applied, and the brief's 'build nothing' branch fits. Both are consistent but it took reading the not_checkable section to be sure.",
+    "The skill's Recipes section has no recipe for environment separation or developer access, and the 'What no check can see' list does not say whether a partial rule is preferable to none. I took 'write no policy when no part is checkable' to mean none here, since no part maps to a check.",
+    "The tool-result files from the skill and templates were truncated in view; I had to read the rest of SKILL.md with offset. Not a product defect, but a long single file is awkward to load in one call."
+  ],
+  "wished_for": [
+    "An example recipe or template for 'separate production from non-production' that says what the workspace must mark (an environment tag or field) and what a rule can check, and that states the gap explicitly.",
+    "A check or documented field that reads which environment or database a statement connects to, so that environment-scoped rules are possible.",
+    "A short note in the not_checkable entries pointing to where these controls live (identity provider, workspace membership, approval tooling) so the customer is not left guessing."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "High confidence that no policy here can enforce either requirement: both depend on runtime data copies and access/approval processes that the catalogue lists as not checkable, and no check reads the environment a statement uses. I did not build or push anything, so the outcome is a clear 'no policy', not a partial one."
+}

@@ -1,0 +1,27 @@
+{
+  "key": "ce96126b4d83d453",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:05.222Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy CHG-001",
+        "create policy CONV-040",
+        "create policy CONV-050",
+        "create policy LOG-010",
+        "create policy PERF-001",
+        "create policy REVIEW-001"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": false,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "goal_id": "G11",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "requests_have_timeout (SEC-013): fits; used as the base rule for timeout max, extended with an explicit-timeout rule",
+    "external_calls_handle_errors (LOG-010): fits; used, with statements list extended beyond api.request to cover all external statements",
+    "Protect health data / Keep code easy to review (recipes): read; the review recipe names LOG-010 and SEC-013 among others, but the rest of its templates are off-ask, so I used the two templates directly",
+    "statement.param_bound alone (SEC-013 template): judged omitted timeouts at the 10s runtime default, so it passes calls with no timeout; a gap for this ask"
+  ],
+  "templates_used": ["requests_have_timeout", "external_calls_handle_errors"],
+  "rules": [
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "timeout set and bounded at 30s on HTTP calls"},
+    {"policy_key": "SEC-013", "check": "statement.param_required", "params": {"statements": ["api.request", "stream.from_request", "webflow.request"], "param_names": ["timeout"]}, "covers": "timeout set explicitly, so calls with none are not silently judged at the 10s default"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "ai.external.mcp.tool.run", "ai.external.mcp.tool.list", "ai.external.mcp.server_details", "db.external.postgres.direct_query", "db.external.mysql.direct_query", "db.external.mssql.direct_query", "db.external.oracle.direct_query", "db.external.snowflake.direct_query"], "must_be_inside": ["try_catch"]}, "covers": "error handling: every external call sits in a try block"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling actually does something useful in the catch", "why": "no check exists"},
+    {"part": "timeout value is right for each vendor", "why": "couldn't tell how"},
+    {"part": "behaviour when a vendor is down (app does not hang)", "why": "needs runtime/org process"},
+    {"part": "timeout values from variables or env are checked at runtime", "why": "couldn't tell how"},
+    {"part": "outbound calls by statements not in the list (new integration types)", "why": "other"}
+  ],
+  "assumptions": [
+    "A 30-second maximum for timeout is an acceptable default; the customer did not give a number",
+    "api.request timeout unit is seconds",
+    "Two policies, one per template, is acceptable for a single ask",
+    "No wrapper function is needed; the policy checks each call site"
+  ],
+  "workspace_names_used": ["acme_get_tracking", "acme_sync_shipping_rates", "acme_notify_sms", "retry_failed_webhooks", "quote_POST", "issue_refund", "fraud_check_POST", "charge_POST", "bank_accounts/link_POST"],
+  "confusions": [
+    "The skill says a template is one policy per template and recipes cover multi-template goals; the customer said 'a policy', so the split into two policies was a judgment call",
+    "The skill's statement.param_bound text says an omitted param is judged at its runtime default, and the template's own limits note says the 10s default passes a 30s max. Combined, a no-timeout call passes SEC-013 unless param_required is added; the skill does not point to param_required for this, only the catalogue does",
+    "xano policy parse printed the policy back without its severity line; unclear whether severity was dropped or only omitted from the echo",
+    "The skill tells me to run xano policy evaluate for predictions, but the brief forbids evaluate; I could only predict"
+  ],
+  "wished_for": [
+    "A template or recipe for 'external calls have timeout and error handling' that includes the explicit-timeout rule",
+    "A catalogue hint that an omitted timeout passes param_bound, pointing to statement.param_required",
+    "A clear answer on whether containment's statement list should include the MCP and direct DB statements by default"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policies parse and the dry run is clean, and the two rules directly check timeout presence and bound and try_catch wrapping. Confidence is not high because the check cannot see the catch body, runtime values, or vendor behaviour during an outage, which is the actual failure the customer hit. I did not run evaluate, so predicted findings are unconfirmed."
+}

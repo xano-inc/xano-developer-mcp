@@ -1,0 +1,63 @@
+{
+  "goal_id": "G06",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "external_calls_handle_errors (LOG-010): fits the 'breaking prod / error handling' part; used as is, covers api.request only",
+    "endpoints_have_tests (CHG-001): fits 'no tests'; used as is",
+    "endpoints_stay_short (CONV-040): fits 'giant functions'; used with its template params, no except_tags",
+    "no_leftover_code (CONV-050): fits the wider 'you know the drill' review items; used as is",
+    "reads_are_paged (PERF-001): fits a common review item (unpaged reads); used as is",
+    "code_review_basics recipe: used as the base plan; its legacy tag build step declined because it exempts the big objects the rule is meant to flag",
+    "middleware_surfaces_errors (LOG-011): considered, not used: no middleware in the ask",
+    "tags_kebab_case / agreed_tag_vocabulary, conventions set (CONV-010..013): considered, not used: naming not asked for"
+  ],
+  "templates_used": ["LOG-010", "CHG-001", "CONV-040", "CONV-050", "PERF-001"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "error handling on outbound calls"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "no tests (endpoints)"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "tests that assert nothing / no anonymous-rejection test"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant functions and deep nesting"},
+    {"policy_key": "CONV-050", "check": "stack.disabled_statement_forbidden", "params": {}, "covers": "leftover code"},
+    {"policy_key": "CONV-050", "check": "object.unused_input_forbidden", "params": {}, "covers": "leftover code"},
+    {"policy_key": "CONV-050", "check": "stack.unused_variable_forbidden", "params": {}, "covers": "leftover code"},
+    {"policy_key": "PERF-001", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 1000, "unit": "rows", "object_kinds": ["query", "tool"]}, "covers": "endpoints returning every row (part of 'you know the drill')"},
+    {"policy_key": "REVIEW-001", "check": "object.description_required", "params": {"object_kinds": ["function"], "min_length": 20}, "covers": "functions that do not say what they do (recipe extra rule)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Missing error handling on non-api.request outbound calls (stream.from_request, ai.external.mcp.*, db.external.*)", "why": "other: template scope is api.request only; not widened without the user asking"},
+    {"part": "Quality of the error handling inside catch", "why": "no check exists"},
+    {"part": "Tests that exist but fail, or that are meaningless", "why": "no check exists (catalogue inspects definitions, not runs)"},
+    {"part": "Reviewer approval / sign-off of changes (no juniors breaking prod by skipping review)", "why": "needs runtime/org process"},
+    {"part": "Breaking prod at runtime (bad data, deploy behaviour)", "why": "needs runtime/org process"},
+    {"part": "Blocking enforcement so juniors cannot push violations", "why": "other: policies written advisory per skill default; making them blocking is the owner's choice"},
+    {"part": "Exempting big legacy objects from the size rule", "why": "other: recipe's legacy tag would exempt them; declined, owner's decision"}
+  ],
+  "assumptions": [
+    "'Giant functions' means stacks over 30 statements or 3 levels of nesting (template default), not a line count",
+    "'No tests' means workflow/unit tests on endpoints, as CHG-001 checks; functions are not required to have tests in this plan",
+    "The recipe's 'legacy' tag should not be applied to existing objects without the owner's say-so",
+    "Advisory enforcement is the right default for a first rollout"
+  ],
+  "workspace_names_used": [
+    "acme_sync_shipping_rates (82-line function, largest stack; used as an example in the reply)",
+    "acme_get_tracking (has try_catch; example of the existing pattern)",
+    "policy_authoring_eval (workspace name in push output)"
+  ],
+  "confusions": [
+    "Recipe 'Keep code easy to review' lists 'functions say what they do' under extra rules, but the rule's params are given as a JSON example only; I wrote the params myself from the recipe text (min_length 20).",
+    "Template LOG-010 summary says 'every external request sits inside a try block', but its only rule checks api.request; the limits text lists the other statements to add. Did not widen, so the summary and the rule disagree in scope.",
+    "CONV-040 limits text says on blocking policies a change over the limit is blocked even when it shrinks it, and suggests except_tags for legacy objects; it is not clear whether advisory rollout is the right default for this recipe, so I chose advisory.",
+    "The recipe's build step adds a 'legacy' tag to existing objects as part of the plan, which is an exemption of the rule; the guidance does not say when that is appropriate, so I left it to the owner."
+  ],
+  "wished_for": [
+    "A recipe variant without the legacy-tag build step, or a note saying to apply it only after the owner names the objects",
+    "Parameter examples for template rules whose 'examples' field is empty (CONV-040, PERF-001) so the fill is not guessed",
+    "A template for a function-level test rule (every function has a test); CHG-001 covers endpoints only"
+  ],
+  "parse_attempts": 6,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The six policies parse and the dry run reports them cleanly, and the checks match the template rules. But the ask is about behaviour (stop breaking prod), and the policies are advisory and only read stored definitions. They flag missing try_catch on api.request, missing workflow tests, long stacks, leftover code, unpaged reads and undescribed functions. They do not stop a bad merge, check review, or cover other outbound calls. I have not run xano policy evaluate, so predicted findings are unverified."
+}

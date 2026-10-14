@@ -1,0 +1,263 @@
+--- a/api/app/appointments_GET.xs
++++ b/api/app/appointments_GET.xs
+@@ -1,6 +1,7 @@
+ // Today's appointments for the waiting-room screen.
+ query appointments verb=GET {
+   api_group = "app"
++  auth = "users"
+ 
+   input {
+   }
+@@ -10,8 +11,16 @@
+       sort = {appointments.starts_at: "asc"}
+       return = {type: "list"}
+     } as $appointments
++  
++    foreach ($appointments) {
++      each as $appointment {
++        function.run log_phi_access {
++          input = {record_table: "appointments", record_id: $appointment.id}
++        } as $access
++      }
++    }
+   }
+ 
+   response = $appointments
+   guid = "5e9I6Dx7fcJbBFwmhaCrYUzWcQA"
+-}
+\ No newline at end of file
++}
+--- a/api/app/clinical_notes_POST.xs
++++ b/api/app/clinical_notes_POST.xs
+@@ -11,10 +11,6 @@
+   }
+ 
+   stack {
+-    debug.log {
+-      value = $input[""]
+-    }
+-  
+     db.add clinical_notes {
+       data = {
+         patient_id    : $input.patient_id
+@@ -23,8 +19,12 @@
+         note          : $input.note
+       }
+     } as $created
++  
++    function.run log_phi_access {
++      input = {record_table: "clinical_notes", record_id: $created.id}
++    } as $access
+   }
+ 
+   response = $created
+   guid = "3rB_UNodo0BhCF1z58vvHWyVMSk"
+-}
+\ No newline at end of file
++}
+--- a/api/app/patients/patient_id_GET.xs
++++ b/api/app/patients/patient_id_GET.xs
+@@ -12,8 +12,12 @@
+       field_name = "id"
+       field_value = $input.patient_id
+     } as $patient
++  
++    function.run log_phi_access {
++      input = {record_table: "patients", record_id: $patient.id}
++    } as $access
+   }
+ 
+   response = $patient
+   guid = "mWodKtX8x1ejIhzDrLMW9bAuG7Y"
+-}
+\ No newline at end of file
++}
+--- a/table/appointments.xs
++++ b/table/appointments.xs
+@@ -1,6 +1,7 @@
+ // Patient appointments with a provider.
+ table appointments {
+   auth = false
++  tags = ["phi"]
+ 
+   schema {
+     int id
+@@ -10,10 +11,10 @@
+   
+     text provider_name
+     timestamp starts_at
+-    text reason?
++    text reason? {sensitive = true}
+     text status?=booked
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
+   guid = "BzrPal7tO1x1hNGsRNgzRVQsOTg"
+-}
+\ No newline at end of file
++}
+--- a/table/clinical_notes.xs
++++ b/table/clinical_notes.xs
+@@ -1,6 +1,7 @@
+ // Clinicians' notes from an appointment.
+ table clinical_notes {
+   auth = false
++  tags = ["phi"]
+ 
+   schema {
+     int id
+@@ -13,11 +14,11 @@
+       table = "appointments"
+     }
+   
+-    text diagnosis?
+-    text note
++    text diagnosis? {sensitive = true}
++    text note {sensitive = true}
+     text author_name?
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
+   guid = "UiAA2Sf5YY9LLj5_dLilWvAygo0"
+-}
+\ No newline at end of file
++}
+--- a/table/patients.xs
++++ b/table/patients.xs
+@@ -1,6 +1,7 @@
+ // Patients of the clinic product.
+ table patients {
+   auth = false
++  tags = ["phi"]
+ 
+   schema {
+     int id
+@@ -9,16 +10,16 @@
+       table = "orgs"
+     }
+   
+-    text first_name
+-    text last_name
+-    date dob
+-    text ssn?
+-    email email?
+-    text phone?
+-    text address?
+-    text insurance_member_id?
++    text first_name {sensitive = true}
++    text last_name {sensitive = true}
++    date dob {sensitive = true}
++    text ssn? {sensitive = true}
++    email email? {sensitive = true}
++    text phone? {sensitive = true}
++    text address? {sensitive = true}
++    text insurance_member_id? {sensitive = true}
+   }
+ 
+   index = [{type: "primary", field: [{name: "id"}]}]
+   guid = "2owJebbNtRm-Ek78hCG3FxeWrO0"
+-}
+\ No newline at end of file
++}
+--- a/function/log_phi_access.xs
++++ b/function/log_phi_access.xs
+@@ -0,0 +1,19 @@
++// Records that the logged-in user accessed one health record. Every endpoint that reaches a phi table calls it.
++function log_phi_access {
++  input {
++    text record_table
++    int record_id
++  }
++
++  stack {
++    db.add phi_access_log {
++      data = {
++        user_id     : $auth.id
++        record_table: $input.record_table
++        record_id   : $input.record_id
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/policies/HIPAA-PHI-001.xs
++++ b/policies/HIPAA-PHI-001.xs
+@@ -0,0 +1,57 @@
++policy "HIPAA-PHI-001" {
++  title = "Health data is tagged, marked, login-only and logged"
++  statement = "Tables holding health data are tagged phi and their health fields are marked sensitive. Only logged-in endpoints reach them. Every endpoint or task that reaches them records the access in phi_access_log through log_phi_access, the only writer of that table. Health fields stay out of responses and debug logs, and external requests verify TLS. A deliberate exception needs the policy owner's sign-off."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["hipaa", "phi"]
++
++  rule {
++    check = "table.tag_required"
++    params = { tag: "phi", field_names: ["dob", "ssn", "insurance_member_id", "diagnosis", "first_name", "last_name", "address"] }
++  }
++
++  rule {
++    check = "table.field_attribute_required"
++    params = { attribute: "sensitive", field_names: ["dob", "ssn", "insurance_member_id", "diagnosis", "first_name", "last_name", "address"] }
++  }
++
++  rule {
++    check = "object.tagged_table_access"
++    params = { table_tags: ["phi"] }
++  }
++
++  rule {
++    check = "db.output_fields_forbidden"
++    params = { fields: ["ssn", "dob", "insurance_member_id", "diagnosis", "note"], table_tags: ["phi"], object_kinds: ["query"] }
++  }
++
++  rule {
++    check = "statement.expression_rule"
++    params = { statements: ["debug.log"], param_names: ["value"], must_not_reference: ["$input", "$auth", "$env"] }
++  }
++
++  rule {
++    check = "table.view_hide_required"
++  }
++
++  rule {
++    check = "statement.param_forbidden"
++    params = { statements: ["api.request", "stream.from_request"], param_names: ["verify_peer", "verify_host"], values: [false] }
++  }
++
++  rule {
++    check = "workspace.object_required"
++    params = { object_kind: "table", names: ["phi_access_log"] }
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = { restricted_tables: ["phi_access_log"], allowed_functions: ["log_phi_access"] }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["log_phi_access"], placement: "unconditional", reaching_table_tags: ["phi"] }
++  }
++}
+--- a/table/phi_access_log.xs
++++ b/table/phi_access_log.xs
+@@ -0,0 +1,17 @@
++// One row per read or write of a health record, written only by log_phi_access.
++table phi_access_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    int user_id? {
++      table = "users"
++    }
++  
++    text record_table
++    int record_id
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

@@ -1,0 +1,70 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/INVOICES-AUTH.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/INVOICES-AUTH.xs",
+      "ok": true,
+      "key": "INVOICES-AUTH",
+      "title": "Invoices are never returned without login or in full",
+      "statement": "Every endpoint that reaches the invoices table must require a login, and any read of invoices must page its results with a page size of at most 100 rows, so no endpoint returns the whole table. An endpoint that cannot meet this is exempted only by the policy owner.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "INVOICES-AUTH.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [
+              "invoices"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "INVOICES-AUTH.R2",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "db.query"
+            ],
+            "param_names": [
+              "per_page"
+            ],
+            "min": null,
+            "max": 100,
+            "unit": "rows",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [
+              "invoices"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

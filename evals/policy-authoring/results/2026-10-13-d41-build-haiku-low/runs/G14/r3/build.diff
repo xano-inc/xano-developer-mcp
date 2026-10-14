@@ -1,0 +1,187 @@
+--- a/api/app/auth/signup_POST.xs
++++ b/api/app/auth/signup_POST.xs
+@@ -16,7 +16,11 @@
+         password: $input.password
+       }
+     } as $user
+-  
++
++    function.run record_audit_event {
++      input = {table_name: "users", record_id: $user.id, action: "add"}
++    } as $audit
++
+     security.create_auth_token {
+       table = "users"
+       extras = {}
+--- a/api/app/customers/customer_id_PATCH.xs
++++ b/api/app/customers/customer_id_PATCH.xs
+@@ -15,6 +15,10 @@
+       field_value = $input.customer_id
+       data = {email: $input.email, phone: $input.phone}
+     } as $customer
++
++    function.run record_audit_event {
++      input = {table_name: "customers", record_id: $input.customer_id, action: "patch"}
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/customers_POST.xs
++++ b/api/app/customers_POST.xs
+@@ -23,6 +23,10 @@
+         phone    : $input.phone
+       }
+     } as $customer
++
++    function.run record_audit_event {
++      input = {table_name: "customers", record_id: $customer.id, action: "add"}
++    } as $audit
+   }
+ 
+   response = $customer
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -16,6 +16,10 @@
+       field_value = $auth.id
+       data = $input[""]
+     } as $me
++
++    function.run record_audit_event {
++      input = {table_name: "users", record_id: $auth.id, action: "patch"}
++    } as $audit
+   }
+ 
+   response = $me
+--- a/api/app/newsletter/subscribe_POST.xs
++++ b/api/app/newsletter/subscribe_POST.xs
+@@ -15,6 +15,10 @@
+         confirmed: false
+       }
+     } as $subscriber
++
++    function.run record_audit_event {
++      input = {table_name: "newsletter_subscribers", record_id: $subscriber.id, action: "add"}
++    } as $audit
+   }
+ 
+   response = {ok: true}
+--- a/function/delete_user_account.xs
++++ b/function/delete_user_account.xs
+@@ -17,6 +17,10 @@
+       field_name = "id"
+       field_value = $input.user_id
+     }
++
++    function.run record_audit_event {
++      input = {table_name: "users", record_id: $input.user_id, action: "delete"}
++    } as $audit
+   }
+ 
+   response = {deleted: true}
+--- a/function/record_audit_event.xs
++++ b/function/record_audit_event.xs
+@@ -0,0 +1,21 @@
++// Adds an audit_log row for a change to a customer-email table. The only code that writes audit_log.
++function record_audit_event {
++  input {
++    text table_name
++    int record_id
++    text action
++  }
++
++  stack {
++    db.add audit_log {
++      data = {
++        actor_id  : $auth.id
++        table_name: $input.table_name
++        record_id : $input.record_id
++        action    : $input.action
++      }
++    } as $entry
++  }
++
++  response = $entry
++}
+--- a/policies/AUDIT-001.xs
++++ b/policies/AUDIT-001.xs
+@@ -0,0 +1,37 @@
++policy "AUDIT-001" {
++  title = "Changes to customer-email tables are recorded"
++  statement = "Every add, edit, patch and delete of a table that stores customer emails (customers, newsletter_subscribers, users) calls record_audit_event, which writes an audit_log row with who made the change, which table and record, and the action. Only record_audit_event writes audit_log. Writes that run in a scheduled task or from a public endpoint record no actor. An object that cannot make the call is exempted by the policy owner, not by its author."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "workspace.object_required"
++    params = { object_kind: "table", names: ["audit_log"] }
++  }
++
++  rule {
++    check = "table.write_location_restricted"
++    params = { restricted_tables: ["audit_log"], allowed_functions: ["record_audit_event"] }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.add", tables: ["customers", "newsletter_subscribers", "users"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.edit", tables: ["customers", "newsletter_subscribers", "users"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.patch", tables: ["customers", "newsletter_subscribers", "users"] } }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = { functions: ["record_audit_event"], placement: "unconditional", when: { statement: "db.del", tables: ["customers", "newsletter_subscribers", "users"] } }
++  }
++}
+--- a/policies/COST-001.xs
++++ b/policies/COST-001.xs
+@@ -0,0 +1,17 @@
++policy "COST-001" {
++  title = "AI calls and retried requests stay out of loops"
++  statement = "An AI agent call or MCP tool run is never made inside a foreach, for or while loop, because each pass bills a model call. An outbound api.request is never made inside a while loop, where a failing call can repeat without end. This does not cap spend or retry counts: those are not checked. A call made from a function that a loop calls is not seen. An object that must loop is exempted by the policy owner, not by its author."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++
++  rule {
++    check = "statement.containment"
++    params = { statements: ["ai.agent.run", "ai.external.mcp.tool.run"], must_not_be_inside: ["foreach", "for", "while"] }
++  }
++
++  rule {
++    check = "statement.containment"
++    params = { statements: ["api.request"], must_not_be_inside: ["while"] }
++  }
++}
+--- a/table/audit_log.xs
++++ b/table/audit_log.xs
+@@ -0,0 +1,20 @@
++// One row per add, edit, patch or delete of a customer-email table: who made it, which table and record, and what happened.
++table audit_log {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    int actor_id?
++    text table_name
++    int record_id
++    enum action {
++      values = ["add", "edit", "patch", "delete"]
++    }
++  }
++
++  index = [
++    {type: "primary", field: [{name: "id"}]}
++    {type: "btree", field: [{name: "table_name", op: "asc"}, {name: "record_id", op: "asc"}]}
++  ]
++}

@@ -1,0 +1,35 @@
+{
+  "key": "4f27078e293df765",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:40.780Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AUDIT-010",
+        "create policy COST-010",
+        "create policy COST-020",
+        "create policy RET-001",
+        "update table customers",
+        "create table email_change_log",
+        "update table newsletter_subscribers",
+        "update table orgs",
+        "update table patients",
+        "update table support_tickets",
+        "update table users",
+        "create function record_email_change",
+        "update task retry_failed_webhooks",
+        "delete task nightly_ticket_summaries"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

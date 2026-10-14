@@ -1,0 +1,56 @@
+--- a/middleware/rate_limit.xs
++++ b/middleware/rate_limit.xs
+@@ -0,0 +1,16 @@
++// Limits each caller IP to 20 requests per minute before the endpoint runs. Past the limit the caller is refused, and the error is never swallowed.
++middleware "rate_limit" {
++  input {
++  }
++
++  stack {
++    redis.ratelimit {
++      key = $env.$remote_ip
++      max = 20
++      ttl = 60
++    } as $ratelimit
++  }
++
++  exception = "critical"
++  result_type = "merge"
++}
+--- a/policies/LOG-011.xs
++++ b/policies/LOG-011.xs
+@@ -0,0 +1,13 @@
++policy "LOG-011" {
++  title = "Middleware doesn't swallow errors"
++  statement = "No middleware is set to swallow the exceptions it catches. A middleware that silently swallows an error hides it from callers and from logs."
++  severity = "medium"
++  active = true
++  enforcement = "advisory"
++  tags = []
++
++  rule {
++    check = "object.settings_forbidden"
++    params = {object_kind: "middleware", when: {exception_policy: {equals: "silent"}}}
++  }
++}
+--- a/policies/RATE-001.xs
++++ b/policies/RATE-001.xs
+@@ -0,0 +1,18 @@
++policy "RATE-001" {
++  title = "Login, signup and public endpoints are rate limited"
++  statement = "Every public endpoint and every endpoint under the auth path (login and signup) runs the rate_limit middleware before its stack, so a caller past the limit is refused. A public endpoint that cannot run it is exempted only by the policy owner."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = []
++
++  rule {
++    check = "object.middleware_required"
++    params = {middleware: ["rate_limit"], phase: "pre", endpoint_auth: "none", object_kinds: ["query"]}
++  }
++
++  rule {
++    check = "object.middleware_required"
++    params = {middleware: ["rate_limit"], phase: "pre", api_groups: ["app"], paths: ["auth"], object_kinds: ["query"]}
++  }
++}

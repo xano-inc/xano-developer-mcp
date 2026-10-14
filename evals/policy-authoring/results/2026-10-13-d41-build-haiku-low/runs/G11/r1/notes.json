@@ -1,0 +1,62 @@
+{
+  "goal_id": "G11",
+  "objects_built": [],
+  "objects_changed": [
+    {"kind": "function", "name": "acme_sync_shipping_rates", "file": "workspace/function/acme_sync_shipping_rates.xs", "change": "api.request given timeout 30 and wrapped in try_catch; catch sets an empty 503 response so the remaining carriers still sync"},
+    {"kind": "function", "name": "acme_notify_sms", "file": "workspace/function/acme_notify_sms.xs", "change": "timeout 30 added; api.request wrapped in try_catch; catch throws sms_vendor_unavailable"},
+    {"kind": "function", "name": "acme_get_tracking", "file": "workspace/function/acme_get_tracking.xs", "change": "timeout lowered from 60 to 30; existing try_catch and 503 fallback unchanged"},
+    {"kind": "tool", "name": "issue_refund", "file": "workspace/ai/tool/issue_refund.xs", "change": "timeout 20 kept; api.request wrapped in try_catch; catch throws refund_vendor_unavailable so a failed refund does not return refunded: true"},
+    {"kind": "task", "name": "retry_failed_webhooks", "file": "workspace/task/retry_failed_webhooks.xs", "change": "timeout 30 added; api.request inside the retry loop wrapped in try_catch; catch throws webhook_vendor_unavailable and stops the run"},
+    {"kind": "query", "name": "shipments/quote POST", "file": "workspace/api/app/shipments/quote_POST.xs", "change": "timeout 30 added; api.request wrapped in try_catch; catch throws shipping_vendor_unavailable"},
+    {"kind": "query", "name": "payments/fraud_check POST", "file": "workspace/api/app/payments/fraud_check_POST.xs", "change": "timeout 15 kept; api.request wrapped in try_catch; catch throws fraud_vendor_unavailable"},
+    {"kind": "query", "name": "payments/charge POST", "file": "workspace/api/app/payments/charge_POST.xs", "change": "timeout 20 kept; api.request wrapped in try_catch; catch throws payment_vendor_unavailable so no payment row is written after a failed charge"},
+    {"kind": "query", "name": "bank-accounts/link POST", "file": "workspace/api/app/bank_accounts/link_POST.xs", "change": "timeout 20 kept; api.request wrapped in try_catch; catch throws bank_vendor_unavailable"}
+  ],
+  "templates_considered": [
+    "requests_have_timeout (SEC-013): fits; timeout max 30 seconds on api.request and related statements",
+    "external_calls_handle_errors (LOG-010): fits; containment of external statements in try_catch",
+    "tls_verification_on (SEC-011): not requested by the ask",
+    "middleware_surfaces_errors (LOG-011): not relevant, no middleware in the ask",
+    "rate_limiting: not relevant to outbound timeouts"
+  ],
+  "templates_used": ["requests_have_timeout", "external_calls_handle_errors"],
+  "rules": [
+    {"policy_key": "SEC-013", "check": "statement.param_bound", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda"], "param_names": ["timeout"], "max": 30, "unit": "seconds"}, "covers": "every external call finishes within 30 seconds (template rule)"},
+    {"policy_key": "SEC-013", "check": "statement.param_required", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda"], "param_names": ["timeout"]}, "covers": "every external call sets its timeout explicitly; added because param_bound judges an omitted timeout at its 10-second default and would pass it"},
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request", "stream.from_request", "webflow.request", "api.microservice", "api.lambda", "ai.external.mcp.tool.run", "ai.external.mcp.tool.list", "ai.external.mcp.server_details", "db.external.postgres.direct_query", "db.external.mysql.direct_query", "db.external.mssql.direct_query", "db.external.oracle.direct_query", "db.external.snowflake.direct_query"], "must_be_inside": ["try_catch"]}, "covers": "every external call sits inside a try block so a vendor failure reaches error handling (template rule, statement list extended beyond the template to the full outbound set in the catalogue)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "the catch branch actually handles the failure sensibly", "why": "no check exists"},
+    {"part": "retries and backoff for failing calls (retry_failed_webhooks loops without delay)", "why": "no check exists"},
+    {"part": "a timeout actually fires within 30 seconds during a real vendor outage", "why": "needs runtime/org process"},
+    {"part": "ai.external.mcp.* and db.external.* calls bounded by a timeout", "why": "no check exists; these statements take no timeout parameter"},
+    {"part": "retried charges being idempotent", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "a 30-second maximum is an acceptable upper bound for every vendor call; the customer did not name one",
+    "a throw in the catch branch is the desired behaviour for payment, refund, quote and SMS calls",
+    "a failing shipping rate for one carrier should not stop the sync for the others",
+    "the throw statement shape { name, value } is valid XanoScript; the dry run accepted it but did not exercise it at runtime"
+  ],
+  "workspace_names_used": [
+    "acme_sync_shipping_rates", "acme_notify_sms", "acme_get_tracking", "issue_refund", "retry_failed_webhooks", "shipments/quote", "payments/fraud_check", "payments/charge", "bank-accounts/link", "api.shipfast.example", "api.stripe.com", "api.riskscreen.example", "production.plaid.com", "api.twilio.com"
+  ],
+  "confusions": [
+    "requests_have_timeout's limits text says an omitted timeout is judged at its 10-second default, so the template rule alone passes a call that sets no timeout; the template does not say to add param_required, and I added it from reading the catalogue",
+    "the skill says a throw/precondition is how callers see failures but gives no example of the throw statement's shape; I wrote throw { name, value } from the naming pattern and the parser accepted it",
+    "external_calls_handle_errors lists its limits as needing stream.from_request, ai.external.mcp.* and db.external.*.direct_query added to cover every outbound call, but the template's rule keeps only api.request; I extended the statements list myself",
+    "the template table lists SEC-013 and LOG-010 as separate templates, so the request covered two policies; the 'one policy per goal' guidance and the 'one policy per template' guidance point different ways for a request that spans two templates, and I followed the template rule",
+    "the brief's plan step asks for objects to build first, but for this ask the enforcement is changes to existing call sites; the plan format has no slot for 'wrap every existing call', so I used the changes section"
+  ],
+  "wished_for": [
+    "an example of throw in XanoScript, and of the common catch-then-rethrow pattern, in the policy-authoring skill or the kit",
+    "a note in SEC-013's limits or template fill saying to add a param_required rule when a timeout must be explicit, not just bounded",
+    "a template or recipe for the whole 'external calls are resilient' goal: timeouts plus try_catch plus catch behaviour, so the plan does not have to be assembled from two templates",
+    "guidance on retry loops (a while loop around an api.request with no delay) since they are a common way an external-call fix goes wrong"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Every outbound api.request in the workspace now has an explicit timeout of 30 seconds or less and sits inside a try_catch, and both policies parsed and the dry run exited 0. Confidence is held at medium because I did not run xano policy evaluate, so which objects the rules judge is a prediction; the catch branches are only checked for existence, not for correct behaviour; and the ai.external.mcp.* and db.external.* calls cannot be bounded by a timeout at all, so the 'every external call has a timeout' part is only true for the five statements that take one."
+}

@@ -1,0 +1,41 @@
+{
+  "goal_id": "G01",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "AUTH-010: every endpoint requires login except public-tagged; broader than the ask (all endpoints, not invoices), so not used as-is",
+    "DATA-010: endpoints don't return personal data; fields-based, not about full-table returns; did not fit",
+    "PERF-001: endpoints never return every row; covers the paging half of the ask, but its scope is generic; used its rule shape (statement.param_bound) rather than the template key"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "INVOICES-AUTH", "check": "object.auth_required", "params": {"tables": ["invoices"]}, "covers": "invoices reached only by logged-in endpoints (the 'without auth' part)"},
+    {"policy_key": "INVOICES-AUTH", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 100, "unit": "rows", "object_kinds": ["query"], "tables": ["invoices"]}, "covers": "no endpoint returns the whole invoices table (the 'full table' part)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "endpoint reads whose filter restricts rows to the caller's own org", "why": "other"},
+    {"part": "what a request actually returns at runtime", "why": "needs runtime/org process"},
+    {"part": "whether 'me at 2am' can edit or remove the policy; no check sees who changes policies", "why": "needs runtime/org process"},
+    {"part": "whether export_GET is reachable from outside the app", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'Invoices table' means the invoices table, and the 'full table' concern is a db.query on it with no page size",
+    "The owner wants a new policy advisory first, per the skill's default; the customer did not ask for blocking",
+    "Tables scope on statement.param_bound behaves as a general scope param (skill says scope params work on every check that lists them; param_bound does not list tables explicitly)"
+  ],
+  "workspace_names_used": ["invoices", "invoice_item", "invoices_GET", "invoice_id_GET", "export_GET", "app", "users"],
+  "confusions": [
+    "Skill says scope params are accepted on every check, but the param_bound catalogue entry does not list tables; I relied on the general statement. Would want that confirmed.",
+    "Whether a policy with no blocking intent should be written advisory when the customer says 'nobody ever ships'; skill says advisory and say blocking is the owner's choice, which I followed, but it leaves the stated goal only partly enforced.",
+    "No evaluate was permitted in this run, so I could not confirm the predicted findings for export_GET."
+  ],
+  "wished_for": [
+    "A recipe for 'endpoints reaching table X require login and page reads' that is one step, not two rules I had to assemble",
+    "A dry-run output that also shows predicted findings, or an offline evaluate, so the prediction can be checked before push"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The auth rule directly checks endpoints reaching invoices and should flag export_GET; the paging rule is an approximation of 'full table' (it checks page size, not the data returned). Findings are predicted, not evaluated. The policy is advisory, so it does not stop a ship on its own."
+}

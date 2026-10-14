@@ -1,0 +1,312 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/HIPAA-PHI-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/HIPAA-PHI-001.xs",
+      "ok": true,
+      "key": "HIPAA-PHI-001",
+      "title": "Health data is tagged, marked, login-only and logged",
+      "statement": "Tables holding health data are tagged phi and their health fields are marked sensitive. Only logged-in endpoints reach them. Every endpoint or task that reaches them records the access in phi_access_log through log_phi_access, the only writer of that table. Health fields stay out of responses and debug logs, and external requests verify TLS. A deliberate exception needs the policy owner's sign-off.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "HIPAA-PHI-001.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "dob",
+              "ssn",
+              "insurance_member_id",
+              "diagnosis",
+              "first_name",
+              "last_name",
+              "address"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "phi",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HIPAA-PHI-001.R2",
+          "title": "",
+          "check": "table.field_attribute_required",
+          "params": {
+            "field_names": [
+              "dob",
+              "ssn",
+              "insurance_member_id",
+              "diagnosis",
+              "first_name",
+              "last_name",
+              "address"
+            ],
+            "field_types": [],
+            "attribute": "sensitive",
+            "value": true,
+            "type": "",
+            "must_exist": false,
+            "forbidden": false,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HIPAA-PHI-001.R3",
+          "title": "",
+          "check": "object.tagged_table_access",
+          "params": {
+            "table_tags": [
+              "phi"
+            ],
+            "auth_tables": [],
+            "function": "",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HIPAA-PHI-001.R4",
+          "title": "",
+          "check": "db.output_fields_forbidden",
+          "params": {
+            "fields": [
+              "ssn",
+              "dob",
+              "insurance_member_id",
+              "diagnosis",
+              "note"
+            ],
+            "include_sensitive": true,
+            "table_tags": [
+              "phi"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HIPAA-PHI-001.R5",
+          "title": "",
+          "check": "statement.expression_rule",
+          "params": {
+            "statements": [
+              "debug.log"
+            ],
+            "param_names": [
+              "value"
+            ],
+            "must_reference": [],
+            "must_not_reference": [
+              "$input",
+              "$auth",
+              "$env"
+            ],
+            "operators_forbidden": [],
+            "literals_forbidden": [],
+            "filters_forbidden": [],
+            "filters_required": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HIPAA-PHI-001.R6",
+          "title": "",
+          "check": "table.view_hide_required",
+          "params": {
+            "fields": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HIPAA-PHI-001.R7",
+          "title": "",
+          "check": "statement.param_forbidden",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request"
+            ],
+            "param_names": [
+              "verify_peer",
+              "verify_host"
+            ],
+            "values": [
+              false
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HIPAA-PHI-001.R8",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "phi_access_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HIPAA-PHI-001.R9",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "phi_access_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "log_phi_access"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "HIPAA-PHI-001.R10",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "log_phi_access"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": [
+              "phi"
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "HIPAA-PHI-001.R3",
+          "text": "table_tags \"phi\" is on no table in this workspace, so no access to it is judged."
+        },
+        {
+          "rule_id": "HIPAA-PHI-001.R4",
+          "text": "table_tags \"phi\" is on no table in this workspace, so nothing is reported for it."
+        },
+        {
+          "rule_id": "HIPAA-PHI-001.R9",
+          "text": "Table \"phi_access_log\" is not in this workspace, so it restricts nothing."
+        },
+        {
+          "rule_id": "HIPAA-PHI-001.R9",
+          "text": "Function \"log_phi_access\" is not on this branch, so it approves nothing."
+        },
+        {
+          "rule_id": "HIPAA-PHI-001.R10",
+          "text": "reaching_table_tags \"phi\" is on no table in this workspace, so it selects nothing."
+        },
+        {
+          "rule_id": "HIPAA-PHI-001.R10",
+          "text": "Function \"log_phi_access\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    }
+  ]
+}

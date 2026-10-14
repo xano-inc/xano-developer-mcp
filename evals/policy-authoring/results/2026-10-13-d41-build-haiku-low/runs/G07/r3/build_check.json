@@ -1,0 +1,30 @@
+{
+  "key": "a7dfcc4adcc5647b",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:21.452Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AUDIT-001",
+        "create policy AUDIT-002",
+        "create table audit_log",
+        "update function delete_user_account",
+        "create function record_audit_event",
+        "update query tenants/{tenant_id} PATCH",
+        "update query customers/{customer_id} PATCH",
+        "update query me PATCH",
+        "update query refunds/{refund_id}/approve POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

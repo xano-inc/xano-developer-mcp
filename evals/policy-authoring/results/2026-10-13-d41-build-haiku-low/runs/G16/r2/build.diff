@@ -1,0 +1,131 @@
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -6,7 +6,6 @@
+   input {
+     text name?
+     text phone?
+-    text role?
+     bool marketing_opt_in?
+   }
+ 
+@@ -14,7 +13,11 @@
+     db.patch users {
+       field_name = "id"
+       field_value = $auth.id
+-      data = $input[""]
++      data = {
++        name: $input.name
++        phone: $input.phone
++        marketing_opt_in: $input.marketing_opt_in
++      }
+     } as $me
+   }
+ 
+--- a/api/app/products/product_id/price_PATCH.xs
++++ b/api/app/products/product_id/price_PATCH.xs
+@@ -2,6 +2,7 @@
+ query "products/{product_id}/price" verb=PATCH {
+   api_group = "app"
+   auth = "users"
++  tags = ["manager-only"]
+ 
+   input {
+     int product_id
+@@ -9,6 +10,10 @@
+   }
+ 
+   stack {
++    function.run require_manager {
++      input = {}
++    } as $manager
++
+     db.patch products {
+       field_name = "id"
+       field_value = $input.product_id
+--- a/api/app/refunds/refund_id/approve_POST.xs
++++ b/api/app/refunds/refund_id/approve_POST.xs
+@@ -2,12 +2,17 @@
+ query "refunds/{refund_id}/approve" verb=POST {
+   api_group = "app"
+   auth = "users"
++  tags = ["manager-only"]
+ 
+   input {
+     int refund_id
+   }
+ 
+   stack {
++    function.run require_manager {
++      input = {}
++    } as $manager
++
+     db.edit refunds {
+       field_name = "id"
+       field_value = $input.refund_id
+--- a/function/require_manager.xs
++++ b/function/require_manager.xs
+@@ -0,0 +1,19 @@
++// Stops the call unless the logged-in user is a manager (or an admin). Call it first in any endpoint that approves refunds or changes prices.
++function require_manager {
++  input {
++  }
++
++  stack {
++    db.get users {
++      field_name = "id"
++      field_value = $auth.id
++    } as $me
++
++    precondition ($me.role == "manager" || $me.role == "admin") {
++      error_type = "accessdenied"
++      error = "Only managers can do this."
++    }
++  }
++
++  response = $me
++}
+--- a/policies/AUTH-030.xs
++++ b/policies/AUTH-030.xs
+@@ -0,0 +1,13 @@
++policy "AUTH-030" {
++  title = "Users can't make themselves admin"
++  statement = "Record writes never take a privilege field such as role or is_admin from request input, nor a whole record from it. A user cannot grant themselves a manager or admin role."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "hipaa"]
++
++  rule {
++    check = "db.write_from_input_forbidden"
++    params = { fields: ["role"] }
++  }
++}
+--- a/policies/ROLE-010.xs
++++ b/policies/ROLE-010.xs
+@@ -0,0 +1,26 @@
++policy "ROLE-010" {
++  title = "Refund approvals and price changes need a manager"
++  statement = "Any object that writes the refunds or products tables must first call the require_manager function, so only managers can approve refunds or change prices. Endpoints tagged manager-only must call require_manager as their first statement. Staff can still read these tables."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["role-access"]
++
++  rule {
++    check = "stack.statement_order"
++    params = {
++      before: {functions: ["require_manager"]}
++      after: ["db.edit", "db.patch", "db.add", "db.del"]
++      tables: ["refunds", "products"]
++    }
++  }
++
++  rule {
++    check = "object.statement_required"
++    params = {
++      functions: ["require_manager"]
++      placement: "first"
++      tags: ["manager-only"]
++    }
++  }
++}

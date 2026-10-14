@@ -1,8 +1,8 @@
 {
   "label": "2026-10-13-d40kit-build-haiku-low",
-  "rubric_version": 6,
+  "rubric_version": 7,
   "workspace_id": "9040",
-  "scored_at": "2026-10-13T23:41:40.741Z",
+  "scored_at": "2026-10-14T01:02:46.531Z",
   "run": {
     "label": "2026-10-13-d40kit-build-haiku-low",
     "model": "haiku",

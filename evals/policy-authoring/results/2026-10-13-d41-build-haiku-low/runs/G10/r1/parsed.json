@@ -1,0 +1,117 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AGENT-GUARD.xs",
+    "build/policies/AI-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AGENT-GUARD.xs",
+      "ok": true,
+      "key": "AGENT-GUARD",
+      "title": "AI tools can't delete, and their emails wait for a human approval",
+      "statement": "AI tools never delete records, directly or through a function they call. Every tool that sends an email calls require_approval first, which stops unless a human has approved that action on that recipient in the approvals table. A tool that needs to delete must be redesigned with its owner, not exempted.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AGENT-GUARD.R1",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "db.del",
+              "db.bulk.delete",
+              "db.truncate"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AGENT-GUARD.R2",
+          "title": "",
+          "check": "stack.statement_order",
+          "params": {
+            "before": {
+              "functions": [
+                "require_approval"
+              ]
+            },
+            "after": [
+              "util.send_email"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "tool"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AGENT-GUARD.R2",
+          "text": "Function \"require_approval\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/AI-001.xs",
+      "ok": true,
+      "key": "AI-001",
+      "title": "AI agents use only approved tools",
+      "statement": "Every AI agent enables only the tools the owner has approved by name. Any other tool an agent enables is reported, and the owner decides whether to approve it or remove it from the agent.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AI-001.R1",
+          "title": "",
+          "check": "agent.tool_allowlist",
+          "params": {
+            "tools": [
+              "lookup_order",
+              "send_customer_email",
+              "issue_refund"
+            ],
+            "tool_tags": [],
+            "external_tools": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "agent"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

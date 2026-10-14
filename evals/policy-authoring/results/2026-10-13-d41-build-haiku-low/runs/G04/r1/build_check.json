@@ -1,0 +1,41 @@
+{
+  "key": "f8491747c35d055d",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:00:48.237Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy HIPAA-PHI-001",
+        "update table appointments",
+        "update_field table appointments",
+        "update table clinical_notes",
+        "update_field table clinical_notes",
+        "update_field table clinical_notes",
+        "update table patients",
+        "update_field table patients",
+        "update_field table patients",
+        "update_field table patients",
+        "update_field table patients",
+        "update_field table patients",
+        "update_field table patients",
+        "update_field table patients",
+        "update_field table patients",
+        "create table phi_access_log",
+        "create function log_phi_access",
+        "update query appointments GET",
+        "update query clinical_notes POST",
+        "update query patients/{patient_id} GET"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

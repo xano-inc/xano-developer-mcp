@@ -1,0 +1,41 @@
+{
+  "goal_id": "G08",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "no_secrets_in_code (SEC-012): fits exactly; the ask is 'no hardcoded keys or passwords'",
+    "tls_verification_on, outbound.vendor_allowlist, approved_vendors_only: unrelated to secret literals",
+    "statement.expression_rule (LOG-001 no_sensitive_data_in_logs): considered for enforcing that secrets come from $env, not used; it can only require or forbid references, and a must_reference on $env per statement would be brittle and would not cover non-api.request sites"
+  ],
+  "templates_used": ["no_secrets_in_code"],
+  "rules": [
+    {"policy_key": "SEC-012", "check": "literal.credential_shape", "params": {}, "covers": "No recognisable credential literal (Stripe, AWS, Twilio, URL credentials, literal keys, etc.) in any function, endpoint or other object definition or agent settings. Defaults used, so all patterns and the definition + agent_settings locations."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Passwords and keys that do not match a built-in credential shape", "why": "no check exists"},
+    {"part": "Requirement that every credential come from an environment variable (positive check that $env is used)", "why": "no check exists; literal.credential_shape only reports literals that look like credentials, and its fix_hint is guidance, not a rule"},
+    {"part": "Environment values themselves (where the secret is set) are not scanned", "why": "other: locations defaults exclude env; no check reads env values for policy purposes"},
+    {"part": "Rotating the Twilio credential already leaked in function acme_notify_sms", "why": "needs runtime/org process"},
+    {"part": "Who pasted the key and whether it was exposed elsewhere", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "'Twilio key' in the ask corresponds to the Twilio-shaped credential in function acme_notify_sms",
+    "Advisory enforcement is appropriate for a new policy, per the skill; the customer may want blocking later, which is their call",
+    "Template tags soc2 and pci_dss are reused from the template's frameworks"
+  ],
+  "workspace_names_used": ["acme_notify_sms", "acme_send_invoice_email", "bank-accounts/link", "policy_authoring_eval"],
+  "confusions": [
+    "The skill says a rule's params list only set values, but the template row in policy-templates.md shows no params for literal.credential_shape; it was not obvious whether to write params = {} or omit the params block. I omitted it.",
+    "The check's fix_hint says 'Use a workspace environment variable'; the check cannot verify that a value is read from $env, so 'must come from environment variables' is only partly enforceable. The skill does not say how to phrase that gap for the customer beyond 'not checked'.",
+    "The catalogue lists the Twilio credential as a built-in pattern, but a generic password in code has no shape; the ask's 'passwords' is broader than any check."
+  ],
+  "wished_for": [
+    "A check or param that requires a credential-bearing parameter (e.g. api.request params, api_key, secret) to be a $env reference, so 'must come from env vars' can be enforced rather than only the literal shapes being caught.",
+    "A template or recipe for 'no secrets in code' that explains the gap between literal shapes and 'must come from env'."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policy catches recognised credential literals across all functions and endpoints, which covers the Twilio case and the most common leaks. It does not enforce that every secret comes from an environment variable, and it misses passwords and keys in unrecognised formats. Advisory enforcement means it blocks nothing until the owner changes it."
+}

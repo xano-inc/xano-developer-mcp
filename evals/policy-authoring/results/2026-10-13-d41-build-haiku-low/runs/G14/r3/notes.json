@@ -1,0 +1,69 @@
+{
+  "goal_id": "G14",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "one row per add/edit/patch/delete of a customer-email table: actor, table, record, action"},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "only writer of audit_log; adds a row with actor from $auth"}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "customers POST", "file": "workspace/api/app/customers_POST.xs", "change": "function.run record_audit_event (add) after db.add customers"},
+    {"kind": "query", "name": "customers/{customer_id} PATCH", "file": "workspace/api/app/customers/customer_id_PATCH.xs", "change": "function.run record_audit_event (patch) after db.patch customers"},
+    {"kind": "query", "name": "newsletter/subscribe POST", "file": "workspace/api/app/newsletter/subscribe_POST.xs", "change": "function.run record_audit_event (add) after db.add newsletter_subscribers; public endpoint, actor empty"},
+    {"kind": "query", "name": "auth/signup POST", "file": "workspace/api/app/auth/signup_POST.xs", "change": "function.run record_audit_event (add) after db.add users; public endpoint, actor empty"},
+    {"kind": "query", "name": "me PATCH", "file": "workspace/api/app/me_PATCH.xs", "change": "function.run record_audit_event (patch) after db.patch users"},
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "function.run record_audit_event (delete) after db.del users; db.del takes no 'as', so no result var"}
+  ],
+  "templates_considered": [
+    "AUDIT-001-style RET-001 (audit_log_protected): fits the audit table and single-writer rule; used its workspace.object_required and table.write_location_restricted rules",
+    "RET-002 / RET-003 (retained_data_*): considered for retention; not in the ask, not used",
+    "AUTH-030 (no_self_promotion): relevant to me_PATCH's role input; out of scope, not used",
+    "LOG-001, DATA-010, CONF-011: relevant to personal data handling; out of scope, not used",
+    "SEC-010 / AI-001 / SEC-013: relevant to AI and retries; no template covers loops, so not used"
+  ],
+  "templates_used": ["RET-001 pattern (audit_log_protected) via its two rules"],
+  "rules": [
+    {"policy_key": "AUDIT-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "audit table exists"},
+    {"policy_key": "AUDIT-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "only the audit function writes audit_log"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.add", "tables": ["customers", "newsletter_subscribers", "users"]}}, "covers": "every add to a customer-email table is audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["customers", "newsletter_subscribers", "users"]}}, "covers": "every edit is audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["customers", "newsletter_subscribers", "users"]}}, "covers": "every patch is audited"},
+    {"policy_key": "AUDIT-001", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["customers", "newsletter_subscribers", "users"]}}, "covers": "every delete is audited"},
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["ai.agent.run", "ai.external.mcp.tool.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI calls not made inside a loop (the $900 case)"},
+    {"policy_key": "COST-001", "check": "statement.containment", "params": {"statements": ["api.request"], "must_not_be_inside": ["while"]}, "covers": "outbound requests not made inside an unbounded while (the retry-forever case); does not bound retries"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "cap on AI spend / cost of AI calls", "why": "no check exists"},
+    {"part": "background task retrying forever (retry count, backoff, cap)", "why": "no check exists; task retries are not in the definitions. Only the while-loop shape is checked"},
+    {"part": "support_tickets.requester_email audited", "why": "couldn't tell how: its only writer is the nightly task that edits inside a loop, so the unconditional-call rule cannot be met without a design decision"},
+    {"part": "new tables storing customer emails are found automatically", "why": "no check reads a field's purpose; table.tag_required could tag by field name but would also tag patients.email, a decision for the owner"},
+    {"part": "who made a change when it comes from a task or public endpoint", "why": "needs runtime data; $auth is empty there"},
+    {"part": "batch writes (db.bulk.*) on audited tables", "why": "not among the four statements the rule names; not added"},
+    {"part": "who may read the audit log; access reviews", "why": "needs runtime/org process"},
+    {"part": "calls made from a function that a loop calls", "why": "no check reads across function calls for AI containment"}
+  ],
+  "assumptions": [
+    "customer-email tables are customers, newsletter_subscribers and users (users holds sign-in emails of the app's users); support_tickets excluded as above; patients and orgs excluded",
+    "record_audit_event can read $auth from an endpoint or function that has it",
+    "actions named add/edit/patch/delete; the audit action enum matches the calls",
+    "the customer wanted the forever-retry and the loop AI call covered by containment rules rather than by a cap"
+  ],
+  "workspace_names_used": ["customers", "newsletter_subscribers", "users", "support_tickets", "patients", "orgs", "support_agent", "ticket_summarizer", "Ticket Summarizer", "Support Agent", "retry_failed_webhooks", "nightly_ticket_summaries", "purge_expired_sessions", "delete_user_account", "customers_POST", "customer_id_PATCH", "newsletter/subscribe POST", "auth/signup POST", "me PATCH", "webhook_deliveries", "app"],
+  "confusions": [
+    "The skill's recipe for 'Record who changed what' names a workspace.object_required rule that is only needed when the table is missing; it was unclear whether to include it when the table is being built in the same change. I included it; it warns until push.",
+    "Guidance says 'placement: unconditional' for a statement inside a foreach does not count; the support_tickets edit lives in a foreach, so the rule can never pass there. No guidance on the right shape for audits of loop writes.",
+    "No check for a task with no retry cap; the skill names 'task retries' as not checked, but 'a background task retrying forever' is exactly what the customer named, so I had to pick the nearest proxy (api.request not inside while).",
+    "Recipe's 'Cannot see' list did not mention that a rule cannot tell a customer-email column from other email columns (patients, orgs billing_email)."
+  ],
+  "wished_for": [
+    "A check or param that caps loop iterations or retry counts on tasks, or flags a while loop with no break/limit.",
+    "A recipe for 'AI spend control' that names what a check can and cannot see on cost.",
+    "Guidance for unconditional calls when a write is inside a foreach (for example, pass the whole batch to the audit function after the loop).",
+    "A way to tag tables by field name in one step with a template (table.tag_required with field_names: email) plus a matching audit recipe."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": ["Parse warnings only for names this change creates: table audit_log and function record_audit_event not on branch (expected)"],
+  "dry_run_problems_seen": [
+    "BLOCKED function delete_user_account: Syntax error while parsing 'db.del users {' - Invalid arg: as. Fixed by removing 'as $deleted'. Second dry run clean (exit 0)."
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "AI-in-loop containment is checked directly and matches the $900 case, but a loop call through a function is not seen. The retry case is only partly covered: the while-loop shape is checked, retry counts are not. The audit half covers the three named tables and the four write statements; support_tickets is excluded and batch writes are not checked. Nothing was evaluated (evaluate was not in scope), so every finding is a prediction."
+}

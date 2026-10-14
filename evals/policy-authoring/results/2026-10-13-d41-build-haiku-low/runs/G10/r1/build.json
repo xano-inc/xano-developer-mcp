@@ -1,0 +1,14 @@
+{
+  "pulled": true,
+  "added": [
+    "function/require_approval.xs",
+    "policies/AGENT-GUARD.xs",
+    "policies/AI-001.xs",
+    "table/approvals.xs"
+  ],
+  "modified": [
+    "ai/tool/send_customer_email.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

@@ -1,0 +1,126 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUTH-030.xs",
+    "build/policies/ROLE-010.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUTH-030.xs",
+      "ok": true,
+      "key": "AUTH-030",
+      "title": "Users can't make themselves admin",
+      "statement": "Record writes never take a privilege field such as role or is_admin from request input, nor a whole record from it. A user cannot grant themselves a manager or admin role.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "AUTH-030.R1",
+          "title": "",
+          "check": "db.write_from_input_forbidden",
+          "params": {
+            "statements": [],
+            "fields": [
+              "role"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/ROLE-010.xs",
+      "ok": true,
+      "key": "ROLE-010",
+      "title": "Refund approvals and price changes need a manager",
+      "statement": "Any object that writes the refunds or products tables must first call the require_manager function, so only managers can approve refunds or change prices. Endpoints tagged manager-only must call require_manager as their first statement. Staff can still read these tables.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "ROLE-010.R1",
+          "title": "",
+          "check": "stack.statement_order",
+          "params": {
+            "before": {
+              "functions": [
+                "require_manager"
+              ]
+            },
+            "after": [
+              "db.edit",
+              "db.patch",
+              "db.add",
+              "db.del"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [
+              "refunds",
+              "products"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "ROLE-010.R2",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "require_manager"
+            ],
+            "placement": "first",
+            "must_reference": [],
+            "when": [],
+            "tags": [
+              "manager-only"
+            ],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "ROLE-010.R1",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        },
+        {
+          "rule_id": "ROLE-010.R2",
+          "text": "tags \"manager-only\" is on no object this rule inspects on this branch, so it selects nothing."
+        },
+        {
+          "rule_id": "ROLE-010.R2",
+          "text": "Function \"require_manager\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    }
+  ]
+}

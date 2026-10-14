@@ -1,0 +1,141 @@
+--- a/api/app/me_PATCH.xs
++++ b/api/app/me_PATCH.xs
+@@ -6,7 +6,6 @@
+   input {
+     text name?
+     text phone?
+-    text role?
+     bool marketing_opt_in?
+   }
+ 
+@@ -14,10 +13,14 @@
+     db.patch users {
+       field_name = "id"
+       field_value = $auth.id
+-      data = $input[""]
++      data = {
++        name            : $input.name
++        phone           : $input.phone
++        marketing_opt_in: $input.marketing_opt_in
++      }
+     } as $me
+   }
+ 
+   response = $me
+   guid = "hU_dGAUAU5dXtih5X1pVEZv2wyU"
+-}
+\ No newline at end of file
++}
+--- a/api/app/products/product_id/price_PATCH.xs
++++ b/api/app/products/product_id/price_PATCH.xs
+@@ -1,4 +1,4 @@
+-// Changes a product's price.
++// Changes a product's price. Managers only.
+ query "products/{product_id}/price" verb=PATCH {
+   api_group = "app"
+   auth = "users"
+@@ -9,6 +9,10 @@
+   }
+ 
+   stack {
++    function.run require_manager {
++      input = {user_id: $auth.id}
++    } as $manager_check
++
+     db.patch products {
+       field_name = "id"
+       field_value = $input.product_id
+@@ -18,4 +22,4 @@
+ 
+   response = $product
+   guid = "YTPlLDKVksaRvDWCFo2ZkQuh7Og"
+-}
+\ No newline at end of file
++}
+--- a/api/app/refunds/refund_id/approve_POST.xs
++++ b/api/app/refunds/refund_id/approve_POST.xs
+@@ -1,4 +1,4 @@
+-// Approves a refund request so it can be paid out.
++// Approves a refund request so it can be paid out. Managers only.
+ query "refunds/{refund_id}/approve" verb=POST {
+   api_group = "app"
+   auth = "users"
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_manager {
++      input = {user_id: $auth.id}
++    } as $manager_check
++
+     db.edit refunds {
+       field_name = "id"
+       field_value = $input.refund_id
+@@ -17,4 +21,4 @@
+ 
+   response = $refund
+   guid = "wFTfZrX0Y6sr1TXTqk_5nVktMk8"
+-}
+\ No newline at end of file
++}
+--- a/function/require_manager.xs
++++ b/function/require_manager.xs
+@@ -0,0 +1,20 @@
++// Stops the call unless the user is a manager. Reads the role from the users table, never from the token.
++function require_manager {
++  input {
++    int user_id
++  }
++
++  stack {
++    db.get users {
++      field_name = "id"
++      field_value = $input.user_id
++    } as $user
++
++    precondition ($user.role == "manager") {
++      error_type = "accessdenied"
++      error = "Only managers can do this."
++    }
++  }
++
++  response = true
++}
+--- a/policies/AUTH-030.xs
++++ b/policies/AUTH-030.xs
+@@ -0,0 +1,13 @@
++policy "AUTH-030" {
++  title = "Users can't make themselves admin"
++  statement = "Request input never writes a user's role. Only a manager can change prices or approve refunds, and no one can give themselves the manager role."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["soc2", "hipaa"]
++
++  rule {
++    check = "db.write_from_input_forbidden"
++    params = { fields: ["role"] }
++  }
++}
+--- a/policies/MGR-010.xs
++++ b/policies/MGR-010.xs
+@@ -0,0 +1,19 @@
++policy "MGR-010" {
++  title = "Refund approval and price changes check for a manager"
++  statement = "Every endpoint that approves a refund or changes a product price calls the manager check first, before it writes anything."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["manager-only"]
++
++  rule {
++    check = "object.statement_required"
++    params = {
++      functions: ["require_manager"],
++      placement: "first",
++      must_reference: ["$auth"],
++      paths: ["refunds/*/approve", "products/*/price"],
++      object_kinds: ["query"]
++    }
++  }
++}

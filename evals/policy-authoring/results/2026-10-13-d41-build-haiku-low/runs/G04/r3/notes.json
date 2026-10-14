@@ -1,0 +1,85 @@
+{
+  "goal_id": "G04",
+  "objects_built": [
+    {"kind": "table", "name": "phi_access_log", "file": "workspace/table/phi_access_log.xs", "role": "One row per read of a health record (user_id, record_table, record_id). Written only by log_phi_access; RET-001 restricts writes to it."},
+    {"kind": "function", "name": "log_phi_access", "file": "workspace/function/log_phi_access.xs", "role": "Adds a phi_access_log row for $auth.id. Called unconditionally by endpoints that reach phi tables (HIPAA-PHI-010)."}
+  ],
+  "objects_changed": [
+    {"kind": "table", "name": "patients", "file": "workspace/table/patients.xs", "change": "tags = [\"phi\"]; dob, ssn, insurance_member_id marked sensitive"},
+    {"kind": "table", "name": "clinical_notes", "file": "workspace/table/clinical_notes.xs", "change": "tags = [\"phi\"]; diagnosis, note marked sensitive"},
+    {"kind": "table", "name": "appointments", "file": "workspace/table/appointments.xs", "change": "tags = [\"phi\"]; reason marked sensitive (my judgement: clinical reason for visit)"},
+    {"kind": "query", "name": "patients/{patient_id} GET", "file": "workspace/api/app/patients/patient_id_GET.xs", "change": "adds function.run log_phi_access after the db.get, record_table patients, record_id $input.patient_id"},
+    {"kind": "query", "name": "clinical_notes POST", "file": "workspace/api/app/clinical_notes_POST.xs", "change": "adds function.run log_phi_access after the db.add, record_table clinical_notes, record_id $created.id"},
+    {"kind": "query", "name": "appointments GET", "file": "workspace/api/app/appointments_GET.xs", "change": "NOT CHANGED. Planned call reverted: endpoint returns a list and log_phi_access takes one record_id. Left as a customer decision; endpoint is public and reaches phi table, so CONF-010 and HIPAA-PHI-010 will flag it."}
+  ],
+  "templates_considered": [
+    "protect_health_data (recipe): fit, followed. Matches the ask (health, patient, clinical, hipaa keywords).",
+    "endpoints_need_login AUTH-010: fit in principle but covered more narrowly by CONF-010 tag-based check; not added separately.",
+    "no_pii_in_responses DATA-010: fit, used via recipe.",
+    "no_sensitive_data_in_logs LOG-001: fit, used via recipe.",
+    "approved_vendors_only VND-001: fit, used via recipe, hosts left empty (owner decision).",
+    "tls_verification_on SEC-011: fit, used via recipe.",
+    "audit_log_protected RET-001: fit, used via recipe.",
+    "sensitive_tables_need_login CONF-010: fit, used via recipe.",
+    "sensitive_fields_marked CONF-011, confidential_tables_tagged CONF-012, views_hide_sensitive CONF-013: fit, used via recipe.",
+    "no_secrets_in_code SEC-012, protect_card_data recipe: not health scope; card data lives in payments endpoint which the ask does not name. Not used.",
+    "personal_data_erasure recipe, erase flow: not asked. Not used."
+  ],
+  "templates_used": [
+    "confidential_tables_tagged", "sensitive_fields_marked", "sensitive_tables_need_login", "no_pii_in_responses", "no_sensitive_data_in_logs", "views_hide_sensitive", "approved_vendors_only", "tls_verification_on", "audit_log_protected"
+  ],
+  "rules": [
+    {"policy_key": "CONF-012", "check": "table.tag_required", "params": {"field_names": ["diagnosis", "note", "reason", "dob", "ssn", "insurance_member_id"], "tag": "phi"}, "covers": "health tables are tagged"},
+    {"policy_key": "CONF-011", "check": "table.field_attribute_required", "params": {"field_names": ["diagnosis", "note", "reason", "dob", "ssn", "insurance_member_id"], "attribute": "sensitive"}, "covers": "health fields are marked sensitive"},
+    {"policy_key": "CONF-010", "check": "object.tagged_table_access", "params": {"table_tags": ["phi"]}, "covers": "endpoints reaching health tables require login"},
+    {"policy_key": "DATA-010", "check": "db.output_fields_forbidden", "params": {"fields": ["diagnosis", "note", "reason", "dob", "ssn", "insurance_member_id"], "object_kinds": ["query"]}, "covers": "endpoints do not fetch health fields"},
+    {"policy_key": "LOG-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "debug logs do not carry request, user or env data"},
+    {"policy_key": "CONF-013", "check": "table.view_hide_required", "params": {}, "covers": "saved views hide sensitive fields"},
+    {"policy_key": "VND-001", "check": "outbound.vendor_allowlist", "params": {"hosts": []}, "covers": "outbound data only goes to approved vendors (list empty until owner decides)"},
+    {"policy_key": "SEC-011", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "external requests verify TLS"},
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["phi_access_log"]}, "covers": "the access log table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["phi_access_log"], "allowed_functions": ["log_phi_access"]}, "covers": "only log_phi_access writes the access log"},
+    {"policy_key": "HIPAA-PHI-010", "check": "object.statement_required", "params": {"functions": ["log_phi_access"], "placement": "unconditional", "reaching_table_tags": ["phi"]}, "covers": "objects reaching phi tables record each access"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Identifiers beyond the listed fields (email, phone, address, first_name, last_name) are PHI under HIPAA but not marked or tagged", "why": "couldn't tell how: the customer has to name the health fields; checks match exact names"},
+    {"part": "Access logging for the appointments list endpoint", "why": "other: a list read has no single record_id for the one-record access function; needs a per-row loop or a decision"},
+    {"part": "Role-based access (who may read patient data)", "why": "no check exists for which roles are needed or whether a role check compares the right role; CONF-010 only checks login"},
+    {"part": "Approved vendor hosts (BAA-covered vendors)", "why": "needs runtime/org process: owner must decide which vendors are approved"},
+    {"part": "Encryption at rest, backups, network controls, vendor BAAs", "why": "no check exists: infrastructure is outside workspace definitions"},
+    {"part": "Staff training, access reviews, change approvals", "why": "needs runtime/org process"},
+    {"part": "Tables that hold health data under names not listed, and objects (AI tools, tasks) reaching phi tables only through paths the checks do not follow", "why": "no check exists for data classification by content"},
+    {"part": "Whether log_phi_access records what the caller actually read", "why": "no check exists: the rule checks the call is present and unconditional, not its arguments"},
+    {"part": "Card data in payments endpoint (charge logs the whole input and stores card_number, card_cvv)", "why": "other: out of this ask's scope; noted because LOG-001 and the plan's policies will see it"}
+  ],
+  "assumptions": [
+    "The recipe protect_health_data is the right reading of 'HIPAA-safe' for patients, appointments and clinical_notes.",
+    "reason on appointments and note on clinical_notes count as health fields (judgement beyond the recipe's examples diagnosis, dob, ssn).",
+    "insurance_member_id counts as a health field (judgement).",
+    "Field attribute syntax: sensitive = true inside a field block. Guessed from parser output; not confirmed against docs.",
+    "Table tags: tags = [\"phi\"] at table level, after index. Guessed from endpoint tags syntax.",
+    "log_phi_access takes record_table and record_id; $auth.id is the logged-in user.",
+    "VND-001 with an empty hosts list is an acceptable way to say not yet reviewed, rather than naming a vendor on the customer's behalf."
+  ],
+  "workspace_names_used": [
+    "patients", "clinical_notes", "appointments", "patients/{patient_id}", "clinical_notes", "appointments", "api group app", "payments/charge", "acme_* functions", "api.stripe.com"
+  ],
+  "confusions": [
+    "The skill and kit do not show the XanoScript syntax for a field's sensitive attribute, or for table tags. I guessed sensitive = true in a field block and tags = [...] at table level. The dry run accepted both, but the dry run does not confirm the attribute was actually set.",
+    "The skill says VND-001 needs hosts or providers. An empty hosts list parsed, and the formatter dropped it without a warning, so the rule ended up with no params. Behaviour is consistent with 'empty reports every host as not yet reviewed', but the parser gives no sign of that.",
+    "Whether a new object needs a guid line. The skill says never invent a GUID, so new table and function files have none. The dry run did not complain, but I cannot tell if that is correct for a push.",
+    "The recipe's fill for reaching_table_tags and its single extra rule (object.statement_required) map cleanly, but the recipe does not say which existing endpoints must be changed to call the function. I worked that out from the endpoints that read the tables; appointments_GET is the case the recipe does not resolve.",
+    "The skill says a function call from a public endpoint leaves $auth empty; the recipe's log_phi_access assumes a logged-in caller. That assumption is wrong for the appointments list endpoint, which is why I reverted it."
+  ],
+  "wished_for": [
+    "A worked example of field-level sensitive attribute syntax in XanoScript, next to the table.field_attribute_required entry.",
+    "A recipe or template for logging access to a list of records (one log row per returned row), since many health endpoints return lists.",
+    "A way for a policy to take a list of approved vendor hosts from the workspace without the customer typing them, or a hint that empty means not yet reviewed.",
+    "Guidance on whether the shell 'not found' noise from the bash tool (a stray hook message) should be ignored."
+  ],
+  "parse_attempts": 10,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policies parse and the dry run is clean, and the recipe's checkable parts are wired to objects built here. But the ask is HIPAA-safe, and the policies do not cover that: no identifier list beyond the named fields, appointments list reads are not logged, no role or infrastructure checks, and the attribute syntax is guessed. Predicted findings in DATA-010, LOG-001, CONF-010, HIPAA-PHI-010 and VND-001 have not been measured because evaluate was not run."
+}

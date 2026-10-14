@@ -1,0 +1,28 @@
+{
+  "key": "d8824d74c5bdf3b8",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:48.436Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy LOG-011",
+        "create policy RATE-001",
+        "create middleware rate_limit"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": [
+        "middleware/rate_limit.xs:10: Missing required argument 'error'",
+        "middleware/rate_limit.xs:2: middleware is missing a response clause",
+        "middleware/rate_limit.xs:14: Expecting --> } <-- but found --> 'exception' <--"
+      ]
+    },
+    "unreadable": []
+  }
+}

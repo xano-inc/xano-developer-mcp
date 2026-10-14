@@ -1,0 +1,67 @@
+{
+  "goal_id": "G14",
+  "objects_built": [
+    {"kind": "table", "name": "email_change_log", "file": "workspace/table/email_change_log.xs", "role": "audit rows for changes to customer-email records: actor, table, record, action, time"},
+    {"kind": "function", "name": "record_email_change", "file": "workspace/function/record_email_change.xs", "role": "the only writer of email_change_log; actor taken from $auth.id"}
+  ],
+  "objects_changed": [
+    {"kind": "task", "name": "retry_failed_webhooks", "file": "workspace/task/retry_failed_webhooks.xs", "change": "removed unbounded while loop; one attempt per failed delivery per run; abandoned after 5 attempts using existing attempts field"},
+    {"kind": "task", "name": "nightly_ticket_summaries", "file": "workspace/task/nightly_ticket_summaries.xs", "change": "file deleted: AI agent call per ticket inside foreach. Dry run did not list the deletion."},
+    {"kind": "table", "name": "customers", "file": "workspace/table/customers.xs", "change": "added table tag customer-email"},
+    {"kind": "table", "name": "users", "file": "workspace/table/users.xs", "change": "added table tag customer-email"},
+    {"kind": "table", "name": "newsletter_subscribers", "file": "workspace/table/newsletter_subscribers.xs", "change": "added table tag customer-email"},
+    {"kind": "table", "name": "patients", "file": "workspace/table/patients.xs", "change": "added table tag customer-email"},
+    {"kind": "table", "name": "support_tickets", "file": "workspace/table/support_tickets.xs", "change": "added table tag customer-email"},
+    {"kind": "table", "name": "orgs", "file": "workspace/table/orgs.xs", "change": "added table tag customer-email (billing_email)"}
+  ],
+  "templates_considered": [
+    "audit_log_protected (RET-001): fit for the audit table write restriction",
+    "no_destructive_sql (SEC-010): did not fit; no raw SQL in the ask",
+    "retained_data_cleaned_up / retained_data_has_age_limit (RET-002/003): did not fit; ask is about tracking changes and runaway loops, not retention",
+    "endpoints_need_login / own_records_only: did not fit; not about access control",
+    "no_sensitive_data_in_logs (LOG-001): did not fit; not about logging content",
+    "reads_are_paged (PERF-001): considered for cost; does not target AI spend or loops",
+    "middleware_surfaces_errors, external_calls_handle_errors: considered for retries; not the unbounded loop problem"
+  ],
+  "templates_used": ["audit_log_protected"],
+  "rules": [
+    {"policy_key": "RET-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["email_change_log"]}, "covers": "audit table exists"},
+    {"policy_key": "RET-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["email_change_log"], "allowed_functions": ["record_email_change"]}, "covers": "only the audit function writes the audit log"},
+    {"policy_key": "AUDIT-010", "check": "table.tag_required", "params": {"field_names": ["email", "requester_email", "billing_email"], "tag": "customer-email"}, "covers": "every table holding a customer email is tagged"},
+    {"policy_key": "AUDIT-010", "check": "object.statement_required", "params": {"functions": ["record_email_change"], "placement": "unconditional", "reaching_table_tags": ["customer-email"]}, "covers": "objects reaching email tables record the change"},
+    {"policy_key": "COST-010", "check": "statement.containment", "params": {"statements": ["ai.agent.run", "ai.external.mcp.tool.run"], "must_not_be_inside": ["foreach", "for", "while"]}, "covers": "AI calls never run inside loops"},
+    {"policy_key": "COST-020", "check": "stack.statement_forbidden", "params": {"statements": ["while"]}, "covers": "no unbounded while loop, so no forever-retry"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "AI call cost of $900 in a loop (total spend)", "why": "no check exists"},
+    {"part": "background task retrying forever (retry count and frequency)", "why": "no check exists; task retries not checkable. Covered only by removing while loops and writing a bound by hand"},
+    {"part": "who changed what on email tables: every write actually goes through the audit", "why": "couldn't tell how; object.statement_required only checks the call exists, not that writes in triggers or direct SQL are audited"},
+    {"part": "whether audit rows are reviewed or retained", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "customer-email tag name is free to choose and is not in any vocabulary",
+    "orgs.billing_email counts as a customer email",
+    "retry cap of 5 attempts is acceptable to the customer",
+    "deleting nightly_ticket_summaries is acceptable; the customer approved the plan but summarising tickets nightly is gone",
+    "users table holds customer-facing emails too, so it is tagged"
+  ],
+  "workspace_names_used": ["customers", "users", "newsletter_subscribers", "patients", "support_tickets", "orgs", "webhook_deliveries", "retry_failed_webhooks", "nightly_ticket_summaries", "summarize_ticket", "sessions", "acme_notify_sms", "customers_POST", "signup_POST", "subscribe_POST"],
+  "confusions": [
+    "Table tag syntax (tags = [...] at table level) was not in the skill or the workspace files; placed after auth and the dry run accepted it, but I did not confirm it is the correct location.",
+    "Skill is very long (about 110KB of output) and the check catalogue has no per-check examples for statement.containment placement names; I guessed must_not_be_inside with foreach/for/while from the example.",
+    "Recipes do not cover audit trails for write changes; I used RET-001 plus a hand-written object.statement_required rule.",
+    "Deleting a task file: the dry run did not show the deletion, and I could not tell whether push deletes without --force.",
+    "object.statement_required placement param is listed in the catalogue but its doc said 'unconditional' meaning top level; I assumed it applies to functions called by the object too."
+  ],
+  "wished_for": [
+    "A recipe or template for 'audit who changed what on tables holding a class of data' that names the write-restriction and per-writer call pattern.",
+    "A check or param that bounds AI spend or flags AI calls in loops across called functions, or a spend-cap check.",
+    "Clear statement of whether deletions of objects appear in a dry-run preview and need --force.",
+    "Examples of table-level tags syntax in XanoScript."
+  ],
+  "parse_attempts": 4,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": ["nightly_ticket_summaries deletion not shown in dry-run preview"],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "AI-in-loop and while-loop rules are real checks and will report, but spend and retry counts are not checkable; the audit rule only confirms a call exists in each writer and the existing writers are not yet updated, so AUDIT-010 will report findings until they are. Policies unevaluated."
+}

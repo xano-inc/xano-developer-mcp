@@ -1,0 +1,41 @@
+{
+  "goal_id": "G01",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "AUTH-010: endpoints_need_login. Fits the auth half, but its rule covers every endpoint in the workspace (login, signup, health included); the ask is about invoices. Not used.",
+    "PERF-001: reads_are_paged. Fits the 'full table' half. Its rule is the same statement.param_bound check, scoped by me to invoices. Not used as a template because I wanted the invoices scope.",
+    "DATA-010 / CONF-010 / RET-*: did not fit; the ask is about auth and list size, not field output or retention."
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "INVOICES-001", "check": "object.auth_required", "params": {"tables": ["invoices"]}, "covers": "endpoints returning invoices data without auth (export_GET today)"},
+    {"policy_key": "INVOICES-001", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 1000, "unit": "rows", "object_kinds": ["query"], "tables": ["invoices"]}, "covers": "the full invoices table returned in one response"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "which login table or role may read invoices", "why": "no check exists"},
+    {"part": "query filters by the caller's org (tenant isolation)", "why": "other"},
+    {"part": "runtime values: per_page actually staying under 1000", "why": "needs runtime/org process"},
+    {"part": "blocking vs advisory enforcement", "why": "other"}
+  ],
+  "assumptions": [
+    "The customer's 'full invoices table' means a list endpoint on the invoices table with no paging.",
+    "Advisory is the right starting enforcement; the customer's 'nobody ships it' goal needs the owner to make it blocking later.",
+    "Turning on auth for invoices/export is the owner's decision, so I did not change the endpoint."
+  ],
+  "workspace_names_used": ["invoices", "invoice_item", "users", "app", "invoices/export", "invoices_GET", "invoices/{invoice_id}"],
+  "confusions": [
+    "The skill's rule that a new policy's key must not use a template prefix (AUTH-, DATA-) left no clear key for a goal that is half AUTH and half PERF; I used INVOICES-001 but the guidance does not say what to do when a request is a narrowed template.",
+    "Template AUTH-010 is written workspace-wide and the skill does not say how to narrow it to one table except by hand-writing the rule; the catalogue example covers 'tables' but not that the template should keep its key when scoped.",
+    "The dry run does not show policy_check results, so the predicted findings are unverified; the skill's evaluate step is forbidden to me here."
+  ],
+  "wished_for": [
+    "A recipe for 'this table is only reached by logged-in endpoints and never returned unpaged', with the scope params filled in.",
+    "Guidance on whether a per_page input variable passes statement.param_bound (runtime value vs. literal)."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The auth rule directly flags endpoints reaching invoices without login, which is the core ask, and the dry run accepted the policy. Confidence is medium, not high, because I could not run evaluate here, so I have not seen the findings. The paging rule may not judge a variable per_page, and nothing checks org isolation or who holds a login."
+}

@@ -1,0 +1,29 @@
+{
+  "key": "673150376d84c145",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:00.096Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AUTH-002",
+        "create policy TENANT-010",
+        "create function require_admin_role",
+        "update query orgs/{org_id}/tenants GET",
+        "update query tenants/{tenant_id} PATCH",
+        "update query tenants GET",
+        "update query users GET",
+        "update query admin/stats GET"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

@@ -1,0 +1,100 @@
+--- a/ai/tool/delete_customer_note.xs
++++ b/ai/tool/delete_customer_note.xs
+@@ -8,6 +8,10 @@
+   }
+ 
+   stack {
++    function.run require_approval {
++      input = {action: "delete_customer_note", record_id: $input.note_id, requested_by: "support-agent"}
++    } as $approval
++
+     db.del customer_notes {
+       field_name = "id"
+       field_value = $input.note_id
+--- a/ai/tool/send_customer_email.xs
++++ b/ai/tool/send_customer_email.xs
+@@ -14,6 +14,10 @@
+   }
+ 
+   stack {
++    function.run require_approval {
++      input = {action: "send_customer_email", record_id: 0, requested_by: "support-agent"}
++    } as $approval
++
+     util.send_email {
+       api_key = $env.RESEND_API_KEY
+       service_provider = "resend"
+--- a/function/require_approval.xs
++++ b/function/require_approval.xs
+@@ -0,0 +1,22 @@
++// Stops an agent action unless a different person approved it for this record.
++function require_approval {
++  input {
++    text action
++    int record_id
++    text requested_by
++  }
++
++  stack {
++    db.query approvals {
++      where = $db.approvals.action == $input.action && $db.approvals.record_id == $input.record_id && $db.approvals.requested_by != $input.requested_by && $db.approvals.approved_by != null
++      return = {type: "count"}
++    } as $approved
++
++    precondition ($approved > 0) {
++      error_type = "accessdenied"
++      error = "This action needs a human approval first."
++    }
++  }
++
++  response = true
++}
+--- a/policies/AGENT-001.xs
++++ b/policies/AGENT-001.xs
+@@ -0,0 +1,27 @@
++policy "AGENT-001" {
++  title = "Agents use only approved tools, and deletes and emails wait for approval"
++  statement = "AI agents enable only the tools the owner has approved. Every tool that deletes a record or sends an email calls require_approval first, so a person must approve the action."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["ai-agents"]
++
++  rule {
++    title = "Support Agent enables only its approved tools"
++    check = "agent.tool_allowlist"
++    params = {
++      object_kinds: ["agent"]
++      tools: ["lookup_order", "delete_customer_note", "send_customer_email", "issue_refund"]
++    }
++  }
++
++  rule {
++    title = "Deletes and emails in tools wait for require_approval"
++    check = "stack.statement_order"
++    params = {
++      before: {functions: ["require_approval"]}
++      after: ["db.del", "db.bulk.delete", "util.send_email"]
++      object_kinds: ["tool"]
++    }
++  }
++}
+--- a/table/approvals.xs
++++ b/table/approvals.xs
+@@ -0,0 +1,16 @@
++// A human's approval of an action an agent wants to take on a record.
++table approvals {
++  auth = false
++
++  schema {
++    int id
++    timestamp created_at?=now
++    text action
++    int record_id
++    text requested_by
++    text approved_by?
++    timestamp approved_at?
++  }
++
++  index = [{type: "primary", field: [{name: "id"}]}]
++}

@@ -1,0 +1,128 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/ERASE-001.xs",
+    "build/policies/RET-003.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/ERASE-001.xs",
+      "ok": true,
+      "key": "ERASE-001",
+      "title": "Account deletion erases personal data everywhere",
+      "statement": "Every table tagged personal must be reached by the erasure function, the one function tagged erasure, which deletes a person's rows with db.del or db.bulk.delete. Endpoints that reach the deletion path require login. A table that cannot be erased is exempted by its owner, never by the author.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "ERASE-001.R1",
+          "title": "",
+          "check": "table.coverage_required",
+          "params": {
+            "table_selector": [],
+            "referenced_by": {
+              "object_kinds": [
+                "function"
+              ],
+              "tags": [
+                "erasure"
+              ],
+              "statements": [
+                "db.del",
+                "db.bulk.delete"
+              ]
+            },
+            "tags": [
+              "personal"
+            ],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "ERASE-001.R2",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "paths": [
+              "account"
+            ],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "ERASE-001.R1",
+          "text": "tags \"personal\" is on no table on this branch, so it selects nothing."
+        },
+        {
+          "rule_id": "ERASE-001.R1",
+          "text": "referenced_by.tags \"erasure\" is on no function on this branch, so no object covers a table through it."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/RET-003.xs",
+      "ok": true,
+      "key": "RET-003",
+      "title": "Retained data is deleted after a set number of days",
+      "statement": "Tables tagged retained are deleted after a set number of days. Each must be reached by an active scheduled task that deletes its rows once created_at is older than 730 days. A table that cannot follow this rule is exempted by its owner, never by the author.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "RET-003.R1",
+          "title": "",
+          "check": "table.coverage_required",
+          "params": {
+            "table_selector": [],
+            "referenced_by": {
+              "object_kinds": [
+                "task"
+              ],
+              "max_age_days": 730
+            },
+            "tags": [
+              "retained"
+            ],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RET-003.R1",
+          "text": "tags \"retained\" is on no table on this branch, so it selects nothing."
+        }
+      ]
+    }
+  ]
+}

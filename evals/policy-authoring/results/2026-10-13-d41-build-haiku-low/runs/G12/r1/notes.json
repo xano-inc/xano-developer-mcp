@@ -1,0 +1,36 @@
+{
+  "goal_id": "G12",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "no_secrets_in_code: no fit; not about data movement or access",
+    "own_records_only: no fit; record ownership, not environment copies",
+    "audit_log_protected: no fit; audit of runtime writes, not prod access approval",
+    "tables_classified: partial fit for data sensitivity labels; does not address either half of the ask, so not used",
+    "endpoints_need_login: no fit; login is not on-call approval"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "production data never ends up in staging", "why": "runtime_data: policies read stored definitions, never records or data copied between environments"},
+    {"part": "devs can only get into prod through the on-call process", "why": "needs runtime/org process: access reviews and change approvals are outside definitions"}
+  ],
+  "assumptions": [
+    "Staging and production are separate branches or environments in the workspace, but no check reads which data moves between them",
+    "The catalogue's not_checkable topics are authoritative for this platform version"
+  ],
+  "workspace_names_used": ["policy_authoring_eval", "orgs", "tenants", "customers", "payments", "patients"],
+  "confusions": [
+    "The skill says to prefer a template and recipe when one fits, but no recipe covers environment separation or on-call access; the recipe list has no entry for it and the not_checkable list is the only guidance",
+    "catalogue.json top-level key is 'items' for checks, not 'checks' as the brief's wording suggests, which I initially assumed"
+  ],
+  "wished_for": [
+    "A recipe or not-checkable entry that tells the author what they can build for environment-separation asks (for example a partial, checkable slice) instead of only stating the gap",
+    "A clear rule for when a partial policy is worth writing versus when the honest answer is none, since the brief's rule ('build nothing') is strict but the customer's ask has one checkable-adjacent piece"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "The two core requirements sit in the catalogue's not-checkable topics (runtime data copies and access/approval). No check reads record movement between environments or who approved a prod change, so no policy can enforce the ask. Confidence is high that the honest outcome is no policy; I did not run a parse or dry run because nothing was written."
+}

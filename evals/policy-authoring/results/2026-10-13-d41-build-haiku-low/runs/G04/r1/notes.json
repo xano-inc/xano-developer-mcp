@@ -1,0 +1,78 @@
+{
+  "goal_id": "G04",
+  "objects_built": [
+    {"kind": "table", "name": "phi_access_log", "file": "workspace/table/phi_access_log.xs", "role": "One row per read or write of a health record: user_id, record_table, record_id. Only log_phi_access writes it."},
+    {"kind": "function", "name": "log_phi_access", "file": "workspace/function/log_phi_access.xs", "role": "Adds a phi_access_log row for $auth.id. Called unconditionally by every endpoint that reaches a phi table."}
+  ],
+  "objects_changed": [
+    {"kind": "table", "name": "patients", "file": "workspace/table/patients.xs", "change": "tags = [\"phi\"]; first_name, last_name, dob, ssn, email, phone, address, insurance_member_id marked sensitive"},
+    {"kind": "table", "name": "appointments", "file": "workspace/table/appointments.xs", "change": "tags = [\"phi\"]; reason marked sensitive"},
+    {"kind": "table", "name": "clinical_notes", "file": "workspace/table/clinical_notes.xs", "change": "tags = [\"phi\"]; diagnosis, note marked sensitive"},
+    {"kind": "query", "name": "patients/{patient_id} GET", "file": "workspace/api/app/patients/patient_id_GET.xs", "change": "function.run log_phi_access after db.get"},
+    {"kind": "query", "name": "clinical_notes POST", "file": "workspace/api/app/clinical_notes_POST.xs", "change": "function.run log_phi_access after db.add; removed debug.log of $input[\"\"]"},
+    {"kind": "query", "name": "appointments GET", "file": "workspace/api/app/appointments_GET.xs", "change": "auth = \"users\" added (was public); foreach over results calling log_phi_access"}
+  ],
+  "templates_considered": [
+    "confidential_tables_tagged (CONF-012): used, tag = phi",
+    "sensitive_fields_marked (CONF-011): used, bare names only; email/phone/note/reason excluded because they collide with users, customers, customer_notes, refunds",
+    "sensitive_tables_need_login (CONF-010): used, table_tags = phi; recipe's function param is covered by the extra statement_required rule",
+    "no_pii_in_responses (DATA-010): used, fields = ssn, dob, insurance_member_id, diagnosis, note; table_tags = phi scope added so it only judges PHI tables",
+    "no_sensitive_data_in_logs (LOG-001): used as given",
+    "views_hide_sensitive (CONF-013): used as given",
+    "tls_verification_on (SEC-011): used as given",
+    "audit_log_protected (RET-001): used, names/restricted_tables = phi_access_log, allowed_functions = log_phi_access",
+    "approved_vendors_only (VND-001): NOT used, no approved hosts or providers given; I did not invent them",
+    "retained_data_cleaned_up / retained_data_has_age_limit (RET-002/003): NOT used, no retention period given",
+    "recipe protect_health_data: followed, minus VND-001 and retention",
+    "recipe audit_changes: NOT followed, not requested",
+    "role_based_access (AUTH-002): NOT followed, outside the health-data ask"
+  ],
+  "templates_used": ["CONF-012", "CONF-011", "CONF-010", "DATA-010", "LOG-001", "CONF-013", "SEC-011", "RET-001"],
+  "rules": [
+    {"policy_key": "HIPAA-PHI-001", "check": "table.tag_required", "params": {"tag": "phi", "field_names": ["dob", "ssn", "insurance_member_id", "diagnosis", "first_name", "last_name", "address"]}, "covers": "PHI tables are tagged (patients, clinical_notes; appointments tagged by hand)"},
+    {"policy_key": "HIPAA-PHI-001", "check": "table.field_attribute_required", "params": {"attribute": "sensitive", "field_names": ["dob", "ssn", "insurance_member_id", "diagnosis", "first_name", "last_name", "address"]}, "covers": "Health identifiers and diagnosis marked sensitive, so DATA-010 and CONF-013 apply"},
+    {"policy_key": "HIPAA-PHI-001", "check": "object.tagged_table_access", "params": {"table_tags": ["phi"]}, "covers": "Endpoints reaching PHI require login (appointments GET fixed)"},
+    {"policy_key": "HIPAA-PHI-001", "check": "db.output_fields_forbidden", "params": {"fields": ["ssn", "dob", "insurance_member_id", "diagnosis", "note"], "table_tags": ["phi"], "object_kinds": ["query"]}, "covers": "PHI fields kept out of responses; expected to flag patients GET and clinical_notes POST, not changed"},
+    {"policy_key": "HIPAA-PHI-001", "check": "statement.expression_rule", "params": {"statements": ["debug.log"], "param_names": ["value"], "must_not_reference": ["$input", "$auth", "$env"]}, "covers": "No request, user or env data in debug logs"},
+    {"policy_key": "HIPAA-PHI-001", "check": "table.view_hide_required", "params": {}, "covers": "Saved views hide sensitive fields"},
+    {"policy_key": "HIPAA-PHI-001", "check": "statement.param_forbidden", "params": {"statements": ["api.request", "stream.from_request"], "param_names": ["verify_peer", "verify_host"], "values": [false]}, "covers": "External requests verify TLS (transmission security)"},
+    {"policy_key": "HIPAA-PHI-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["phi_access_log"]}, "covers": "Access log exists"},
+    {"policy_key": "HIPAA-PHI-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["phi_access_log"], "allowed_functions": ["log_phi_access"]}, "covers": "Only log_phi_access writes the access log"},
+    {"policy_key": "HIPAA-PHI-001", "check": "object.statement_required", "params": {"functions": ["log_phi_access"], "placement": "unconditional", "reaching_table_tags": ["phi"]}, "covers": "Every object reaching PHI records the access. Not a catalogue template; this is the recipe's extra rule"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Approved vendors / hosts for PHI traffic (VND-001)", "why": "couldn't tell how: needs the customer's approved hosts or providers"},
+    {"part": "Retention period and cleanup of PHI and access-log rows (RET-002, RET-003)", "why": "needs runtime/org process: the period is the owner's decision"},
+    {"part": "Sensitive marking of email, phone, note, reason", "why": "no check can target one table's field: bare names also hit users, customers, customer_notes, refunds"},
+    {"part": "DATA-010 findings on patients GET and clinical_notes POST", "why": "other: removing fields from the clinician UI is a product decision, so not changed"},
+    {"part": "Audit of edits and deletes (audit_changes recipe)", "why": "other: not in the request"},
+    {"part": "Who may read phi_access_log and admin role checks", "why": "no check exists for who reads a table; AUTH-002 is outside the health-data ask"},
+    {"part": "People and training, access reviews, runtime data, infrastructure, encryption at rest, backups", "why": "no check exists: the recipe lists these as unseen"}
+  ],
+  "assumptions": [
+    "The clinician-facing endpoints are the three in the app group: patients/{patient_id} GET, clinical_notes POST, appointments GET",
+    "Appointments GET being public was unintended, so adding auth is in scope under the approved plan",
+    "The debug.log on $input[\"\"] was an accidental leftover, so removing it is in scope",
+    "phi as a tag name and phi_access_log as a table name are free in the workspace (dry-run reported no conflict)",
+    "$auth is available inside log_phi_access when called from logged-in endpoints"
+  ],
+  "workspace_names_used": ["patients", "appointments", "clinical_notes", "users", "orgs", "customers", "customer_notes", "refunds", "patients/{patient_id} GET", "clinical_notes POST", "appointments GET"],
+  "confusions": [
+    "The skill says the policy file lives at policies/<KEY>.xs under the project root; the brief says ./workspace/policies/<KEY>.xs. I followed the brief.",
+    "The skill's sensitive-field and table-tag syntax in XanoScript is not documented in the skill or catalogue. I guessed {sensitive = true} on schema fields and tags = [\"phi\"] in the table block. The dry-run accepted both (UPDATE_FIELD / UPDATE), but I have not confirmed the output matches what Studio writes.",
+    "Recipe says CONF-010 takes table_tags only, but also says a function is required for the access rule. It is split into a separate statement_required rule, which is not a catalogue template. The skill does not say whether that split is expected.",
+    "Field-name checks take bare names with no table scope, so shared names (email, phone, note, reason) cannot be targeted. The catalogue does not say how to target one table's field.",
+    "Parse warned that phi and phi_access_log are not in the workspace. That is expected for new names, but the warning text does not say whether names in the same change are checked together."
+  ],
+  "wished_for": [
+    "A table/field scope param for table.field_attribute_required and table.tag_required, so bare names do not hit other tables.",
+    "An example of XanoScript field attributes (sensitive) and table tags in the policies topic.",
+    "A recipe that says which templates to skip when a vendor list is unknown, with a placeholder-free option.",
+    "Guidance on whether appointments GET being public should be treated as a bug or a choice."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The enforcement is wired (access log, function, unconditional call, login, sensitive marking, phi tags), and the dry run accepted all objects and the policy. Confidence is only medium because nothing was evaluated, so I do not know what findings will appear. VND-001 and retention are not covered, and several PHI fields are not checkable without touching unrelated tables."
+}

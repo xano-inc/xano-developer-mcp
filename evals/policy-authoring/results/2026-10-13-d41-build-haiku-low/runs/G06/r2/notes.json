@@ -1,0 +1,58 @@
+{
+  "goal_id": "G06",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "external_calls_handle_errors: fits the missing error handling part; used as LOG-010",
+    "endpoints_have_tests: fits the no tests part; used as CHG-001",
+    "endpoints_stay_short: fits the giant functions part; used as CONV-040 with the template's 30-statement limit, which is stricter than the customer's 200 lines",
+    "no_leftover_code: fits hygiene in general, not named in the ask; included because the recipe includes it; used as CONV-050",
+    "reads_are_paged: fits generic quality, not named in the ask; included because the recipe includes it; used as PERF-001",
+    "code_review_basics recipe: fits the whole ask; followed for the policy set, but not its legacy tag build since no object needs an exemption",
+    "middleware_surfaces_errors (LOG-011): considered for error handling; not used because the workspace has no middleware and the ask is about endpoint and function code",
+    "tables_have_listed_fields, object.naming templates: not relevant to the ask"
+  ],
+  "templates_used": ["external_calls_handle_errors", "endpoints_have_tests", "endpoints_stay_short", "no_leftover_code", "reads_are_paged"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling around external calls"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query", "function"]}, "covers": "no tests"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests (asserting tests)"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant functions"},
+    {"policy_key": "CONV-050", "check": "stack.disabled_statement_forbidden", "params": {}, "covers": "leftover code (not in ask, from recipe)"},
+    {"policy_key": "CONV-050", "check": "object.unused_input_forbidden", "params": {}, "covers": "leftover code (not in ask, from recipe)"},
+    {"policy_key": "CONV-050", "check": "stack.unused_variable_forbidden", "params": {}, "covers": "leftover code (not in ask, from recipe)"},
+    {"policy_key": "PERF-001", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 1000, "unit": "rows", "object_kinds": ["query", "tool"]}, "covers": "unbounded reads (not in ask, from recipe)"},
+    {"policy_key": "CR-010", "check": "object.description_required", "params": {"object_kinds": ["function"], "min_length": 20}, "covers": "functions say what they do (recipe's own rule)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "error handling beyond external calls (database writes, input handling, what the catch does)", "why": "no check exists"},
+    {"part": "tests that actually assert the right thing", "why": "no check exists; object.test_coverage and test.assertion_required only confirm a test calls and asserts something"},
+    {"part": "200-line functions as lines", "why": "couldn't tell how; checks count statements, not lines; I used the template's 30-statement limit instead"},
+    {"part": "stop juniors breaking prod at run time", "why": "needs runtime/org process; policies read stored definitions only"},
+    {"part": "code review sign-off and who approves changes", "why": "needs runtime/org process"},
+    {"part": "blocking enforcement", "why": "other: deliberately left advisory because existing objects already violate the rules, and the template guidance says to start advisory; the customer must choose to switch"}
+  ],
+  "assumptions": [
+    "The customer's 'juniors' are the people whose changes go through this workspace's definitions, so stored-definition checks are the right place to enforce.",
+    "Advisory enforcement is acceptable for a first pass; the customer will flip to blocking after reviewing findings.",
+    "No existing object should be exempt via a legacy tag, since none has been identified as a deliberate legacy case.",
+    "The 'missing error handling' complaint maps to api.request calls outside try_catch."
+  ],
+  "workspace_names_used": ["policy_authoring_eval", "invoices_require_login", "health_check", "acme_sync_shipping_rates", "charge_POST"],
+  "confusions": [
+    "The skill text says a 'legacy' tag is needed for except_tags, but the recipe lists it as a 'tag' build; it was not clear whether a tag must exist as an object or is just a string on objects. I did not create one.",
+    "The recipe names no build step beyond the legacy tag for code_review_basics, so the recipe gives no enforcement object for this goal; reasonable, but a reader may expect something to be built.",
+    "Template limit for functions (30 statements) is the same as for endpoints, which may be stricter than teams expect for functions; the template does not say so explicitly.",
+    "xano policy parse text output omits the severity line when severity is medium (it shows in -o json); looks like a display quirk, not a parse error."
+  ],
+  "wished_for": [
+    "A worked example of mapping 'lines' to statements, since the customer's words are line counts.",
+    "A template or recipe variant that starts blocking only for new or changed objects, so existing violators do not block every merge.",
+    "An explicit note that the test rules check a test exists and asserts, not that its assertions are meaningful."
+  ],
+  "parse_attempts": 7,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The six policies cover the three named complaints with real checks and parse cleanly, and the dry run is clean. Confidence is medium, not high, because error handling and test quality are only partly checkable, and the policies were not evaluated against the workspace (evaluate is forbidden for me), so I know from reading the files that acme_sync_shipping_rates and most endpoints would produce findings, but not the full finding list."
+}

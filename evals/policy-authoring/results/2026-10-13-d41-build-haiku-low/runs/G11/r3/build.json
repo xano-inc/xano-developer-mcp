@@ -1,0 +1,10 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/LOG-010.xs",
+    "policies/SEC-013.xs"
+  ],
+  "modified": [],
+  "deleted": [],
+  "other_files": []
+}

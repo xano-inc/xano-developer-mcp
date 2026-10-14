@@ -1,0 +1,19 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/GDPR-010.xs",
+    "task/purge_expired_personal_data.xs"
+  ],
+  "modified": [
+    "api/app/account_DELETE.xs",
+    "function/delete_user_account.xs",
+    "table/newsletter_subscribers.xs",
+    "table/orders.xs",
+    "table/sessions.xs",
+    "table/support_tickets.xs",
+    "table/user_address.xs",
+    "table/users.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

@@ -1,0 +1,25 @@
+{
+  "pulled": true,
+  "added": [
+    "function/record_audit_event.xs",
+    "function/require_role.xs",
+    "policies/AUTH-002.xs",
+    "policies/AUTH-030.xs",
+    "policies/CHG-010.xs",
+    "policies/RET-001.xs",
+    "table/audit_log.xs"
+  ],
+  "modified": [
+    "api/admin/orgs/org_id/tenants_GET.xs",
+    "api/admin/tenants/tenant_id_PATCH.xs",
+    "api/admin/tenants_GET.xs",
+    "api/admin/users_GET.xs",
+    "api/app/admin/stats_GET.xs",
+    "api/app/customers/customer_id_PATCH.xs",
+    "api/app/me_PATCH.xs",
+    "api/app/refunds/refund_id/approve_POST.xs",
+    "function/delete_user_account.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

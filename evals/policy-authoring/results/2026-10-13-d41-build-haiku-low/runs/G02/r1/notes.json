@@ -1,0 +1,50 @@
+{
+  "goal_id": "G02",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "functions_snake_case (CONV-010): did not fit, it checks snake_case only and not the client prefix or plural tables",
+    "endpoint_paths_versioned (CONV-012): did not fit, it requires kebab-case endpoint paths, which conflicts with the requested snake_case",
+    "fields_snake_case (CONV-011): did not fit, it covers table fields, not endpoints, tables or functions",
+    "function_arguments_snake_case (CONV-013): did not fit, it covers function arguments, which the ask does not mention"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "CONV-100", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are lowercase snake_case"},
+    {"policy_key": "CONV-100", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "suffixes": ["s"]}, "covers": "tables are plural"},
+    {"policy_key": "CONV-100", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "prefixes": ["acme_"]}, "covers": "functions start with the client prefix"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "functions start with the client prefix: the actual prefix", "why": "couldn't tell how: the workspace has no stated client prefix, so I used acme_ from the five functions that carry it"},
+    {"part": "one policy covering 12 client workspaces", "why": "other: a policy is per workspace, so each client needs its own copy with its own prefix"},
+    {"part": "fields and inputs naming", "why": "other: the ask did not mention them"},
+    {"part": "whether a name matches what the object does", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "client prefix is acme_, taken from existing function names; the customer must confirm",
+    "plural means the name ends in s, as the object.naming suffix check reads it; irregular plurals would need allowed_names",
+    "endpoint paths are judged by the declared path (for example bank-accounts/link), not the file name"
+  ],
+  "workspace_names_used": [
+    "tables: appointments, clinical_notes, customer_notes, customers, invoice_item, invoices, newsletter_subscribers, orders, orgs, patients, payment_method, payments, products, refunds, sessions, shipments, support_tickets, tenants, user_address, users, webhook_deliveries",
+    "functions: acme_calculate_tax, acme_get_tracking, acme_notify_sms, acme_send_invoice_email, acme_sync_shipping_rates, calculateLateFee, delete_user_account, summarize_ticket",
+    "endpoint paths: bank-accounts/link and the other declared query paths"
+  ],
+  "confusions": [
+    "object.naming rule for endpoint_path: the skill lists object_kinds as a param, but the parser refused it with name_kind endpoint_path (it only applies to object or input names); the error was clear but the skill's params list does not say so",
+    "the catalogue has no check for a per-workspace prefix or for plural tables that handles irregular plurals, so the suffix 's' rule is a literal approximation",
+    "pulled file names differ from declared names (bank_accounts/link_POST.xs declares bank-accounts/link), so reading the directory alone misleads about endpoint paths"
+  ],
+  "wished_for": [
+    "a template or example of a per-client prefix rule that a multi-workspace agency can copy",
+    "a note in the object.naming docs that object_kinds does not apply to endpoint_path",
+    "a way to run evaluate in dry mode so I could confirm predicted findings; I could only predict them by reading names"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [
+    "rule[0]: object_kinds applies only when name_kind is object or input"
+  ],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policy parses and the dry run accepts it, and the three rules map to the three naming requirements. Confidence is not higher because I could not evaluate it, so the flagged names are predicted from declared names. The function prefix is an assumption (acme_), not a confirmed client prefix."
+}

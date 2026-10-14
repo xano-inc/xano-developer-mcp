@@ -1,0 +1,39 @@
+{
+  "key": "ba7d45b7feb27d5e",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:16.042Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AUTH-002",
+        "create policy AUTH-030",
+        "create policy CHG-010",
+        "create policy RET-001",
+        "create table audit_log",
+        "update function delete_user_account",
+        "create function record_audit_event",
+        "create function require_role",
+        "update query orgs/{org_id}/tenants GET",
+        "update query tenants/{tenant_id} PATCH",
+        "update query tenants GET",
+        "update query users GET",
+        "update query admin/stats GET",
+        "update query customers/{customer_id} PATCH",
+        "update query me PATCH",
+        "update query refunds/{refund_id}/approve POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": [
+        "api/admin/tenants/tenant_id_PATCH.xs:30: Expecting: Expected an expression but found: '$tenant'"
+      ]
+    },
+    "unreadable": []
+  }
+}

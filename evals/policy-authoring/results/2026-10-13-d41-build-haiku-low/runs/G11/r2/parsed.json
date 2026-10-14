@@ -1,0 +1,125 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/LOG-010.xs",
+    "build/policies/SEC-013.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/LOG-010.xs",
+      "ok": true,
+      "key": "LOG-010",
+      "title": "External calls handle their own failures",
+      "statement": "Every external call sits inside a try block, so a vendor failure reaches error handling instead of hanging or crashing the request. An external call that cannot be wrapped must be flagged to the platform owner before it is exempted.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "LOG-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request",
+              "ai.external.mcp.tool.run",
+              "ai.external.mcp.tool.list",
+              "ai.external.mcp.server_details",
+              "db.external.mysql.direct_query",
+              "db.external.postgres.direct_query",
+              "db.external.mssql.direct_query",
+              "db.external.oracle.direct_query",
+              "db.external.snowflake.direct_query"
+            ],
+            "must_be_inside": [
+              "try_catch"
+            ],
+            "must_not_be_inside": [],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/SEC-013.xs",
+      "ok": true,
+      "key": "SEC-013",
+      "title": "External requests time out quickly",
+      "statement": "Every external HTTP request sets its own timeout of 30 seconds or less, so one slow vendor cannot stall the workspace. A request that leaves timeout unset runs at the platform default and is reported, so the timeout is always written in the code. MCP and external database calls take no timeout and are not covered by this policy.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "medium",
+      "rules": [
+        {
+          "id": "SEC-013.R1",
+          "title": "",
+          "check": "statement.param_required",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "table_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "SEC-013.R2",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "api.request",
+              "stream.from_request",
+              "webflow.request"
+            ],
+            "param_names": [
+              "timeout"
+            ],
+            "min": null,
+            "max": 30,
+            "unit": "seconds",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "goal_id": "G05",
+  "objects_built": [
+    {"kind": "function", "name": "require_admin_role", "file": "workspace/function/require_admin_role.xs", "role": "Reads the user's role from the users table by id and stops with precondition unless it is admin or support_lead. Returns the role."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "tenants", "file": "workspace/api/admin/tenants_GET.xs", "change": "Added function.run require_admin_role as first statement, input user_id = $auth.id"},
+    {"kind": "query", "name": "orgs/{org_id}/tenants", "file": "workspace/api/admin/orgs/org_id/tenants_GET.xs", "change": "Same role check call as first statement"},
+    {"kind": "query", "name": "tenants/{tenant_id}", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "Same role check call as first statement"},
+    {"kind": "query", "name": "users", "file": "workspace/api/admin/users_GET.xs", "change": "Same role check call as first statement"},
+    {"kind": "query", "name": "admin/stats", "file": "workspace/api/app/admin/stats_GET.xs", "change": "Same role check call as first statement; endpoint is in app group but path is under admin"}
+  ],
+  "templates_considered": [
+    "AUTH-002: fit. Admin endpoints check the caller's role. Used with functions, placement first, paths admin.",
+    "AUTH-020: fit for the org_id filter. Own-records template is about owner fields; used only its db.where_constraint_required rule on tenants with field org_id and no compare_to. Dropped its db.write_from_input_forbidden rule as not asked.",
+    "AUTH-030: not used. Covers users writing their own role, which the ask did not mention.",
+    "Recipe 'Keep admin endpoints for admins': followed for the role check; it also proposes AUTH-030 and a tag. Did not add the tag because the endpoints share the /admin path."
+  ],
+  "templates_used": ["AUTH-002", "AUTH-020"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_admin_role"], "placement": "first", "must_reference": ["$auth"], "paths": ["admin"], "object_kinds": ["query"]}, "covers": "Every endpoint under /admin calls the role check before anything else and passes the logged-in user"},
+    {"policy_key": "AUTH-020", "check": "db.where_constraint_required", "params": {"field": "org_id", "table_selector": {"names": ["tenants"]}}, "covers": "Every read and write of tenants filters on org_id (no compare_to, so any org_id filter passes)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Caller's org matches the tenant's org (compare_to)", "why": "couldn't tell how: the ask names only org_id, not which value to compare against"},
+    {"part": "Role check compares the right roles and roles are granted correctly", "why": "no check exists"},
+    {"part": "users.role cannot be written from request input", "why": "other: out of scope of the ask; would need AUTH-030"},
+    {"part": "Runtime: what the role check and tenant queries return for real requests and tokens", "why": "needs runtime/org process"},
+    {"part": "Existing tenants queries are not org-filtered (tenants_GET, tenant PATCH, admin/stats)", "why": "other: policy will report them; changing their behaviour is a customer decision, so I did not"}
+  ],
+  "assumptions": [
+    "Admin path means the admin API group plus any endpoint whose path starts with admin (includes app group admin/stats).",
+    "The role lives on users.role and is read by db.get on the user id from $auth.id.",
+    "'filtering by org_id' means any org_id predicate, with no value to compare against.",
+    "Policy tags soc2 and hipaa are the template's frameworks; they are policy tags, not workspace tags."
+  ],
+  "workspace_names_used": ["users", "tenants", "orgs", "admin", "app", "admin/stats", "tenants/{tenant_id}", "orgs/{org_id}/tenants", "users", "$auth.id", "users.role", "org_id"],
+  "confusions": [
+    "The skill says a policy file is at policies/<KEY>.xs and a name must exist; for AUTH-020 the template rule's needs list includes write rule, which was unclear to drop when only one rule was wanted. The 'keep its rules' guidance vs 'add only what the request asks' conflict was not spelled out.",
+    "The recipe 'Keep admin endpoints for admins' says to add an admin tag only when paths do not share a prefix; the admin endpoints do share /admin, so no tag, but the recipe also says AUTH-002 selects by path in that case. Consistent, but the recipe text is dense.",
+    "Templates list AUTH-020 as an owner-field rule. Applying it to org_id required reading the check description to confirm that field plus no compare_to is valid."
+  ],
+  "wished_for": [
+    "A template or example for a tenant or org scoping rule (field = org_id with compare_to from the caller's org) and guidance on whether support staff are exempt.",
+    "Guidance on how to treat a scoped endpoint that touches a table but whose existing logic is out of policy: whether to fix it or leave the finding.",
+    "A reminder in the admin recipe that the role check should cover the app-group admin endpoints under the path, since the admin endpoint group alone would miss admin/stats."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": ["AUTH-002.R1: Function \"require_admin_role\" is not on this branch (expected: the function is new in this change)"],
+  "dry_run_problems_seen": ["none blocking; dry run exit 0, 2 policies, 1 function, 5 endpoints updated"],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "AUTH-002 enforces the role-check-first call on every endpoint under the admin path, which matches the ask's mechanics, but it only checks that the call is first and passes the user, not that the function enforces admin or support_lead correctly. AUTH-020 checks that tenants reads and writes carry an org_id filter, but without a compare_to it does not check the filter's value, and three existing endpoints will fail it until the customer decides how to scope them. Neither policy has been evaluated; the findings are a prediction from the rule text, not a run."
+}

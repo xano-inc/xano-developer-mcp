@@ -1,0 +1,17 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/ERASE-001.xs",
+    "policies/RET-003.xs",
+    "task/purge_expired_support_tickets.xs"
+  ],
+  "modified": [
+    "function/delete_user_account.xs",
+    "table/sessions.xs",
+    "table/support_tickets.xs",
+    "table/user_address.xs",
+    "table/users.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

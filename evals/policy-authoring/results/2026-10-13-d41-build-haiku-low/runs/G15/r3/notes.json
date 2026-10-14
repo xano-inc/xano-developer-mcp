@@ -1,0 +1,57 @@
+{
+  "goal_id": "G15",
+  "objects_built": [
+    {"kind": "middleware", "name": "rate_limit", "file": "workspace/middleware/rate_limit.xs", "role": "Per-IP limit of 60 requests per 60s via redis.ratelimit; raises accessdenied past the limit; exception critical"}
+  ],
+  "objects_changed": [
+    {"kind": "api_group", "name": "app", "file": "workspace/api/app/app.xs", "change": "Added middleware = {pre: [{name: \"rate_limit\"}]} so every endpoint in the group runs the limiter first"}
+  ],
+  "templates_considered": [
+    "rate_limiting: fits; supplied the plan shape (middleware + attachment + two rules + LOG-011). Its rule 1 names api_groups without a group name, so I filled it with app and paths auth/login, auth/signup.",
+    "middleware_surfaces_errors (LOG-011): fits; included as the recipe's second policy."
+  ],
+  "templates_used": ["rate_limiting", "middleware_surfaces_errors"],
+  "rules": [
+    {"policy_key": "RATE-010", "check": "object.middleware_required", "params": {"middleware": ["rate_limit"], "phase": "pre", "endpoint_auth": "none", "object_kinds": ["query"]}, "covers": "every public endpoint, new ones included"},
+    {"policy_key": "RATE-010", "check": "object.middleware_required", "params": {"middleware": ["rate_limit"], "phase": "pre", "api_groups": ["app"], "paths": ["auth/login", "auth/signup"], "object_kinds": ["query"]}, "covers": "login and signup specifically"},
+    {"policy_key": "LOG-011", "check": "object.settings_forbidden", "params": {"object_kind": "middleware", "when": {"exception_policy": {"equals": "silent"}}}, "covers": "the limiter's refusal must reach the caller"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "The limit value and the key it counts by (IP vs user, proxy behaviour)", "why": "no check exists"},
+    {"part": "Bots spreading requests across many IPs / bot management in front of Xano", "why": "needs runtime/org process"},
+    {"part": "Redis availability for the limiter", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "redis.ratelimit accepts key, max, ttl and returns an object with an allowed field",
+    "$env.$remote_ip is the caller's IP",
+    "accessdenied is an acceptable error_type for a refusal (a 429 would be more accurate)",
+    "api_group middleware attaches via middleware = {pre: [{name: ...}]}",
+    "Health endpoint being rate-limited is acceptable (flagged to customer)"
+  ],
+  "workspace_names_used": ["app", "auth/login", "auth/signup", "health", "newsletter/subscribe", "invoices/export", "appointments", "admin", "users", "policy_authoring_eval"],
+  "confusions": [
+    "Skill and templates say to attach middleware with an attach_middleware object, but give no XanoScript syntax for that. I found the api_group middleware form by trial against the dry run.",
+    "api_group middleware: the error messages ('Expecting static:object[], got static:text[]', 'Invalid block: name') did not show the expected shape; it took three tries.",
+    "No example of a middleware file or of redis.ratelimit in the kit or the workspace; the middleware body is a guess.",
+    "Rule warnings on RATE-010 at parse time ('rate_limit is not on this branch') are expected before the middleware is pushed; the skill's wording makes them look like errors to fix.",
+    "Template rule 1 mentions api_groups without saying which group; the workspace has only app for public endpoints."
+  ],
+  "wished_for": [
+    "A documented XanoScript example for middleware files and for attaching middleware to an api_group",
+    "A redis.ratelimit example with its return fields",
+    "A note on whether the platform sets $env.$remote_ip behind a proxy"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [
+    "api_group middleware = {pre: [\"rate_limit\"]}: Expecting static:object[], got static:text[]",
+    "api_group middleware = [{name: ...}]: Invalid block: name",
+    "api_group middleware = [{middleware: ...}]: Invalid block: middleware",
+    "api_group middleware = [rate_limit]: Invalid kind for middleware - assign:expr"
+  ],
+  "dry_run_problems_seen": [
+    "BLOCKED api_group app: syntax error on first two attempts; resolved by middleware = {pre: [{name: \"rate_limit\"}]}",
+    "Final dry-run: no critical errors, no rule warnings"
+  ],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policy wiring is verified: the dry run accepts the middleware, the attachment and both policies, and the rules point at real objects. Confidence is held back because the middleware body (redis.ratelimit usage and its return field) and the attachment syntax were not checked against any reference, only against the dry-run parser, and the limit, key and proxy behaviour are unknown."
+}

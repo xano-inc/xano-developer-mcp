@@ -1,0 +1,18 @@
+{
+  "pulled": true,
+  "added": [
+    "policies/CONF-011.xs",
+    "policies/DATA-010.xs",
+    "policies/LOG-001.xs",
+    "policies/PCI-CARD-001.xs",
+    "policies/SEC-011.xs",
+    "policies/SEC-012.xs",
+    "policies/VND-001.xs"
+  ],
+  "modified": [
+    "table/payment_method.xs",
+    "table/payments.xs"
+  ],
+  "deleted": [],
+  "other_files": []
+}

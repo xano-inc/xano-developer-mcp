@@ -1,0 +1,53 @@
+{
+  "goal_id": "G05",
+  "objects_built": [
+    {"kind": "function", "name": "require_admin_role", "file": "workspace/function/require_admin_role.xs", "role": "Reads the caller's role from users by user_id and stops with precondition (accessdenied) unless it is admin or support_lead. Called as the first statement of every /admin endpoint."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "users GET", "file": "workspace/api/admin/users_GET.xs", "change": "Added function.run require_admin_role with user_id $auth.id as the first statement of the stack."},
+    {"kind": "query", "name": "tenants GET", "file": "workspace/api/admin/tenants_GET.xs", "change": "Added function.run require_admin_role as first statement. Left the unfiltered db.query on tenants unchanged; TENANT-010 will report it."},
+    {"kind": "query", "name": "tenants/{tenant_id} PATCH", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "Added function.run require_admin_role as first statement. Left db.get and db.edit by id unchanged; TENANT-010 will report them."},
+    {"kind": "query", "name": "orgs/{org_id}/tenants GET", "file": "workspace/api/admin/orgs/org_id/tenants_GET.xs", "change": "Added function.run require_admin_role as first statement."},
+    {"kind": "query", "name": "admin/stats GET", "file": "workspace/api/app/admin/stats_GET.xs", "change": "Added function.run require_admin_role as first statement (endpoint is in the app API group but its path is admin/stats). Left unfiltered tenants count unchanged; TENANT-010 will report it."}
+  ],
+  "templates_considered": [
+    "AUTH-002 admin_endpoints_check_role: fits the role check directly; used as-is with functions, placement first, must_reference $auth, paths admin.",
+    "AUTH-020 own_records_only: partly fits (isolation, tenant), but its second rule (db.write_from_input_forbidden with fields) is not asked for, and its field is user-scoped. Not used; TENANT-010 written as its own policy instead.",
+    "AUTH-030 no_self_promotion: role is an enum on users; the ask does not mention writes to role. Not used."
+  ],
+  "templates_used": ["AUTH-002"],
+  "rules": [
+    {"policy_key": "AUTH-002", "check": "object.statement_required", "params": {"functions": ["require_admin_role"], "placement": "first", "must_reference": ["$auth"], "paths": ["admin"], "object_kinds": ["query"]}, "covers": "Every endpoint under /admin checks the caller's role before doing anything else."},
+    {"policy_key": "TENANT-010", "check": "db.where_constraint_required", "params": {"field": "org_id", "table_selector": {"names": ["tenants"]}}, "covers": "The tenants table is never read or written without an org_id filter. compare_to is not set, so it does not tie the filter to the caller's org."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Caller can only see tenants of their own org (org_id filter must equal the caller's org)", "why": "other", "detail": "db.where_constraint_required with compare_to $auth.org_id would check this, but the ask only says filter by org_id and cross-org support staff may be intended. Left as a gap and reported to the customer."},
+    {"part": "Correct role comparison inside the role check", "why": "no check exists", "detail": "AUTH-002 checks the call is first, not what the function decides."},
+    {"part": "Which roles exist and how they are granted", "why": "needs runtime/org process", "detail": "Policies read definitions only."},
+    {"part": "Tenants touched by endpoints outside /admin", "why": "other", "detail": "TENANT-010 covers all tenants reads and writes, but nothing requires a role check there. Out of the ask's /admin scope."}
+  ],
+  "assumptions": [
+    "'Every endpoint under /admin' means path admin, including app/admin/stats, whose path is admin/stats in the app API group.",
+    "The role check takes $auth.id and reads the role from the users table, since $auth may not expose role directly in a function.",
+    "'Filtering by org_id' means any where on org_id on the tenants table, with no caller-org tie.",
+    "Existing tenants endpoints that lack an org_id filter should be reported, not changed, because adding a filter changes their output and needs an owner decision.",
+    "Both policies advisory, as the skill requires for a new policy."
+  ],
+  "workspace_names_used": ["require_admin_role (new)", "users", "tenants", "orgs", "admin", "app", "admin/stats", "admin/tenants/{tenant_id}", "admin/orgs/{org_id}/tenants", "admin/users", "admin/tenants", "users.role", "users.id", "tenants.org_id", "$auth.id"],
+  "confusions": [
+    "The skill's check catalogue says db.where_constraint_required is judged on the statement's own table for db.get by id. It does not say whether db.get with field_name id counts as constraining by org_id. I predicted it is reported; this is inferred, not confirmed by an evaluate run.",
+    "The template for admin role checks names 'tags or paths' as a fill option, and the recipe for role-based access adds a tag only when paths do not fit. The ask names /admin, which fits paths, so no tag was added, but the choice between the two was not stated clearly in one place.",
+    "The skill says templates that fit should be used, but AUTH-020 is a partial fit for the tenant rule and its rules do not all match the ask. The guidance on what to do with a partial-fit template was not explicit, so I wrote a separate policy with its own key.",
+    "xano policy parse prints a formatted copy of the policy. It was not clear from its output whether it also rewrote the file on disk. I did not rely on it."
+  ],
+  "wished_for": [
+    "A recipe or template for tenant or org isolation (every read and write of a tenant-scoped table filters on org_id, optionally against the caller's org).",
+    "Guidance on whether db.get by primary key counts as constrained by a field when that field is not the key.",
+    "A way to tell the dry run to include policy-check results, so the predicted findings can be confirmed without running evaluate."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The role gate is well covered: AUTH-002 with paths admin and placement first will hold for each endpoint under /admin, and it fails if a call is missing or moved. The tenant rule only checks that an org_id filter exists; it does not check it is the caller's org, and it may not count db.get by id. Neither policy was evaluated (evaluate is outside the brief), so both are predictions. The dry run passed with exit 0."
+}

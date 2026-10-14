@@ -1,0 +1,44 @@
+{
+  "goal_id": "G02",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "CONV-010 functions_snake_case: covers function snake_case only, not the prefix or table plurals; not used alone",
+    "CONV-011 fields_snake_case: fields, not asked; not used",
+    "CONV-012 endpoint_paths_versioned: requires version segment and kebab-case, which conflicts with the customer's snake_case ask; not used",
+    "CONV-013 function_arguments_snake_case: arguments, not asked; not used"
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are always lowercase snake_case"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "suffixes": ["s"]}, "covers": "tables are plural"},
+    {"policy_key": "NAMING-001", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "prefixes": ["acme_"]}, "covers": "functions start with the client prefix"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "client prefix value for each of 12 workspaces", "why": "other"},
+    {"part": "flag it, don't block it, as a requirement for each client workspace", "why": "other"},
+    {"part": "whether a name is meaningful, and whether callers outside the workspace use the URL", "why": "needs runtime/org process"}
+  ],
+  "assumptions": [
+    "client prefix is acme_, taken from the acme_ functions in this workspace",
+    "the policy is advisory and severity low, since the customer asked to flag not block and gave no severity",
+    "endpoint_path snake_case applies to the path segments, with {param} segments skipped as documented",
+    "table plural checked with suffix s, accepting that this is literal"
+  ],
+  "workspace_names_used": ["acme_calculate_tax", "acme_get_tracking", "acme_notify_sms", "acme_send_invoice_email", "acme_sync_shipping_rates", "calculate_late_fee", "summarize_ticket", "delete_user_account", "invoice_item", "payment_method", "user_address", "policy_authoring_eval"],
+  "confusions": [
+    "The skill says the naming check's prefixes apply to object names; it does not say how a single policy handles a prefix that differs per client workspace. One policy per workspace with its own prefix is implied but not stated.",
+    "CONV-012 is a template for endpoint naming but requires kebab-case and a version segment, which contradicts the snake_case ask; the template list gives no way to say 'snake_case, no version' except by using object.naming directly.",
+    "The skill's params examples use '=' style in some places and ':' style in others; parse accepted both, but the examples are inconsistent."
+  ],
+  "wished_for": [
+    "a template or recipe for 'team naming convention' that takes a prefix and a plural-table rule as parameters",
+    "a note on whether endpoint_path case_style is checked against the full path or each segment",
+    "a note on how one policy is shared across many workspaces with different prefixes"
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three rules match the ask and the file parses and dry-runs cleanly. The prefix is an assumption, the policy has not been evaluated so existing findings are unseen, and the 12-client rollout is not covered by one workspace's policy."
+}

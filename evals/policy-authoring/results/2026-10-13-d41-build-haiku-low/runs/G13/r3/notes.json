@@ -1,0 +1,35 @@
+{
+  "goal_id": "G13",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "endpoints_need_login (AUTH-010): covers logged-in endpoints, not staff training; did not fit",
+    "no_pii_in_responses (DATA-010): limits fields returned, not who touches data; did not fit",
+    "protect_health_data recipe: includes a people_and_training limit; did not fit as a stand-in"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "every team member has completed security awareness training", "why": "no check exists"},
+    {"part": "team members are blocked from touching customer data until trained", "why": "no check exists"},
+    {"part": "who on the team counts as a member (workspace membership)", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "'Team' means Xano workspace members who edit objects, not the app's end users in the users table.",
+    "'Customer data' means the customers, orders, payments, invoices and clinical tables."
+  ],
+  "workspace_names_used": ["users", "customers", "clinical_notes", "orgs", "patients"],
+  "confusions": [
+    "The brief's plan step expects an enforcement, coverage and gap structure, but nothing here fits the enforcement part for a people-based requirement. I was unsure whether a runtime gate on app users was in scope, and chose not to build one.",
+    "The catalogue says 'People and training' is not checkable, but the skill's rule 5 says to write a policy when any part is checkable. Which part is checkable here (middleware attachment only) was not obvious, and I judged it would overstate coverage."
+  ],
+  "wished_for": [
+    "A recipe for people-based requirements that says plainly when to stop and recommend an external control.",
+    "Guidance on whether a runtime gate on the app's end-user table should count as enforcement for a workforce requirement."
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "No policy can observe training completion or team membership, so the requested control cannot be built or verified with these tools. I built nothing and wrote no policy, as the brief directs."
+}

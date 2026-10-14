@@ -1,0 +1,63 @@
+{
+  "goal_id": "G09",
+  "objects_built": [
+    {"kind": "task", "name": "purge_expired_personal_data", "file": "workspace/task/purge_expired_personal_data.xs", "role": "Nightly delete of support_tickets, newsletter_subscribers and orders rows older than 730 days (created_at)"},
+    {"kind": "policy", "name": "GDPR-010", "file": "workspace/policies/GDPR-010.xs", "role": "Coverage rules: personal tables reached by erasure function; retained tables reached by a 730-day task"}
+  ],
+  "objects_changed": [
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Added input email; db.bulk.delete support_tickets by user_id; db.bulk.delete newsletter_subscribers by email; db.query + foreach + db.edit to set orders.user_id null; tags = [\"erasure\"]"},
+    {"kind": "query", "name": "account DELETE", "file": "workspace/api/app/account_DELETE.xs", "change": "Passes email: $auth.email into delete_user_account"},
+    {"kind": "table", "name": "users, user_address, sessions, support_tickets, newsletter_subscribers, orders", "file": "workspace/table/*.xs", "change": "tags = [\"personal\"] added to all six; tags = [\"retained\"] added to support_tickets, newsletter_subscribers, orders"}
+  ],
+  "templates_considered": [
+    "personal_data_erasure (recipe): used as the shape for the erasure and retention coverage rules; its field-attribute and logging templates (CONF-011, DATA-010, LOG-001) were not used because they need schema edits and the ask did not name fields",
+    "retained_data_has_age_limit (RET-003): fits the 730-day cleanup rule; I wrote its params into a combined policy rather than a standalone policy from the template",
+    "retained_data_cleaned_up (RET-002): subsumed by RET-003's params",
+    "no_pii_in_responses (DATA-010), no_sensitive_data_in_logs (LOG-001), sensitive_fields_marked (CONF-011): did not fit the ask without schema changes the customer did not request",
+    "tables_classified, agreed_tag_vocabulary: did not fit; no tag vocabulary exists in the workspace"
+  ],
+  "templates_used": ["retained_data_has_age_limit (params only)", "personal_data_erasure recipe (shape only)"],
+  "rules": [
+    {"policy_key": "GDPR-010", "check": "table.coverage_required", "params": {"tags": ["personal"], "referenced_by": {"object_kinds": ["function"], "tags": ["erasure"], "statements": ["db.del", "db.bulk.delete", "db.edit"]}}, "covers": "Account deletion reaches every personal table"},
+    {"policy_key": "GDPR-010", "check": "table.coverage_required", "params": {"tags": ["retained"], "referenced_by": {"object_kinds": ["task"], "max_age_days": 730, "age_field": "created_at"}}, "covers": "2-year maximum retention on support_tickets, newsletter_subscribers, orders"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Inactive accounts never expire", "why": "needs runtime/org process"},
+    {"part": "customers, patients, clinical_notes, appointments not linked to users so not erased", "why": "couldn't tell how (no FK from users; intent unclear)"},
+    {"part": "Legal retention for orders/invoices vs 2-year limit", "why": "needs runtime/org process"},
+    {"part": "Copies in backups, logs, vendors, analytics", "why": "no check can see"},
+    {"part": "Field-level sensitivity and response/log exposure of personal fields", "why": "other (no check added; schema change not requested)"},
+    {"part": "Deletion actually executed at runtime; no transaction around the delete steps", "why": "no check exists"},
+    {"part": "webhook_deliveries.payload may hold personal data", "why": "couldn't tell how"}
+  ],
+  "assumptions": [
+    "Orders are kept but unlinked from the user on erasure, rather than deleted, because they are commercial records",
+    "The 2-year limit applies to support_tickets, newsletter_subscribers and orders (the tables with created_at and personal data)",
+    "$auth.email is available on the users auth object",
+    "newsletter_subscribers are matched to an account by the account's email",
+    "Policy GDPR-010 is advisory; blocking is the owner's choice"
+  ],
+  "workspace_names_used": ["delete_user_account", "account", "account_DELETE", "user_address", "sessions", "users", "support_tickets", "newsletter_subscribers", "orders", "purge_expired_sessions", "policy_authoring_eval", "customers", "patients", "clinical_notes", "appointments", "refunds", "webhook_deliveries"],
+  "confusions": [
+    "The kit and skill list db.bulk.patch as a write statement, but the parser rejects `db.bulk.patch orders { where, data }` with 'Missing block: items'. The skill does not show a working bulk-update or bulk-patch syntax.",
+    "db.bulk.update with where and data also fails with 'Missing block: items'. Unclear what the items block should contain, and the catalogue has no example.",
+    "The template text tells you to add db.edit or db.patch to the erasure rule's statements, but the parser error on db.bulk.patch does not say which bulk write forms are valid.",
+    "The statements list in referenced_by is not clear on whether any one listed statement is enough for a table to count as covered, or whether each listed statement must appear."
+  ],
+  "wished_for": [
+    "A working XanoScript example of a bulk update or patch (db.bulk.update / db.bulk.patch) with where and data, or the items shape it expects",
+    "A worked example of the personal_data_erasure recipe filled in for a users/orders/support schema, including the unlink-instead-of-delete case",
+    "A note in the policy docs on how to model personal data not linked by foreign key to users (for example newsletter rows matched by email)"
+  ],
+  "parse_attempts": 3,
+  "parse_errors_seen": [
+    "Syntax error, while parsing: 'db.bulk.patch orders {' - Missing block: items (dry run)",
+    "Syntax error, while parsing: 'db.bulk.update orders {' - Missing block: items (dry run)"
+  ],
+  "dry_run_problems_seen": [
+    "First dry run blocked on db.bulk.patch in delete_user_account; second on db.bulk.update in the same place. Resolved with db.query + foreach + db.edit; third dry run clean.",
+    "Policy parse warnings that personal, retained and erasure tags are on no object on the live branch. Expected because this change creates them; not checked with policy evaluate (not permitted here)."
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy checks that a personal-data-tagged table is reached by a function tagged erasure, and that retained tables are cleaned by a task with a 730-day bound. It does not check the erasure is complete (for example, personal data in users' other tables without tags, or customers/patients), that the deletion actually runs, or that the 2-year scope is legally right for orders. Several parts of the ask are outside what any check can see, and the policy is advisory and not yet pushed."
+}

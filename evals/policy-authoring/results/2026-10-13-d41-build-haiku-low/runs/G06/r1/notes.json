@@ -1,0 +1,56 @@
+{
+  "goal_id": "G06",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "code_review_basics (recipe): fits the ask; followed for its five templates and its extra rule",
+    "external_calls_handle_errors (LOG-010): fits 'missing error handling'; checks api.request only",
+    "endpoints_have_tests (CHG-001): fits 'no tests'; checks existence and an assertion, not its quality",
+    "endpoints_stay_short (CONV-040): fits 'giant functions'; used without except_tags, so existing big objects will be flagged",
+    "no_leftover_code (CONV-050): part of the recipe; fits leftover code, not in the ask but included by the recipe",
+    "reads_are_paged (PERF-001): part of the recipe; fits unbounded reads, not in the ask but included by the recipe",
+    "tables_have_listed_fields, inputs_validated, shallow_nesting: did not fit the ask",
+    "legacy tag (recipe Build step): not applied; it is an exemption that would hide the findings the customer wants to see"
+  ],
+  "templates_used": ["external_calls_handle_errors", "endpoints_have_tests", "endpoints_stay_short", "no_leftover_code", "reads_are_paged"],
+  "rules": [
+    {"policy_key": "LOG-010", "check": "statement.containment", "params": {"statements": ["api.request"], "must_be_inside": ["try_catch"]}, "covers": "missing error handling on outbound calls"},
+    {"policy_key": "CHG-001", "check": "object.test_coverage", "params": {"object_kinds": ["query"]}, "covers": "no tests: every endpoint is called by a test"},
+    {"policy_key": "CHG-001", "check": "test.assertion_required", "params": {}, "covers": "no tests: tests must assert something"},
+    {"policy_key": "CONV-040", "check": "stack.size_limit", "params": {"max_statements": 30, "max_nesting": 3, "object_kinds": ["query", "function"]}, "covers": "giant 200-line functions"},
+    {"policy_key": "CONV-050", "check": "stack.disabled_statement_forbidden", "params": {}, "covers": "leftover code (recipe, not in the ask)"},
+    {"policy_key": "CONV-050", "check": "object.unused_input_forbidden", "params": {}, "covers": "leftover code (recipe, not in the ask)"},
+    {"policy_key": "CONV-050", "check": "stack.unused_variable_forbidden", "params": {}, "covers": "leftover code (recipe, not in the ask)"},
+    {"policy_key": "PERF-001", "check": "statement.param_bound", "params": {"statements": ["db.query"], "param_names": ["per_page"], "max": 1000, "unit": "rows", "object_kinds": ["query", "tool"]}, "covers": "unbounded reads (recipe, not in the ask)"},
+    {"policy_key": "REVIEW-001", "check": "object.description_required", "params": {"object_kinds": ["function"], "min_length": 20}, "covers": "functions say what they do (recipe extra rule)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "juniors breaking prod", "why": "needs runtime/org process"},
+    {"part": "error handling beyond api.request (stream, MCP, direct DB calls, what the catch does)", "why": "no check exists"},
+    {"part": "test quality (whether assertions are right)", "why": "no check exists"},
+    {"part": "review and approval of changes", "why": "needs runtime/org process"},
+    {"part": "existing oversized objects: exemption while they are split", "why": "other: a policy owner decision, not applied"}
+  ],
+  "assumptions": [
+    "Advisory enforcement is right for a new policy; blocking is the owner's choice",
+    "Policy keys: template keys used as is; REVIEW-001 is my own key since no template covers function descriptions",
+    "No existing object should be tagged legacy or exempted without the customer asking",
+    "The customer's yes covers building all six policies in one change"
+  ],
+  "workspace_names_used": ["policy_authoring_eval", "workflow_test/invoices_require_login.xs (read only)", "function/ and api/ objects (not referenced by any rule)"],
+  "confusions": [
+    "The recipe's Build step suggests tagging large legacy objects, but the skill says a tag that exempts an object is the owner's decision; the recipe does not say whether to do it by default",
+    "xano policy parse output dropped 'severity = medium' from LOG-010 and PERF-001 when printing the file back, while low was kept; unclear whether that is default normalization or a lost value",
+    "The brief says 'xano workspace push -d ./workspace --dry-run' is the check; the dry run prints no evaluation result, so I cannot tell from it what the policies would find on existing objects"
+  ],
+  "wished_for": [
+    "A way to see what the policies would find on the current workspace before pushing (evaluate is forbidden in this brief)",
+    "A catalogue entry or check for stream.from_request, MCP and direct DB calls under LOG-010",
+    "A template for function descriptions, so it is not a custom rule"
+  ],
+  "parse_attempts": 6,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Each of the four named pain points maps to a check that reads stored definitions, and all six policies parse and pass the dry run. Confidence is capped by the gap: none of the policies can see who wrote a change, what the tests assert, or whether error handling is right, and the policies are advisory, so they inform reviewers rather than stop juniors from breaking prod. I have not run evaluate, so I do not know what they will find on existing code."
+}

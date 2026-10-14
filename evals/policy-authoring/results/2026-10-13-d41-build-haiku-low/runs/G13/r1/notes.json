@@ -1,0 +1,40 @@
+{
+  "goal_id": "G13",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "endpoints_need_login: checks auth on endpoints, not that the caller completed training; did not fit",
+    "sensitive_tables_need_login: login on reaches to sensitive tables, still not training; did not fit",
+    "protected_endpoints_run_middleware: would only confirm a gate is attached; no gate was built, so did not fit",
+    "tables_classified / confidential_tables_tagged: label data, do not gate people; did not fit",
+    "approved_vendors_only, no_pii_in_responses: unrelated to staff training; did not fit"
+  ],
+  "templates_used": [],
+  "rules": [],
+  "ask_parts_not_covered": [
+    {"part": "every team member has completed security awareness training", "why": "no check exists"},
+    {"part": "untrained members cannot touch customer data", "why": "needs runtime/org process: a training gate would rely on manually entered records that no check can verify, so I did not build one"}
+  ],
+  "assumptions": [
+    "'touch customer data' means changing or reading customer data through workspace objects or the team's workspace access, not end-user app traffic",
+    "the customer approved building only what the policy can actually enforce, per the brief's 'build nothing' path"
+  ],
+  "workspace_names_used": [
+    "users (table, role enum incl. admin/staff)",
+    "customers, invoices, payments, clinical_notes, patients (customer-data tables)",
+    "admin API group, app API group"
+  ],
+  "confusions": [
+    "The skill says a policy with no fitting check should be explained, but does not say how to handle a partial fit, such as a gate plus a policy that only confirms the gate is attached. I could not tell whether that counts as covering the ask.",
+    "The brief's step 3 assumes some policy can be built. For a people-facing ask, the catalogue's not_checkable list is the only signal, and it is easy to miss unless you search it."
+  ],
+  "wished_for": [
+    "A short 'no fit' recipe: what to say and do when the ask is about people, process or training, with the not_checkable topic named explicitly",
+    "A worked example of declining a partial enforcement that depends on manually entered records, and how to phrase the gap for a non-technical reader"
+  ],
+  "parse_attempts": 0,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "high",
+  "why_confidence": "The catalogue lists 'People and training' under things no rule can see, and no check reads training records or any person-level data. Nothing was built, so the outcome is a clear decline rather than a partial policy."
+}

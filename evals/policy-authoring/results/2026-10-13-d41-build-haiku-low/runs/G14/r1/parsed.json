@@ -1,0 +1,229 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/AUDIT-010.xs",
+    "build/policies/COST-010.xs",
+    "build/policies/COST-020.xs",
+    "build/policies/RET-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/AUDIT-010.xs",
+      "ok": true,
+      "key": "AUDIT-010",
+      "title": "Customer email records are tracked",
+      "statement": "Every table holding a customer email carries the customer-email tag, and every object that reaches such a table records the change through record_email_change.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "AUDIT-010.R1",
+          "title": "",
+          "check": "table.tag_required",
+          "params": {
+            "field_names": [
+              "email",
+              "requester_email",
+              "billing_email"
+            ],
+            "field_types": [],
+            "include_sensitive": false,
+            "tag": "customer-email",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "AUDIT-010.R2",
+          "title": "",
+          "check": "object.statement_required",
+          "params": {
+            "statements": [],
+            "functions": [
+              "record_email_change"
+            ],
+            "placement": "unconditional",
+            "must_reference": [],
+            "when": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": [
+              "customer-email"
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "AUDIT-010.R2",
+          "text": "reaching_table_tags \"customer-email\" is on no table in this workspace, so it selects nothing."
+        },
+        {
+          "rule_id": "AUDIT-010.R2",
+          "text": "Function \"record_email_change\" is not on this branch, so it never satisfies this rule."
+        }
+      ]
+    },
+    {
+      "file": "build/policies/COST-010.xs",
+      "ok": true,
+      "key": "COST-010",
+      "title": "AI calls are never made inside a loop",
+      "statement": "No AI agent or external MCP call runs inside a foreach, for or while loop, so one run cannot make an unbounded number of paid model calls.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "COST-010.R1",
+          "title": "",
+          "check": "statement.containment",
+          "params": {
+            "statements": [
+              "ai.agent.run",
+              "ai.external.mcp.tool.run"
+            ],
+            "must_be_inside": [],
+            "must_not_be_inside": [
+              "foreach",
+              "for",
+              "while"
+            ],
+            "must_contain": [],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/COST-020.xs",
+      "ok": true,
+      "key": "COST-020",
+      "title": "No unbounded while loops",
+      "statement": "No object uses a while loop, so every loop has a bounded count and a retry cannot run forever.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "COST-020.R1",
+          "title": "",
+          "check": "stack.statement_forbidden",
+          "params": {
+            "statements": [
+              "while"
+            ],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "file": "build/policies/RET-001.xs",
+      "ok": true,
+      "key": "RET-001",
+      "title": "Only the audit function writes the audit log",
+      "statement": "Only record_email_change writes the email_change_log audit table.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "high",
+      "rules": [
+        {
+          "id": "RET-001.R1",
+          "title": "",
+          "check": "workspace.object_required",
+          "params": {
+            "object_kind": "table",
+            "names": [
+              "email_change_log"
+            ],
+            "min_count": 1,
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "RET-001.R2",
+          "title": "",
+          "check": "table.write_location_restricted",
+          "params": {
+            "restricted_tables": [
+              "email_change_log"
+            ],
+            "fields": [],
+            "statements": [],
+            "allowed_functions": [
+              "record_email_change"
+            ],
+            "allowed_tags": [],
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": [
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Table \"email_change_log\" is not in this workspace, so it restricts nothing."
+        },
+        {
+          "rule_id": "RET-001.R2",
+          "text": "Function \"record_email_change\" is not on this branch, so it approves nothing."
+        }
+      ]
+    }
+  ]
+}

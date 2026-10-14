@@ -1,0 +1,50 @@
+{
+  "goal_id": "G16",
+  "objects_built": [
+    {"kind": "function", "name": "require_manager", "file": "workspace/function/require_manager.xs", "role": "Loads the caller's role from users by user_id and stops with a precondition unless it is manager or admin. Called first by refund approval and price changes."}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "refunds/{refund_id}/approve POST", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "Added function.run require_manager with user_id $auth.id as the first statement."},
+    {"kind": "query", "name": "products/{product_id}/price PATCH", "file": "workspace/api/app/products/product_id/price_PATCH.xs", "change": "Added function.run require_manager with user_id $auth.id as the first statement."},
+    {"kind": "query", "name": "me PATCH", "file": "workspace/api/app/me_PATCH.xs", "change": "Removed the role input. Replaced data = $input[\"\"] (whole request body) with explicit name, phone and marketing_opt_in fields."}
+  ],
+  "templates_considered": [
+    "AUTH-030: fit. Users can't make themselves admin; covers role writes from input. Used as-is with fields [role].",
+    "AUTH-002: did not fit. Its selector is admin paths or the admin tag, and this ask is about specific write endpoints, not admin paths.",
+    "AUTH-020 and the other access templates: did not fit. They concern record ownership, not role gating."
+  ],
+  "templates_used": ["AUTH-030"],
+  "rules": [
+    {"policy_key": "AUTH-030", "check": "db.write_from_input_forbidden", "params": {"fields": ["role"]}, "covers": "nobody can give themselves manager by writing role from request input"},
+    {"policy_key": "ACCESS-MGR-001", "check": "object.statement_required", "params": {"functions": ["require_manager"], "placement": "first", "must_reference": ["$auth"], "api_groups": ["app"], "paths": ["refunds/{refund_id}/approve", "products/{product_id}/price"], "object_kinds": ["query"]}, "covers": "only managers can approve refunds or change prices; the two endpoints call the role check first with the logged-in user"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "regular staff can view but not change, beyond the refund approve and price endpoints", "why": "other is a scope question: no single check says which writes are manager-only; needs the customer to name them"},
+    {"part": "AI tool issue_refund can issue Stripe refunds with no role check", "why": "other: left out of the plan; the customer has not said whether it should require a manager"},
+    {"part": "which roles count as manager (admin included?)", "why": "couldn't tell: the ask says managers, the workspace has admin and manager roles"},
+    {"part": "who holds the manager role and how it is granted", "why": "no check can see it: role grants are runtime and outside the definitions"},
+    {"part": "runtime enforcement and stored role values", "why": "needs runtime/org process: checks read definitions only"}
+  ],
+  "assumptions": [
+    "The users.role enum (admin, support_lead, manager, staff, member, viewer) is the role vocabulary; 'manager' is the enum value.",
+    "admin should pass the manager check (the plan allows both manager and admin).",
+    "The approve and price endpoints are the only refund-approval and price-change paths in scope.",
+    "The signup endpoint does not set role, so new users get the default member role."
+  ],
+  "workspace_names_used": ["users", "role", "manager", "admin", "refunds", "products", "payments", "api group app", "refunds/{refund_id}/approve", "products/{product_id}/price", "me", "issue_refund", "delete_user_account", "$auth.id"],
+  "confusions": [
+    "The skill says a rule warning that a function does not exist means the rule judges nothing, but a function built in the same change is expected to be missing until push. The parse warning for ACCESS-MGR-001.R1 appeared for that reason; the skill does not say whether a new object in the same change clears this before push. Had to judge it expected.",
+    "The skill's Build recipe for 'Keep admin endpoints for admins' uses a require_role function with a db.get on the user table; the same shape worked for require_manager, but the recipe is about admin paths, not per-endpoint write gating, and I had to adapt it.",
+    "The skill's statement.expression_rule and precondition shapes are not in the catalogue; I used the workspace's login_POST precondition syntax as the reference for the role precondition."
+  ],
+  "wished_for": [
+    "A template or recipe for 'only role X may call these specific endpoints': this is different from admin-path gating and needs a function plus statement_required scoped by endpoint names.",
+    "A way for the parser to accept a function that is being built in the same change without a warning, or a note on whether the rule is judged after push.",
+    "Guidance on whether 'staff view only' should be enforced by listing write endpoints, or by a different mechanism."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "Both gates are wired in the dry run's preview (the function, the two endpoints and the role-write fix), and the statement_required rule names the function and the endpoints. Confidence is only medium because the 'staff view only' part is covered for two endpoints, not for every write; the AI refund tool bypasses the role check; and admin passing is an assumption. Policy evaluation has not been run, so no finding has been observed."
+}

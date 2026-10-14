@@ -1,0 +1,65 @@
+{
+  "goal_id": "G15",
+  "objects_built": [
+    {"kind": "middleware", "name": "rate_limit", "file": "workspace/middleware/rate_limit.xs", "role": "Counts requests per caller IP ($env.$remote_ip) with redis.ratelimit, 20 per 60 seconds, and refuses past the limit. exception = critical so the refusal is not swallowed. Dry run accepted it."}
+  ],
+  "objects_changed": [],
+  "templates_considered": [
+    "middleware_surfaces_errors (LOG-011): fits, the middleware must not swallow errors. Used.",
+    "protected_endpoints_run_middleware (AUTH-040): considered, it checks that auth middleware runs, not rate limiting. Did not fit.",
+    "public_endpoints_harmless (AUTH-003): considered, it forbids writes from public endpoints. Does not cover rate limiting. Did not fit.",
+    "rate_limiting recipe: followed for the enforcement and coverage shape, with the two object.middleware_required rules."
+  ],
+  "templates_used": ["middleware_surfaces_errors"],
+  "rules": [
+    {"policy_key": "LOG-011", "check": "object.settings_forbidden", "params": {"object_kind": "middleware", "when": {"exception_policy": {"equals": "silent"}}}, "covers": "The rate-limit middleware must not swallow its refusal (template rule)."},
+    {"policy_key": "RATE-001", "check": "object.middleware_required", "params": {"middleware": ["rate_limit"], "phase": "pre", "endpoint_auth": "none", "object_kinds": ["query"]}, "covers": "Every public endpoint, including ones added later, runs rate_limit first."},
+    {"policy_key": "RATE-001", "check": "object.middleware_required", "params": {"middleware": ["rate_limit"], "phase": "pre", "api_groups": ["app"], "paths": ["auth"], "object_kinds": ["query"]}, "covers": "Login and signup (auth/login, auth/signup) run rate_limit first, whatever their auth setting."}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Rate limit actually attached to login, signup, health and newsletter/subscribe endpoints", "why": "couldn't tell how: the XanoScript syntax for attaching middleware to an endpoint was refused three ways by the dry run, so the attachment was reverted. The workspace currently has no enforcement on the endpoints."},
+    {"part": "The limit value (20 per 60s) and keying by IP only", "why": "no check reads the value or the key; per-account login limits by email are not built"},
+    {"part": "Spread-out botnet traffic across many IPs", "why": "runtime behaviour; no check can see it"},
+    {"part": "Refusal reaches the client as a 429, Redis availability", "why": "runtime behaviour; no check can see it"},
+    {"part": "Load-balancer probes of health hitting the limit", "why": "runtime data and infrastructure; no check can see it"},
+    {"part": "Upstream limits (CDN/WAF)", "why": "infrastructure; no check can see it"}
+  ],
+  "assumptions": [
+    "The customer's 'login and signup' are auth/login and auth/signup in api group app.",
+    "'Every public endpoint' means endpoints tagged public, which endpoint_auth none selects (health, auth/login, auth/signup, newsletter/subscribe; bank-accounts/link needs auth despite the name).",
+    "The limit is 20 requests per 60 seconds per IP; the customer gave no number.",
+    "Attaching per endpoint rather than to the app API group, so authenticated app endpoints are not rate-limited by accident.",
+    "redis.ratelimit's key/max/ttl parameter names are correct; the dry run accepted the middleware file, which suggests they parse but this was not verified at runtime."
+  ],
+  "workspace_names_used": [
+    "app (api group)",
+    "auth/login (POST)",
+    "auth/signup (POST)",
+    "health (GET)",
+    "newsletter/subscribe (POST)",
+    "users (table, via login/signup)",
+    "policy_authoring_eval (workspace)"
+  ],
+  "confusions": [
+    "The kit does not show how to attach a middleware to an endpoint in XanoScript. The skill only says 'attach' and the catalogue's fix_hint says 'attaching per object replaces inherited middleware'. Three forms were refused: middleware = [\"rate_limit\"] (Invalid kind for middleware - static:text[]), middleware = [{name, kind}] and middleware = [{name, phase}] (both Invalid block: name). I guessed all three and could not find the right one.",
+    "The rate_limiting recipe's Build says 'attach middleware rate_limit ... to the API groups holding public endpoints and to the login API group'. Attaching at the group level would also rate-limit every authenticated endpoint in the app group. The recipe does not say whether to attach per endpoint or per group, and the check fix_hint says prefer the API group.",
+    "The recipe's Login rule (rules[1]) has only object_kinds and middleware, filled with api_groups. Scoped to the app group it covers every app endpoint, not only login and signup. I added paths: [\"auth\"] to narrow it. The recipe does not say that.",
+    "The brief gives no guidance on whether a rate_limit middleware should key on $auth.id after login; the recipe mentions both and I used IP only.",
+    "The push guard hook blocked 'xano workspace push --help' (only the exact dry-run command is allowed), so I could not read the push flags from help. Not a problem for the task, but the guard's allow-list is narrower than the brief's list."
+  ],
+  "wished_for": [
+    "An example of a workspace with an endpoint that already has middleware attached, in its XanoScript form, or a link to the syntax for endpoint middleware attachment.",
+    "The XanoScript syntax of redis.ratelimit (key, max, ttl names and the error it raises), with an example middleware file.",
+    "A recipe note on per-endpoint versus per-API-group attachment, and the trade-off when the group also holds authenticated endpoints.",
+    "A recipe rule that scopes the login rule to the login and signup endpoints by path, rather than the whole API group."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [
+    "Invalid kind for middleware - static:text[] (endpoint middleware = [\"rate_limit\"])",
+    "Invalid block: name (endpoint middleware = [{name, kind}] and [{name, phase}])",
+    "Middleware \"rate_limit\" is not on this branch (warning on RATE-001 R1, R2 before the middleware is pushed; expected)"
+  ],
+  "confidence_policy_achieves_goal": "low",
+  "why_confidence": "The policy rules are correct and parse, and the middleware is built and accepted by the dry run. But the middleware is not attached to any endpoint because I could not find the attachment syntax, so nothing limits login or signup yet. The policies will report the four public endpoints as findings once pushed, which is correct but advisory. Predictions only: xano policy evaluate was not run."
+}

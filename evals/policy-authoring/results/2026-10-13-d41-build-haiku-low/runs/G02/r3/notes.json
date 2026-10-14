@@ -1,0 +1,49 @@
+{
+  "goal_id": "G02",
+  "objects_built": [],
+  "objects_changed": [],
+  "templates_considered": [
+    "CONV-010 functions_snake_case: did not fit. It is snake_case only; the ask needs a client prefix and endpoint rules, and it does not cover endpoints.",
+    "CONV-012 endpoint_paths_versioned: did not fit. It requires a version segment and kebab-case, the opposite of the snake_case the customer asked for.",
+    "CONV-020/021/022/023 tag and classification templates: out of scope for this ask."
+  ],
+  "templates_used": [],
+  "rules": [
+    {"policy_key": "NAMING-010", "check": "object.naming", "params": {"name_kind": "endpoint_path", "case_style": "snake_case"}, "covers": "endpoints are lowercase snake_case"},
+    {"policy_key": "NAMING-010", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["table"], "suffixes": ["s"]}, "covers": "tables are plural (approximated by trailing s)"},
+    {"policy_key": "NAMING-010", "check": "object.naming", "params": {"name_kind": "object", "object_kinds": ["function"], "prefixes": ["acme_"]}, "covers": "functions start with the client prefix (acme_ assumed)"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Plural tables without false positives (irregular or uncountable names such as people, status, news)", "why": "couldn't tell how"},
+    {"part": "The client prefix differs per client; the policy hard-codes acme_", "why": "other"},
+    {"part": "Whether a function really belongs to the client beyond its name", "why": "no check exists"},
+    {"part": "Field and input naming, not asked explicitly", "why": "other"}
+  ],
+  "assumptions": [
+    "Client prefix for this workspace is acme_ (five of eight functions use it).",
+    "Endpoint naming refers to endpoint path segments (endpoint_path), which also covers query names such as getCustomerProfile.",
+    "Flag-only means enforcement = advisory, active = true, as the skill's default for new policies.",
+    "Customer's pre-approval of the plan covers the policy file and the dry run, so no further confirmation was needed."
+  ],
+  "workspace_names_used": [
+    "acme_calculate_tax", "acme_get_tracking", "acme_notify_sms", "acme_send_invoice_email", "acme_sync_shipping_rates",
+    "calculateLateFee", "delete_user_account", "summarize_ticket",
+    "invoice_item", "payment_method", "user_address", "invoices", "customers",
+    "bank-accounts/link", "getCustomerProfile", "customers/{customer_id}"
+  ],
+  "confusions": [
+    "The skill says to show one plan and wait for a yes before building; the brief says the customer already approved, so I built in the same turn. This is fine, but the two instructions should say which one wins.",
+    "object.naming's object_kinds for name_kind object does not list query, so an endpoint's own name is judged only as endpoint_path. The skill does not say that plainly; I inferred it from the param description.",
+    "The plural rule has no native plural check; the catalogue's example uses suffixes ['s'] which the docs call literal text. Irregular plurals will be flagged without an allowlist. I did not add an allowlist (the skill says to add no exemption unless asked).",
+    "The template catalogue has no client-prefix or endpoint snake_case template, so the policy is hand-built from object.naming uses."
+  ],
+  "wished_for": [
+    "A recipe for per-client prefix naming (a prefix parameter the team sets once per workspace).",
+    "A worked example of endpoint_path snake_case with the expected finding text, so the wording of findings can be checked before running evaluate."
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The three rules use real object.naming params and parse, and the dry run shows the policy will be created. I have not run xano policy evaluate, so the expected findings are predictions from reading the workspace, not results. Plural detection is a heuristic that will over- and under-flag, and the prefix is an assumption."
+}

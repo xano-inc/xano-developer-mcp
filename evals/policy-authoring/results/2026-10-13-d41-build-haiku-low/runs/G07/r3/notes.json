@@ -1,0 +1,59 @@
+{
+  "goal_id": "G07",
+  "objects_built": [
+    {"kind": "table", "name": "audit_log", "file": "workspace/table/audit_log.xs", "role": "One row per edit, patch or delete of an audited table: actor, table, record, action, time"},
+    {"kind": "function", "name": "record_audit_event", "file": "workspace/function/record_audit_event.xs", "role": "Only writer of audit_log; called unconditionally by every write path to audited tables"}
+  ],
+  "objects_changed": [
+    {"kind": "query", "name": "refunds/{refund_id}/approve", "file": "workspace/api/app/refunds/refund_id/approve_POST.xs", "change": "Calls record_audit_event after db.edit refunds"},
+    {"kind": "query", "name": "tenants/{tenant_id}", "file": "workspace/api/admin/tenants/tenant_id_PATCH.xs", "change": "Calls record_audit_event after db.edit tenants"},
+    {"kind": "query", "name": "customers/{customer_id}", "file": "workspace/api/app/customers/customer_id_PATCH.xs", "change": "Calls record_audit_event after db.patch customers"},
+    {"kind": "query", "name": "me", "file": "workspace/api/app/me_PATCH.xs", "change": "Calls record_audit_event after db.patch users"},
+    {"kind": "function", "name": "delete_user_account", "file": "workspace/function/delete_user_account.xs", "change": "Calls record_audit_event after db.del users"}
+  ],
+  "templates_considered": [
+    "audit_changes: fit, used its structure (audit table, one writer function, edits call it, audit log not editable)",
+    "audit_log_protected (RET-001): fit, folded into AUDIT-001",
+    "role_based_access: partial fit for access reviews; not built because it changes the first statement of every admin endpoint and needs a require_role function; proposed as next step",
+    "ai_cost_and_agent_safety, rate_limiting, approved vendors, retained data, and others: did not fit the ask"
+  ],
+  "templates_used": ["audit_changes", "audit_log_protected"],
+  "rules": [
+    {"policy_key": "AUDIT-001", "check": "workspace.object_required", "params": {"object_kind": "table", "names": ["audit_log"]}, "covers": "The audit log exists"},
+    {"policy_key": "AUDIT-001", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "allowed_functions": ["record_audit_event"]}, "covers": "Only the audit function writes the audit log"},
+    {"policy_key": "AUDIT-002", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.edit", "tables": ["refunds", "customers", "tenants", "users"]}}, "covers": "Edits to audited tables are recorded"},
+    {"policy_key": "AUDIT-002", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.patch", "tables": ["refunds", "customers", "tenants", "users"]}}, "covers": "Patches to audited tables are recorded"},
+    {"policy_key": "AUDIT-002", "check": "object.statement_required", "params": {"functions": ["record_audit_event"], "placement": "unconditional", "when": {"statement": "db.del", "tables": ["refunds", "customers", "tenants", "users"]}}, "covers": "Deletes from audited tables are recorded"},
+    {"policy_key": "AUDIT-002", "check": "table.write_location_restricted", "params": {"restricted_tables": ["audit_log"], "statements": ["db.edit", "db.patch", "db.add_or_edit", "db.del", "db.truncate", "db.bulk.update", "db.bulk.patch", "db.bulk.delete"]}, "covers": "Audit entries cannot be edited or deleted"}
+  ],
+  "ask_parts_not_covered": [
+    {"part": "Access reviews (periodic review of who has access)", "why": "no check exists"},
+    {"part": "Change approvals (who approved a change before it shipped)", "why": "needs runtime/org process"},
+    {"part": "Admin endpoints check the caller's role (access control evidence)", "why": "other: deliberately not built in this change; needs approval to alter every admin endpoint"},
+    {"part": "Writes inside functions other than the audited ones (for example products, shipments)", "why": "other: scope chosen to four tables; check statement_required does not inspect function objects"},
+    {"part": "Before and after values of changes", "why": "no check exists"}
+  ],
+  "assumptions": [
+    "$auth is available inside record_audit_event when called from an authenticated endpoint",
+    "refunds, customers, tenants and users are the sensitive tables for SOC 2 change evidence",
+    "audit_log.actor_id links to users, following the pattern in the workspace",
+    "Advisory enforcement is the right default for a new control"
+  ],
+  "workspace_names_used": ["refunds", "customers", "tenants", "users", "approve_POST", "tenant_id_PATCH", "customer_id_PATCH", "me_PATCH", "delete_user_account", "policy_authoring_eval"],
+  "confusions": [
+    "Catalogue says object.statement_required inspects query, tool, task, message; functions are not listed, so the db.del in delete_user_account is not checked by AUDIT-002. The skill does not say whether the list is exhaustive for this check",
+    "AUDIT-001 rule 2 and AUDIT-002 rule 4 both use table.write_location_restricted with overlapping writes; the template suggests both, unclear whether one is enough",
+    "Whether $auth is populated inside a function called by an endpoint was assumed, not confirmed",
+    "The enum for audit_log.action vs the free text action input: the catalogue does not say what happens on a value outside the enum"
+  ],
+  "wished_for": [
+    "A checked example where an audit function is called from a function (not an endpoint) and the rule passes",
+    "A way to say that a table is audited in one place rather than listing it in every rule",
+    "Confirmation of which object kinds object.statement_required inspects, including functions"
+  ],
+  "parse_attempts": 2,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The policies parse and the dry run shows no blocked objects, and the audit trail mechanism is enforced on four tables. Confidence is medium, not high, because access reviews and change approvals are outside what policies can see, the audit covers only four tables, and writes inside functions other than delete_user_account are not checked. The me PATCH role write (a finding) is left unfixed."
+}

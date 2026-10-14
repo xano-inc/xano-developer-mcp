@@ -1,0 +1,33 @@
+{
+  "key": "1126b2c14fc5f60e",
+  "workspace_id": "9040",
+  "checked_at": "2026-10-14T01:01:43.357Z",
+  "check": {
+    "dry_run": {
+      "ran": true,
+      "status": "dry-run",
+      "blocked": [],
+      "unresolved": [],
+      "operations": [
+        "create policy AUDIT-001",
+        "create policy COST-001",
+        "create table audit_log",
+        "update function delete_user_account",
+        "create function record_audit_event",
+        "update function summarize_ticket",
+        "update task nightly_ticket_summaries",
+        "update query auth/signup POST",
+        "update query customers/{customer_id} PATCH",
+        "update query customers POST",
+        "update query me PATCH",
+        "update query newsletter/subscribe POST"
+      ],
+      "error": null
+    },
+    "language_server": {
+      "ran": true,
+      "errors": []
+    },
+    "unreadable": []
+  }
+}

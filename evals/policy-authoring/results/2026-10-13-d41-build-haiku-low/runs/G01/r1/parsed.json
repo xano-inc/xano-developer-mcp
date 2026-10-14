@@ -1,0 +1,70 @@
+{
+  "workspace_id": "9040",
+  "files": [
+    "build/policies/INVOICES-001.xs"
+  ],
+  "policies": [
+    {
+      "file": "build/policies/INVOICES-001.xs",
+      "ok": true,
+      "key": "INVOICES-001",
+      "title": "Invoices are only served to logged-in callers, and never as an unbounded list",
+      "statement": "Every endpoint that reads the invoices table must require login, so an anonymous caller never receives invoice data. Every list read of invoices must be paged to at most 1000 rows, so no single response returns the whole table. A deliberately public endpoint must not read invoices at all.",
+      "enforcement": "advisory",
+      "active": true,
+      "severity": "critical",
+      "rules": [
+        {
+          "id": "INVOICES-001.R1",
+          "title": "",
+          "check": "object.auth_required",
+          "params": {
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [
+              "invoices"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [],
+            "reaching_table_tags": []
+          }
+        },
+        {
+          "id": "INVOICES-001.R2",
+          "title": "",
+          "check": "statement.param_bound",
+          "params": {
+            "statements": [
+              "db.query"
+            ],
+            "param_names": [
+              "per_page"
+            ],
+            "min": null,
+            "max": 1000,
+            "unit": "rows",
+            "tags": [],
+            "api_groups": [],
+            "paths": [],
+            "except_paths": [],
+            "tables": [
+              "invoices"
+            ],
+            "verbs": [],
+            "endpoint_auth": "",
+            "except_tags": [],
+            "object_kinds": [
+              "query"
+            ],
+            "reaching_table_tags": []
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ]
+}

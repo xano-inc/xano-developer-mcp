@@ -1,0 +1,139 @@
+{
+  "goal_id": "G10",
+  "objects_built": [
+    {
+      "kind": "table",
+      "name": "approvals",
+      "file": "workspace/table/approvals.xs",
+      "role": "Stores who asked for an action on which record, and who approved it. Read by require_approval."
+    },
+    {
+      "kind": "function",
+      "name": "require_approval",
+      "file": "workspace/function/require_approval.xs",
+      "role": "Stops with a precondition error unless an approvals row exists for this action and record, approved by someone other than the requester."
+    },
+    {
+      "kind": "policy",
+      "name": "AGENT-001",
+      "file": "workspace/policies/AGENT-001.xs",
+      "role": "Policy file: approved-tool allowlist for the Support Agent and approval-before-delete/email rule for tools."
+    }
+  ],
+  "objects_changed": [
+    {
+      "kind": "tool",
+      "name": "delete_customer_note",
+      "file": "workspace/ai/tool/delete_customer_note.xs",
+      "change": "Added function.run require_approval (action delete_customer_note, record_id = note_id, requested_by support-agent) before db.del."
+    },
+    {
+      "kind": "tool",
+      "name": "send_customer_email",
+      "file": "workspace/ai/tool/send_customer_email.xs",
+      "change": "Added function.run require_approval (action send_customer_email, record_id 0, requested_by support-agent) before util.send_email."
+    }
+  ],
+  "templates_considered": [
+    "agents_use_approved_tools (AI-001): fits the allowlist part; used its check pattern with an explicit tools list instead of tool_tags, since the four tools are the customer's explicit list.",
+    "ai_cost_and_agent_safety recipe: covers approval-before-delete/email and allowlist; its rule 'AI tools cannot delete records' (stack.statement_forbidden on db.del) does not fit, because the customer wants deletes allowed with approval, not forbidden.",
+    "approved_vendors_only, reads_are_paged, requests_have_timeout, ai_tools_described: not part of the ask."
+  ],
+  "templates_used": [
+    "agents_use_approved_tools (pattern only, rule written directly in AGENT-001)"
+  ],
+  "rules": [
+    {
+      "policy_key": "AGENT-001",
+      "check": "agent.tool_allowlist",
+      "params": {
+        "object_kinds": [
+          "agent"
+        ],
+        "tools": [
+          "lookup_order",
+          "delete_customer_note",
+          "send_customer_email",
+          "issue_refund"
+        ]
+      },
+      "covers": "Agents may only call tools explicitly given to them"
+    },
+    {
+      "policy_key": "AGENT-001",
+      "check": "stack.statement_order",
+      "params": {
+        "before": {
+          "functions": [
+            "require_approval"
+          ]
+        },
+        "after": [
+          "db.del",
+          "db.bulk.delete",
+          "util.send_email"
+        ],
+        "object_kinds": [
+          "tool"
+        ]
+      },
+      "covers": "Deletes and emails in agent tools wait for an approval check"
+    }
+  ],
+  "ask_parts_not_covered": [
+    {
+      "part": "A human actually approves the delete or email",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Approval rows can only be written by a human (no endpoint or UI built for approvals; the agent could write approvals if a future tool does)",
+      "why": "needs runtime/org process"
+    },
+    {
+      "part": "Delete and email paths outside agent tools (e.g. delete_user_account via DELETE /account)",
+      "why": "other"
+    },
+    {
+      "part": "issue_refund moves money but is neither a delete nor an email; it is allowlisted but not approval-gated",
+      "why": "other"
+    },
+    {
+      "part": "record_id for email has no record; passing 0 means the approval is not tied to a specific email",
+      "why": "couldn't tell how"
+    }
+  ],
+  "assumptions": [
+    "The four tools on Support Agent are the ones the customer explicitly gave it, so they form the approved list.",
+    "Deletes are allowed with approval, not forbidden (the customer said 'without a human approving it first').",
+    "Tools are the only agent-reachable path for deletes/emails in this workspace.",
+    "requested_by is a constant 'support-agent' because tools have no authenticated caller."
+  ],
+  "workspace_names_used": [
+    "Support Agent",
+    "support_agent",
+    "lookup_order",
+    "delete_customer_note",
+    "send_customer_email",
+    "issue_refund",
+    "customer_notes",
+    "delete_user_account",
+    "policy_authoring_eval"
+  ],
+  "confusions": [
+    "The ai_cost_and_agent_safety recipe's rule 'AI tools cannot delete records' conflicts with the customer's ask that deletes be allowed with approval. The recipe does not say how to handle a tool that must delete with approval.",
+    "require_approval is not on the branch until pushed, so parse warns 'Function not on this branch' for AGENT-001.R2. Expected, but the parse output alone reads like a failure.",
+    "agent.tool_allowlist 'tools' takes names only; there is no guidance on whether naming the existing tools counts as the owner approving them. The skill says never add to tools yourself, but the customer is the owner and stated the list in the ask; I followed the ask.",
+    "Not clear how a tool gets a trustworthy requester identity to pass to an approval check. I used a constant string.",
+    "db.query return = {type: \"count\"} syntax was a guess; not verified by parse (parse does not check XanoScript body semantics beyond the policy file)."
+  ],
+  "wished_for": [
+    "A recipe or template for 'human approval before a tool action' showing the approvals table, the require_approval function and the policy rule together.",
+    "Guidance on how a tool identifies the requesting human or agent for approval checks.",
+    "A way to express 'deletes allowed only with approval' distinct from 'deletes forbidden' in the AI tool template."
+  ],
+  "parse_attempts": 1,
+  "parse_errors_seen": [],
+  "dry_run_problems_seen": [],
+  "confidence_policy_achieves_goal": "medium",
+  "why_confidence": "The allowlist and statement_order checks cover the tool list and the approval-call ordering, and the dry run is clean. But the approval gate is only as good as the approvals table, which a human still has to write; the policy cannot see that, and the require_approval logic and db.query count syntax were not validated by a push or run."
+}

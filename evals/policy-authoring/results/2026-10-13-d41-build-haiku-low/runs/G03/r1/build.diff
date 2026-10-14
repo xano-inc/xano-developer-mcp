@@ -1,0 +1,62 @@
+--- a/api/app/payments/charge_POST.xs
++++ b/api/app/payments/charge_POST.xs
+@@ -13,10 +13,6 @@
+   }
+ 
+   stack {
+-    debug.log {
+-      value = "charge attempt " ~ ($input|json_encode)
+-    }
+-  
+     api.request {
+       url = "https://api.stripe.com/v1/payment_intents"
+       method = "POST"
+--- a/policies/LOG-001.xs
++++ b/policies/LOG-001.xs
+@@ -0,0 +1,14 @@
++policy "LOG-001" {
++  title = "Logs don't contain request, user or secret data"
++  statement = "Debug logs never reference request input, the logged-in user or environment variables. Card numbers, security codes and cardholder names arrive as request input, so they must never reach a log. An object that cannot comply is fixed by logging an event name instead of its input."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "pci-10"]
++
++  rule {
++    title = "Debug logs name events, not input, auth or env"
++    check = "statement.expression_rule"
++    params = { statements: ["debug.log"], param_names: ["value"], must_not_reference: ["$input", "$auth", "$env"] }
++  }
++}
+--- a/policies/PCI-001.xs
++++ b/policies/PCI-001.xs
+@@ -0,0 +1,13 @@
++policy "PCI-001" {
++  title = "Cardholder data is never stored raw"
++  statement = "Cardholder data (card number, security code, expiry, cardholder name) must never be stored raw in a table. Keep only the processor's token and the last four digits. A table that declares one of these fields is reported until the field is removed or moved to the processor."
++  severity = "critical"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "pci-3.2"]
++
++  rule {
++    check = "table.field_attribute_required"
++    params = { field_names: ["card_number", "card_cvv", "card_expiry", "cardholder_name", "pan", "cvv", "cvc"], forbidden: true }
++  }
++}
+--- a/policies/VND-001.xs
++++ b/policies/VND-001.xs
+@@ -0,0 +1,13 @@
++policy "VND-001" {
++  title = "Data only goes to approved vendors"
++  statement = "Cardholder and bank data may be sent only to Stripe (api.stripe.com) and Plaid (production.plaid.com). Any other outbound host, AI model provider, email or cloud destination is reported until the policy owner approves it, and then it is added to the approved hosts here."
++  severity = "high"
++  active = true
++  enforcement = "advisory"
++  tags = ["pci-dss", "pci-12.8"]
++
++  rule {
++    check = "outbound.vendor_allowlist"
++    params = { hosts: ["api.stripe.com", "production.plaid.com"] }
++  }
++}
