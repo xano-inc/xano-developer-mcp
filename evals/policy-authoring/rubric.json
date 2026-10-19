@@ -309,7 +309,7 @@
         {
           "id": "endpoint_paths_snake_case",
           "points": 2,
-          "desc": "object.naming name_kind endpoint_path with case_style snake_case (CONV-012's kebab-case changed, not used as-is).",
+          "desc": "object.naming name_kind endpoint_path with case_style snake_case (CONV-010's kebab-case path rule changed, not used as-is).",
           "any_of": [
             {
               "match": {
@@ -435,7 +435,7 @@
         {
           "id": "kebab_paths",
           "penalty": 2,
-          "desc": "Endpoint paths judged kebab-case (CONV-012 as-is) against the ask.",
+          "desc": "Endpoint paths judged kebab-case (CONV-010's path rule as-is) against the ask.",
           "match": {
             "rule": {
               "check": "object.naming",

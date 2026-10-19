@@ -2855,7 +2855,7 @@
             "name_kind": "endpoint_path",
             "case_style": "snake_case"
           },
-          "note": "With CONV-012 in place, change its case_style rather than adding a second naming policy."
+          "note": "With CONV-010 in place, change its endpoint path rule's case_style rather than adding a second naming policy."
         },
         {
           "goal": "Function names start with a verb.",
@@ -9793,7 +9793,7 @@
         "hipaa"
       ],
       "title": "Users only reach their own records",
-      "summary": "Reads of owned tables filter on the owner field against the logged-in user, and new records take their owner from the login rather than the request.",
+      "summary": "Reads of owned tables filter on the owner field against the logged-in user, and new records take their owner from the logged-in user rather than the request.",
       "key": "AUTH-020",
       "severity": "critical",
       "keywords": [
@@ -9838,7 +9838,7 @@
           "needs_any": []
         },
         {
-          "title": "New records take their owner from the login, not the request",
+          "title": "New records take their owner from the logged-in user, not the request",
           "check": "db.write_from_input_forbidden",
           "params": {
             "statements": [
@@ -10131,7 +10131,7 @@
         "pci_dss"
       ],
       "title": "External requests verify TLS certificates",
-      "summary": "Every external request verifies the TLS certificate and host name of the server it talks to.",
+      "summary": "Every external request keeps TLS certificate and host name verification on, as Xano does by default.",
       "key": "SEC-011",
       "severity": "high",
       "keywords": [
@@ -10176,7 +10176,7 @@
         "soc2",
         "hipaa"
       ],
-      "title": "Login tokens expire within an hour",
+      "title": "Authentication tokens expire within an hour",
       "summary": "Every authentication token expires within one hour of being created, and every signed token (JWS or JWE) within the lifetime you choose.",
       "key": "SEC-014",
       "severity": "high",
@@ -10289,7 +10289,7 @@
         "hipaa",
         "gdpr"
       ],
-      "title": "Sensitive tables are only reached by logged-in endpoints",
+      "title": "Sensitive tables are only reached by authenticated endpoints",
       "summary": "Every endpoint that reaches a table carrying your sensitive-data tag, directly or through a function, requires authentication.",
       "key": "CONF-010",
       "severity": "critical",
@@ -10311,7 +10311,7 @@
       "examples": {},
       "rules": [
         {
-          "title": "Endpoints reaching sensitive tables require login",
+          "title": "Endpoints reaching sensitive tables require authentication",
           "check": "object.tagged_table_access",
           "params": {},
           "needs": [
@@ -10404,7 +10404,7 @@
         "hipaa"
       ],
       "title": "Saved views hide sensitive fields",
-      "summary": "Every saved table view hides the fields marked sensitive in its table's schema, and password fields.",
+      "summary": "Every saved table view hides the fields marked sensitive in its table's schema, and password fields, so a share link made from a view never shows them.",
       "key": "CONF-013",
       "severity": "medium",
       "keywords": [
@@ -10415,7 +10415,9 @@
         "sensitive",
         "pii",
         "dashboard",
-        "mask"
+        "mask",
+        "share link",
+        "shared view"
       ],
       "limits": "Checks saved views only: a share link made with the default view, or whose view was deleted, shares every field, and share links are outside the branch.",
       "examples": {},
@@ -10519,8 +10521,8 @@
       "id": "middleware_surfaces_errors",
       "category": "reliability",
       "frameworks": [],
-      "title": "Middleware doesn't swallow errors",
-      "summary": "No middleware is set to swallow the exceptions it catches.",
+      "title": "Middleware doesn't ignore errors",
+      "summary": "No middleware is set to ignore the exceptions it catches.",
       "key": "LOG-011",
       "severity": "medium",
       "keywords": [
@@ -10880,7 +10882,7 @@
       "category": "access_control",
       "frameworks": [],
       "title": "Users sign in through one auth table",
-      "summary": "The workspace has exactly one auth table, and every authenticated endpoint uses it.",
+      "summary": "Exactly one table has Authentication turned on in its settings, and every authenticated endpoint uses it.",
       "key": "AUTH-050",
       "severity": "medium",
       "keywords": [
@@ -11099,11 +11101,11 @@
       ]
     },
     {
-      "id": "functions_snake_case",
+      "id": "naming_conventions",
       "category": "conventions",
       "frameworks": [],
-      "title": "Functions are snake_case",
-      "summary": "Every function name is lowercase words joined by underscores, such as get_invoice; the folder it sits in is not judged.",
+      "title": "Names follow the naming conventions",
+      "summary": "Function names and function inputs are snake_case, table fields are snake_case with links named <table>_id (or <table>_ids for a list), and endpoint paths start with a version such as v1 and are kebab-case.",
       "key": "CONV-010",
       "severity": "low",
       "keywords": [
@@ -11111,11 +11113,32 @@
         "naming",
         "name",
         "snake_case",
+        "kebab-case",
         "function name",
+        "field name",
+        "column name",
+        "foreign key",
+        "relationship",
+        "table link",
+        "schema",
+        "database",
+        "table",
+        "endpoint path",
+        "url",
+        "route",
+        "rest",
+        "api version",
+        "versioning",
+        "v1",
+        "endpoint",
+        "argument",
+        "parameter",
+        "input name",
+        "function input",
         "style guide",
         "consistent names"
       ],
-      "limits": "Judges the name after the last / only, so folders are not checked; renaming a function changes every function.run that calls it, so existing names are best exempted with allowed_names or a tag in except_tags.",
+      "limits": "A function is judged by the name after the last / only, so folders are not checked; an input by its own name, not its dotted path; a table field from the schema only, never the primary key id or a json field's contents; an endpoint path segment by segment, skipping {param} segments. A plural table name stays plural (users gives users_id), and a link to the table itself (parent_id) or an unversioned path such as health needs an allowed_names entry. Renaming changes every function.run and caller that uses the name, so existing names are best exempted with allowed_names or a tag in except_tags; change a rule's case_style, or remove a rule, to fit your own convention.",
       "examples": {},
       "rules": [
         {
@@ -11130,33 +11153,7 @@
           },
           "needs": [],
           "needs_any": []
-        }
-      ]
-    },
-    {
-      "id": "fields_snake_case",
-      "category": "conventions",
-      "frameworks": [],
-      "title": "Fields are snake_case with <table>_id links",
-      "summary": "Every table field is snake_case, and a field that links to another table ends in that table's name and _id (owner_user_id), or _ids for a list.",
-      "key": "CONV-011",
-      "severity": "low",
-      "keywords": [
-        "convention",
-        "naming",
-        "snake_case",
-        "field name",
-        "column name",
-        "foreign key",
-        "relationship",
-        "table link",
-        "schema",
-        "database",
-        "table"
-      ],
-      "limits": "Reads table schemas only; the primary key id is not judged, and a json field's contents have no declared names. A plural table name stays plural (users gives users_id), and a link to the table itself (parent_id) needs an allowed_names entry such as category.parent_id.",
-      "examples": {},
-      "rules": [
+        },
         {
           "title": "Fields are snake_case and links end in <table>_id",
           "check": "object.naming",
@@ -11168,34 +11165,7 @@
           },
           "needs": [],
           "needs_any": []
-        }
-      ]
-    },
-    {
-      "id": "endpoint_paths_versioned",
-      "category": "conventions",
-      "frameworks": [],
-      "title": "Endpoint paths are versioned kebab-case",
-      "summary": "Every endpoint path starts with a version segment such as v1, and its other segments are lowercase words joined by hyphens, such as order-items.",
-      "key": "CONV-012",
-      "severity": "low",
-      "keywords": [
-        "convention",
-        "naming",
-        "kebab-case",
-        "endpoint path",
-        "url",
-        "route",
-        "rest",
-        "api version",
-        "versioning",
-        "v1",
-        "style guide",
-        "endpoint"
-      ],
-      "limits": "Judges each path segment on its own and skips {param} segments; an unversioned path such as health needs an allowed_names entry or a tag in except_tags. Renaming a path changes the URL every caller uses.",
-      "examples": {},
-      "rules": [
+        },
         {
           "title": "Endpoint paths are versioned kebab-case",
           "check": "object.naming",
@@ -11206,30 +11176,7 @@
           },
           "needs": [],
           "needs_any": []
-        }
-      ]
-    },
-    {
-      "id": "function_arguments_snake_case",
-      "category": "conventions",
-      "frameworks": [],
-      "title": "Function arguments are snake_case",
-      "summary": "Every input a function declares, nested inputs included, is lowercase words joined by underscores, such as customer_id.",
-      "key": "CONV-013",
-      "severity": "low",
-      "keywords": [
-        "convention",
-        "naming",
-        "snake_case",
-        "argument",
-        "parameter",
-        "input name",
-        "function input",
-        "style guide"
-      ],
-      "limits": "Judges each input by its own name, not its dotted path; renaming an input changes every function.run that passes it.",
-      "examples": {},
-      "rules": [
+        },
         {
           "title": "Function inputs are snake_case",
           "check": "object.naming",

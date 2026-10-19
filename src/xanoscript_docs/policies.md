@@ -184,7 +184,7 @@ Uses: what each check is for, as goals in a customer's words with the params tha
 - `object.middleware_required`: Every logged-in endpoint runs the rate limiter before its stack. → `{"middleware":["rate_limit"],"phase":"pre","endpoint_auth":"required","object_kinds":["query"]}`
 - `object.middleware_required`: Everything under /internal runs the IP allowlist first. → `{"middleware":["ip_allowlist"],"phase":"pre","paths":["internal"],"object_kinds":["query"]}` — paths selects every endpoint under the path, new ones included, with no tag needed.
 - `object.naming`: Table names are plural. → `{"name_kind":"object","object_kinds":["table"],"suffixes":["s"]}` — A suffix is literal text: a plural such as people needs an allowed_names entry.
-- `object.naming`: Endpoint paths are snake_case. → `{"name_kind":"endpoint_path","case_style":"snake_case"}` — With CONV-012 in place, change its case_style rather than adding a second naming policy.
+- `object.naming`: Endpoint paths are snake_case. → `{"name_kind":"endpoint_path","case_style":"snake_case"}` — With CONV-010 in place, change its endpoint path rule's case_style rather than adding a second naming policy.
 - `object.naming`: Function names start with a verb. → `{"name_kind":"object","object_kinds":["function"],"first_word_must_be":["get","list","create","update","delete"]}`
 - `object.settings_forbidden`: No endpoint caches its response for more than an hour. → `{"object_kind":"query","when":{"cache.active":{"equals":true},"cache.ttl":{"gt":3600}}}`
 - `object.settings_forbidden`: API documentation requires a token. → `{"object_kind":"api_group","when":{"swagger":{"equals":true},"swagger.require_token":{"equals":false}}}`

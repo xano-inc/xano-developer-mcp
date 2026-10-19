@@ -19,7 +19,7 @@ The platform's starting points for a new policy, and its recipes for goals that 
 | `no_self_promotion` | `AUTH-030` | critical | Users can't make themselves admin | `db.write_from_input_forbidden` | _nothing_ | SOC 2, HIPAA |
 | `public_endpoints_harmless` | `AUTH-003` | high | Public endpoints can't change data | `stack.statement_forbidden` | _nothing_ |  |
 | `admin_endpoints_check_role` | `AUTH-002` | critical | Admin endpoints check the caller's role | `object.statement_required` | `functions` (e.g. `["require_admin"]`), and `tags` (e.g. `["admin"]`) or `paths` (e.g. `["admin"]`) | SOC 2, HIPAA |
-| `tokens_expire` | `SEC-014` | high | Login tokens expire within an hour | `statement.param_bound` | R2: `max` (e.g. `3600`) | SOC 2, HIPAA |
+| `tokens_expire` | `SEC-014` | high | Authentication tokens expire within an hour | `statement.param_bound` | R2: `max` (e.g. `3600`) | SOC 2, HIPAA |
 | `writes_check_first` | `BIZ-001` | high | Endpoints check the caller before writing | `stack.statement_order` | _nothing_ |  |
 | `protected_endpoints_run_middleware` | `AUTH-040` | high | Protected endpoints run your auth middleware | `object.middleware_required` | `middleware` (e.g. `["access_context"]`) |  |
 | `one_auth_table` | `AUTH-050` | medium | Users sign in through one auth table | `table.auth_table_rules` | _nothing_ |  |
@@ -29,7 +29,7 @@ The platform's starting points for a new policy, and its recipes for goals that 
 | Template | Key | Severity | Title | Checks | Fill | Frameworks |
 | --- | --- | --- | --- | --- | --- | --- |
 | `no_pii_in_responses` | `DATA-010` | high | Endpoints don't return personal data | `db.output_fields_forbidden` | `fields` (e.g. `["ssn","user.password_hash"]`) | SOC 2, HIPAA, GDPR, PCI DSS |
-| `sensitive_tables_need_login` | `CONF-010` | critical | Sensitive tables are only reached by logged-in endpoints | `object.tagged_table_access` | `table_tags` (e.g. `["phi"]`) | SOC 2, HIPAA, GDPR |
+| `sensitive_tables_need_login` | `CONF-010` | critical | Sensitive tables are only reached by authenticated endpoints | `object.tagged_table_access` | `table_tags` (e.g. `["phi"]`) | SOC 2, HIPAA, GDPR |
 | `sensitive_fields_marked` | `CONF-011` | high | Sensitive fields are marked sensitive | `table.field_attribute_required` | `field_names` (e.g. `["ssn","dob"]`) | SOC 2, HIPAA, GDPR, PCI DSS |
 | `confidential_tables_tagged` | `CONF-012` | medium | Tables holding confidential data are tagged | `table.tag_required` | `field_names` (e.g. `["notes","diagnosis"]`) |  |
 | `views_hide_sensitive` | `CONF-013` | medium | Saved views hide sensitive fields | `table.view_hide_required` | _nothing_ | SOC 2, HIPAA |
@@ -59,7 +59,7 @@ The platform's starting points for a new policy, and its recipes for goals that 
 | Template | Key | Severity | Title | Checks | Fill | Frameworks |
 | --- | --- | --- | --- | --- | --- | --- |
 | `no_destructive_sql` | `SEC-010` | high | No table truncation or raw SQL | `stack.statement_forbidden` | _nothing_ |  |
-| `middleware_surfaces_errors` | `LOG-011` | medium | Middleware doesn't swallow errors | `object.settings_forbidden` | _nothing_ |  |
+| `middleware_surfaces_errors` | `LOG-011` | medium | Middleware doesn't ignore errors | `object.settings_forbidden` | _nothing_ |  |
 | `reads_are_paged` | `PERF-001` | medium | Endpoints never return every row | `statement.param_bound` | _nothing_ |  |
 | `get_endpoints_only_read` | `API-010` | medium | GET endpoints only read | `stack.statement_forbidden` | _nothing_ |  |
 | `inputs_validated` | `VAL-001` | medium | Endpoint inputs are typed and bounded | `object.input_rules`, `object.unused_input_forbidden` | _nothing_ |  |
@@ -75,10 +75,7 @@ The platform's starting points for a new policy, and its recipes for goals that 
 
 | Template | Key | Severity | Title | Checks | Fill | Frameworks |
 | --- | --- | --- | --- | --- | --- | --- |
-| `functions_snake_case` | `CONV-010` | low | Functions are snake_case | `object.naming` | _nothing_ |  |
-| `fields_snake_case` | `CONV-011` | low | Fields are snake_case with <table>_id links | `object.naming` | _nothing_ |  |
-| `endpoint_paths_versioned` | `CONV-012` | low | Endpoint paths are versioned kebab-case | `object.naming` | _nothing_ |  |
-| `function_arguments_snake_case` | `CONV-013` | low | Function arguments are snake_case | `object.naming` | _nothing_ |  |
+| `naming_conventions` | `CONV-010` | low | Names follow the naming conventions | `object.naming` | _nothing_ |  |
 | `agreed_tag_vocabulary` | `CONV-020` | low | Tags come from the agreed vocabulary | `object.tag_vocabulary` | `allowed_tags` (e.g. `["pii","phi","pci","public"]`) |  |
 | `tags_kebab_case` | `CONV-021` | low | Tags are kebab-case | `object.tag_vocabulary` | _nothing_ |  |
 | `owner_team_tagged` | `CONV-022` | low | APIs, functions and tasks name an owner team | `object.tag_required` | `tag_set` (e.g. `["team-billing","team-growth","team-platform"]`) |  |
@@ -114,7 +111,7 @@ Templates, in order, one policy each:
 
 1. `confidential_tables_tagged` (`CONF-012`): Tables holding confidential data are tagged
 2. `sensitive_fields_marked` (`CONF-011`): Sensitive fields are marked sensitive
-3. `sensitive_tables_need_login` (`CONF-010`): Sensitive tables are only reached by logged-in endpoints
+3. `sensitive_tables_need_login` (`CONF-010`): Sensitive tables are only reached by authenticated endpoints
 4. `no_pii_in_responses` (`DATA-010`): Endpoints don't return personal data
 5. `no_sensitive_data_in_logs` (`LOG-001`): Logs don't contain request, user or secret data
 6. `views_hide_sensitive` (`CONF-013`): Saved views hide sensitive fields
@@ -282,7 +279,7 @@ The user's own objects and choices fill `rules[1].api_groups`.
 
 Templates, in order, one policy each:
 
-1. `middleware_surfaces_errors` (`LOG-011`): Middleware doesn't swallow errors
+1. `middleware_surfaces_errors` (`LOG-011`): Middleware doesn't ignore errors
 
 Rules no template covers, together in one policy of your own:
 
