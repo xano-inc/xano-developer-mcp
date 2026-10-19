@@ -9705,7 +9705,7 @@
         "soc2",
         "hipaa"
       ],
-      "title": "Endpoints require login",
+      "title": "Endpoints require authentication",
       "summary": "Every endpoint requires authentication, unless it or its API group is tagged public.",
       "key": "AUTH-010",
       "severity": "critical",

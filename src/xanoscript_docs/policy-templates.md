@@ -14,7 +14,7 @@ The platform's starting points for a new policy, and its recipes for goals that 
 
 | Template | Key | Severity | Title | Checks | Fill | Frameworks |
 | --- | --- | --- | --- | --- | --- | --- |
-| `endpoints_need_login` | `AUTH-010` | critical | Endpoints require login | `object.auth_required` | _nothing_ | SOC 2, HIPAA |
+| `endpoints_need_login` | `AUTH-010` | critical | Endpoints require authentication | `object.auth_required` | _nothing_ | SOC 2, HIPAA |
 | `own_records_only` | `AUTH-020` | critical | Users only reach their own records | `db.where_constraint_required`, `db.write_from_input_forbidden` | R1: `field` (e.g. `"user_id"`); R2: `fields` (e.g. `["user_id"]`) | SOC 2, HIPAA |
 | `no_self_promotion` | `AUTH-030` | critical | Users can't make themselves admin | `db.write_from_input_forbidden` | _nothing_ | SOC 2, HIPAA |
 | `public_endpoints_harmless` | `AUTH-003` | high | Public endpoints can't change data | `stack.statement_forbidden` | _nothing_ |  |
