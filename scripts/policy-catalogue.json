@@ -12868,21 +12868,17 @@
           "low"
         ],
         "default": "medium",
-        "description": "How much a violation of this policy matters. It orders findings in reports and never blocks anything; enforcement does."
+        "description": "How much a violation of this policy matters. It orders findings in reports and never blocks anything; mode does."
       },
-      "active": {
-        "type": "bool",
-        "default": true,
-        "description": "Only an active policy is evaluated; an inactive policy reports nothing."
-      },
-      "enforcement": {
+      "mode": {
         "type": "string",
         "values": [
+          "off",
           "advisory",
           "blocking"
         ],
         "default": "advisory",
-        "description": "An advisory policy only reports its findings. An active blocking policy's findings also stop a gated change that introduces them or changes the objects they are on: a merge, a set-live, a publish or push to the live branch, an archive import or a tenant deploy, unless someone allowed to override gives a reason."
+        "description": "An off policy is never evaluated, so it reports and blocks nothing. An advisory policy only reports its findings. A blocking policy's findings also stop a gated change that introduces them or changes the objects they are on: a merge, a set-live, a publish or push to the live branch, an archive import or a tenant deploy, unless someone allowed to override gives a reason."
       },
       "tags": {
         "type": "string[]",
@@ -12908,7 +12904,9 @@
     "retired": {
       "policy": {
         "remediation": "policy: \"remediation\" was removed; put the guidance in the policy statement.",
-        "lifecycle": "policy: \"lifecycle\" was replaced by \"active\"; write active = true or active = false.",
+        "active": "policy: \"active\" was replaced by \"mode\"; write mode = \"off\", mode = \"advisory\" or mode = \"blocking\".",
+        "enforcement": "policy: \"enforcement\" was replaced by \"mode\"; write mode = \"off\", mode = \"advisory\" or mode = \"blocking\".",
+        "lifecycle": "policy: \"lifecycle\" was replaced by \"mode\"; write mode = \"off\", mode = \"advisory\" or mode = \"blocking\".",
         "owner": "policy: \"owner\" was removed; delete the line. Ownership will return as a reference to a workspace member."
       },
       "rule": {
@@ -12925,9 +12923,9 @@
     },
     "rules_required": {
       "unless": {
-        "active": false
+        "mode": "off"
       },
-      "message": "An active policy needs at least one rule; set active = false instead."
+      "message": "A policy that is not off needs at least one rule; set mode = \"off\" instead."
     }
   }
 }

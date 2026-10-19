@@ -236,7 +236,7 @@
             {
               "match": {
                 "any_policy": {
-                  "enforcement": "blocking"
+                  "mode": "blocking"
                 }
               }
             },
@@ -398,7 +398,7 @@
             {
               "match": {
                 "all_policies": {
-                  "enforcement": "advisory"
+                  "mode": "advisory"
                 }
               }
             }

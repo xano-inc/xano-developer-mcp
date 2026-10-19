@@ -1,6 +1,6 @@
 ---
 name: xano-policies
-description: Use this skill whenever working with Xano workspace policies - authoring or editing policy files (`policies/*.xs`, `policy "KEY" { ... }` documents), running or interpreting policy checks, findings, reports or status, using any `xano policy ...` command, reading `policy_check` feedback from `xano workspace push`, or answering which checks exist, what a check inspects and how to fix or exempt a finding. Trigger on any mention of a Xano policy, policy check, policy finding, policy run or the policy catalogue, and before changing code in a project that has a `policies/` folder: its active blocking policies apply to every code change.
+description: Use this skill whenever working with Xano workspace policies - authoring or editing policy files (`policies/*.xs`, `policy "KEY" { ... }` documents), running or interpreting policy checks, findings, reports or status, using any `xano policy ...` command, reading `policy_check` feedback from `xano workspace push`, or answering which checks exist, what a check inspects and how to fix or exempt a finding. Trigger on any mention of a Xano policy, policy check, policy finding, policy run or the policy catalogue, and before changing code in a project that has a `policies/` folder: its blocking policies apply to every code change.
 ---
 
 # Xano policies
@@ -44,11 +44,12 @@ guess a check id or parameter; read them from `xano policy catalogue`.
 - **Rules are anonymous.** Write `rule { ... }`; `rule foo { ... }` is refused. A rule's
   id is its position (`KEY.R1`, `KEY.R2`), and its human name is its `title`.
 - **A rule has no `severity`.** Severity lives on the policy (`critical`, `high`,
-  `medium`, `low`) and only orders findings; `enforcement` is what blocks a gate.
+  `medium`, `low`) and only orders findings; `mode` is what blocks a gate.
 - **There is no `owner` field.** An `owner` line is refused.
-- **A new policy is `active = true` with `enforcement = "advisory"`** unless you
-  are told otherwise: it blocks nothing while its findings are reviewed, and an inactive
-  policy (`active = false`) is never evaluated, so it reports nothing at all.
+- **A new policy is `mode = "advisory"`** unless you are told otherwise: it blocks
+  nothing while its findings are reviewed. `mode` is `"off"`, `"advisory"` or `"blocking"`;
+  an `off` policy is never evaluated, so it reports nothing at all. `active` and
+  `enforcement` are retired and refused.
 - **Start a new policy from a template when one fits.** `xano policy catalogue` lists the
   platform's templates (`topic: "policy-templates"` in the XanoScript docs lists them too), and
   `xano policy create --template <id> --param 'path=JSON'` creates one. Each template names the
@@ -58,14 +59,14 @@ guess a check id or parameter; read them from `xano policy catalogue`.
 - **Always parse before publishing:** `xano policy parse --file <path>`, then
   `xano policy publish --file <path> -m "<message>"`.
 - **An exact copy is refused.** A new policy whose rules exactly match one the branch
-  already has (active or not) is refused as `policy_duplicate`, naming that policy. Only
+  already has (`off` or not) is refused as `policy_duplicate`, naming that policy. Only
   each rule's check and params count, in any order; the key, title, statement, tags,
-  active, severity, enforcement and rule titles do not. Tell the user which policy has
+  severity, mode and rule titles do not. Tell the user which policy has
   these rules and ask what the new one should cover differently: the refusal's "change a
   parameter or scope" is their choice, never a param or scope you pick to get past the
   refusal. On a push, nothing else in it is imported either.
 - **Never relax a policy unprompted** — blocking to advisory, loosening or removing a
-  rule, widening `except_tags`, or setting `active = false`. Fix the object instead, and when
+  rule, widening `except_tags`, or setting `mode = "off"`. Fix the object instead, and when
   you are asked to relax one, say plainly what stops being checked. Never override a policy
   gate's refusal unless the user gave you the reason.
 - **A fix changes the object, never the policy, and never exempts it.** Do the change the
@@ -76,7 +77,7 @@ guess a check id or parameter; read them from `xano policy catalogue`.
   allowlist entry or an `allowed_secrets` fingerprint, and never rename a table to match a
   rule, or work around a plan limit. Never quote any part of a secret.
 - **Policies apply to every code change.** In a project with a `policies/` folder, read the
-  active policies that apply to what you are changing, keep to the blocking ones, and run
+  policies that are on (not `off`) and apply to what you are changing, keep to the blocking ones, and run
   `xano policy evaluate` after changing code (exit 2 is a blocking finding).
 
 Every command: `xano policy --help`, or the live skill after `xano skills pull`.

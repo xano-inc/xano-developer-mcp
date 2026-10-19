@@ -166,14 +166,14 @@ describe("policy documentation", () => {
     expect(text).toContain("`gdpr` GDPR, `pci_dss` PCI DSS)");
   });
 
-  it("says policy catalogue --template shows one template, each check lists its params, the head says what severity and enforcement do, and parse always shows severity", () => {
+  it("says policy catalogue --template shows one template, each check lists its params, the head says what severity and mode do, and parse always shows severity", () => {
     const cli = handleCliDocs({ topic: "policy" });
     expect(cli).toContain("xano policy catalogue --template retained_data_has_age_limit");
     expect(cli).toContain("--template to one template id");
     expect(cli).toContain("an id of another kind names the flag that shows it");
     expect(cli).toContain("an object param's parts by their dotted path, as referenced_by.age_field");
     expect(cli).toContain("a Scope fields: line naming the scope fields it takes");
-    expect(cli).toContain("advisory, the default, only reports; an active blocking policy's findings stop a gated change");
+    expect(cli).toContain("off is never evaluated; advisory, the default, only reports; a blocking policy's findings stop a gated change");
     expect(cli).toContain("orgs/*/tenants and orgs/{id}/tenants both select orgs/{org_id}/tenants");
     expect(cli).toContain("with the policy's severity always shown");
   });

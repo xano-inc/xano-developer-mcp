@@ -51,7 +51,7 @@ describe("validate_xanoscript and valid policy documents", () => {
     }
   });
 
-  it("passes the other fields a policy may set, a bare key, several rules and an inactive policy without rules", () => {
+  it("passes the other fields a policy may set, a bare key, several rules and an off policy without rules", () => {
     const full = `policy DB-001 {
   title = "No direct writes"
   statement = "Endpoints do not write to tables directly."
@@ -62,8 +62,7 @@ so they are audited in one place.
 """
   tags = ["soc2", "hipaa"]
   severity = "critical"
-  active = true
-  enforcement = "blocking"
+  mode = "blocking"
 
   rule {
     title = "No writes"
@@ -78,7 +77,7 @@ so they are audited in one place.
     check = "object.auth_required"
   }
 }`;
-    const parked = `policy "PARKED-1" {\n  title = "Parked"\n  statement = "Not evaluated yet."\n  active = false\n  enforcement = "advisory"\n}`;
+    const parked = `policy "PARKED-1" {\n  title = "Parked"\n  statement = "Not evaluated yet."\n  mode = "off"\n}`;
     for (const code of [full, parked]) {
       const result = validate(code);
       expect(result.valid, result.message).toBe(true);
@@ -99,9 +98,9 @@ describe("validate_xanoscript and invalid policy documents", () => {
     ["a block comment", beforeSeverity("  /* note */"), 'line 4: policy files cannot contain "/* */" comments. Put the explanation in the policy\'s statement, rationale or narrative.', 4, 3],
     ["a # character", beforeSeverity("  # note"), "Syntax error: unexpected '#'", 4, 3],
     ["a field set twice", beforeSeverity('  severity = "low"'), 'policy: "severity" is set more than once.', 5, 3],
-    ["two fields on one line", policyExample.replace('  severity = "high"\n  active = true', '  severity = "high" active = true'), "Policy fields must be separated by a newline.", 4, 21],
-    ["a named rule", policyExample.replace("rule {", 'rule "R1" {'), 'rule[0]: A rule cannot be named. Write "rule {" — rules are identified by position (KEY.R1, KEY.R2…).', 8, 8],
-    ["a parameter that is not a literal", policyExample.replace('["public", "xano:quick-start"]', "$env.public_tags"), "Policy parameters must be literal values.", 10, 28],
+    ["two fields on one line", policyExample.replace('  severity = "high"\n  mode = "advisory"', '  severity = "high" mode = "advisory"'), "Policy fields must be separated by a newline.", 4, 21],
+    ["a named rule", policyExample.replace("rule {", 'rule "R1" {'), 'rule[0]: A rule cannot be named. Write "rule {" — rules are identified by position (KEY.R1, KEY.R2…).', 7, 8],
+    ["a parameter that is not a literal", policyExample.replace('["public", "xano:quick-start"]', "$env.public_tags"), "Policy parameters must be literal values.", 9, 28],
   ];
 
   for (const [name, code, message, line, column] of cases) {
@@ -124,12 +123,15 @@ describe("validate_xanoscript and the bundled check catalogue", () => {
   // The snapshot's date changes whenever the language server regenerates it.
   const note = /\(checked against the language server's check catalogue of \d{4}-\d{2}-\d{2}; your instance decides on save\)$/;
   const cases: Array<[string, string, string, number, number]> = [
-    ["an unknown check", policyExample.replace('"object.auth_required"', '"object.auth_requird"'), '"object.auth_requird" is not a policy check. Did you mean "object.auth_required"?', 9, 13],
-    ["an unknown param", policyExample.replace("except_tags", "except_tagz"), 'unknown param "except_tagz" for check "object.auth_required". Did you mean "except_tags"?', 10, 15],
+    ["an unknown check", policyExample.replace('"object.auth_required"', '"object.auth_requird"'), '"object.auth_requird" is not a policy check. Did you mean "object.auth_required"?', 8, 13],
+    ["an unknown param", policyExample.replace("except_tags", "except_tagz"), 'unknown param "except_tagz" for check "object.auth_required". Did you mean "except_tags"?', 9, 15],
     ["a severity outside its set", policyExample.replace('severity = "high"', 'severity = "urgent"'), 'severity must be one of: critical, high, medium, low (got "urgent").', 4, 14],
     ["a removed field", beforeSeverity('  owner = "security"'), 'policy: "owner" was removed; delete the line. Ownership will return as a reference to a workspace member.', 4, 3],
-    ["a reserved block", policyExample.replace("  rule {", "  guard {\n  }\n\n  rule {"), 'Policy block "guard" is reserved. Policies support rule blocks only.', 8, 3],
-    ["an active policy with no rule", `policy "P-1" {\n  title = "t"\n  statement = "s"\n  active = true\n  enforcement = "advisory"\n}`, "An active policy needs at least one rule; set active = false instead.", 1, 8],
+    ["a reserved block", policyExample.replace("  rule {", "  guard {\n  }\n\n  rule {"), 'Policy block "guard" is reserved. Policies support rule blocks only.', 7, 3],
+    ["a policy that is not off with no rule", `policy "P-1" {\n  title = "t"\n  statement = "s"\n  mode = "advisory"\n}`, 'A policy that is not off needs at least one rule; set mode = "off" instead.', 1, 8],
+    ["a mode outside its set", policyExample.replace('mode = "advisory"', 'mode = "mandatory"'), 'mode must be one of: off, advisory, blocking (got "mandatory").', 5, 10],
+    ["the retired active field", beforeSeverity("  active = true"), 'policy: "active" was replaced by "mode"; write mode = "off", mode = "advisory" or mode = "blocking".', 4, 3],
+    ["the retired enforcement field", beforeSeverity('  enforcement = "blocking"'), 'policy: "enforcement" was replaced by "mode"; write mode = "off", mode = "advisory" or mode = "blocking".', 4, 3],
   ];
 
   for (const [name, code, message, line, column] of cases) {
@@ -150,7 +152,7 @@ describe("validate_xanoscript and the bundled check catalogue", () => {
 
 describe("validate_xanoscript hints on policy documents", () => {
   it("does not offer the json type for a naming rule's name_kind \"object\", a value and not a type", () => {
-    const naming = `policy "CONV-010" {\n  title = "t"\n  statement = "s"\n  active = true\n  enforcement = "advisory"\n\n  rule {\n    check = "object.naming"\n    params = {name_kind: "object", case_style: "snake_case", version_required: true}\n  }\n}`;
+    const naming = `policy "CONV-010" {\n  title = "t"\n  statement = "s"\n  mode = "advisory"\n\n  rule {\n    check = "object.naming"\n    params = {name_kind: "object", case_style: "snake_case", version_required: true}\n  }\n}`;
     const warnings = validate(naming).errors.filter((d) => d.severity === SEVERITY.WARNING);
     expect(warnings).toHaveLength(1);
     expect(warnings[0].message).toContain("version_required applies only when name_kind is endpoint_path.");

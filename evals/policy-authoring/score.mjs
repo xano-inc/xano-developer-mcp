@@ -82,8 +82,7 @@ async function parsePolicy(file, rel) {
     key: p.key,
     title: p.title,
     statement: p.statement,
-    enforcement: p.enforcement,
-    active: p.active,
+    mode: p.mode,
     severity: p.severity,
     rules: (p.rules ?? []).map((r) => ({ id: r.id, title: r.title, check: r.check, params: r.params })),
     warnings,
@@ -622,7 +621,7 @@ for (const goal of goals) {
       parse_ok: policies.filter((p) => p.ok).length,
       parse_errors: policies.filter((p) => !p.ok).map((p) => `${p.file}: ${p.error}`),
       rules: ctx.rules.map((x) => `${x.id} ${x.check}`),
-      enforcement: [...new Set(parsed.map((p) => p.enforcement))],
+      mode: [...new Set(parsed.map((p) => p.mode))],
       build: build.present
         ? {
             added: build.added.filter((f) => !f.startsWith("policies/")),
