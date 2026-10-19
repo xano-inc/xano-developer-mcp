@@ -12878,7 +12878,7 @@
           "blocking"
         ],
         "default": "advisory",
-        "description": "An off policy is never evaluated, so it reports and blocks nothing. An advisory policy only reports its findings. A blocking policy's findings also stop a gated change that introduces them or changes the objects they are on: a merge, a set-live, a publish or push to the live branch, an archive import or a tenant deploy, unless someone allowed to override gives a reason."
+        "description": "Whether the policy is evaluated and whether it blocks. An off policy is never evaluated and reports nothing. An advisory policy only reports its findings. A blocking policy's findings also stop a gated change that introduces them or changes the objects they are on: a merge, a set-live, a publish or push to the live branch, an archive import or a tenant deploy, unless someone allowed to override gives a reason."
       },
       "tags": {
         "type": "string[]",
@@ -12904,9 +12904,9 @@
     "retired": {
       "policy": {
         "remediation": "policy: \"remediation\" was removed; put the guidance in the policy statement.",
+        "lifecycle": "policy: \"lifecycle\" was replaced by \"mode\"; write mode = \"off\", mode = \"advisory\" or mode = \"blocking\".",
         "active": "policy: \"active\" was replaced by \"mode\"; write mode = \"off\", mode = \"advisory\" or mode = \"blocking\".",
         "enforcement": "policy: \"enforcement\" was replaced by \"mode\"; write mode = \"off\", mode = \"advisory\" or mode = \"blocking\".",
-        "lifecycle": "policy: \"lifecycle\" was replaced by \"mode\"; write mode = \"off\", mode = \"advisory\" or mode = \"blocking\".",
         "owner": "policy: \"owner\" was removed; delete the line. Ownership will return as a reference to a workspace member."
       },
       "rule": {
