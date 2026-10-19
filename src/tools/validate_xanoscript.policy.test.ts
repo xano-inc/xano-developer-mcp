@@ -62,7 +62,7 @@ so they are audited in one place.
 """
   tags = ["soc2", "hipaa"]
   severity = "critical"
-  mode = "blocking"
+  enforcement = "blocking"
 
   rule {
     title = "No writes"
@@ -77,7 +77,7 @@ so they are audited in one place.
     check = "object.auth_required"
   }
 }`;
-    const parked = `policy "PARKED-1" {\n  title = "Parked"\n  statement = "Not evaluated yet."\n  mode = "off"\n}`;
+    const parked = `policy "PARKED-1" {\n  title = "Parked"\n  statement = "Not evaluated yet."\n  enforcement = "off"\n}`;
     for (const code of [full, parked]) {
       const result = validate(code);
       expect(result.valid, result.message).toBe(true);
@@ -98,7 +98,7 @@ describe("validate_xanoscript and invalid policy documents", () => {
     ["a block comment", beforeSeverity("  /* note */"), 'line 4: policy files cannot contain "/* */" comments. Put the explanation in the policy\'s statement, rationale or narrative.', 4, 3],
     ["a # character", beforeSeverity("  # note"), "Syntax error: unexpected '#'", 4, 3],
     ["a field set twice", beforeSeverity('  severity = "low"'), 'policy: "severity" is set more than once.', 5, 3],
-    ["two fields on one line", policyExample.replace('  severity = "high"\n  mode = "advisory"', '  severity = "high" mode = "advisory"'), "Policy fields must be separated by a newline.", 4, 21],
+    ["two fields on one line", policyExample.replace('  severity = "high"\n  enforcement = "advisory"', '  severity = "high" enforcement = "advisory"'), "Policy fields must be separated by a newline.", 4, 21],
     ["a named rule", policyExample.replace("rule {", 'rule "R1" {'), 'rule[0]: A rule cannot be named. Write "rule {" — rules are identified by position (KEY.R1, KEY.R2…).', 7, 8],
     ["a parameter that is not a literal", policyExample.replace('["public", "xano:quick-start"]', "$env.public_tags"), "Policy parameters must be literal values.", 9, 28],
   ];
@@ -128,10 +128,12 @@ describe("validate_xanoscript and the bundled check catalogue", () => {
     ["a severity outside its set", policyExample.replace('severity = "high"', 'severity = "urgent"'), 'severity must be one of: critical, high, medium, low (got "urgent").', 4, 14],
     ["a removed field", beforeSeverity('  owner = "security"'), 'policy: "owner" was removed; delete the line. Ownership will return as a reference to a workspace member.', 4, 3],
     ["a reserved block", policyExample.replace("  rule {", "  guard {\n  }\n\n  rule {"), 'Policy block "guard" is reserved. Policies support rule blocks only.', 7, 3],
-    ["a policy that is not off with no rule", `policy "P-1" {\n  title = "t"\n  statement = "s"\n  mode = "advisory"\n}`, 'A policy that is not off needs at least one rule; set mode = "off" instead.', 1, 8],
-    ["a mode outside its set", policyExample.replace('mode = "advisory"', 'mode = "mandatory"'), 'mode must be one of: off, advisory, blocking (got "mandatory").', 5, 10],
-    ["the retired active field", beforeSeverity("  active = true"), 'policy: "active" was replaced by "mode"; write mode = "off", mode = "advisory" or mode = "blocking".', 4, 3],
-    ["the retired enforcement field", beforeSeverity('  enforcement = "blocking"'), 'policy: "enforcement" was replaced by "mode"; write mode = "off", mode = "advisory" or mode = "blocking".', 4, 3],
+    ["a policy that is not off with no rule", `policy "P-1" {\n  title = "t"\n  statement = "s"\n  enforcement = "advisory"\n}`, 'A policy that is not off needs at least one rule; set enforcement = "off" instead.', 1, 8],
+    ["an enforcement outside its set", policyExample.replace('enforcement = "advisory"', 'enforcement = "mandatory"'), 'enforcement must be one of: off, advisory, blocking (got "mandatory").', 5, 17],
+    ["the retired active field", beforeSeverity("  active = true"), 'policy: "active" was replaced by "enforcement"; write enforcement = "off", enforcement = "advisory" or enforcement = "blocking".', 4, 3],
+    ["the retired lifecycle field", beforeSeverity('  lifecycle = "draft"'), 'policy: "lifecycle" was replaced by "enforcement"; write enforcement = "off", enforcement = "advisory" or enforcement = "blocking".', 4, 3],
+    // `mode` was never released, so it has no retired message: it is an unknown field.
+    ["the unreleased mode field, an unknown one", beforeSeverity('  mode = "blocking"'), 'policy: unknown field "mode".', 4, 3],
   ];
 
   for (const [name, code, message, line, column] of cases) {
@@ -152,7 +154,7 @@ describe("validate_xanoscript and the bundled check catalogue", () => {
 
 describe("validate_xanoscript hints on policy documents", () => {
   it("does not offer the json type for a naming rule's name_kind \"object\", a value and not a type", () => {
-    const naming = `policy "CONV-010" {\n  title = "t"\n  statement = "s"\n  mode = "advisory"\n\n  rule {\n    check = "object.naming"\n    params = {name_kind: "object", case_style: "snake_case", version_required: true}\n  }\n}`;
+    const naming = `policy "CONV-010" {\n  title = "t"\n  statement = "s"\n  enforcement = "advisory"\n\n  rule {\n    check = "object.naming"\n    params = {name_kind: "object", case_style: "snake_case", version_required: true}\n  }\n}`;
     const warnings = validate(naming).errors.filter((d) => d.severity === SEVERITY.WARNING);
     expect(warnings).toHaveLength(1);
     expect(warnings[0].message).toContain("version_required applies only when name_kind is endpoint_path.");

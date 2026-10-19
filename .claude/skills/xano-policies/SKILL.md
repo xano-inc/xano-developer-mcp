@@ -44,12 +44,12 @@ guess a check id or parameter; read them from `xano policy catalogue`.
 - **Rules are anonymous.** Write `rule { ... }`; `rule foo { ... }` is refused. A rule's
   id is its position (`KEY.R1`, `KEY.R2`), and its human name is its `title`.
 - **A rule has no `severity`.** Severity lives on the policy (`critical`, `high`,
-  `medium`, `low`) and only orders findings; `mode` is what blocks a gate.
+  `medium`, `low`) and only orders findings; `enforcement` is what blocks a gate.
 - **There is no `owner` field.** An `owner` line is refused.
-- **A new policy is `mode = "advisory"`** unless you are told otherwise: it blocks
-  nothing while its findings are reviewed. `mode` is `"off"`, `"advisory"` or `"blocking"`;
+- **A new policy is `enforcement = "advisory"`** unless you are told otherwise: it blocks
+  nothing while its findings are reviewed. `enforcement` is `"off"`, `"advisory"` or `"blocking"`;
   an `off` policy is never evaluated, so it reports nothing at all. `active` and
-  `enforcement` are retired and refused.
+  `lifecycle` are retired and refused.
 - **Start a new policy from a template when one fits.** `xano policy catalogue` lists the
   platform's templates (`topic: "policy-templates"` in the XanoScript docs lists them too), and
   `xano policy create --template <id> --param 'path=JSON'` creates one. Each template names the
@@ -61,12 +61,12 @@ guess a check id or parameter; read them from `xano policy catalogue`.
 - **An exact copy is refused.** A new policy whose rules exactly match one the branch
   already has (`off` or not) is refused as `policy_duplicate`, naming that policy. Only
   each rule's check and params count, in any order; the key, title, statement, tags,
-  severity, mode and rule titles do not. Tell the user which policy has
+  severity, enforcement and rule titles do not. Tell the user which policy has
   these rules and ask what the new one should cover differently: the refusal's "change a
   parameter or scope" is their choice, never a param or scope you pick to get past the
   refusal. On a push, nothing else in it is imported either.
 - **Never relax a policy unprompted** — blocking to advisory, loosening or removing a
-  rule, widening `except_tags`, or setting `mode = "off"`. Fix the object instead, and when
+  rule, widening `except_tags`, or setting `enforcement = "off"`. Fix the object instead, and when
   you are asked to relax one, say plainly what stops being checked. Never override a policy
   gate's refusal unless the user gave you the reason.
 - **A fix changes the object, never the policy, and never exempts it.** Do the change the
