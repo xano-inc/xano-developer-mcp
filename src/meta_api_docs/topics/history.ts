@@ -11,6 +11,8 @@ export const historyDoc: TopicDoc = {
 - **Task History**: Scheduled task execution logs
 - **Middleware History**: Middleware execution logs
 - **Tool History**: Agent tool execution logs
+- **Prompt History**: MCP prompt request logs
+- **Resource History**: MCP resource request logs
 - **Trigger History**: Event trigger execution logs
 
 ## Common Use Cases
@@ -113,6 +115,34 @@ export const historyDoc: TopicDoc = {
     },
     {
       method: "GET",
+      path: "/workspace/{workspace_id}/prompt_history",
+      tool_name: "getPromptRequestHistory",
+      description: "Get MCP prompt request history, newest first.",
+      parameters: [
+        { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
+        { name: "prompt_id", type: "integer", description: "Filter by MCP prompt ID" },
+        { name: "branch", type: "string", description: "Filter by branch name" },
+        { name: "page", type: "integer", default: 1, description: "Page number" },
+        { name: "per_page", type: "integer", default: 50, description: "Items per page (max 500)" },
+        { name: "include_output", type: "boolean", default: false, description: "Include each request's output" }
+      ]
+    },
+    {
+      method: "GET",
+      path: "/workspace/{workspace_id}/resource_history",
+      tool_name: "getResourceRequestHistory",
+      description: "Get MCP resource request history, newest first.",
+      parameters: [
+        { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
+        { name: "resource_id", type: "integer", description: "Filter by MCP resource ID" },
+        { name: "branch", type: "string", description: "Filter by branch name" },
+        { name: "page", type: "integer", default: 1, description: "Page number" },
+        { name: "per_page", type: "integer", default: 50, description: "Items per page (max 500)" },
+        { name: "include_output", type: "boolean", default: false, description: "Include each request's output" }
+      ]
+    },
+    {
+      method: "GET",
       path: "/workspace/{workspace_id}/trigger_history",
       tool_name: "getTriggerHistory",
       description: "Get trigger execution history.",
@@ -153,5 +183,5 @@ export const historyDoc: TopicDoc = {
     }
   },
 
-  related_topics: ["api", "function", "task"]
+  related_topics: ["api", "function", "task", "prompt", "resource"]
 };
