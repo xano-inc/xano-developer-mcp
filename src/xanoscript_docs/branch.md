@@ -20,10 +20,12 @@ branch "<name>" {
 ### Attributes
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `color` | text | Yes | Hex color code for branch identification |
+| `color` | text | No | Hex color code for branch identification (a pull omits it when unset) |
 | `description` | text | No | Human-readable branch description |
-| `middleware` | object | No | Pre/post middleware configuration |
-| `history` | object | No | Request history retention settings |
+| `middleware` | object | Yes | Pre/post middleware; `function`, `query`, `task` and `tool` are required |
+| `history` | object | Yes | Trace retention; `function`, `query`, `task`, `tool`, `trigger` and `middleware` are required |
+
+A pull always writes both `middleware` and `history`, so a branch file needs them even when every list is empty.
 
 ---
 
@@ -33,6 +35,23 @@ branch "<name>" {
 branch "production" {
   color = "#22c55e"
   description = "Production environment"
+
+  middleware = {
+    function: {pre: [], post: []},
+    query: {pre: [], post: []},
+    task: {pre: [], post: []},
+    tool: {pre: [], post: []},
+    message: {pre: [], post: []}
+  }
+
+  history = {
+    function: 100,
+    query: 100,
+    task: 100,
+    tool: 100,
+    trigger: 100,
+    middleware: 100
+  }
 }
 ```
 
@@ -78,6 +97,15 @@ branch "production" {
       post: []
     }
   }
+
+  history = {
+    function: 100,
+    query: 100,
+    task: 100,
+    tool: 100,
+    trigger: 100,
+    middleware: 100
+  }
 }
 ```
 
@@ -85,10 +113,10 @@ branch "production" {
 
 | Target | Description |
 |--------|-------------|
-| `function` | Applies to all function calls |
-| `query` | Applies to all API endpoints |
-| `task` | Applies to scheduled tasks |
-| `tool` | Applies to AI agent and MCP tools |
+| `function` | Applies to all function calls (required) |
+| `query` | Applies to all API endpoints (required) |
+| `task` | Applies to scheduled tasks (required) |
+| `tool` | Applies to AI agent and MCP tools (required) |
 | `message` | Applies to realtime messages |
 | `prompt` | Applies to MCP prompts (optional) |
 | `resource` | Applies to MCP resources (optional) |
@@ -117,13 +145,20 @@ Entries with `active: false` are skipped.
 
 ## History Configuration
 
-Control how many statements from the execution trace are retained per request. Execution traces are kept for 24 hours; this setting limits how many stack statements are recorded in each trace.
+Control how many statements from the execution trace are retained per request. `function`, `query`, `task`, `tool`, `trigger` and `middleware` are required. Execution traces are kept for 24 hours; this setting limits how many stack statements are recorded in each trace.
 
 ### Syntax
 
 ```xs
 branch "production" {
   color = "#22c55e"
+
+  middleware = {
+    function: {pre: [], post: []},
+    query: {pre: [], post: []},
+    task: {pre: [], post: []},
+    tool: {pre: [], post: []}
+  }
 
   history = {
     function: 100,
@@ -176,6 +211,13 @@ branch "development" {
   color = "#3b82f6"
   description = "Development environment with full debugging"
 
+  middleware = {
+    function: {pre: [], post: []},
+    query: {pre: [], post: []},
+    task: {pre: [], post: []},
+    tool: {pre: [], post: []}
+  }
+
   history = {
     function: "all",
     query: "all",
@@ -195,10 +237,13 @@ branch "staging" {
   description = "Staging environment for testing"
 
   middleware = {
+    function: {pre: [], post: []},
     query: {
       pre: [{name: "auth_check"}],
       post: [{name: "audit_log"}]
-    }
+    },
+    task: {pre: [], post: []},
+    tool: {pre: [], post: []}
   }
 
   history = {
