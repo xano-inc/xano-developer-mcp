@@ -1,5 +1,5 @@
 ---
-applyTo: "ai/prompt/*.xs"
+applyTo: "ai/prompt/*.xs, prompt/**/*.xs"
 ---
 
 # Prompts

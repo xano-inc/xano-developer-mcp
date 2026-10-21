@@ -1,5 +1,5 @@
 ---
-applyTo: "ai/resource/*.xs"
+applyTo: "ai/resource/*.xs, resource/**/*.xs"
 ---
 
 # Resources

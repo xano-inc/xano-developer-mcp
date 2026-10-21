@@ -39,6 +39,21 @@ describe("Realtime V2 documentation", () => {
     for (const path of ["realtime_server/chat.xs", "channel/rooms/room_id.xs", "message/send.xs", "channel_trigger/member_gate.xs", "realtime_server_trigger/gate.xs"])
       expect(getDocsForFilePath(path)).toContain("realtime-v2");
   });
+  it("auto-selects V2, not legacy, for the CLI's nested pull layout", () => {
+    for (const path of [
+      "realtime/server/chat/chat.xs",
+      "realtime/server/chat/trigger/gate.xs",
+      "realtime/server/chat/channel/rooms_room_id/rooms_room_id.xs",
+      "realtime/server/chat/channel/rooms_room_id/message/send.xs",
+      "realtime/server/chat/channel/rooms_room_id/trigger/member_gate.xs",
+      "realtime/channel_trigger/member_gate.xs",
+      "realtime/server_trigger/gate.xs",
+    ]) {
+      const docs = getDocsForFilePath(path);
+      expect(docs, path).toContain("realtime-v2");
+      expect(docs, path).not.toContain("realtime");
+    }
+  });
   it("distinguishes V2 from legacy even in compact output", () => {
     const quick = xanoscriptDocs({ topic: "realtime-v2", mode: "quick_reference" }).documentation;
     expect(quick).toContain("realtime.publish");
