@@ -20,7 +20,7 @@ export const apigroupDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/apigroup",
-      tool_name: "listApiGroups",
+      tool_name: "listAPIGroups",
       description: "List all API groups in a workspace with filtering and sorting.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -87,7 +87,7 @@ export const apigroupDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/apigroup/{apigroup_id}/openapi",
-      tool_name: "getApiGroupOpenAPI",
+      tool_name: "getApiGroupSwagger",
       description: "Get OpenAPI v3 specification for this API group's endpoints.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },

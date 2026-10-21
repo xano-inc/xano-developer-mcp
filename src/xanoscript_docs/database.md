@@ -1,5 +1,5 @@
 ---
-applyTo: "function/**/*.xs, api/**/*.xs, task/*.xs, ai/tool/*.xs, ai/prompt/*.xs, ai/resource/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs, task/*.xs, ai/tool/*.xs, ai/prompt/*.xs, ai/resource/*.xs, prompt/**/*.xs, resource/**/*.xs"
 ---
 
 # Database Operations
@@ -288,6 +288,8 @@ db.add "product" {
 } as $product
 ```
 
+`data = {}` is valid on `db.add`, `db.edit` and `db.add_or_edit`; a pull writes it when the statement sets no fields.
+
 ---
 
 ## db.edit
@@ -507,6 +509,9 @@ db.external.mssql.direct_query { ... }
 
 // Oracle
 db.external.oracle.direct_query { ... }
+
+// Snowflake
+db.external.snowflake.direct_query { ... }
 ```
 
 ---

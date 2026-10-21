@@ -1,5 +1,5 @@
 ---
-applyTo: "realtime_server/**/*.xs, channel/**/*.xs, message/**/*.xs, channel_trigger/**/*.xs, realtime_server_trigger/**/*.xs"
+applyTo: "realtime_server/**/*.xs, channel/**/*.xs, message/**/*.xs, channel_trigger/**/*.xs, realtime_server_trigger/**/*.xs, realtime/server/**/*.xs, realtime/channel_trigger/*.xs, realtime/server_trigger/*.xs"
 ---
 
 # Realtime V2
@@ -63,6 +63,8 @@ The declaration names the template `rooms/{room_id}`; a client joins a resolved 
 | `publish.who` | `nobody`, `anyone`, or `authenticated` may publish |
 | `publish.direct` | Whether clients may address other clients directly |
 | `delivery.guarantee` | The example uses `at_most_once`; delivery may be lost |
+
+Optional `description`, `docs` and `tags` document a channel; a pull writes each only when it is set.
 
 A room path separates subscriptions; knowing a path is not authorization. Use access policy and a join trigger for restricted rooms.
 
@@ -371,7 +373,7 @@ xano workspace push --profile YOUR_PROFILE --workspace YOUR_WORKSPACE --branch Y
 xano workspace pull --profile YOUR_PROFILE --workspace YOUR_WORKSPACE --branch YOUR_BRANCH --directory pulled-workspace
 ```
 
-Validate with `xano_validate_xanoscript` before pushing. Pull back and verify server canonicals, channel settings, message parent references, and trigger inputs. Use a current CLI release with Realtime V2 support. V2 objects pull under `realtime_server/`, `channel/`, `message/`, and `channel_trigger/`. Keep explicit parent clauses: folder names do not replace them.
+Validate with `xano_validate_xanoscript` before pushing. Pull back and verify server canonicals, channel settings, message parent references, and trigger inputs. Use a current CLI release with Realtime V2 support. The CLI pulls V2 objects under `realtime/server/<server>/`: the server's own file, `trigger/` for its triggers, and `channel/<channel>/` holding the channel file, `message/` and `trigger/`. Push reads the documents, not the folders, so a hand-made layout such as this example's flat `realtime_server/`, `channel/` and `message/` folders also works. Keep explicit parent clauses: folder names do not replace them.
 
 If working from the source repository, run `node examples/realtime-v2/verify.mjs` with the frontend config pointed at your deployed examples. Set `XANO_TEST_USER_TOKEN` to an application user JWT to include the authenticated positive test. The script reports that test as skipped if the token is absent.
 

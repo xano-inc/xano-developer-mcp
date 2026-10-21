@@ -129,7 +129,7 @@ tool lookup_order {
 
 ### `title`
 
-A human readable name, e.g. `"Look up an order"`. The tool name stays the identifier.
+A human readable name, e.g. `"Look up an order"`. The tool name stays the identifier. A pull writes a title containing `"` as `'...'` and one containing a newline as a `"""` block; both are valid, as on prompts and resources.
 
 ### `annotations`
 

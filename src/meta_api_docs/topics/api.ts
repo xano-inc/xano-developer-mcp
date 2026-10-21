@@ -21,7 +21,7 @@ export const apiDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/apigroup/{apigroup_id}/api",
-      tool_name: "listApis",
+      tool_name: "listAPIs",
       description: "List all API endpoints in an API group.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -37,7 +37,7 @@ export const apiDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/apigroup/{apigroup_id}/api/{api_id}",
-      tool_name: "getApi",
+      tool_name: "getAPI",
       description: "Get details of a specific API endpoint.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -50,7 +50,7 @@ export const apiDoc: TopicDoc = {
     {
       method: "POST",
       path: "/workspace/{workspace_id}/apigroup/{apigroup_id}/api",
-      tool_name: "createApi",
+      tool_name: "createAPI",
       description: "Create a new API endpoint with XanoScript logic.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -80,7 +80,7 @@ export const apiDoc: TopicDoc = {
     {
       method: "PUT",
       path: "/workspace/{workspace_id}/apigroup/{apigroup_id}/api/{api_id}",
-      tool_name: "updateApi",
+      tool_name: "updateAPI",
       description: "Update an existing API endpoint.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -102,7 +102,7 @@ export const apiDoc: TopicDoc = {
     {
       method: "DELETE",
       path: "/workspace/{workspace_id}/apigroup/{apigroup_id}/api/{api_id}",
-      tool_name: "deleteApi",
+      tool_name: "deleteAPI",
       description: "Delete an API endpoint.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -113,7 +113,7 @@ export const apiDoc: TopicDoc = {
     {
       method: "PUT",
       path: "/workspace/{workspace_id}/apigroup/{apigroup_id}/api/{api_id}/security",
-      tool_name: "updateApiSecurity",
+      tool_name: "updateAPISecurity",
       description: "Update security settings for a specific endpoint (overrides group settings).",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },

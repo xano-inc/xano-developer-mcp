@@ -1,5 +1,5 @@
 ---
-applyTo: "ai/resource/*.xs"
+applyTo: "ai/resource/*.xs, resource/**/*.xs"
 ---
 
 # Resources
@@ -95,6 +95,8 @@ Reading `orders://eu/42` binds `region = "eu"` and `order_id = 42`, converted to
 | `middleware`, `history`, `tags`, `docs`, `guid` | As on a tool | No |
 
 The declaration name (`resource regional_order`) is the resource's name. It is never its uri.
+
+Without its own `middleware` block, a resource reached through an MCP server uses that server's middleware, as a tool does. Past the server it uses the branch's `resource` middleware (see `branch`). Without its own `history` setting, it follows the server's history override, then the branch's `resource` history setting.
 
 ---
 

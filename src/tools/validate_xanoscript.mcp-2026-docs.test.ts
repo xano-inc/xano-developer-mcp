@@ -80,7 +80,7 @@ ${body}
 
 describe("MCP 2026-07-28 topic wiring", () => {
   it("auto-selects prompts and resources docs for their file paths", () => {
-    for (const [path, topic] of [["ai/prompt/x.xs", "prompts"], ["ai/resource/x.xs", "resources"]]) {
+    for (const [path, topic] of [["ai/prompt/x.xs", "prompts"], ["ai/resource/x.xs", "resources"], ["prompt/x.xs", "prompts"], ["resource/x.xs", "resources"]]) {
       const docs = getDocsForFilePath(path);
       expect(docs).toContain(topic);
       expect(docs).toContain("types");

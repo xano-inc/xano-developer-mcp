@@ -71,7 +71,7 @@
     "types": {
       "file": "types.md",
       "description": "Data types, input blocks, and validation",
-      "applyTo": ["function/**/*.xs", "api/**/*.xs", "ai/tool/*.xs", "ai/agent/*.xs", "ai/prompt/*.xs", "ai/resource/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "ai/tool/*.xs", "ai/agent/*.xs", "ai/prompt/*.xs", "ai/resource/*.xs", "prompt/**/*.xs", "resource/**/*.xs"],
       "priority": 5,
       "aliases": ["validation", "input", "data-types"]
     },
@@ -105,7 +105,7 @@
     },
     "triggers": {
       "file": "triggers.md",
-      "description": "Event-driven handlers (table, realtime, workspace, agent, MCP)",
+      "description": "Event-driven handlers (table, realtime, workspace, agent, MCP, error)",
       "applyTo": ["*/trigger/*.xs", "ai/*/trigger/*.xs", "realtime/trigger/*.xs"],
       "priority": 3,
       "aliases": ["events", "hooks", "handlers"]
@@ -113,7 +113,7 @@
     "database": {
       "file": "database.md",
       "description": "All db.* operations: query, get, add, edit, patch, increment, delete",
-      "applyTo": ["function/**/*.xs", "api/**/*.xs", "task/*.xs", "ai/tool/*.xs", "ai/prompt/*.xs", "ai/resource/*.xs"],
+      "applyTo": ["function/**/*.xs", "api/**/*.xs", "task/*.xs", "ai/tool/*.xs", "ai/prompt/*.xs", "ai/resource/*.xs", "prompt/**/*.xs", "resource/**/*.xs"],
       "priority": 5,
       "aliases": ["db", "crud", "query", "sql"]
     },
@@ -141,14 +141,14 @@
     "prompts": {
       "file": "prompts.md",
       "description": "MCP prompts: reusable prompt templates an MCP server offers, with arguments and completions",
-      "applyTo": ["ai/prompt/*.xs"],
+      "applyTo": ["ai/prompt/*.xs", "prompt/**/*.xs"],
       "priority": 3,
       "aliases": ["prompt", "mcp-prompts"]
     },
     "resources": {
       "file": "resources.md",
       "description": "MCP resources: static and URI-template resources an MCP server shares as context",
-      "applyTo": ["ai/resource/*.xs"],
+      "applyTo": ["ai/resource/*.xs", "resource/**/*.xs"],
       "priority": 3,
       "aliases": ["resource", "mcp-resources", "resource-templates"]
     },
@@ -258,7 +258,10 @@
         "channel/**/*.xs",
         "message/**/*.xs",
         "channel_trigger/**/*.xs",
-        "realtime_server_trigger/**/*.xs"
+        "realtime_server_trigger/**/*.xs",
+        "realtime/server/**/*.xs",
+        "realtime/channel_trigger/*.xs",
+        "realtime/server_trigger/*.xs"
       ],
       "priority": 3,
       "aliases": [
@@ -390,6 +393,7 @@
     "workspace_trigger": { "file": "triggers.md", "section": "workspace-trigger" },
     "agent_trigger": { "file": "triggers.md", "section": "agent-trigger" },
     "mcp_server_trigger": { "file": "triggers.md", "section": "mcp-server-trigger" },
+    "error_trigger": { "file": "triggers.md", "section": "error-trigger" },
     "addon": { "file": "addons.md" },
     "middleware": { "file": "middleware.md" },
     "realtime_channel": { "file": "realtime.md" },

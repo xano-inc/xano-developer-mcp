@@ -1,5 +1,5 @@
 ---
-applyTo: "ai/prompt/*.xs"
+applyTo: "ai/prompt/*.xs, prompt/**/*.xs"
 ---
 
 # Prompts
@@ -80,6 +80,8 @@ prompt code_review {
 
 An input field that is required and has no default becomes a required prompt argument. A client that omits one gets an error before the stack runs.
 
+Without its own `middleware` block, a prompt reached through an MCP server uses that server's middleware, as a tool does. Past the server it uses the branch's `prompt` middleware (see `branch`). Without its own `history` setting, it follows the server's history override, then the branch's `prompt` history setting.
+
 ---
 
 ## What `response` May Return
@@ -137,7 +139,7 @@ mcp_server "Engineering" {
 
 | Entry field | Purpose | Default |
 |-------------|---------|---------|
-| `name` | Prompt file name in `ai/prompt/` | (required) |
+| `name` | The prompt's declaration name (`prompt code_review`) | (required) |
 | `active` | Whether this server offers the prompt | `true` |
 | `auth` | Name of an auth-enabled table whose token is required to fetch it | omitted = public |
 

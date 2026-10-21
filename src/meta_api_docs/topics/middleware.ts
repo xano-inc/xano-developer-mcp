@@ -30,7 +30,7 @@ export const middlewareDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/middleware",
-      tool_name: "listMiddlewares",
+      tool_name: "listmiddlewares",
       description: "List all middleware in a workspace.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },

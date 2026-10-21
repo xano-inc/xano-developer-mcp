@@ -20,12 +20,17 @@ XanoScript is the declarative scripting language for [Xano](https://xano.com), a
 | `agent_trigger`     | `ai/agent/trigger/{name}.xs`           | Agent event handlers          |
 | `tool`              | `ai/tool/{name}.xs`                    | Tools for AI agents           |
 | `mcp_server`        | `ai/mcp_server/{name}.xs`             | MCP server definitions        |
-| `prompt`            | `ai/prompt/{name}.xs`                  | MCP prompts                   |
-| `resource`          | `ai/resource/{name}.xs`                | MCP resources                 |
+| `prompt`            | `prompt/{name}.xs`                     | MCP prompts                   |
+| `resource`          | `resource/{name}.xs`                   | MCP resources                 |
 | `mcp_server_trigger`| `ai/mcp_server/trigger/{name}.xs`     | MCP server event handlers     |
 | `workflow_test`     | `workflow_test/{name}.xs`              | End-to-end workflow tests     |
-| `realtime_channel`  | `realtime/channel/{name}.xs`           | Realtime channel settings     |
-| `realtime_trigger`  | `realtime/trigger/{name}.xs`           | Realtime event handlers       |
+| `realtime_server`   | `realtime/server/{server}/{server}.xs` | Realtime V2 server            |
+| `realtime_server_trigger` | `realtime/server/{server}/trigger/{name}.xs` | Realtime V2 connect/disconnect handlers |
+| `channel`           | `realtime/server/{server}/channel/{channel}/{channel}.xs` | Realtime V2 channel |
+| `message`           | `realtime/server/{server}/channel/{channel}/message/{name}.xs` | Realtime V2 message handlers |
+| `channel_trigger`   | `realtime/server/{server}/channel/{channel}/trigger/{name}.xs` | Realtime V2 join/leave/deliver handlers |
+| `realtime_channel`  | `realtime/channel/{name}.xs`           | Legacy V1 realtime channel settings |
+| `realtime_trigger`  | `realtime/trigger/{name}.xs`           | Legacy V1 realtime event handlers |
 | `branch`            | `branch.xs`                            | Branch-level configuration    |
 
 **Naming convention:** All folder and file names use `snake_case` (e.g., `user_profile.xs`, `get_all_users_get.xs`).
@@ -72,6 +77,10 @@ project/
 │       ├── my_server.xs             # MCP server definitions
 │       └── trigger/
 │           └── on_connect.xs        # MCP server triggers
+├── prompt/
+│   └── code_review.xs               # MCP prompts
+├── resource/
+│   └── order_docs.xs                # MCP resources
 ├── workflow_test/
 │   └── checkout_flow.xs             # End-to-end workflow tests
 ├── middleware/
@@ -79,10 +88,18 @@ project/
 ├── addon/
 │   └── user_posts.xs                # Query addons
 ├── realtime/
+│   ├── server/
+│   │   └── chat/
+│   │       ├── chat.xs              # Realtime V2 server
+│   │       └── channel/
+│   │           └── rooms_room_id/   # Channel "rooms/{room_id}"
+│   │               ├── rooms_room_id.xs
+│   │               └── message/
+│   │                   └── send.xs  # Realtime V2 messages
 │   ├── channel/
-│   │   └── chat_room.xs             # Realtime channels
+│   │   └── chat_room.xs             # Legacy V1 realtime channels
 │   └── trigger/
-│       └── on_message.xs            # Realtime triggers
+│       └── on_message.xs            # Legacy V1 realtime triggers
 ├── static/                          # Frontend files (HTML, CSS, JS)
 └── run/                             # Job and service configurations
 ```
@@ -268,7 +285,7 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 | ------------ | ---------------------------------------------------------------------- | ------------ |
 | `workspace`  | Workspace-level settings: environment variables, preferences, realtime | Env Variables, Preferences |
 | `branch`     | Branch-level settings: middleware, history retention, visual styling   | Middleware Config, History |
-| `middleware` | Request/response interceptors for functions, queries, tasks, and tools | Pre/Post Hooks |
+| `middleware` | Request/response interceptors for functions, queries, tasks, tools, realtime messages, and MCP prompts and resources | Pre/Post Hooks |
 | `policies`   | Workspace policy documents: syntax, check catalogue, templates, authoring rules | Quick Reference, Permissions |
 | `policy-templates` | The platform's policy templates: key, title, checks, framework tags and what each leaves to fill, with an example; recipes for goals that take several; what no check can see | Using a template, Recipes, What no check can see |
 

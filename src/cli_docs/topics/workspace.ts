@@ -58,11 +58,27 @@ After \`workspace pull\`, files are organized using snake_case naming:
 │   │       └── on_connect.xs     # MCP server triggers
 │   └── tool/
 │       └── my_tool.xs            # AI tools
+├── prompt/
+│   └── code_review.xs            # MCP prompts
+├── resource/
+│   └── order_docs.xs             # MCP resources
 ├── realtime/
+│   ├── server/
+│   │   └── chat/                 # Realtime V2 server folder
+│   │       ├── chat.xs           # Realtime V2 server
+│   │       ├── trigger/
+│   │       │   └── on_connect.xs # Server connect/disconnect triggers
+│   │       └── channel/
+│   │           └── rooms_room_id/
+│   │               ├── rooms_room_id.xs  # Channel "rooms/{room_id}"
+│   │               ├── message/
+│   │               │   └── send.xs       # Channel messages
+│   │               └── trigger/
+│   │                   └── on_join.xs    # Channel join/leave/deliver triggers
 │   ├── channel/
-│   │   └── my_channel.xs         # Realtime channels
+│   │   └── my_channel.xs         # Legacy V1 realtime channels
 │   └── trigger/
-│       └── on_connect.xs         # Realtime triggers
+│       └── on_connect.xs         # Legacy V1 realtime triggers
 └── knowledge/                    # Knowledge & skills (markdown, synced automatically)
     ├── agents.md                 # Workspace AGENTS.md
     ├── docs/

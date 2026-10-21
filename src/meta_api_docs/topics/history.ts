@@ -11,6 +11,8 @@ export const historyDoc: TopicDoc = {
 - **Task History**: Scheduled task execution logs
 - **Middleware History**: Middleware execution logs
 - **Tool History**: Agent tool execution logs
+- **Prompt History**: MCP prompt request logs
+- **Resource History**: MCP resource request logs
 - **Trigger History**: Event trigger execution logs
 
 ## Common Use Cases
@@ -31,7 +33,7 @@ export const historyDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/request_history",
-      tool_name: "getRequestHistory",
+      tool_name: "getApiRequestHistory",
       description: "Get API request history with pagination.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -45,7 +47,7 @@ export const historyDoc: TopicDoc = {
     {
       method: "POST",
       path: "/workspace/{workspace_id}/request_history/search",
-      tool_name: "searchRequestHistory",
+      tool_name: "searchApiRequestHistory",
       description: "Search request history with advanced filters.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
@@ -66,7 +68,7 @@ export const historyDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/function_history",
-      tool_name: "getFunctionHistory",
+      tool_name: "getFunctionRequestHistory",
       description: "Get function execution history.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -78,7 +80,7 @@ export const historyDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/task_history",
-      tool_name: "getTaskHistory",
+      tool_name: "getTaskRequestHistory",
       description: "Get scheduled task execution history.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -90,7 +92,7 @@ export const historyDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/middleware_history",
-      tool_name: "getMiddlewareHistory",
+      tool_name: "getMiddlewareRequestHistory",
       description: "Get middleware execution history.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -102,7 +104,7 @@ export const historyDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/tool_history",
-      tool_name: "getToolHistory",
+      tool_name: "getToolRequestHistory",
       description: "Get agent tool execution history.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -113,8 +115,36 @@ export const historyDoc: TopicDoc = {
     },
     {
       method: "GET",
+      path: "/workspace/{workspace_id}/prompt_history",
+      tool_name: "getPromptRequestHistory",
+      description: "Get MCP prompt request history, newest first.",
+      parameters: [
+        { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
+        { name: "prompt_id", type: "integer", description: "Filter by MCP prompt ID" },
+        { name: "branch", type: "string", description: "Filter by branch name" },
+        { name: "page", type: "integer", default: 1, description: "Page number" },
+        { name: "per_page", type: "integer", default: 50, description: "Items per page (max 500)" },
+        { name: "include_output", type: "boolean", default: false, description: "Include each request's output" }
+      ]
+    },
+    {
+      method: "GET",
+      path: "/workspace/{workspace_id}/resource_history",
+      tool_name: "getResourceRequestHistory",
+      description: "Get MCP resource request history, newest first.",
+      parameters: [
+        { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
+        { name: "resource_id", type: "integer", description: "Filter by MCP resource ID" },
+        { name: "branch", type: "string", description: "Filter by branch name" },
+        { name: "page", type: "integer", default: 1, description: "Page number" },
+        { name: "per_page", type: "integer", default: 50, description: "Items per page (max 500)" },
+        { name: "include_output", type: "boolean", default: false, description: "Include each request's output" }
+      ]
+    },
+    {
+      method: "GET",
       path: "/workspace/{workspace_id}/trigger_history",
-      tool_name: "getTriggerHistory",
+      tool_name: "getTriggerRequestHistory",
       description: "Get trigger execution history.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -153,5 +183,5 @@ export const historyDoc: TopicDoc = {
     }
   },
 
-  related_topics: ["api", "function", "task"]
+  related_topics: ["api", "function", "task", "prompt", "resource"]
 };

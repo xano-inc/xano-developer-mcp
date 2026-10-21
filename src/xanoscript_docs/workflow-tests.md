@@ -39,6 +39,7 @@ Call functions invoke Xano constructs and capture their results. Each returns a 
 | `task.call`       | Call a task                    | —                                    |
 | `tool.call`       | Call a tool                    | —                                    |
 | `trigger.call`    | Call a trigger                 | `input` with `new`, `old`, `action`, `datasource` |
+| `workflow_test.call` | Run another workflow test   | optional `datasource`                |
 
 ### api.call
 
@@ -92,6 +93,20 @@ trigger.call "<trigger_name>" {
   input = {new: {}, old: {}, action: "", datasource: ""}
 } as $result
 ```
+
+### workflow_test.call
+
+Runs another workflow test as a step. Valid only inside a `workflow_test`.
+
+```xs
+workflow_test.call "<workflow_test_name>" {
+  datasource = "staging"
+} as $result
+```
+
+- The call binds the target's outcome instead of raising it: `null` when the target passes, `{code, message}` when it fails. Assert on the binding, or wrap the call in `expect.to_throw` to require a failure.
+- `datasource` is optional; a pull writes it only when set. The common statement attributes `description`, `disabled` and `mock` are also accepted.
+- A test cannot call itself or a test already running earlier in the chain (the call fails with `already running earlier in this chain`), and the call is refused inside a `db.transaction`.
 
 ---
 
@@ -248,6 +263,9 @@ workflow_test "comprehensive_test" {
     trigger.call "my_trigger" {
       input = {new: {}, old: {}, action: "", datasource: ""}
     } as $trigger1
+
+    workflow_test.call "my_other_test" as $chained1
+    expect.to_be_null ($chained1)
 
     // No-property assertions
     expect.to_be_defined ($endpoint1)

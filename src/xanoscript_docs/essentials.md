@@ -332,6 +332,48 @@ conditional {
 
 ---
 
+## Syntax a Pull Writes
+
+### Disabled Statements
+
+A leading `!` disables a statement, an `elseif` branch or a switch `case`: it stays in the stack but never runs. A pull writes disabled ones this way.
+
+```xs
+!debug.log { value = "skipped" }
+
+switch ($input.status) {
+  case ("active") {
+    var $message { value = "User is active" }
+  } break
+  !case ("legacy") {
+    var $message { value = "Legacy status" }
+  } break
+  default {
+    var $message { value = "Unknown status" }
+  }
+}
+```
+
+### Quoting Text
+
+`'...'` strings are valid, including for `description`, `docs`, `instructions`, `title`, `tags` and enum `values`; a pull writes a value that contains `"` that way. `"""` blocks hold multiline text.
+
+```xs
+function "greet" {
+  description = 'Says "hello" to the caller'
+  input {
+  }
+
+  stack {
+  }
+
+  response = null
+  tags = ['greeting', 'say "hi"']
+}
+```
+
+---
+
 ## Common Patterns
 
 ### 1. Input Validation

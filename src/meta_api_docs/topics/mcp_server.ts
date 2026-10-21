@@ -32,7 +32,7 @@ export const mcpServerDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/mcp_server",
-      tool_name: "listMcpServers",
+      tool_name: "listMCPServers",
       description: "List all MCP servers in a workspace.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -45,7 +45,7 @@ export const mcpServerDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/mcp_server/{mcp_server_id}",
-      tool_name: "getMcpServer",
+      tool_name: "getMCPServer",
       description: "Get details of a specific MCP server.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -56,7 +56,7 @@ export const mcpServerDoc: TopicDoc = {
     {
       method: "POST",
       path: "/workspace/{workspace_id}/mcp_server",
-      tool_name: "createMcpServer",
+      tool_name: "createMCPServer",
       description: "Create a new MCP server to expose tools.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
@@ -88,7 +88,7 @@ export const mcpServerDoc: TopicDoc = {
     {
       method: "PUT",
       path: "/workspace/{workspace_id}/mcp_server/{mcp_server_id}",
-      tool_name: "updateMcpServer",
+      tool_name: "updateMCPServer",
       description: "Update an existing MCP server.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -106,7 +106,7 @@ export const mcpServerDoc: TopicDoc = {
     {
       method: "DELETE",
       path: "/workspace/{workspace_id}/mcp_server/{mcp_server_id}",
-      tool_name: "deleteMcpServer",
+      tool_name: "deleteMCPServer",
       description: "Delete an MCP server.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -116,7 +116,7 @@ export const mcpServerDoc: TopicDoc = {
     {
       method: "GET",
       path: "/mcp_server/documentation",
-      tool_name: "getMcpDocumentation",
+      tool_name: "documentation",
       description: "Get MCP documentation for setup and syntax reference.",
       parameters: [
         { name: "type", type: "string", enum: ["start", "api", "function", "task", "mcp", "agent", "tool", "fs-syntax", "table", "database"], description: "Documentation type to retrieve" }
