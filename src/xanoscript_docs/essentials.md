@@ -99,6 +99,26 @@ switch ($input.status) {
 
 > **Note:** `break` goes **after** the closing `}` of each `case` block. The `default` case does not need `break`.
 
+### Disabled Statements
+
+A leading `!` disables a statement, an `elseif` branch or a switch `case`: it stays in the stack but never runs. A pull writes disabled ones this way.
+
+```xs
+!debug.log { value = "skipped" }
+
+switch ($input.status) {
+  case ("active") {
+    var $message { value = "User is active" }
+  } break
+  !case ("legacy") {
+    var $message { value = "Legacy status" }
+  } break
+  default {
+    var $message { value = "Unknown status" }
+  }
+}
+```
+
 ### Loops
 
 ```xs
