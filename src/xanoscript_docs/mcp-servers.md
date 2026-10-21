@@ -150,7 +150,7 @@ the server is exported.
 
 ## Prompts and Resources Blocks
 
-First-class prompts (`ai/prompt/`) and resources (`ai/resource/`) are attached the same way as tools. These blocks exist on `mcp_server` only; an `agent` cannot have them.
+First-class prompts (pulled to `prompt/`) and resources (pulled to `resource/`) are attached the same way as tools. These blocks exist on `mcp_server` only; an `agent` cannot have them.
 
 ```xs
 mcp_server "Orders" {
@@ -164,7 +164,7 @@ mcp_server "Orders" {
 }
 ```
 
-Each entry takes `name` (required, the file name), `active` (default `true`) and `auth` (an auth-enabled table name; omitted = public). A client only sees, fetches and completes the prompts and resources attached to the server it connected to.
+Each entry takes `name` (required, the prompt or resource declaration name), `active` (default `true`) and `auth` (an auth-enabled table name; omitted = public). A client only sees, fetches and completes the prompts and resources attached to the server it connected to.
 
 ---
 

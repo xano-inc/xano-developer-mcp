@@ -139,7 +139,7 @@ mcp_server "Engineering" {
 
 | Entry field | Purpose | Default |
 |-------------|---------|---------|
-| `name` | Prompt file name in `ai/prompt/` | (required) |
+| `name` | The prompt's declaration name (`prompt code_review`) | (required) |
 | `active` | Whether this server offers the prompt | `true` |
 | `auth` | Name of an auth-enabled table whose token is required to fetch it | omitted = public |
 
