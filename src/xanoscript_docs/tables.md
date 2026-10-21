@@ -113,6 +113,20 @@ schema {
 }
 ```
 
+### Quoted Names
+
+A column name that is not an identifier is written quoted, as a pull writes it:
+
+```xs
+schema {
+  int id
+  text "my-col"
+  timestamp "created-at"?=now
+}
+```
+
+Prefer identifier names (`created_at`) for new columns.
+
 ### Foreign Keys
 
 ```xs
@@ -240,6 +254,50 @@ index = [
 ```
 
 Required for vector similarity searches via `cosine_distance` in `db.query`. PostgreSQL vector indexes only support ascending scans, so queries must sort by distance `asc` to use the index. Sorting `desc` will bypass the index and trigger a full table scan. See [database.md](database.md) for query usage.
+
+---
+
+## Views
+
+Saved views of the table's data in Studio. Each key is the view name; each view needs an `id` and at least one of `term`, `search`, `sort` or `hide`. A pull writes `alias`, `term`, `search`, `sort` and `hide` only when the view has them.
+
+```xs
+table "customer" {
+  auth = false
+  schema {
+    int id
+    text name
+    email email
+    text notes?
+  }
+
+  index = [
+    {type: "primary", field: [{name: "id"}]}
+  ]
+
+  view = {
+    "Gmail customers": {
+      term: "gmail"
+      sort: {id: "desc"}
+      id: "9ed7daad-682f-455e-bf02-ca53444cd429"
+    }
+    "Without notes": {
+      alias: "Contact columns"
+      hide: ["notes"]
+      id: "4c1f6e0a-2b7d-4f39-9a51-3e8d2c7b6a10"
+    }
+  }
+}
+```
+
+| Key | Description |
+|-----|-------------|
+| `id` | View id (required) |
+| `alias` | Display name |
+| `term` | Quick-search text |
+| `search` | Filter expression |
+| `sort` | `{field: "asc" \| "desc" \| "rand"}` |
+| `hide` | Columns hidden in the view |
 
 ---
 

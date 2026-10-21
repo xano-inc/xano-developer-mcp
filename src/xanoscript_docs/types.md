@@ -100,6 +100,19 @@ input { email email_input? filters=trim|lower text name }
 
 Access inputs in stack: `$input.username`, `$input.age`
 
+### Quoted Names
+
+A name that is not an identifier is written quoted, as a pull writes it. Read it with brackets:
+
+```xs
+input {
+  text "my-col"
+  timestamp "created-at"?=now
+}
+```
+
+Access: `$input["my-col"]`, `$input["created-at"]`. Prefer identifier names for new inputs.
+
 ---
 
 ## Type Details
