@@ -105,7 +105,7 @@
     },
     "triggers": {
       "file": "triggers.md",
-      "description": "Event-driven handlers (table, realtime, workspace, agent, MCP)",
+      "description": "Event-driven handlers (table, realtime, workspace, agent, MCP, error)",
       "applyTo": ["*/trigger/*.xs", "ai/*/trigger/*.xs", "realtime/trigger/*.xs"],
       "priority": 3,
       "aliases": ["events", "hooks", "handlers"]
@@ -393,6 +393,7 @@
     "workspace_trigger": { "file": "triggers.md", "section": "workspace-trigger" },
     "agent_trigger": { "file": "triggers.md", "section": "agent-trigger" },
     "mcp_server_trigger": { "file": "triggers.md", "section": "mcp-server-trigger" },
+    "error_trigger": { "file": "triggers.md", "section": "error-trigger" },
     "addon": { "file": "addons.md" },
     "middleware": { "file": "middleware.md" },
     "realtime_channel": { "file": "realtime.md" },

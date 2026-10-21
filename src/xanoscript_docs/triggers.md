@@ -4,9 +4,9 @@ applyTo: "*/trigger/*.xs, ai/*/trigger/*.xs, realtime/trigger/*.xs"
 
 # Triggers
 
-Event-driven handlers that execute in response to system events. Triggers allow you to react to database changes, real-time messages, workspace events, agent connections, and MCP server tool calls.
+Event-driven handlers that execute in response to system events. Triggers allow you to react to database changes, real-time messages, workspace events, agent connections, MCP server tool calls, and captured errors.
 
-> **TL;DR:** Triggers respond to events. Types: `table_trigger` (CRUD events), `realtime_trigger` (channel events), `workspace_trigger` (branch events), `agent_trigger` (AI events), `mcp_server_trigger` (MCP events). Each has predefined input blocks.
+> **TL;DR:** Triggers respond to events. Types: `table_trigger` (CRUD events), `realtime_trigger` (channel events), `workspace_trigger` (branch events), `agent_trigger` (AI events), `mcp_server_trigger` (MCP events), `error_trigger` (error signature events). Each has predefined input blocks.
 
 ## Section Index
 
@@ -19,6 +19,7 @@ Event-driven handlers that execute in response to system events. Triggers allow 
 | [Workspace Trigger](#workspace-trigger) | Branch lifecycle event handlers |
 | [Agent Trigger](#agent-trigger) | AI agent event handlers |
 | [MCP Server Trigger](#mcp-server-trigger) | MCP tool call handlers |
+| [Error Trigger](#error-trigger) | Captured error event handlers |
 | [Common Patterns](#common-patterns) | Error handling, conditional logic |
 | [Best Practices](#best-practices) | Guidelines for trigger development |
 
@@ -31,6 +32,7 @@ Event-driven handlers that execute in response to system events. Triggers allow 
 | `workspace_trigger` | React to branch lifecycle events | `input`, `stack` |
 | `agent_trigger` | Handle AI agent connections | `agent`, `input`, `stack`, `response` |
 | `mcp_server_trigger` | Handle MCP server tool calls | `mcp_server`, `input`, `stack`, `response` |
+| `error_trigger` | React to new, regressed and fixed errors | `input`, `stack` |
 
 ---
 
@@ -555,7 +557,9 @@ mcp_server_trigger "<name>" {
 
 | Action | Description |
 |--------|-------------|
-| `connection` | Trigger on MCP connection events (required) |
+| `connection` | Trigger on MCP connection events |
+
+A pull writes only the actions that are on, so a trigger with connection off is written `actions = {}`.
 
 ### Example
 
@@ -586,6 +590,130 @@ mcp_server_trigger "database_tool_handler" {
   history = false
 }
 ```
+
+---
+
+## Error Trigger
+
+Runs when the workspace's error log records an error signature event. `active = false` pauses it; a pull writes `active` only when the trigger is paused.
+
+### Syntax
+
+```xs
+error_trigger "<name>" {
+  description = "Description of this trigger"
+  active = false
+
+  // Uses the predefined error trigger input - see the Example
+  input { ... }
+
+  stack {
+    // Logic to execute when triggered
+  }
+
+  tags = ["tag1", "tag2"]
+  history = false
+}
+```
+
+### Required Clauses
+
+| Clause | Description |
+|--------|-------------|
+| `input` | Predefined input block (read-only) |
+| `stack` | Logic to execute when triggered |
+
+### Optional Clauses
+
+| Clause | Type | Description |
+|--------|------|-------------|
+| `active` | boolean | `false` pauses the trigger (default `true`) |
+| `description` | string | Short description |
+| `history` | integer/string/boolean | History retention setting |
+| `tags` | array | Tags for organization |
+
+### Events
+
+| `$input.event` | Fires when |
+|----------------|------------|
+| `new` | A signature is first captured, and again on each snapshot re-capture (about every 5 minutes) unless the signature is ignored |
+| `regression` | A signature marked fixed occurs again |
+| `fixed` | A user marks a signature fixed (`caller` and `statement` are null; `actor` is set) |
+
+### Example
+
+The input block below is the one a pull writes, with descriptions omitted.
+
+```xs
+error_trigger "notify_on_error" {
+  description = "Post new and regressed errors to the team channel"
+
+  input {
+    enum event {
+      values = ["new", "regression", "fixed"]
+    }
+
+    int id
+    text signature
+    object error {
+      schema {
+        text code
+        text message
+      }
+    }
+
+    object? caller {
+      schema {
+        text type
+        int id
+        text? name
+      }
+    }
+
+    object? statement {
+      schema {
+        text name
+        text xsid
+      }
+    }
+
+    object? actor {
+      schema {
+        int id
+        text? name
+      }
+    }
+
+    object count {
+      schema {
+        int total
+        int last_hour
+      }
+    }
+
+    text first_seen
+    text last_seen
+    text? fixed_at
+  }
+
+  stack {
+    conditional {
+      if ($input.event != "fixed") {
+        api.request {
+          url = $env.SLACK_WEBHOOK_URL
+          method = "POST"
+          params = {text: $input.event ~ ": " ~ $input.error.message ~ " (" ~ $input.count.total ~ " total)"}
+        } as $notify
+      }
+    }
+  }
+
+  tags = ["alerts"]
+  history = false
+}
+```
+
+`caller.type` is `api`, `function`, `task`, `middleware`, `trigger` or `unknown`. `id` is the error signature's id, `first_seen`, `last_seen` and `fixed_at` are ISO-8601 UTC timestamps.
 
 ---
 
