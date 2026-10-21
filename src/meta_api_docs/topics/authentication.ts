@@ -45,7 +45,7 @@ Returns: id, name, email, and extras (including role and workspace access).`,
     {
       method: "GET",
       path: "/auth/me",
-      tool_name: "getAuthMe",
+      tool_name: "getLoggedInUser",
       description: "Get the authenticated user's information including ID, name, email, and role.",
       response: {
         type: "object",

@@ -130,7 +130,7 @@ export const workspaceDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/openapi",
-      tool_name: "getWorkspaceOpenAPI",
+      tool_name: "getWorkspaceOpenApi",
       description: "Get OpenAPI v3 specification for all APIs in the workspace.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }

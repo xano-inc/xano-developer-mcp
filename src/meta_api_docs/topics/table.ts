@@ -30,7 +30,7 @@ export const tableDoc: TopicDoc = {
     {
       method: "GET",
       path: "/workspace/{workspace_id}/table",
-      tool_name: "listTables",
+      tool_name: "getTables",
       description: "List all database tables in a workspace.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" },
@@ -57,7 +57,7 @@ export const tableDoc: TopicDoc = {
     {
       method: "POST",
       path: "/workspace/{workspace_id}/table",
-      tool_name: "createTable",
+      tool_name: "addTable",
       description: "Create a new database table with optional schema.",
       parameters: [
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
