@@ -21,7 +21,7 @@ This topic covers uploading files **to Xano's own private/public storage** (the 
 | Viewing a **private** file | `storage.sign_private_url` (pathname + ttl, one arg per line) | reading `.path` directly (returns HTTP 403) |
 | Viewing a **public** file | instance base URL `~ $stored_file.path` (no signing) | `storage.sign_private_url` (works but is unnecessary) |
 | Multiple-file form field | append as `field[]` (e.g. `photos[]`) | append repeatedly as `photos` (only the last file is kept) |
-| Required `storage.*` args | always pass `value`, `access`, **and** `filename` | omitting `access` or `filename` (validation error) |
+| Required `storage.*` args | pass `value` and `access` (`filename` is optional) | omitting `access` on `create_attachment`/`create_image` (validation error) |
 | Frontend `Content-Type` | let the browser set it | manually setting `multipart/form-data` |
 
 ## The Core Rule: `file?`, not `image?`
@@ -53,7 +53,7 @@ file[] my_files
 
 ## Storage Operations
 
-All `storage.create_*` operations require three arguments — `value`, `access`, and `filename` — written one per line (block arguments are newline-separated; commas are only used inside object literals like `data = { ... }`).
+`storage.create_attachment` and `storage.create_image` require `value` and `access`; `filename` is optional on every `storage.create_*` (a pull omits it when unset), and `access` is optional on `create_audio` and `create_video`. Write one argument per line (block arguments are newline-separated; commas are only used inside object literals like `data = { ... }`).
 
 ### `storage.create_attachment` — any file type (recommended default)
 
@@ -383,7 +383,7 @@ storage.create_attachment {
 } as $f
 ```
 
-❌ **Omitting `access` or `filename`** — `storage.create_attachment { value = $input.photo } as $f` fails validation with `Missing required argument 'access'`. Always pass all three.
+❌ **Omitting `access`** — `storage.create_attachment { value = $input.photo } as $f` fails validation with `Missing required argument 'access'`.
 
 ❌ **Comma-separated or commented op args** — `storage.create_attachment { value = ..., filename = ... }` and a comment inside the `{ }` are both parse errors. One argument per line, comments on their own line outside the block.
 
@@ -393,7 +393,7 @@ storage.create_attachment {
 |-------|--------|-------|-----|
 | `Missing param: path` (`ERROR_CODE_INPUT_ERROR`, `payload.param` ends in `.path`) | 400 | Input declared `image?`/`video?`/`audio?`/`attachment?` — Xano doesn't set `.path` on the raw upload object | Change input type to `file?` |
 | `Invalid file extension.` (`ERROR_FATAL`) | 500 | `storage.create_image` with a non-image (PDF, HEIC, …) | Use `storage.create_attachment` |
-| `Missing required argument 'access'` (validation, at push time) | — | A `storage.create_*` call omitted `access` (or `filename`) | Pass `value`, `access`, and `filename` |
+| `Missing required argument 'access'` (validation, at push time) | — | A `storage.create_attachment` or `storage.create_image` call omitted `access` | Pass `value` and `access` |
 | HTTP 403 when fetching a file's `.path` | 403 | The file is `private`; raw paths aren't public | Generate `storage.sign_private_url`, or store the file as `public` |
 | Multiple upload stored only one file | — | Multipart field appended without the `[]` suffix | Append files as `field[]` (e.g. `photos[]`) |
 
