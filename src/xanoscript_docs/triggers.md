@@ -642,11 +642,13 @@ error_trigger "<name>" {
 
 ### Example
 
-The input block below is the one a pull writes, with descriptions omitted.
+A paused trigger; delete `active = false` to turn it on. The input block is the one a pull writes, with descriptions omitted.
 
 ```xs
 error_trigger "notify_on_error" {
   description = "Post new and regressed errors to the team channel"
+
+  active = false
 
   input {
     enum event {
