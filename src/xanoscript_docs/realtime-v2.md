@@ -64,6 +64,8 @@ The declaration names the template `rooms/{room_id}`; a client joins a resolved 
 | `publish.direct` | Whether clients may address other clients directly |
 | `delivery.guarantee` | The example uses `at_most_once`; delivery may be lost |
 
+Optional `description`, `docs` and `tags` document a channel; a pull writes each only when it is set.
+
 A room path separates subscriptions; knowing a path is not authorization. Use access policy and a join trigger for restricted rooms.
 
 ### Message handler

@@ -321,6 +321,24 @@ var $msg { value = "Hello, " ~ $input.name ~ "!" }
 var $msg { value = ($status|to_text) ~ ": " ~ ($data|json_encode) }
 ```
 
+### Quoting Text
+
+`'...'` strings are valid, including for `description`, `docs`, `instructions`, `title`, `tags` and enum `values`; a pull writes a value that contains `"` that way. `"""` blocks hold multiline text.
+
+```xs
+function "greet" {
+  description = 'Says "hello" to the caller'
+  input {
+  }
+
+  stack {
+  }
+
+  response = null
+  tags = ['greeting', 'say "hi"']
+}
+```
+
 ### Authentication Check
 
 ```xs
