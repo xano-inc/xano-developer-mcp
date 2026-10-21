@@ -40,7 +40,7 @@ branch "production" {
 
 ## Middleware Configuration
 
-Configure middleware to run before (pre) and after (post) different construct types.
+Configure middleware to run before (pre) and after (post) different construct types. Each entry is an object naming a middleware: `{name: "auth_check"}`. Add `active: false` to keep an entry in place but skip it. A list of plain strings is not accepted.
 
 ### Syntax
 
@@ -50,20 +50,32 @@ branch "production" {
 
   middleware = {
     function: {
-      pre: ["auth_check", "rate_limit"],
-      post: ["audit_log"]
+      pre: [{name: "auth_check"}, {name: "rate_limit"}],
+      post: [{name: "audit_log"}]
     },
     query: {
-      pre: ["auth_check", "rate_limit"],
-      post: ["audit_log", "cache_response"]
+      pre: [{name: "auth_check"}, {name: "rate_limit"}],
+      post: [{name: "audit_log"}, {name: "cache_response", active: false}]
     },
     task: {
-      pre: ["task_lock"],
-      post: ["task_cleanup"]
+      pre: [{name: "task_lock"}],
+      post: [{name: "task_cleanup"}]
     },
     tool: {
-      pre: ["tool_auth"],
-      post: ["tool_log"]
+      pre: [{name: "tool_auth"}],
+      post: [{name: "tool_log"}]
+    },
+    message: {
+      pre: [{name: "auth_check"}],
+      post: []
+    },
+    prompt: {
+      pre: [{name: "tool_auth"}],
+      post: []
+    },
+    resource: {
+      pre: [{name: "tool_auth"}],
+      post: []
     }
   }
 }
@@ -76,7 +88,12 @@ branch "production" {
 | `function` | Applies to all function calls |
 | `query` | Applies to all API endpoints |
 | `task` | Applies to scheduled tasks |
-| `tool` | Applies to AI agent tools |
+| `tool` | Applies to AI agent and MCP tools |
+| `message` | Applies to realtime messages |
+| `prompt` | Applies to MCP prompts (optional) |
+| `resource` | Applies to MCP resources (optional) |
+
+A pull writes the `prompt` and `resource` lines only when the branch has middleware for them. A missing target means no branch middleware for that type.
 
 ### Pre vs Post Middleware
 
@@ -84,6 +101,17 @@ branch "production" {
 |------|-----------|-----------|
 | `pre` | Before main logic | Authentication, rate limiting, validation |
 | `post` | After main logic | Logging, caching, response transformation |
+
+### Which Middleware Runs
+
+Pre and post are resolved separately. The first level that sets its own list wins, even if that list is empty:
+
+1. The object's own `middleware` block
+2. Its container: the API group for a query; the MCP server a tool, prompt or resource was reached through; the channel, then its realtime server, for a message
+3. The branch's list for that type (`query`, `prompt`, ...)
+4. The workspace's list, only when the object's branch cannot be resolved
+
+Entries with `active: false` are skipped.
 
 ---
 
@@ -103,7 +131,9 @@ branch "production" {
     task: 100,
     tool: 100,
     trigger: 100,
-    middleware: 10
+    middleware: 10,
+    prompt: 100,
+    resource: false
   }
 }
 ```
@@ -113,6 +143,7 @@ branch "production" {
 | Value | Description |
 |-------|-------------|
 | `false` | Disable history (no statements recorded) |
+| `0` | Record no statements (a pull writes `task: 0` when task history is off) |
 | `10` | Record up to 10 statements per trace |
 | `100` | Record up to 100 statements per trace |
 | `1000` | Record up to 1000 statements per trace |
@@ -129,6 +160,10 @@ branch "production" {
 | `tool` | Statement limit for AI tool traces |
 | `trigger` | Statement limit for trigger traces |
 | `middleware` | Statement limit for middleware traces |
+| `prompt` | Statement limit for MCP prompt traces (optional) |
+| `resource` | Statement limit for MCP resource traces (optional) |
+
+`prompt` and `resource` default to `100`. A pull writes them only when they differ from that default. An MCP server whose history settings do not inherit overrides the branch for its tools, prompts and resources.
 
 ---
 
@@ -161,8 +196,8 @@ branch "staging" {
 
   middleware = {
     query: {
-      pre: ["auth_check"],
-      post: ["audit_log"]
+      pre: [{name: "auth_check"}],
+      post: [{name: "audit_log"}]
     }
   }
 
@@ -186,20 +221,20 @@ branch "production" {
 
   middleware = {
     function: {
-      pre: ["auth_check", "rate_limit"],
-      post: ["audit_log"]
+      pre: [{name: "auth_check"}, {name: "rate_limit"}],
+      post: [{name: "audit_log"}]
     },
     query: {
-      pre: ["auth_check", "rate_limit", "security_check"],
-      post: ["audit_log", "cache_response"]
+      pre: [{name: "auth_check"}, {name: "rate_limit"}, {name: "security_check"}],
+      post: [{name: "audit_log"}, {name: "cache_response"}]
     },
     task: {
-      pre: ["task_lock"],
-      post: ["audit_log"]
+      pre: [{name: "task_lock"}],
+      post: [{name: "audit_log"}]
     },
     tool: {
-      pre: ["auth_check"],
-      post: ["audit_log"]
+      pre: [{name: "auth_check"}],
+      post: [{name: "audit_log"}]
     }
   }
 
