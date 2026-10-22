@@ -78,15 +78,12 @@ Add to your Claude Desktop configuration file:
 
 ## Xano Skills
 
-This repo ships three agent skills under `skills/`:
+This repo ships two agent skills under `skills/`:
 
 - **`xano-init`** — guided setup that profiles a Xano workspace and builds a sandbox-first development playbook
 - **`xanoscript-docs-expert`** — deep reference for working with XanoScript documentation and this MCP project's architecture
-- **`xano-policies`** — stub for workspace policies: the authoring rules that never change, plus `xano skills pull` to install the live, catalogue-generated skill from your instance
 
-**Using Claude Code inside this repo?** You already have all three skills. They're committed to `.claude/skills/` and load automatically when Claude Code starts a session in this directory — no install step needed. Just invoke `xano-init`, `xanoscript-docs-expert` or `xano-policies` by name, or describe the task in natural language.
-
-> Only the root `skills/` folder is published (skills.sh indexes it, and `npx skills add` installs from it); `.claude/skills/` is the copy this repo's own Claude Code sessions load. Edit `xano-policies` in both places: a test fails when its two copies differ.
+**Using Claude Code inside this repo?** You already have both skills. They're committed to `.claude/skills/` and load automatically when Claude Code starts a session in this directory — no install step needed. Just invoke `xano-init` or `xanoscript-docs-expert` by name, or describe the task in natural language.
 
 **Using a different agent, or want the skills available in other projects?** Skills are distributed via the open [Agent Skills standard](https://github.com/vercel-labs/skills) and install with a single `npx` command — no cloning or manual file copying.
 
@@ -103,7 +100,7 @@ npx skills add xano-inc/xano-developer-mcp -s xano-init \
   -a claude-code -a codex -a cursor -a opencode -g
 ```
 
-Drop `-s` to install every skill in the repo, or drop `-g` to scope the install to the current project instead of your user profile. Install `xano-policies` per project for Claude Code (`-s xano-policies -a claude-code`, without `-g`): that is the file `xano skills pull` replaces with your instance's live skill. A global or other-agent install of the stub stays in place after a pull, so remove it then. Other supported agents include `gemini-cli`, `windsurf`, `continue`, `cline`, `github-copilot`, and more — see the [skills CLI](https://github.com/vercel-labs/skills) for the full list.
+Drop `-s` to install every skill in the repo, or drop `-g` to scope the install to the current project instead of your user profile. Other supported agents include `gemini-cli`, `windsurf`, `continue`, `cline`, `github-copilot`, and more — see the [skills CLI](https://github.com/vercel-labs/skills) for the full list.
 
 Start a new agent session after installing so the skill manifest is picked up.
 
@@ -328,7 +325,7 @@ import '@xano/developer-mcp/server';
 
 ### 1. `xano_validate_xanoscript`
 
-Validates XanoScript code for syntax errors. Supports multiple input methods. The language server auto-detects the object type from the code syntax, including policy documents (`policies/*.xs`), whose rules are checked against the check catalogue bundled with the language server; a catalogue problem is a warning, since your instance decides on save.
+Validates XanoScript code for syntax errors. Supports multiple input methods. The language server auto-detects the object type from the code syntax.
 
 **Parameters:**
 | Parameter | Type | Required | Description |
@@ -415,8 +412,6 @@ Retrieves XanoScript programming language documentation with context-aware suppo
 | `middleware` | Request/response interceptors for functions, queries, tasks, and tools |
 | `branch` | Branch-level settings: middleware, history retention, visual styling |
 | `workspace` | Workspace-level settings: environment variables, preferences, realtime |
-| `policies` | Workspace policy documents: syntax, the check catalogue, templates and authoring rules |
-| `policy-templates` | The platform's policy templates, recipes for goals that take several, and what no check can see |
 
 **Examples:**
 ```
@@ -498,7 +493,6 @@ Get documentation for Xano's Meta API. Use this to understand how to programmati
 | `realtime` | Real-time channel operations |
 | `file` | File management |
 | `history` | Version history |
-| `policy` | Workspace policies: check catalogue and templates, parse, save, object lookup, evaluate, runs (whole, summary and findings pages), agent skill |
 | `workflows` | Step-by-step workflow guides |
 
 **Examples:**
@@ -546,8 +540,6 @@ Use this tool to understand CLI commands for local development, code synchroniza
 | `tenant` | Tenant management - CRUD, deployments, env vars, backups, clusters |
 | `unit_test` | Unit test management - list and run unit tests |
 | `workflow_test` | Workflow test management - list, run, and manage workflow tests |
-| `policy` | Workspace policies - catalogue, parse, publish, evaluate, status, runs, delete |
-| `skills` | Install the agent skill the instance generates (`skills pull`) |
 | `platform` | Platform management - list and view platform versions |
 | `static_host` | Static hosting - deploy frontend builds |
 | `update` | Update the CLI to the latest version |
@@ -610,8 +602,6 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `xanoscript://docs/middleware` | Request/response interceptors |
 | `xanoscript://docs/branch` | Branch-level settings |
 | `xanoscript://docs/workspace` | Workspace-level settings |
-| `xanoscript://docs/policies` | Workspace policy documents |
-| `xanoscript://docs/policy-templates` | Policy templates and recipes |
 
 ## npm Scripts
 
@@ -623,7 +613,6 @@ The server also exposes XanoScript documentation as MCP resources for direct acc
 | `test` | `vitest run` | Run unit tests |
 | `test:watch` | `vitest` | Run tests in watch mode |
 | `test:coverage` | `vitest run --coverage` | Run tests with coverage report |
-| `gen:policy-docs` | `node scripts/gen-policy-check-docs.mjs` | Regenerate the check catalogue regions of `policies.md`, and `policy-templates.md`, from `scripts/policy-catalogue.json` |
 
 ## Project Structure
 
@@ -741,7 +730,6 @@ Compiles TypeScript to JavaScript in the `dist/` directory.
   - **aliases**: Alternative names for topic lookup
   - **priority**: Ordering weight for file_path matching
   - **exclusive**: The topic alone documents the files its `applyTo` matches, so file_path mode returns only that topic
-- The check catalogue in `policies.md` (the checks and their uses, the scope fields, the statement names and the fix hints) is generated between its `BEGIN GENERATED` and `END GENERATED` markers, and `policy-templates.md` (the templates, the recipes and what no check can see) is generated whole. To refresh them, save the catalogue the platform serves (`xano policy catalogue -o json`, from an instance running the matching platform version) to `scripts/policy-catalogue.json`, then run `npm run gen:policy-docs`; a test fails when the two disagree
 
 **Meta API Documentation** (`src/meta_api_docs/`):
 - TypeScript modules with structured documentation

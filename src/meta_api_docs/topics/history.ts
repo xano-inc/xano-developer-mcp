@@ -6,7 +6,7 @@ export const historyDoc: TopicDoc = {
   description: `History endpoints provide audit logs for API requests and background executions. Use for debugging, monitoring, and compliance.
 
 ## Available History Types
-- **Request History**: All API requests with timing and responses (a Metadata API call that carries policy details is masked for a viewer without workspace:policy read)
+- **Request History**: All API requests with timing and responses
 - **Function History**: Function execution logs
 - **Task History**: Scheduled task execution logs
 - **Middleware History**: Middleware execution logs
@@ -26,7 +26,6 @@ export const historyDoc: TopicDoc = {
 - Filter by status to find errors (4xx, 5xx)
 - Use branch filter to separate dev/prod logs
 - Pass include_output=true for each request's output; the input is always returned
-- For a viewer without workspace:policy read (or while the policies feature is off), a Metadata API call that carries policy details (a policy route, a policy refusal, a push's policy_check, a policy document) shows "Hidden: this call carries policy details, which need workspace:policy read." as its whole input and output; an endpoint's own request history is never masked
 - History is limited to recent requests (not permanent storage)`,
 
   endpoints: [
