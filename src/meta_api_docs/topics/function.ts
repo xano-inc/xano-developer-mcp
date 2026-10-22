@@ -67,35 +67,24 @@ Functions can cache results based on:
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Function name", required: true },
-          description: { type: "string", description: "Function description" },
-          xanoscript: { type: "string", description: "XanoScript function definition", required: true }
-        }
+        type: "text/x-xanoscript",
+        description: "The function as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`. Its name, description, inputs and response come from the script. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request creates the function without its code."
       },
       example: {
         method: "POST",
         path: "/workspace/1/function",
-        body: {
-          name: "calculate_total",
-          description: "Calculate order total with tax",
-          xanoscript: `function calculate_total {
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `function "calculate_total" {
+  description = "Order total for a quantity at a unit price"
   input {
-    decimal subtotal
-    decimal tax_rate = 0.08
+    int quantity filters=min:0
+    decimal price filters=min:0
   }
   stack {
-    var $tax {
-      value = $input.subtotal * $input.tax_rate
-    }
-    var $total {
-      value = $input.subtotal + $tax
-    }
+    var $total { value = $input.quantity * $input.price }
   }
   response = $total
 }`
-        }
       }
     },
     {
@@ -109,12 +98,24 @@ Functions can cache results based on:
         { name: "publish", type: "boolean", default: true, description: "Publish changes immediately (false saves as draft)" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Function name" },
-          description: { type: "string", description: "Function description" },
-          xanoscript: { type: "string", description: "XanoScript function definition" }
-        }
+        type: "text/x-xanoscript",
+        description: "The whole function as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`; it replaces the current definition. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request never changes the function's code."
+      },
+      example: {
+        method: "PUT",
+        path: "/workspace/1/function/12",
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `function "calculate_total" {
+  description = "Order total for a quantity at a unit price"
+  input {
+    int quantity filters=min:0
+    decimal price filters=min:0
+  }
+  stack {
+    var $total { value = $input.quantity * $input.price }
+  }
+  response = $total
+}`
       }
     },
     {

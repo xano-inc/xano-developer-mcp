@@ -60,6 +60,9 @@ function formatEndpoint(ep: EndpointDoc, detailLevel: DetailLevel): string {
   if (ep.request_body) {
     lines.push("");
     lines.push(`**Request Body:** \`${ep.request_body.type}\``);
+    if (ep.request_body.description) {
+      lines.push(ep.request_body.description);
+    }
     if (ep.request_body.properties) {
       for (const [key, val] of Object.entries(ep.request_body.properties)) {
         const req = val.required ? " (required)" : "";
@@ -74,13 +77,24 @@ function formatEndpoint(ep: EndpointDoc, detailLevel: DetailLevel): string {
     lines.push("**Example:**");
     lines.push("```");
     lines.push(`${ep.example.method} ${ep.example.path}`);
+    if (ep.example.headers) {
+      for (const [key, val] of Object.entries(ep.example.headers)) {
+        lines.push(`${key}: ${val}`);
+      }
+    }
     if (ep.example.body) {
-      lines.push(JSON.stringify(ep.example.body, null, 2));
+      lines.push("");
+      lines.push(formatBody(ep.example.body));
     }
     lines.push("```");
   }
 
   return lines.join("\n");
+}
+
+// A string body (a XanoScript request) is printed as sent; anything else as JSON.
+function formatBody(body: unknown): string {
+  return typeof body === "string" ? body : JSON.stringify(body, null, 2);
 }
 
 function formatExample(ex: ExampleDoc): string {
@@ -100,7 +114,7 @@ function formatExample(ex: ExampleDoc): string {
   }
   if (ex.request.body) {
     lines.push("");
-    lines.push(JSON.stringify(ex.request.body, null, 2));
+    lines.push(formatBody(ex.request.body));
   }
   lines.push("```");
 

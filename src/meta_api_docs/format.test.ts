@@ -177,6 +177,33 @@ describe("meta_api_docs/format", () => {
       expect(result).toContain('"value": 42');
     });
 
+    it("should print a XanoScript body as sent, with its description and headers", () => {
+      const script = 'task "t" {\n  stack {\n  }\n}';
+      const doc: TopicDoc = {
+        ...minimalDoc,
+        endpoints: [
+          {
+            method: "POST",
+            path: "/workspace/{workspace_id}/task",
+            description: "Create a task",
+            request_body: { type: "text/x-xanoscript", description: "The task as XanoScript" },
+            example: {
+              method: "POST",
+              path: "/workspace/1/task",
+              headers: { "Content-Type": "text/x-xanoscript" },
+              body: script,
+            },
+          },
+        ],
+      };
+      const result = formatDocumentation(doc, "examples");
+      expect(result).toContain("**Request Body:** `text/x-xanoscript`");
+      expect(result).toContain("The task as XanoScript");
+      expect(result).toContain("Content-Type: text/x-xanoscript");
+      expect(result).toContain(script);
+      expect(result).not.toContain(JSON.stringify(script));
+    });
+
     it("should format patterns/workflows", () => {
       const docWithPatterns: TopicDoc = {
         ...minimalDoc,

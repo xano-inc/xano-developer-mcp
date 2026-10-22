@@ -3,10 +3,10 @@ import type { TopicDoc } from "../types.js";
 export const taskDoc: TopicDoc = {
   topic: "task",
   title: "Scheduled Task Management",
-  description: `Tasks are scheduled jobs that run automatically based on a cron schedule. They're used for background processing, periodic data sync, automated maintenance, and more.
+  description: `Tasks are scheduled jobs that run automatically on a schedule: a start time and a repeat frequency in seconds, written in the task's XanoScript. They're used for background processing, periodic data sync, automated maintenance, and more.
 
 ## Key Concepts
-- Tasks run on a schedule (cron syntax)
+- Tasks run on the schedule in their XanoScript: \`schedule = [{starts_on: 2026-01-01 03:00:00+0000, freq: 86400}]\` (freq in seconds; add \`ends_on\` to stop; several entries for several times)
 - No HTTP trigger - runs automatically
 - Can access databases, call functions, make external requests
 - Support draft/publish workflow
@@ -20,7 +20,9 @@ export const taskDoc: TopicDoc = {
 - Cache warming`,
 
   ai_hints: `- Tasks require paid account (will fail on free tier)
-- Use cron syntax for scheduling (e.g., "0 * * * *" for hourly)
+- Create and update a task by sending its XanoScript as the raw body with \`Content-Type: text/x-xanoscript\`. The schedule, the \`active\` flag and the stack all live in the script; there is no cron field
+- A JSON body with a \`xanoscript\` field creates a task with no stack and no schedule (the field is dropped silently), so it never runs
+- Schedule frequency is in seconds: 3600 hourly, 86400 daily, 604800 weekly
 - Tasks have no HTTP inputs - all data comes from database or environment
 - Draft changes won't affect running schedule until published
 - Check task history to debug execution issues`,
@@ -64,34 +66,23 @@ export const taskDoc: TopicDoc = {
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Task name", required: true },
-          description: { type: "string", description: "Task description" },
-          schedule: { type: "string", description: "Cron expression (e.g., '0 * * * *' for hourly)", required: true },
-          active: { type: "boolean", description: "Whether task is active", required: true },
-          xanoscript: { type: "string", description: "XanoScript task definition", required: true }
-        }
+        type: "text/x-xanoscript",
+        description: "The task as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`. Its name, description, `active` flag and schedule (`schedule = [{starts_on, freq}]`, freq in seconds) come from the script. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request creates the task without its code."
       },
       example: {
         method: "POST",
         path: "/workspace/1/task",
-        body: {
-          name: "cleanup_old_sessions",
-          description: "Delete sessions older than 30 days",
-          schedule: "0 3 * * *",
-          active: true,
-          xanoscript: `task cleanup_old_sessions {
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `task "cleanup_old_sessions" {
+  description = "Delete sessions older than 30 days, daily at 03:00 UTC"
   stack {
-    var $cutoff {
-      value = now|transform_timestamp:"-30 days"
-    }
-    db.bulk.delete "sessions" {
-      where = $db.sessions.created_at < $cutoff
-    } as $deleted_count
+    var $cutoff { value = now|transform_timestamp:"-30 days" }
+    db.bulk.delete "session" {
+      where = $db.session.created_at < $cutoff
+    } as $deleted
   }
+  schedule = [{starts_on: 2026-01-01 03:00:00+0000, freq: 86400}]
 }`
-        }
       }
     },
     {
@@ -105,14 +96,24 @@ export const taskDoc: TopicDoc = {
         { name: "publish", type: "boolean", default: true, description: "Publish changes immediately" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Task name" },
-          description: { type: "string", description: "Task description" },
-          schedule: { type: "string", description: "Cron expression" },
-          active: { type: "boolean", description: "Whether task is active" },
-          xanoscript: { type: "string", description: "XanoScript task definition" }
-        }
+        type: "text/x-xanoscript",
+        description: "The whole task as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`; it replaces the current definition. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request never changes the task's code."
+      },
+      example: {
+        method: "PUT",
+        path: "/workspace/1/task/4",
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `task "cleanup_old_sessions" {
+  description = "Delete sessions older than 30 days, every 6 hours, paused"
+  active = false
+  stack {
+    var $cutoff { value = now|transform_timestamp:"-30 days" }
+    db.bulk.delete "session" {
+      where = $db.session.created_at < $cutoff
+    } as $deleted
+  }
+  schedule = [{starts_on: 2026-01-01 00:00:00+0000, freq: 21600}]
+}`
       }
     },
     {
@@ -150,20 +151,19 @@ export const taskDoc: TopicDoc = {
         id: { type: "integer" },
         name: { type: "string" },
         description: { type: "string" },
-        schedule: { type: "string", description: "Cron expression" },
+        datasource: { type: "string" },
         active: { type: "boolean" },
         xanoscript: { type: "string" },
         created_at: { type: "string", format: "date-time" },
         updated_at: { type: "string", format: "date-time" }
       }
     },
-    CronExamples: {
-      "every_minute": "* * * * *",
-      "every_hour": "0 * * * *",
-      "every_day_midnight": "0 0 * * *",
-      "every_day_3am": "0 3 * * *",
-      "every_monday": "0 0 * * 1",
-      "first_of_month": "0 0 1 * *"
+    ScheduleExamples: {
+      "hourly": "schedule = [{starts_on: 2026-01-01 00:00:00+0000, freq: 3600}]",
+      "daily_3am_utc": "schedule = [{starts_on: 2026-01-01 03:00:00+0000, freq: 86400}]",
+      "weekly_monday": "schedule = [{starts_on: 2026-01-05 00:00:00+0000, freq: 604800}]",
+      "twice_daily": "schedule = [{starts_on: 2026-01-01 09:00:00+0000, freq: 86400}, {starts_on: 2026-01-01 21:00:00+0000, freq: 86400}]",
+      "until_year_end": "schedule = [{starts_on: 2026-01-01 08:00:00+0000, freq: 3600, ends_on: 2026-12-31 23:59:59+0000}]"
     }
   },
 
