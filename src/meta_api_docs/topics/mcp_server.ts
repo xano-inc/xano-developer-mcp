@@ -62,27 +62,17 @@ export const mcpServerDoc: TopicDoc = {
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "MCP server name", required: true },
-          description: { type: "string", description: "MCP server description" },
-          xanoscript: { type: "string", description: "XanoScript MCP server definition", required: true }
-        }
+        type: "text/x-xanoscript",
+        description: "The MCP server as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`. Its name and the tools, prompts and resources it exposes come from the script. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request creates the MCP server without its code."
       },
       example: {
         method: "POST",
         path: "/workspace/1/mcp_server",
-        body: {
-          name: "my_tools",
-          description: "MCP server exposing customer support tools",
-          xanoscript: `mcp_server my_tools {
-  tools = [lookup_order, update_ticket, send_notification]
-  authentication {
-    type = "bearer"
-    token = env.MCP_TOKEN
-  }
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `mcp_server "Orders" {
+  canonical = "orders-mcp"
+  tools = [{ name: "get_order_status" }]
 }`
-        }
       }
     },
     {
@@ -95,12 +85,17 @@ export const mcpServerDoc: TopicDoc = {
         { name: "mcp_server_id", type: "integer", required: true, in: "path", description: "MCP Server ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "MCP server name" },
-          description: { type: "string", description: "MCP server description" },
-          xanoscript: { type: "string", description: "XanoScript MCP server definition" }
-        }
+        type: "text/x-xanoscript",
+        description: "The whole MCP server as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`; it replaces the current definition. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request never changes the MCP server's code."
+      },
+      example: {
+        method: "PUT",
+        path: "/workspace/1/mcp_server/1",
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `mcp_server "Orders" {
+  canonical = "orders-mcp"
+  tools = [{ name: "get_order_status" }]
+}`
       }
     },
     {

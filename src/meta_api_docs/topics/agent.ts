@@ -62,30 +62,27 @@ export const agentDoc: TopicDoc = {
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Agent name", required: true },
-          description: { type: "string", description: "Agent description" },
-          xanoscript: { type: "string", description: "XanoScript agent definition", required: true }
-        }
+        type: "text/x-xanoscript",
+        description: "The agent as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`. Its name, LLM settings and tools come from the script. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request creates the agent without its code."
       },
       example: {
         method: "POST",
         path: "/workspace/1/agent",
-        body: {
-          name: "support_agent",
-          description: "Customer support AI agent",
-          xanoscript: `agent support_agent {
-  llm {
-    type = "anthropic"
-    model = "claude-4-sonnet-20250514"
-    system_prompt = "You are a helpful customer support agent."
-    max_steps = 10
-    temperature = 0.3
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `agent "Customer Support" {
+  canonical = "support-agent-v1"
+  description = "Handles customer inquiries"
+  llm = {
+    type: "xano-free"
+    system_prompt: "You are a helpful customer support agent."
+    prompt: "{{ $args.user_message }}"
+    max_steps: 5
+    temperature: 0.7
   }
-  tools = [lookup_order, update_ticket]
+  tools = [
+    { name: "get_order_status" }
+  ]
 }`
-        }
       }
     },
     {
@@ -99,12 +96,27 @@ export const agentDoc: TopicDoc = {
         { name: "publish", type: "boolean", default: true, description: "Publish changes immediately" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Agent name" },
-          description: { type: "string", description: "Agent description" },
-          xanoscript: { type: "string", description: "XanoScript agent definition" }
-        }
+        type: "text/x-xanoscript",
+        description: "The whole agent as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`; it replaces the current definition. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request never changes the agent's code."
+      },
+      example: {
+        method: "PUT",
+        path: "/workspace/1/agent/2",
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `agent "Customer Support" {
+  canonical = "support-agent-v1"
+  description = "Handles customer inquiries"
+  llm = {
+    type: "xano-free"
+    system_prompt: "You are a helpful customer support agent."
+    prompt: "{{ $args.user_message }}"
+    max_steps: 5
+    temperature: 0.7
+  }
+  tools = [
+    { name: "get_order_status" }
+  ]
+}`
       }
     },
     {

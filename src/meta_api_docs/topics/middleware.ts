@@ -62,38 +62,27 @@ export const middlewareDoc: TopicDoc = {
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Middleware name", required: true },
-          description: { type: "string", description: "Middleware description" },
-          type: { type: "string", description: "pre or post", required: true },
-          xanoscript: { type: "string", description: "XanoScript middleware definition", required: true }
-        }
+        type: "text/x-xanoscript",
+        description: "The middleware as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`. Its name, policies, inputs and response come from the script. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request creates the middleware without its code."
       },
       example: {
         method: "POST",
         path: "/workspace/1/middleware",
-        body: {
-          name: "rate_limiter",
-          description: "Limit requests to 100 per minute per IP",
-          type: "pre",
-          xanoscript: `middleware rate_limiter {
-  stack {
-    var $key {
-      value = "ratelimit:" + $request.ip
-    }
-    var $count {
-      value = redis.incr($key)
-    }
-    if ($count == 1) {
-      redis.expire($key, 60)
-    }
-    if ($count > 100) {
-      throw(429, "Rate limit exceeded")
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `middleware "wrap_response" {
+  exception_policy = "rethrow"
+  response_strategy = "replace"
+  input {
+    json vars
+    enum type {
+      values = ["pre", "post"]
     }
   }
+  stack {
+    var $payload { value = $input.vars.result }
+  }
+  response = {success: true, payload: $payload}
 }`
-        }
       }
     },
     {
@@ -107,12 +96,27 @@ export const middlewareDoc: TopicDoc = {
         { name: "publish", type: "boolean", default: true, description: "Publish changes immediately" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Middleware name" },
-          description: { type: "string", description: "Middleware description" },
-          xanoscript: { type: "string", description: "XanoScript middleware definition" }
-        }
+        type: "text/x-xanoscript",
+        description: "The whole middleware as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`; it replaces the current definition. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request never changes the middleware's code."
+      },
+      example: {
+        method: "PUT",
+        path: "/workspace/1/middleware/3",
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `middleware "wrap_response" {
+  exception_policy = "rethrow"
+  response_strategy = "replace"
+  input {
+    json vars
+    enum type {
+      values = ["pre", "post"]
+    }
+  }
+  stack {
+    var $payload { value = $input.vars.result }
+  }
+  response = {success: true, payload: $payload}
+}`
       }
     },
     {

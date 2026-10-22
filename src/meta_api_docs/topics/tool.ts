@@ -63,35 +63,30 @@ export const toolDoc: TopicDoc = {
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Tool name", required: true },
-          description: { type: "string", description: "Tool description (shown to AI)" },
-          xanoscript: { type: "string", description: "XanoScript tool definition", required: true }
-        }
+        type: "text/x-xanoscript",
+        description: "The tool as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`. Its name, instructions, inputs and response come from the script. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request creates the tool without its code."
       },
       example: {
         method: "POST",
         path: "/workspace/1/tool",
-        body: {
-          name: "lookup_order",
-          description: "Look up an order by order ID or customer email",
-          xanoscript: `tool lookup_order {
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `tool "get_order_status" {
+  instructions = "Check the current status of an order by its ID."
   input {
-    int order_id?
-    text email?
+    int order_id { description = "Order ID to check" }
   }
   stack {
-    var $order {
-      value = db.orders.query()
-        .where("id", "=", $input.order_id)
-        .or("customer_email", "=", $input.email)
-        .first()
-    }
+    db.get "order" {
+      field_name = "id"
+      field_value = $input.order_id
+    } as $order
   }
-  response = $order
+  response = {
+    order_id: $order.id,
+    status: $order.status,
+    updated_at: $order.updated_at
+  }
 }`
-        }
       }
     },
     {
@@ -105,12 +100,30 @@ export const toolDoc: TopicDoc = {
         { name: "publish", type: "boolean", default: true, description: "Publish changes immediately" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Tool name" },
-          description: { type: "string", description: "Tool description" },
-          xanoscript: { type: "string", description: "XanoScript tool definition" }
-        }
+        type: "text/x-xanoscript",
+        description: "The whole tool as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`; it replaces the current definition. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request never changes the tool's code."
+      },
+      example: {
+        method: "PUT",
+        path: "/workspace/1/tool/5",
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `tool "get_order_status" {
+  instructions = "Check the current status of an order by its ID."
+  input {
+    int order_id { description = "Order ID to check" }
+  }
+  stack {
+    db.get "order" {
+      field_name = "id"
+      field_value = $input.order_id
+    } as $order
+  }
+  response = {
+    order_id: $order.id,
+    status: $order.status,
+    updated_at: $order.updated_at
+  }
+}`
       }
     },
     {

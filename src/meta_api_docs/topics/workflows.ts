@@ -33,22 +33,45 @@ export const workflowsDoc: TopicDoc = {
         "9. `POST /workspace/{id}/apigroup/{id}/api` - Create PUT endpoint",
         "10. `POST /workspace/{id}/apigroup/{id}/api` - Create DELETE endpoint"
       ],
-      example: `// Example: Create users table and list endpoint
+      example: `// Example: create a users table and a list endpoint.
+// Each object is sent as XanoScript: the raw body, Content-Type: text/x-xanoscript.
 
-// 1. Create table
+// 1. Create the table
 POST /workspace/1/table
-{
-  "name": "users",
-  "xanoscript": "table users {\\n  id int [pk, auto]\\n  email text [unique]\\n  name text\\n  created_at timestamp [default:now]\\n}"
+Content-Type: text/x-xanoscript
+
+table "user" {
+  auth = true
+  schema {
+    int id
+    timestamp created_at?=now
+    text name filters=trim
+    email email filters=trim|lower {
+      sensitive = true
+    }
+    password password
+  }
+  index = [
+    {type: "primary", field: [{name: "id"}]}
+    {type: "btree|unique", field: [{name: "email"}]}
+  ]
 }
 
-// 2. Create list endpoint
+// 2. Create the list endpoint
 POST /workspace/1/apigroup/1/api
-{
-  "name": "listUsers",
-  "path": "/users",
-  "verb": "GET",
-  "xanoscript": "query listUsers {\\n  response = db.users.query().all()\\n}"
+Content-Type: text/x-xanoscript
+
+query "orders" verb=GET {
+  description = "List orders, 20 a page"
+  input {
+    int page?=1
+  }
+  stack {
+    db.query "order" {
+      return = {type: "list", paging: {page: $input.page, per_page: 20}}
+    } as $orders
+  }
+  response = $orders
 }`
     },
     {
@@ -61,19 +84,45 @@ POST /workspace/1/apigroup/1/api
         "4. `POST /workspace/{id}/agent` - Create agent with tool references",
         "5. `POST /workspace/{id}/mcp_server` (optional) - Expose via MCP"
       ],
-      example: `// 1. Create a lookup tool
+      example: `// 1. Create a tool (XanoScript body, Content-Type: text/x-xanoscript)
 POST /workspace/1/tool
-{
-  "name": "lookup_customer",
-  "description": "Look up customer by email or ID",
-  "xanoscript": "tool lookup_customer {\\n  input { text email? int id? }\\n  response = db.customers.query().where('email', '=', $input.email).or('id', '=', $input.id).first()\\n}"
+Content-Type: text/x-xanoscript
+
+tool "get_order_status" {
+  instructions = "Check the current status of an order by its ID."
+  input {
+    int order_id { description = "Order ID to check" }
+  }
+  stack {
+    db.get "order" {
+      field_name = "id"
+      field_value = $input.order_id
+    } as $order
+  }
+  response = {
+    order_id: $order.id,
+    status: $order.status,
+    updated_at: $order.updated_at
+  }
 }
 
-// 2. Create agent
+// 2. Create the agent that uses it
 POST /workspace/1/agent
-{
-  "name": "support_bot",
-  "xanoscript": "agent support_bot {\\n  llm {\\n    type = \\"anthropic\\"\\n    model = \\"claude-4-sonnet-20250514\\"\\n    system_prompt = \\"You help customers with their orders.\\"\\n  }\\n  tools = [lookup_customer]\\n}"
+Content-Type: text/x-xanoscript
+
+agent "Customer Support" {
+  canonical = "support-agent-v1"
+  description = "Handles customer inquiries"
+  llm = {
+    type: "xano-free"
+    system_prompt: "You are a helpful customer support agent."
+    prompt: "{{ $args.user_message }}"
+    max_steps: 5
+    temperature: 0.7
+  }
+  tools = [
+    { name: "get_order_status" }
+  ]
 }`
     },
     {
@@ -91,15 +140,22 @@ POST /workspace/1/agent
       description: "Set up automated data maintenance",
       steps: [
         "1. `GET /workspace` - Find workspace ID",
-        "2. `POST /workspace/{id}/task` - Create the task with schedule",
+        "2. `POST /workspace/{id}/task` - Create the task: its XanoScript, schedule included, as a `text/x-xanoscript` body",
         "3. Monitor via `GET /workspace/{id}/task_history`"
       ],
-      example: `POST /workspace/1/task
-{
-  "name": "cleanup_old_sessions",
-  "schedule": "0 3 * * *",
-  "active": true,
-  "xanoscript": "task cleanup_old_sessions {\\n  stack {\\n    var $cutoff {\\n      value = now|transform_timestamp:\\"-30 days\\"\\n    }\\n    db.bulk.delete \\"sessions\\" {\\n      where = $db.sessions.created_at < $cutoff\\n    } as $deleted_count\\n  }\\n}"
+      example: `// The schedule lives in the XanoScript (freq in seconds); there is no cron field.
+POST /workspace/1/task
+Content-Type: text/x-xanoscript
+
+task "cleanup_old_sessions" {
+  description = "Delete sessions older than 30 days, daily at 03:00 UTC"
+  stack {
+    var $cutoff { value = now|transform_timestamp:"-30 days" }
+    db.bulk.delete "session" {
+      where = $db.session.created_at < $cutoff
+    } as $deleted
+  }
+  schedule = [{starts_on: 2026-01-01 03:00:00+0000, freq: 86400}]
 }`
     },
     {

@@ -57,24 +57,25 @@ export const apiDoc: TopicDoc = {
         { name: "apigroup_id", type: "integer", required: true, in: "path", description: "API Group ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Endpoint name", required: true },
-          path: { type: "string", description: "URL path (e.g., /users/{id})", required: true },
-          verb: { type: "string", description: "HTTP method: GET, POST, PUT, DELETE", required: true },
-          description: { type: "string", description: "Endpoint description" },
-          xanoscript: { type: "string", description: "XanoScript code defining the endpoint logic" }
-        }
+        type: "text/x-xanoscript",
+        description: "The endpoint as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`. Its name, verb, path, inputs and response come from the script (`query \"<path>\" verb=<VERB> { ... }`). A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request creates the endpoint without its code."
       },
       example: {
         method: "POST",
         path: "/workspace/1/apigroup/2/api",
-        body: {
-          name: "getUsers",
-          path: "/users",
-          verb: "GET",
-          xanoscript: "query getUsers {\n  response = db.users.query().all()\n}"
-        }
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `query "orders" verb=GET {
+  description = "List orders, 20 a page"
+  input {
+    int page?=1
+  }
+  stack {
+    db.query "order" {
+      return = {type: "list", paging: {page: $input.page, per_page: 20}}
+    } as $orders
+  }
+  response = $orders
+}`
       }
     },
     {
@@ -89,14 +90,25 @@ export const apiDoc: TopicDoc = {
         { name: "publish", type: "boolean", default: true, description: "Publish changes immediately" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Endpoint name" },
-          path: { type: "string", description: "URL path" },
-          verb: { type: "string", description: "HTTP method" },
-          description: { type: "string", description: "Endpoint description" },
-          xanoscript: { type: "string", description: "XanoScript code" }
-        }
+        type: "text/x-xanoscript",
+        description: "The whole endpoint as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`; it replaces the current definition. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request never changes the endpoint's code."
+      },
+      example: {
+        method: "PUT",
+        path: "/workspace/1/apigroup/2/api/7",
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `query "orders" verb=GET {
+  description = "List orders, 20 a page"
+  input {
+    int page?=1
+  }
+  stack {
+    db.query "order" {
+      return = {type: "list", paging: {page: $input.page, per_page: 20}}
+    } as $orders
+  }
+  response = $orders
+}`
       }
     },
     {
@@ -148,32 +160,27 @@ export const apiDoc: TopicDoc = {
   examples: [
     {
       title: "Create a GET endpoint",
-      description: "Create a simple endpoint to list all users",
+      description: "Create an endpoint that lists orders, 20 a page. The endpoint is the request body, as XanoScript.",
       request: {
         method: "POST",
         path: "/workspace/1/apigroup/2/api",
-        body: {
-          name: "listUsers",
-          path: "/users",
-          verb: "GET",
-          xanoscript: `query listUsers {
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `query "orders" verb=GET {
+  description = "List orders, 20 a page"
   input {
-    int page = 1
-    int per_page = 20
+    int page?=1
   }
   stack {
-    var $users {
-      value = db.users.query().paginate($input.page, $input.per_page)
-    }
+    db.query "order" {
+      return = {type: "list", paging: {page: $input.page, per_page: 20}}
+    } as $orders
   }
-  response = $users
+  response = $orders
 }`
-        }
       },
       response: {
         id: 123,
-        name: "listUsers",
-        path: "/users",
+        name: "orders",
         verb: "GET"
       }
     }
