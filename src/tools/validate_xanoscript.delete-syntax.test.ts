@@ -25,6 +25,10 @@ const inTask = (stackBody: string): string =>
 /** Recursively collect every XanoScript source string reachable from a doc node. */
 function collectXanoscripts(node: unknown, out: string[] = []): string[] {
   if (typeof node === "string") {
+    // A workflow example shows each request as headers then its XanoScript body (DEV-8990).
+    for (const match of node.matchAll(/Content-Type: text\/x-xanoscript\n\n([\s\S]*?)(?=\n\n\/\/|$)/g)) {
+      out.push(match[1]);
+    }
     // Some examples embed the payload as a JSON blob containing "xanoscript".
     if (node.includes('"xanoscript"')) {
       const match = node.match(/\{[\s\S]*\}/);
@@ -44,6 +48,12 @@ function collectXanoscripts(node: unknown, out: string[] = []): string[] {
     return out;
   }
   if (node && typeof node === "object") {
+    // An endpoint or topic example whose body is XanoScript, sent as text/x-xanoscript (DEV-8990).
+    const req = node as { headers?: Record<string, string>; body?: unknown };
+    if (req.headers?.["Content-Type"] === "text/x-xanoscript" && typeof req.body === "string") {
+      out.push(req.body);
+      return out;
+    }
     for (const [key, value] of Object.entries(node)) {
       if (key === "xanoscript" && typeof value === "string") {
         out.push(value);

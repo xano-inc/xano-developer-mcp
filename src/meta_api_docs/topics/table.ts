@@ -63,25 +63,29 @@ export const tableDoc: TopicDoc = {
         { name: "workspace_id", type: "integer", required: true, in: "path", description: "Workspace ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Table name", required: true },
-          description: { type: "string", description: "Table description" },
-          xanoscript: { type: "string", description: "XanoScript table definition with schema" }
-        }
+        type: "text/x-xanoscript",
+        description: "The table as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`. Its name, schema and indexes come from the script. To start from an empty table instead, send JSON `{\"name\": \"...\"}` and add fields with the schema endpoints below. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request creates the table without the schema in it."
       },
       example: {
         method: "POST",
         path: "/workspace/1/table",
-        body: {
-          name: "users",
-          xanoscript: `table users {
-  id int [pk, auto]
-  email text [unique]
-  name text
-  created_at timestamp [default:now]
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `table "user" {
+  auth = true
+  schema {
+    int id
+    timestamp created_at?=now
+    text name filters=trim
+    email email filters=trim|lower {
+      sensitive = true
+    }
+    password password
+  }
+  index = [
+    {type: "primary", field: [{name: "id"}]}
+    {type: "btree|unique", field: [{name: "email"}]}
+  ]
 }`
-        }
       }
     },
     {
@@ -94,12 +98,29 @@ export const tableDoc: TopicDoc = {
         { name: "table_id", type: "integer", required: true, in: "path", description: "Table ID" }
       ],
       request_body: {
-        type: "application/json",
-        properties: {
-          name: { type: "string", description: "Table name" },
-          description: { type: "string", description: "Table description" },
-          xanoscript: { type: "string", description: "Updated XanoScript definition" }
-        }
+        type: "text/x-xanoscript",
+        description: "The whole table as XanoScript, sent as the raw request body with `Content-Type: text/x-xanoscript`; it replaces the current definition. A JSON body's `xanoscript` field is not read: the route drops fields it does not declare, so a JSON request never changes the table's schema."
+      },
+      example: {
+        method: "PUT",
+        path: "/workspace/1/table/3",
+        headers: { "Content-Type": "text/x-xanoscript" },
+        body: `table "user" {
+  auth = true
+  schema {
+    int id
+    timestamp created_at?=now
+    text name filters=trim
+    email email filters=trim|lower {
+      sensitive = true
+    }
+    password password
+  }
+  index = [
+    {type: "primary", field: [{name: "id"}]}
+    {type: "btree|unique", field: [{name: "email"}]}
+  ]
+}`
       }
     },
     {
