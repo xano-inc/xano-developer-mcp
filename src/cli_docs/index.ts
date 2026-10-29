@@ -9,6 +9,7 @@ import { z } from "zod";
 import type { TopicDoc, DetailLevel, CliDocsArgs } from "./types.js";
 import { formatDocumentation } from "./format.js";
 import { defineTool } from "../tools/define_tool.js";
+import { gatePolicies, perPolicies, policiesOnly, type DeveloperToolsOptions } from "../policies.js";
 
 // Import all topic documentation
 import { authDoc } from "./topics/auth.js";
@@ -27,11 +28,13 @@ import { platformDoc } from "./topics/platform.js";
 import { staticHostDoc } from "./topics/static_host.js";
 import { updateDoc } from "./topics/update.js";
 import { integrationDoc } from "./topics/integration.js";
+import { policyDoc } from "./topics/policy.js";
+import { skillsDoc } from "./topics/skills.js";
 
 /**
- * All available documentation topics
+ * All documentation topics, the policies feature's included
  */
-export const topics: Record<string, TopicDoc> = {
+const allTopics: Record<string, TopicDoc> = {
   auth: authDoc,
   start: startDoc,
   profile: profileDoc,
@@ -48,20 +51,32 @@ export const topics: Record<string, TopicDoc> = {
   static_host: staticHostDoc,
   update: updateDoc,
   integration: integrationDoc,
+  policy: policiesOnly(policyDoc),
+  skills: policiesOnly(skillsDoc),
 };
+
+/**
+ * The topics served under the host's options
+ */
+export const topicsFor = perPolicies((options) => gatePolicies(allTopics, options));
+
+/**
+ * All available documentation topics (by default, without the policies feature)
+ */
+export const topics: Record<string, TopicDoc> = topicsFor();
 
 /**
  * Get list of all available topic names
  */
-export function getTopicNames(): string[] {
-  return Object.keys(topics);
+export function getTopicNames(options?: DeveloperToolsOptions): string[] {
+  return Object.keys(topicsFor(options));
 }
 
 /**
  * Get topic descriptions for tool documentation
  */
-export function getTopicDescriptions(): string {
-  return Object.entries(topics)
+export function getTopicDescriptions(options?: DeveloperToolsOptions): string {
+  return Object.entries(topicsFor(options))
     .map(([key, doc]) => `- ${key}: ${doc.title}`)
     .join("\n");
 }
@@ -69,62 +84,72 @@ export function getTopicDescriptions(): string {
 /**
  * Handler for the cli_docs tool
  */
-export function handleCliDocs(args: CliDocsArgs): string {
+export function handleCliDocs(
+  args: CliDocsArgs,
+  options?: DeveloperToolsOptions
+): string {
   const { topic, detail_level = "detailed" } = args;
 
   // Validate topic
-  if (!topics[topic]) {
-    const available = getTopicNames().join(", ");
+  const served = topicsFor(options);
+  if (!served[topic]) {
+    const available = getTopicNames(options).join(", ");
     return `Error: Unknown topic "${topic}".\n\nAvailable topics: ${available}`;
   }
 
-  const doc = topics[topic];
+  const doc = served[topic];
   return formatDocumentation(doc, detail_level as DetailLevel);
 }
 
 /**
- * Tool definition for MCP server
+ * Tool definition for MCP server, per the host's options
  */
-export const cliDocsToolSpec = defineTool({
-  name: "xano_cli_docs",
-  description: `Get documentation for the Xano CLI. Use this to understand how to use the CLI for local development, code sync, and XanoScript execution.
+export const cliDocsToolSpecFor = perPolicies((options) =>
+  defineTool({
+    name: "xano_cli_docs",
+    description: `Get documentation for the Xano CLI. Use this to understand how to use the CLI for local development, code sync, and XanoScript execution.
 
 ## Topics
-${getTopicDescriptions()}
+${getTopicDescriptions(options)}
 
 ## Usage
 - Start with "start" topic for installation and setup
 - Use "auth" or "profile" to understand authentication options
 - Use "integration" to understand when to use CLI vs Meta API
 - Use specific topics for command reference (workspace, sandbox, branch, release, tenant, function, etc.)`,
-  annotations: {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: true,
-    openWorldHint: false,
-  },
-  inputShape: {
-    topic: z
-      .enum(getTopicNames() as [string, ...string[]])
-      .describe(
-        "Documentation topic to retrieve. Start with 'start' for installation and setup. " +
-          "Example: topic='function' for function management commands, topic='sandbox' for the personal dev environment."
-      ),
-    detail_level: z
-      .enum(["overview", "detailed", "examples"])
-      .optional()
-      .describe(
-        "Level of detail to return. " +
-          "'overview' = brief summary of commands and their purpose. " +
-          "'detailed' = full command reference with flags and arguments. " +
-          "'examples' = includes usage examples for each command. " +
-          "Default: 'detailed'."
-      ),
-  },
-  outputShape: {
-    documentation: z
-      .string()
-      .describe("The CLI documentation content for the requested topic."),
-  },
-});
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    inputShape: {
+      topic: z
+        .enum(getTopicNames(options) as [string, ...string[]])
+        .describe(
+          "Documentation topic to retrieve. Start with 'start' for installation and setup. " +
+            "Example: topic='function' for function management commands, topic='sandbox' for the personal dev environment."
+        ),
+      detail_level: z
+        .enum(["overview", "detailed", "examples"])
+        .optional()
+        .describe(
+          "Level of detail to return. " +
+            "'overview' = brief summary of commands and their purpose. " +
+            "'detailed' = full command reference with flags and arguments. " +
+            "'examples' = includes usage examples for each command. " +
+            "Default: 'detailed'."
+        ),
+    },
+    outputShape: {
+      documentation: z
+        .string()
+        .describe("The CLI documentation content for the requested topic."),
+    },
+  })
+);
 
+/**
+ * Tool definition for MCP server (by default, without the policies feature)
+ */
+export const cliDocsToolSpec = cliDocsToolSpecFor();

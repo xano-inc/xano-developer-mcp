@@ -9,6 +9,13 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { minimatch } from "minimatch";
 import docsIndex from "./xanoscript_docs/docs_index.json" with { type: "json" };
+import {
+  gatePolicies,
+  perPolicies,
+  policiesIncluded,
+  policiesOnly,
+  type DeveloperToolsOptions,
+} from "./policies.js";
 
 // =============================================================================
 // Types
@@ -45,63 +52,75 @@ export interface XanoscriptDocsArgs {
 // Documentation Configuration (loaded from docs_index.json)
 // =============================================================================
 
+/** Every topic, a topic of the policies feature (`"feature": "policies"`) marked as such. */
 function buildDocsConfig(): Record<string, DocConfig> {
   const config: Record<string, DocConfig> = {};
   for (const [key, topic] of Object.entries(docsIndex.topics)) {
-    config[key] = {
+    const doc: DocConfig = {
       file: topic.file,
       applyTo: topic.applyTo,
       description: topic.description,
       priority: (topic as Record<string, unknown>).priority as number | undefined,
       exclusive: (topic as Record<string, unknown>).exclusive === true,
     };
+    config[key] = (topic as Record<string, unknown>).feature === "policies" ? policiesOnly(doc) : doc;
   }
   return config;
 }
 
-export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = buildDocsConfig();
+const ALL_DOCS = buildDocsConfig();
+
+/** The topics served under the host's options. */
+export const docsConfigFor = perPolicies((options) => gatePolicies(ALL_DOCS, options));
+
+/** The topics served by default (without the policies feature). */
+export const XANOSCRIPT_DOCS_V2: Record<string, DocConfig> = docsConfigFor();
 
 /**
  * Map of alias -> canonical topic name, built from the `aliases` arrays in
  * docs_index.json. Lets callers pass a natural synonym (e.g. "upload",
  * "storage", "attachment") and have it resolve to the canonical topic
  * ("file-uploads"). An alias that shadows a real topic name is skipped, and
- * cross-topic collisions are resolved first-writer-wins.
+ * cross-topic collisions are resolved first-writer-wins. Only the served
+ * topics' aliases resolve.
  */
-const ALIAS_TO_TOPIC: Record<string, string> = (() => {
+const aliasesFor = perPolicies((options) => {
+  const docs = docsConfigFor(options);
   const map: Record<string, string> = {};
   for (const [key, topic] of Object.entries(docsIndex.topics)) {
+    if (!(key in docs)) continue;
     const aliases = (topic as { aliases?: string[] }).aliases;
     if (!aliases) continue;
     for (const alias of aliases) {
-      if (alias in XANOSCRIPT_DOCS_V2) continue; // never shadow a canonical topic name
+      if (alias in docs) continue; // never shadow a canonical topic name
       if (alias in map) continue; // first-writer-wins on cross-topic collisions
       map[alias] = key;
     }
   }
   return map;
-})();
+});
 
 /**
  * Resolve a topic name or alias to a canonical topic name. Returns the input
  * unchanged when it is already canonical or unknown, so callers can still
  * surface the existing "Unknown topic" error for genuinely bad input.
  */
-export function resolveTopic(input?: string): string | undefined {
+export function resolveTopic(input?: string, options?: DeveloperToolsOptions): string | undefined {
   if (!input) return input;
-  if (input in XANOSCRIPT_DOCS_V2) return input;
-  return ALIAS_TO_TOPIC[input] ?? input;
+  if (input in docsConfigFor(options)) return input;
+  return aliasesFor(options)[input] ?? input;
 }
 
 /** Get all alias names (keys of the alias -> canonical topic map). */
-export function getAliasNames(): string[] {
-  return Object.keys(ALIAS_TO_TOPIC);
+export function getAliasNames(options?: DeveloperToolsOptions): string[] {
+  return Object.keys(aliasesFor(options));
 }
 
 // =============================================================================
 // Content Cache
 // =============================================================================
 
+/** Keyed by gate state and path: a doc is cached as the host's options serve it. */
 const _fileCache = new Map<string, string>();
 let _versionCache: { path: string; version: string } | null = null;
 
@@ -114,12 +133,18 @@ export function clearDocsCache(): void {
   _versionCache = null;
 }
 
-function cachedReadFile(filePath: string): string {
-  const cached = _fileCache.get(filePath);
+function cachedReadFile(filePath: string, options?: DeveloperToolsOptions): string {
+  const key = `${policiesIncluded(options)}:${filePath}`;
+  const cached = _fileCache.get(key);
   if (cached !== undefined) return cached;
-  const content = readFileSync(filePath, "utf-8");
-  _fileCache.set(filePath, content);
+  const content = gatePolicies(readFileSync(filePath, "utf-8"), options);
+  _fileCache.set(key, content);
   return content;
+}
+
+/** One documentation file as the host's options serve it. */
+export function readDocFile(docsPath: string, file: string, options?: DeveloperToolsOptions): string {
+  return cachedReadFile(join(docsPath, file), options);
 }
 
 export interface TierFact {
@@ -137,14 +162,14 @@ export interface TierFact {
  * in four places) is what stops them drifting stale — the recurring bug this
  * helper exists to kill. Estimate ratio matches the tool spec: ~250 tokens/KB.
  */
-export function getTierFacts(docsPath: string): {
+export function getTierFacts(docsPath: string, options?: DeveloperToolsOptions): {
   survival: TierFact;
   working: TierFact;
 } {
   const fact = (file: string): TierFact => {
     let size = 0;
     try {
-      size = cachedReadFile(join(docsPath, file)).length;
+      size = cachedReadFile(join(docsPath, file), options).length;
     } catch {
       size = 0;
     }
@@ -165,10 +190,10 @@ export function getTierFacts(docsPath: string): {
 /**
  * Get list of topics that apply to a given file path based on applyTo patterns
  */
-export function getDocsForFilePath(filePath: string): string[] {
+export function getDocsForFilePath(filePath: string, options?: DeveloperToolsOptions): string[] {
   const matches: string[] = [];
 
-  for (const [topic, config] of Object.entries(XANOSCRIPT_DOCS_V2)) {
+  for (const [topic, config] of Object.entries(docsConfigFor(options))) {
     if (topic === "readme") continue; // Don't auto-include readme
 
     for (const pattern of config.applyTo) {
@@ -232,8 +257,12 @@ export function extractQuickReference(content: string, topic: string): string {
  * array_min and the display name of num_min) returns all matching entries,
  * since the engine picks by input type.
  */
-export function extractFilterDocs(docsPath: string, filterQuery: string): string {
-  const content = cachedReadFile(join(docsPath, "expressions/filters.md"));
+export function extractFilterDocs(
+  docsPath: string,
+  filterQuery: string,
+  options?: DeveloperToolsOptions
+): string {
+  const content = cachedReadFile(join(docsPath, "expressions/filters.md"), options);
   const lines = content.split("\n");
 
   interface FilterSection {
@@ -334,9 +363,11 @@ export function getXanoscriptDocsVersion(docsPath: string): string {
 function selectTopicsForFilePath(
   docsPath: string,
   args: XanoscriptDocsArgs & { file_path: string },
-  mode: string
+  mode: string,
+  options?: DeveloperToolsOptions
 ): string[] {
-  let topics = getDocsForFilePath(args.file_path);
+  const docs = docsConfigFor(options);
+  let topics = getDocsForFilePath(args.file_path, options);
 
   // Filter out excluded topics
   if (args.exclude_topics && args.exclude_topics.length > 0) {
@@ -347,14 +378,14 @@ function selectTopicsForFilePath(
   if (args.max_tokens) {
     let tokenBudget = args.max_tokens;
     const sortedTopics = [...topics].sort((a, b) => {
-      const pa = XANOSCRIPT_DOCS_V2[a]?.priority ?? 99;
-      const pb = XANOSCRIPT_DOCS_V2[b]?.priority ?? 99;
+      const pa = docs[a]?.priority ?? 99;
+      const pb = docs[b]?.priority ?? 99;
       return pa - pb;
     });
     const filteredTopics: string[] = [];
     for (const t of sortedTopics) {
-      const config = XANOSCRIPT_DOCS_V2[t];
-      const content = cachedReadFile(join(docsPath, config.file));
+      const config = docs[t];
+      const content = cachedReadFile(join(docsPath, config.file), options);
       const topicContent =
         mode === "quick_reference" ? extractQuickReference(content, t) : content;
       const estimatedTokens = Math.ceil(topicContent.length / 4);
@@ -367,7 +398,7 @@ function selectTopicsForFilePath(
 
   if (topics.length === 0) {
     throw new Error(
-      `No documentation found for file pattern: ${args.file_path}\n\nAvailable topics: ${Object.keys(XANOSCRIPT_DOCS_V2).join(", ")}`
+      `No documentation found for file pattern: ${args.file_path}\n\nAvailable topics: ${Object.keys(docs).join(", ")}`
     );
   }
 
@@ -379,14 +410,16 @@ function selectTopicsForFilePath(
  */
 export function readXanoscriptDocsV2(
   docsPath: string,
-  args?: XanoscriptDocsArgs
+  args?: XanoscriptDocsArgs,
+  options?: DeveloperToolsOptions
 ): string {
   const version = getXanoscriptDocsVersion(docsPath);
+  const docs = docsConfigFor(options);
 
   // Tier mode: return pre-built documentation tier
   if (args?.tier) {
     const tierFile = args.tier === "survival" ? "survival.md" : "working.md";
-    const content = cachedReadFile(join(docsPath, tierFile));
+    const content = cachedReadFile(join(docsPath, tierFile), options);
     return `${content}\n\n---\nDocumentation version: ${version}`;
   }
 
@@ -401,12 +434,12 @@ export function readXanoscriptDocsV2(
     // survival/working are whole-corpus digests reached via tier=, not granular
     // topic= targets — listing them as table rows invites topic='survival' calls
     // (a different, non-tier code path). They are surfaced in Next steps instead.
-    const rows = Object.entries(XANOSCRIPT_DOCS_V2)
+    const rows = Object.entries(docs)
       .filter(([name]) => name !== "survival" && name !== "working")
       .map(([name, config]) => {
         let size: number;
         try {
-          size = cachedReadFile(join(docsPath, config.file)).length;
+          size = cachedReadFile(join(docsPath, config.file), options).length;
         } catch {
           size = 0;
         }
@@ -414,8 +447,8 @@ export function readXanoscriptDocsV2(
         const estTokens = Math.ceil(size / 4);
         return `| ${name} | ${config.description} | ${sizeKb} KB | ~${estTokens} |`;
       });
-    const tiers = getTierFacts(docsPath);
-    return [
+    const tiers = getTierFacts(docsPath, options);
+    return gatePolicies([
       `# XanoScript Documentation Index`,
       ``,
       `XanoScript is the declarative language for Xano backends (tables, APIs, functions, tasks, AI agents).`,
@@ -432,19 +465,20 @@ export function readXanoscriptDocsV2(
       `- file_path='api/users/create.xs' — auto-select the docs for the file you're editing`,
       `- filter='round' — one expression filter's signature and example (comma-separate for several, e.g. filter='to_upper,split')`,
       `- tier='survival' (~${tiers.survival.tokens}) or tier='working' (~${tiers.working.tokens}) for context-limited models`,
+      `<!-- policies -->- topic='policies' — when the workspace has a policies/ folder: keep to its Block policies while changing code, and evaluate after<!-- /policies -->`,
       `- mode='quick_reference' — compact output when you only need a reminder`,
       `- max_tokens=4000 with file_path= — stop loading once the budget is reached`,
       `- exclude_topics=['syntax'] with file_path= — skip topics you've already loaded`,
       ``,
       `---`,
       `Documentation version: ${version}`,
-    ].join("\n");
+    ], options).join("\n");
   }
 
   // Filter lookup: return individual entries from the expression filter
   // reference instead of a whole topic
   if (args?.filter) {
-    const doc = extractFilterDocs(docsPath, args.filter);
+    const doc = extractFilterDocs(docsPath, args.filter, options);
     return `${doc}\n\n---\nDocumentation version: ${version}`;
   }
 
@@ -457,33 +491,34 @@ export function readXanoscriptDocsV2(
     const topics = selectTopicsForFilePath(
       docsPath,
       args as XanoscriptDocsArgs & { file_path: string },
-      mode
+      mode,
+      options
     );
 
-    const docs = topics.map((t) => {
-      const config = XANOSCRIPT_DOCS_V2[t];
-      const content = cachedReadFile(join(docsPath, config.file));
+    const contents = topics.map((t) => {
+      const config = docs[t];
+      const content = cachedReadFile(join(docsPath, config.file), options);
       return mode === "quick_reference"
         ? extractQuickReference(content, t)
         : content;
     });
 
     const header = `# XanoScript Documentation for: ${args.file_path}\n\nMatched topics: ${topics.join(", ")}\nMode: ${mode}\nVersion: ${version}\n\n---\n\n`;
-    return header + docs.join("\n\n---\n\n");
+    return header + contents.join("\n\n---\n\n");
   }
 
   // Topic-based: return specific doc (resolve aliases to canonical names first)
-  const canonicalTopic = resolveTopic(args!.topic!)!;
-  const config = XANOSCRIPT_DOCS_V2[canonicalTopic];
+  const canonicalTopic = resolveTopic(args!.topic!, options)!;
+  const config = docs[canonicalTopic];
 
   if (!config) {
-    const availableTopics = Object.keys(XANOSCRIPT_DOCS_V2).join(", ");
+    const availableTopics = Object.keys(docs).join(", ");
     throw new Error(
       `Unknown topic "${args!.topic}".\n\nAvailable topics: ${availableTopics}`
     );
   }
 
-  const content = cachedReadFile(join(docsPath, config.file));
+  const content = cachedReadFile(join(docsPath, config.file), options);
   const doc = mode === "quick_reference"
     ? extractQuickReference(content, canonicalTopic)
     : content;
@@ -506,15 +541,17 @@ export interface TopicDoc {
  */
 export function readXanoscriptDocsStructured(
   docsPath: string,
-  args: XanoscriptDocsArgs & { file_path: string }
+  args: XanoscriptDocsArgs & { file_path: string },
+  options?: DeveloperToolsOptions
 ): TopicDoc[] {
   const mode = args.mode || "quick_reference";
+  const docs = docsConfigFor(options);
 
-  const topics = selectTopicsForFilePath(docsPath, args, mode);
+  const topics = selectTopicsForFilePath(docsPath, args, mode, options);
 
   return topics.map((t) => {
-    const config = XANOSCRIPT_DOCS_V2[t];
-    const content = cachedReadFile(join(docsPath, config.file));
+    const config = docs[t];
+    const content = cachedReadFile(join(docsPath, config.file), options);
     return {
       topic: t,
       content:
@@ -532,15 +569,15 @@ export function readXanoscriptDocsStructured(
 /**
  * Get available topic names
  */
-export function getTopicNames(): string[] {
-  return Object.keys(XANOSCRIPT_DOCS_V2);
+export function getTopicNames(options?: DeveloperToolsOptions): string[] {
+  return Object.keys(docsConfigFor(options));
 }
 
 /**
  * Get topic descriptions for documentation
  */
-export function getTopicDescriptions(): string {
-  return Object.entries(XANOSCRIPT_DOCS_V2)
+export function getTopicDescriptions(options?: DeveloperToolsOptions): string {
+  return Object.entries(docsConfigFor(options))
     .map(([k, v]) => `${k} (${v.description.split(".")[0]})`)
     .join(", ");
 }

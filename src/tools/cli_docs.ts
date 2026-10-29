@@ -8,12 +8,14 @@
 import {
   handleCliDocs as _handleCliDocs,
   cliDocsToolSpec,
+  cliDocsToolSpecFor,
   topics,
   getTopicNames,
   getTopicDescriptions,
 } from "../cli_docs/index.js";
 import type { CliDocsArgs, DetailLevel, TopicDoc } from "../cli_docs/types.js";
 import type { ToolResult } from "./types.js";
+import type { DeveloperToolsOptions } from "../policies.js";
 
 // =============================================================================
 // Re-exports
@@ -21,6 +23,7 @@ import type { ToolResult } from "./types.js";
 
 export {
   cliDocsToolSpec,
+  cliDocsToolSpecFor,
   topics as cliTopics,
   getTopicNames as getCliTopicNames,
   getTopicDescriptions as getCliTopicDescriptions,
@@ -43,6 +46,7 @@ export interface CliDocsResult {
  * Get Xano CLI documentation.
  *
  * @param args - Documentation arguments
+ * @param options - The host's options (`policies: true` includes the policies feature)
  * @returns Documentation content
  *
  * @example
@@ -59,18 +63,18 @@ export interface CliDocsResult {
  * });
  * ```
  */
-export function cliDocs(args: CliDocsArgs): CliDocsResult {
+export function cliDocs(args: CliDocsArgs, options?: DeveloperToolsOptions): CliDocsResult {
   if (!args?.topic) {
     throw new Error("'topic' parameter is required. Use topic='start' for overview.");
   }
-  const documentation = _handleCliDocs(args);
+  const documentation = _handleCliDocs(args, options);
   return { documentation };
 }
 
 /**
  * Get CLI documentation and return a ToolResult.
  */
-export function cliDocsTool(args: CliDocsArgs): ToolResult {
+export function cliDocsTool(args: CliDocsArgs, options?: DeveloperToolsOptions): ToolResult {
   if (!args?.topic) {
     return {
       success: false,
@@ -79,7 +83,7 @@ export function cliDocsTool(args: CliDocsArgs): ToolResult {
   }
 
   try {
-    const result = cliDocs(args);
+    const result = cliDocs(args, options);
     return {
       success: true,
       data: result.documentation,

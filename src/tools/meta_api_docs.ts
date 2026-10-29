@@ -8,12 +8,14 @@
 import {
   handleMetaApiDocs as _handleMetaApiDocs,
   metaApiDocsToolSpec,
+  metaApiDocsToolSpecFor,
   topics,
   getTopicNames,
   getTopicDescriptions,
 } from "../meta_api_docs/index.js";
 import type { MetaApiDocsArgs, DetailLevel, TopicDoc } from "../meta_api_docs/types.js";
 import type { ToolResult } from "./types.js";
+import type { DeveloperToolsOptions } from "../policies.js";
 
 // =============================================================================
 // Re-exports
@@ -21,6 +23,7 @@ import type { ToolResult } from "./types.js";
 
 export {
   metaApiDocsToolSpec,
+  metaApiDocsToolSpecFor,
   topics as metaApiTopics,
   getTopicNames as getMetaApiTopicNames,
   getTopicDescriptions as getMetaApiTopicDescriptions,
@@ -43,6 +46,7 @@ export interface MetaApiDocsResult {
  * Get Xano Meta API documentation.
  *
  * @param args - Documentation arguments
+ * @param options - The host's options (`policies: true` includes the policies feature)
  * @returns Documentation content
  *
  * @example
@@ -60,18 +64,18 @@ export interface MetaApiDocsResult {
  * });
  * ```
  */
-export function metaApiDocs(args: MetaApiDocsArgs): MetaApiDocsResult {
+export function metaApiDocs(args: MetaApiDocsArgs, options?: DeveloperToolsOptions): MetaApiDocsResult {
   if (!args?.topic) {
     throw new Error("'topic' parameter is required. Use topic='start' for overview.");
   }
-  const documentation = _handleMetaApiDocs(args);
+  const documentation = _handleMetaApiDocs(args, options);
   return { documentation };
 }
 
 /**
  * Get Meta API documentation and return a ToolResult.
  */
-export function metaApiDocsTool(args: MetaApiDocsArgs): ToolResult {
+export function metaApiDocsTool(args: MetaApiDocsArgs, options?: DeveloperToolsOptions): ToolResult {
   if (!args?.topic) {
     return {
       success: false,
@@ -80,7 +84,7 @@ export function metaApiDocsTool(args: MetaApiDocsArgs): ToolResult {
   }
 
   try {
-    const result = metaApiDocs(args);
+    const result = metaApiDocs(args, options);
     return {
       success: true,
       data: result.documentation,

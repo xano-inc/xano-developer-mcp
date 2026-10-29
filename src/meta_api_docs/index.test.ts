@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   topics,
+  topicsFor,
   getTopicNames,
   getTopicDescriptions,
   handleMetaApiDocs,
@@ -32,9 +33,10 @@ describe("meta_api_docs/index", () => {
         "file",
         "history",
         "workflows",
+        "policy",
       ];
 
-      expect(Object.keys(topics)).toEqual(expectedTopics);
+      expect(Object.keys(topicsFor({ policies: true }))).toEqual(expectedTopics);
     });
 
     it("should have valid TopicDoc structure for each topic", () => {
