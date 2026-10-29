@@ -125,9 +125,12 @@ export {
   toolDefinitions,
   toolSpecs,
   handleTool,
+  developerTools,
 } from "./tools/index.js";
 
-export type { ToolName } from "./tools/index.js";
+export type { ToolName, DeveloperTools } from "./tools/index.js";
+
+export type { DeveloperToolsOptions } from "./policies.js";
 
 export type {
   BuiltTool,

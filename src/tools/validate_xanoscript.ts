@@ -21,6 +21,7 @@ import { minimatch } from "minimatch";
 import { z } from "zod";
 import { defineTool } from "./define_tool.js";
 import type { ToolResult } from "./types.js";
+import { gatePolicies, perPolicies } from "../policies.js";
 
 // =============================================================================
 // Types
@@ -580,7 +581,7 @@ function countWarnings(
 // MCP Tool Definition
 // =============================================================================
 
-export const validateXanoscriptToolSpec = defineTool({
+const validateXanoscriptSpec = {
   name: "xano_validate_xanoscript",
   description:
     "Validate XanoScript code for syntax errors. Supports multiple input methods:\n" +
@@ -589,7 +590,11 @@ export const validateXanoscriptToolSpec = defineTool({
     "- file_paths: Array of file paths for batch validation\n" +
     "- directory: Validate all .xs files in a directory\n\n" +
     "Returns errors with line/column positions and helpful suggestions for common mistakes. " +
-    "The language server auto-detects the object type from the code syntax.",
+    "The language server auto-detects the object type from the code syntax.<!-- policies --> " +
+    "Policy documents (policies/*.xs) are validated too: their syntax and block shape are errors, " +
+    "and what the check catalogue decides (an unknown check, field or param, a value outside its set) " +
+    "is a warning against the catalogue the language server ships with. The instance decides on save; " +
+    "format and check a policy against its branch with xano_parse_policy or `xano policy parse --file <path>`.<!-- /policies -->",
   annotations: {
     readOnlyHint: true,
     destructiveHint: false,
@@ -647,7 +652,14 @@ export const validateXanoscriptToolSpec = defineTool({
       .optional()
       .describe("Number of non-fatal warnings encountered, if any."),
   },
-});
+};
+
+/** The tool definition, its description per the host's options. */
+export const validateXanoscriptToolSpecFor = perPolicies((options) =>
+  defineTool({ ...validateXanoscriptSpec, description: gatePolicies(validateXanoscriptSpec.description, options) })
+);
+
+export const validateXanoscriptToolSpec = validateXanoscriptToolSpecFor();
 
 // =============================================================================
 // Utility Exports

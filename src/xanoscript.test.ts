@@ -3,6 +3,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import {
   XANOSCRIPT_DOCS_V2,
+  docsConfigFor,
   getDocsForFilePath,
   extractQuickReference,
   getXanoscriptDocsVersion,
@@ -65,9 +66,11 @@ describe("xanoscript module", () => {
         "middleware",
         "branch",
         "workspace",
+        "policies",
+        "policy-templates",
       ];
 
-      expect(Object.keys(XANOSCRIPT_DOCS_V2)).toEqual(expectedTopics);
+      expect(Object.keys(docsConfigFor({ policies: true }))).toEqual(expectedTopics);
     });
 
     it("should have valid DocConfig structure for each topic", () => {

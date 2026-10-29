@@ -7,6 +7,9 @@
  * ```ts
  * import { validateXanoscript, xanoscriptDocs } from '@xano/developer-mcp';
  * ```
+ *
+ * The local server never serves the unreleased policies feature: it uses the
+ * default tools and reads its resources without options (see src/policies.ts).
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -16,6 +19,7 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 import { XANOSCRIPT_DOCS_V2, getXanoscriptDocsVersion } from "./xanoscript.js";
+import { gatePolicies } from "./policies.js";
 import {
   toolSpecs,
   handleTool,
@@ -93,7 +97,7 @@ for (const [key, config] of Object.entries(XANOSCRIPT_DOCS_V2)) {
     },
     async (uri) => {
       try {
-        const content = readFileSync(join(XANOSCRIPT_DOCS_PATH, config.file), "utf-8");
+        const content = gatePolicies(readFileSync(join(XANOSCRIPT_DOCS_PATH, config.file), "utf-8"));
         const version = getXanoscriptDocsVersion(XANOSCRIPT_DOCS_PATH);
         return {
           contents: [

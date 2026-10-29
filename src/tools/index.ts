@@ -5,13 +5,15 @@
  * Tool registration goes through `toolSpecs` and `handleTool` below — the
  * `toolSpecs` map is the single source of truth for which tools exist and
  * the dispatch table in `handleTool` is statically required to cover every
- * key, so a new tool cannot be registered without being routed.
+ * key, so a new tool cannot be registered without being routed. A host that
+ * serves the unreleased policies feature takes both from
+ * `developerTools({ policies: true })` instead (see src/policies.ts).
  */
 
 import {
   validateXanoscript,
   validateXanoscriptTool,
-  validateXanoscriptToolSpec,
+  validateXanoscriptToolSpecFor,
   TYPE_ALIASES,
   RESERVED_VARIABLES,
   type ValidateXanoscriptArgs,
@@ -24,7 +26,7 @@ import {
 import {
   xanoscriptDocs,
   xanoscriptDocsTool,
-  xanoscriptDocsToolSpec,
+  xanoscriptDocsToolSpecFor,
   getXanoscriptDocsPath,
   setXanoscriptDocsPath,
   type XanoscriptDocsArgs,
@@ -44,7 +46,7 @@ import {
 import {
   metaApiDocs,
   metaApiDocsTool,
-  metaApiDocsToolSpec,
+  metaApiDocsToolSpecFor,
   metaApiTopics,
   getMetaApiTopicNames,
   getMetaApiTopicDescriptions,
@@ -55,7 +57,7 @@ import {
 import {
   cliDocs,
   cliDocsTool,
-  cliDocsToolSpec,
+  cliDocsToolSpecFor,
   cliTopics,
   getCliTopicNames,
   getCliTopicDescriptions,
@@ -77,6 +79,7 @@ import {
 } from "./xano_knowledge.js";
 
 import { type ToolResult, toMcpResponse } from "./types.js";
+import { perPolicies, type DeveloperToolsOptions } from "../policies.js";
 import { z } from "zod";
 import type { BuiltTool, ZodRawShape } from "./define_tool.js";
 
@@ -136,6 +139,7 @@ export {
   // Utility types
   type ToolResult,
   toMcpResponse,
+  type DeveloperToolsOptions,
 };
 
 // =============================================================================
@@ -157,32 +161,28 @@ export {
 // =============================================================================
 
 /**
- * Full tool specs (Zod shapes + derived JSON Schema). Use these to register
- * tools with `McpServer.registerTool` — descriptions live in the shapes and
- * the JSON Schema can never drift from the parser.
+ * Full tool specs (Zod shapes + derived JSON Schema) under the host's options.
+ * Use these to register tools with `McpServer.registerTool` — descriptions
+ * live in the shapes and the JSON Schema can never drift from the parser.
  */
-export const toolSpecs = {
-  xano_validate_xanoscript: validateXanoscriptToolSpec,
-  xano_xanoscript_docs: xanoscriptDocsToolSpec,
-  xano_version: mcpVersionToolSpec,
-  xano_meta_api_docs: metaApiDocsToolSpec,
-  xano_cli_docs: cliDocsToolSpec,
-  xano_knowledge_list: xanoKnowledgeListToolSpec,
-  xano_knowledge_get: xanoKnowledgeGetToolSpec,
-} as const;
+function buildToolSpecs(options: DeveloperToolsOptions) {
+  return {
+    xano_validate_xanoscript: validateXanoscriptToolSpecFor(options),
+    xano_xanoscript_docs: xanoscriptDocsToolSpecFor(options),
+    xano_version: mcpVersionToolSpec,
+    xano_meta_api_docs: metaApiDocsToolSpecFor(options),
+    xano_cli_docs: cliDocsToolSpecFor(options),
+    xano_knowledge_list: xanoKnowledgeListToolSpec,
+    xano_knowledge_get: xanoKnowledgeGetToolSpec,
+  } as const;
+}
 
-export type ToolName = keyof typeof toolSpecs;
+type ToolSpecs = ReturnType<typeof buildToolSpecs>;
 
-/**
- * Tool definitions array (derived from toolSpecs). Kept for callers that
- * want a flat list to advertise.
- */
-export const toolDefinitions = Object.values(toolSpecs).map(
-  (spec) => spec.definition
-);
+export type ToolName = keyof ToolSpecs;
 
 // =============================================================================
-// Tool Handler (typed dispatch — adding to toolSpecs without adding here is
+// Tool Handler (typed dispatch — adding to the specs without adding here is
 // a compile error)
 // =============================================================================
 
@@ -207,60 +207,94 @@ function parseWithSpec<I extends ZodRawShape, O extends ZodRawShape>(
 }
 
 /**
- * Dispatch table — every key in `toolSpecs` must have a handler here, or
- * TypeScript will fail to compile. Adding a tool means: add to `toolSpecs`,
- * then add a handler entry below.
+ * Dispatch table — every key in the specs must have a handler here, or
+ * TypeScript will fail to compile. Adding a tool means: add to
+ * `buildToolSpecs`, then add a handler entry below.
  */
-const dispatch: { [K in ToolName]: (args: Record<string, unknown>) => Promise<ToolResult> } = {
-  async xano_validate_xanoscript(args) {
-    const parsed = parseWithSpec(validateXanoscriptToolSpec, args);
-    if (!parsed.ok) return parsed.error;
-    return validateXanoscriptTool(parsed.data as ValidateXanoscriptArgs);
-  },
-  async xano_xanoscript_docs(args) {
-    const parsed = parseWithSpec(xanoscriptDocsToolSpec, args);
-    if (!parsed.ok) return parsed.error;
-    return xanoscriptDocsTool(parsed.data as XanoscriptDocsArgs);
-  },
-  async xano_version() {
-    return mcpVersionTool();
-  },
-  async xano_meta_api_docs(args) {
-    const parsed = parseWithSpec(metaApiDocsToolSpec, args);
-    if (!parsed.ok) return parsed.error;
-    return metaApiDocsTool(parsed.data as MetaApiDocsArgs);
-  },
-  async xano_cli_docs(args) {
-    const parsed = parseWithSpec(cliDocsToolSpec, args);
-    if (!parsed.ok) return parsed.error;
-    return cliDocsTool(parsed.data as CliDocsArgs);
-  },
-  async xano_knowledge_list(args) {
-    const parsed = parseWithSpec(xanoKnowledgeListToolSpec, args);
-    if (!parsed.ok) return parsed.error;
-    return xanoKnowledgeListTool(parsed.data as XanoKnowledgeListArgs);
-  },
-  async xano_knowledge_get(args) {
-    const parsed = parseWithSpec(xanoKnowledgeGetToolSpec, args);
-    if (!parsed.ok) return parsed.error;
-    return xanoKnowledgeGetTool(parsed.data as XanoKnowledgeGetArgs);
-  },
-};
+function buildDispatch(
+  specs: ToolSpecs,
+  options: DeveloperToolsOptions
+): { [K in ToolName]: (args: Record<string, unknown>) => Promise<ToolResult> } {
+  return {
+    async xano_validate_xanoscript(args) {
+      const parsed = parseWithSpec(specs.xano_validate_xanoscript, args);
+      if (!parsed.ok) return parsed.error;
+      return validateXanoscriptTool(parsed.data as ValidateXanoscriptArgs);
+    },
+    async xano_xanoscript_docs(args) {
+      const parsed = parseWithSpec(specs.xano_xanoscript_docs, args);
+      if (!parsed.ok) return parsed.error;
+      return xanoscriptDocsTool(parsed.data as XanoscriptDocsArgs, options);
+    },
+    async xano_version() {
+      return mcpVersionTool();
+    },
+    async xano_meta_api_docs(args) {
+      const parsed = parseWithSpec(specs.xano_meta_api_docs, args);
+      if (!parsed.ok) return parsed.error;
+      return metaApiDocsTool(parsed.data as MetaApiDocsArgs, options);
+    },
+    async xano_cli_docs(args) {
+      const parsed = parseWithSpec(specs.xano_cli_docs, args);
+      if (!parsed.ok) return parsed.error;
+      return cliDocsTool(parsed.data as CliDocsArgs, options);
+    },
+    async xano_knowledge_list(args) {
+      const parsed = parseWithSpec(specs.xano_knowledge_list, args);
+      if (!parsed.ok) return parsed.error;
+      return xanoKnowledgeListTool(parsed.data as XanoKnowledgeListArgs);
+    },
+    async xano_knowledge_get(args) {
+      const parsed = parseWithSpec(specs.xano_knowledge_get, args);
+      if (!parsed.ok) return parsed.error;
+      return xanoKnowledgeGetTool(parsed.data as XanoKnowledgeGetArgs);
+    },
+  };
+}
 
-function isToolName(name: string): name is ToolName {
-  return name in dispatch;
+export interface DeveloperTools {
+  /** The tool specs, keyed by tool name. */
+  readonly toolSpecs: ToolSpecs;
+  /** The specs' definitions as a flat list, for callers that advertise one. */
+  readonly toolDefinitions: ToolSpecs[ToolName]["definition"][];
+  /**
+   * Handle a tool call by name and return the result.
+   * Async to allow future tools that perform I/O without breaking the signature.
+   */
+  handleTool(name: string, args: Record<string, unknown>): Promise<ToolResult>;
 }
 
 /**
- * Handle a tool call by name and return the result.
- * Async to allow future tools that perform I/O without breaking the signature.
+ * The tools as a host serves them. `{ policies: true }` includes the
+ * unreleased policies feature (its topics, docs and wording); anything else,
+ * including no options, leaves it out.
  */
-export async function handleTool(
-  name: string,
-  args: Record<string, unknown>
-): Promise<ToolResult> {
-  if (!isToolName(name)) {
-    return { success: false, error: `Unknown tool: ${name}` };
-  }
-  return dispatch[name](args);
-}
+export const developerTools = perPolicies((options): DeveloperTools => {
+  const toolSpecs = buildToolSpecs(options);
+  const dispatch = buildDispatch(toolSpecs, options);
+  const isToolName = (name: string): name is ToolName => name in dispatch;
+  return {
+    toolSpecs,
+    toolDefinitions: Object.values(toolSpecs).map((spec) => spec.definition),
+    async handleTool(name, args) {
+      if (!isToolName(name)) {
+        return { success: false, error: `Unknown tool: ${name}` };
+      }
+      return dispatch[name](args);
+    },
+  };
+});
+
+const defaults = developerTools();
+
+/** The tool specs without the policies feature (see {@link developerTools}). */
+export const toolSpecs = defaults.toolSpecs;
+
+/**
+ * Tool definitions array (derived from toolSpecs). Kept for callers that
+ * want a flat list to advertise.
+ */
+export const toolDefinitions = defaults.toolDefinitions;
+
+/** Handle a tool call without the policies feature (see {@link developerTools}). */
+export const handleTool = defaults.handleTool;

@@ -20,6 +20,7 @@ import {
 } from "../xanoscript.js";
 import { defineTool } from "./define_tool.js";
 import type { ToolResult } from "./types.js";
+import { perPolicies, type DeveloperToolsOptions } from "../policies.js";
 
 // =============================================================================
 // Types
@@ -101,6 +102,7 @@ export function setXanoscriptDocsPath(path: string): void {
  * Get XanoScript documentation.
  *
  * @param args - Optional documentation arguments
+ * @param options - The host's options (`policies: true` includes the policies feature)
  * @returns Documentation content
  *
  * @example
@@ -120,16 +122,19 @@ export function setXanoscriptDocsPath(path: string): void {
  * const quickRef = xanoscriptDocs({ topic: 'syntax', mode: 'quick_reference' });
  * ```
  */
-export function xanoscriptDocs(args?: XanoscriptDocsArgs): XanoscriptDocsResult {
+export function xanoscriptDocs(
+  args?: XanoscriptDocsArgs,
+  options?: DeveloperToolsOptions
+): XanoscriptDocsResult {
   const docsPath = getXanoscriptDocsPath();
-  const documentation = readXanoscriptDocsV2(docsPath, args);
+  const documentation = readXanoscriptDocsV2(docsPath, args, options);
 
   // For file_path mode, also provide structured per-topic access
   if (args?.file_path) {
     const topics = readXanoscriptDocsStructured(docsPath, {
       ...args,
       file_path: args.file_path,
-    });
+    }, options);
     return { documentation, topics };
   }
 
@@ -140,13 +145,16 @@ export function xanoscriptDocs(args?: XanoscriptDocsArgs): XanoscriptDocsResult 
  * Get XanoScript documentation and return a ToolResult.
  * For file_path mode, returns each topic as a separate content block.
  */
-export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
+export function xanoscriptDocsTool(
+  args?: XanoscriptDocsArgs,
+  options?: DeveloperToolsOptions
+): ToolResult {
   try {
     const docsPath = getXanoscriptDocsPath();
 
     // Tier mode: return single content block for pre-built tiers
     if (args?.tier) {
-      const result = xanoscriptDocs(args);
+      const result = xanoscriptDocs(args, options);
       return {
         success: true,
         data: result.documentation,
@@ -160,7 +168,7 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
       const topicDocs = readXanoscriptDocsStructured(docsPath, {
         ...args,
         file_path: args.file_path,
-      });
+      }, options);
       const mode = args.mode || "quick_reference";
       const topics = topicDocs.map((d) => d.topic);
       const header =
@@ -182,7 +190,7 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
     }
 
     // All other modes: return single content block
-    const result = xanoscriptDocs(args);
+    const result = xanoscriptDocs(args, options);
     return {
       success: true,
       data: result.documentation,
@@ -202,117 +210,120 @@ export function xanoscriptDocsTool(args?: XanoscriptDocsArgs): ToolResult {
 // =============================================================================
 
 // Derive tier size facts from the actual files so the advertised numbers can
-// never drift stale (see getTierFacts). Computed once at module load.
-const tierFacts = getTierFacts(getXanoscriptDocsPath());
-
-export const xanoscriptDocsToolSpec = defineTool({
-  name: "xano_xanoscript_docs",
-  description:
-    "Get XanoScript programming language documentation for AI code generation. " +
-    "Call without parameters for a compact index of all topics (~4KB, ~1K tokens); then drill in with topic= or file_path=. Use topic='readme' for the full prose overview (previously the no-arg default). " +
-    `For context-limited models: use tier='survival' (~${tierFacts.survival.tokens}) or tier='working' (~${tierFacts.working.tokens}). ` +
-    "Use 'topic' for specific documentation, or 'file_path' for context-aware docs based on the file you're editing. " +
-    "Use 'filter' to fetch just one or a few expression filter signatures by name (e.g. filter='round') instead of the whole filter reference. " +
-    "Use mode='quick_reference' for compact syntax reference (recommended for context efficiency). " +
-    "Use max_tokens to limit documentation size to fit your context budget. " +
-    "file_path mode defaults to 'quick_reference' to reduce context size; use mode='full' to get complete docs.",
-  annotations: {
-    readOnlyHint: true,
-    destructiveHint: false,
-    idempotentHint: true,
-    openWorldHint: false,
-  },
-  inputShape: {
-    topic: z
-      .string()
-      .optional()
-      .describe(
-        "Documentation topic to retrieve. Call without any parameters to get the compact topic index; use topic='readme' for the full prose overview. " +
-          "Example: topic='syntax' for language syntax, topic='database' for database operations, topic='types' for type system. " +
-          "Common synonyms are accepted and resolved automatically (e.g. 'upload'/'storage' -> 'file-uploads'); an unrecognized topic returns the list of valid topics.\n\n" +
-          "Available topics:\n" +
-          getTopicDescriptions()
-      ),
-    file_path: z
-      .string()
-      .optional()
-      .describe(
-        "File path being edited. Returns all relevant docs automatically based on the file type and location. " +
-          "Uses applyTo pattern matching to select applicable topics. " +
-          "Example: 'api/users/create.xs' returns API, database, and syntax docs. " +
-          "'function/format.xs' returns function and syntax docs."
-      ),
-    filter: z
-      .string()
-      .optional()
-      .describe(
-        "One or more expression filter (transformer) names, comma-separated, to retrieve just those entries from the expression filter reference: signature, arguments with defaults, and a worked example. " +
-          "Accepts display names and canonical aliases, case-insensitive (e.g. filter='round', filter='fsort' or 'sort', filter='to_upper,split,map'). " +
-          "Much cheaper than loading topic='expressions/filters' (~12.7K tokens) when you only need a few signatures. " +
-          "Takes precedence over topic and file_path; an unknown name returns suggestions."
-      ),
-    mode: z
-      .enum(["full", "quick_reference", "index"])
-      .optional()
-      .describe(
-        "'full' = complete documentation with explanations and examples. " +
-          "'quick_reference' = compact reference with just syntax patterns and signatures. " +
-          "'index' = compact topic listing with descriptions and byte sizes (~4KB, ~1K tokens). " +
-          "When set, 'index' takes precedence over topic and file_path. " +
-          "Use 'index' to discover available topics before loading them. " +
-          "Use 'quick_reference' to save context window space when you just need a reminder. " +
-          "Default: 'full' for topic mode, 'quick_reference' for file_path mode."
-      ),
-    tier: z
-      .enum(["survival", "working"])
-      .optional()
-      .describe(
-        "Pre-packaged documentation tier for context-limited models. " +
-          `'survival' (~${tierFacts.survival.kb}, ~${tierFacts.survival.tokens}): minimum syntax to write valid XanoScript. ` +
-          `'working' (~${tierFacts.working.kb}, ~${tierFacts.working.tokens}): complete reference for common tasks. ` +
-          "Overrides topic/file_path/mode when set. " +
-          "Use 'survival' for models with <16K context, 'working' for 16-64K context."
-      ),
-    max_tokens: z
-      .number()
-      .optional()
-      .describe(
-        "Maximum estimated token budget for documentation. " +
-          "When used with file_path, loads topics in priority order until budget is reached. " +
-          "Helps prevent context overflow for small-window models. " +
-          "Estimate: 1KB of docs ≈ 250 tokens."
-      ),
-    exclude_topics: z
-      .array(z.string())
-      .optional()
-      .describe(
-        "List of topic names to exclude from file_path results. " +
-          "Use this to skip topics you've already loaded (e.g., exclude_topics: ['syntax', 'essentials']). " +
-          "Only applies when using file_path parameter."
-      ),
-  },
-  outputShape: {
-    documentation: z
-      .string()
-      .optional()
-      .describe("The documentation content (index, topic, tier, or file_path mode)."),
-    file_path: z
-      .string()
-      .optional()
-      .describe("The file path that was matched (file_path mode only)."),
-    mode: z.string().optional().describe("The documentation mode used."),
-    tier: z
-      .string()
-      .optional()
-      .describe("The pre-packaged tier used, if any."),
-    version: z
-      .string()
-      .optional()
-      .describe("The XanoScript documentation version."),
-    topics: z
-      .array(z.string())
-      .optional()
-      .describe("List of matched topic names (file_path mode only)."),
-  },
+// never drift stale (see getTierFacts). Computed once per gate state, the
+// default one at module load.
+export const xanoscriptDocsToolSpecFor = perPolicies((options) => {
+  const tierFacts = getTierFacts(getXanoscriptDocsPath(), options);
+  return defineTool({
+    name: "xano_xanoscript_docs",
+    description:
+      "Get XanoScript programming language documentation for AI code generation. " +
+      "Call without parameters for a compact index of all topics (~4KB, ~1K tokens); then drill in with topic= or file_path=. Use topic='readme' for the full prose overview (previously the no-arg default). " +
+      `For context-limited models: use tier='survival' (~${tierFacts.survival.tokens}) or tier='working' (~${tierFacts.working.tokens}). ` +
+      "Use 'topic' for specific documentation, or 'file_path' for context-aware docs based on the file you're editing. " +
+      "Use 'filter' to fetch just one or a few expression filter signatures by name (e.g. filter='round') instead of the whole filter reference. " +
+      "Use mode='quick_reference' for compact syntax reference (recommended for context efficiency). " +
+      "Use max_tokens to limit documentation size to fit your context budget. " +
+      "file_path mode defaults to 'quick_reference' to reduce context size; use mode='full' to get complete docs.",
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    inputShape: {
+      topic: z
+        .string()
+        .optional()
+        .describe(
+          "Documentation topic to retrieve. Call without any parameters to get the compact topic index; use topic='readme' for the full prose overview. " +
+            "Example: topic='syntax' for language syntax, topic='database' for database operations, topic='types' for type system. " +
+            "Common synonyms are accepted and resolved automatically (e.g. 'upload'/'storage' -> 'file-uploads'); an unrecognized topic returns the list of valid topics.\n\n" +
+            "Available topics:\n" +
+            getTopicDescriptions(options)
+        ),
+      file_path: z
+        .string()
+        .optional()
+        .describe(
+          "File path being edited. Returns all relevant docs automatically based on the file type and location. " +
+            "Uses applyTo pattern matching to select applicable topics. " +
+            "Example: 'api/users/create.xs' returns API, database, and syntax docs. " +
+            "'function/format.xs' returns function and syntax docs."
+        ),
+      filter: z
+        .string()
+        .optional()
+        .describe(
+          "One or more expression filter (transformer) names, comma-separated, to retrieve just those entries from the expression filter reference: signature, arguments with defaults, and a worked example. " +
+            "Accepts display names and canonical aliases, case-insensitive (e.g. filter='round', filter='fsort' or 'sort', filter='to_upper,split,map'). " +
+            "Much cheaper than loading topic='expressions/filters' (~12.7K tokens) when you only need a few signatures. " +
+            "Takes precedence over topic and file_path; an unknown name returns suggestions."
+        ),
+      mode: z
+        .enum(["full", "quick_reference", "index"])
+        .optional()
+        .describe(
+          "'full' = complete documentation with explanations and examples. " +
+            "'quick_reference' = compact reference with just syntax patterns and signatures. " +
+            "'index' = compact topic listing with descriptions and byte sizes (~4KB, ~1K tokens). " +
+            "When set, 'index' takes precedence over topic and file_path. " +
+            "Use 'index' to discover available topics before loading them. " +
+            "Use 'quick_reference' to save context window space when you just need a reminder. " +
+            "Default: 'full' for topic mode, 'quick_reference' for file_path mode."
+        ),
+      tier: z
+        .enum(["survival", "working"])
+        .optional()
+        .describe(
+          "Pre-packaged documentation tier for context-limited models. " +
+            `'survival' (~${tierFacts.survival.kb}, ~${tierFacts.survival.tokens}): minimum syntax to write valid XanoScript. ` +
+            `'working' (~${tierFacts.working.kb}, ~${tierFacts.working.tokens}): complete reference for common tasks. ` +
+            "Overrides topic/file_path/mode when set. " +
+            "Use 'survival' for models with <16K context, 'working' for 16-64K context."
+        ),
+      max_tokens: z
+        .number()
+        .optional()
+        .describe(
+          "Maximum estimated token budget for documentation. " +
+            "When used with file_path, loads topics in priority order until budget is reached. " +
+            "Helps prevent context overflow for small-window models. " +
+            "Estimate: 1KB of docs ≈ 250 tokens."
+        ),
+      exclude_topics: z
+        .array(z.string())
+        .optional()
+        .describe(
+          "List of topic names to exclude from file_path results. " +
+            "Use this to skip topics you've already loaded (e.g., exclude_topics: ['syntax', 'essentials']). " +
+            "Only applies when using file_path parameter."
+        ),
+    },
+    outputShape: {
+      documentation: z
+        .string()
+        .optional()
+        .describe("The documentation content (index, topic, tier, or file_path mode)."),
+      file_path: z
+        .string()
+        .optional()
+        .describe("The file path that was matched (file_path mode only)."),
+      mode: z.string().optional().describe("The documentation mode used."),
+      tier: z
+        .string()
+        .optional()
+        .describe("The pre-packaged tier used, if any."),
+      version: z
+        .string()
+        .optional()
+        .describe("The XanoScript documentation version."),
+      topics: z
+        .array(z.string())
+        .optional()
+        .describe("List of matched topic names (file_path mode only)."),
+    },
+  });
 });
 
+export const xanoscriptDocsToolSpec = xanoscriptDocsToolSpecFor();

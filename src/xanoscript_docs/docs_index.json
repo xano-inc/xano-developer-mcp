@@ -305,6 +305,22 @@
       "applyTo": ["workspace/**/*.xs"],
       "priority": 3,
       "aliases": ["env", "environment", "preferences"]
+    },
+    "policies": {
+      "file": "policies.md",
+      "feature": "policies",
+      "description": "Workspace policies: human descriptions and deterministic check rules, validated by the platform",
+      "applyTo": ["policies/*.xs"],
+      "exclusive": true,
+      "priority": 3,
+      "aliases": ["policy", "governance"]
+    },
+    "policy-templates": {
+      "file": "policy-templates.md",
+      "feature": "policies",
+      "description": "The platform's policy templates by category: key, title, checks, framework tags and the settings each leaves to fill, with an example; recipes for goals that take several templates; what no check can see",
+      "applyTo": [],
+      "aliases": ["policy-template"]
     }
   },
 

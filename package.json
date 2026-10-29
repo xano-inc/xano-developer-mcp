@@ -37,6 +37,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "gen:policy-docs": "node scripts/gen-policy-check-docs.mjs",
     "prepublishOnly": "./scripts/check-publish-tag.sh && npm run build",
     "publish:beta": "./scripts/bump-version.sh beta && npm publish --tag beta",
     "publish:latest": "./scripts/bump-version.sh patch && npm publish"
