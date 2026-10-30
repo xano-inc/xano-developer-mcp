@@ -621,20 +621,7 @@ db.query "dad_jokes" {
 } as $joke
 ```
 
-### 10. Using $env in run.job input blocks
-```xs
-// Wrong - $env not allowed in input blocks
-// run.job "my_job" { input { text api_key = $env.API_KEY } }
-
-// Correct - access $env in the stack instead
-run.job "my_job" {
-  stack {
-    var $api_key { value = $env.API_KEY }
-  }
-}
-```
-
-### 11. Using `object` type without schema
+### 10. Using `object` type without schema
 ```xs
 // Wrong - object requires a schema
 // input { object data }
@@ -655,7 +642,7 @@ input {
 }
 ```
 
-### 12. While loop outside of stack block
+### 11. While loop outside of stack block
 ```xs
 // Wrong - while must be inside stack
 // while (true) { each { ... } }
@@ -668,7 +655,7 @@ stack {
 }
 ```
 
-### 13. Multiple constructs in one file
+### 12. Multiple constructs in one file
 
 Each `.xs` file must contain exactly **one** construct. Placing two constructs in the same file causes a parse error.
 
@@ -682,7 +669,7 @@ Each `.xs` file must contain exactly **one** construct. Placing two constructs i
 // function/helper_b.xs -> contains only "helper_b"
 ```
 
-### 14. Using `image?` for file uploads (the `.path` footgun)
+### 13. Using `image?` for file uploads (the `.path` footgun)
 
 Upload inputs **must** be typed `file?`. `image?`/`attachment?`/`video?`/`audio?` pass the raw upload object (which has `tmp_name` but no `.path`), so `storage.*` fails at runtime with `Missing param: path`. The validator does **not** catch this — it is syntactically valid.
 
@@ -708,7 +695,7 @@ stack {
 
 See `xano_xanoscript_docs({ topic: "file-uploads" })` for the full pattern.
 
-### 15. Wrong delete operation names
+### 14. Wrong delete operation names
 
 There is no `db.delete`, no `db.delete_all`, and no fluent `db.<table>.query()...delete()`. The parser rejects all three. Pick by scope: one record, many-by-condition, or the whole table.
 
@@ -735,7 +722,7 @@ db.truncate "session" { reset = true }
 
 See `xano_xanoscript_docs({ topic: "database" })` for all delete operations.
 
-### 16. Read-then-edit counters (lost updates)
+### 15. Read-then-edit counters (lost updates)
 
 `db.get` → add → `db.edit` races: two concurrent requests both read `5` and write `6`. Use `db.increment` (atomic; negative `value` decrements; guard with `where`, no clamping; the key is `field_name`).
 

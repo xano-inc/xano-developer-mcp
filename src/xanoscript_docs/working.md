@@ -128,14 +128,7 @@ throw {
 var $obj { value = { name: "Alice", age: 30 } }
 ```
 
-### 10. Using $env in run.job input blocks
-```xs
-// WRONG: run.job "my_job" { input { text api_key = $env.API_KEY } }
-// RIGHT — access $env in the stack:
-run.job "my_job" { stack { var $api_key { value = $env.API_KEY } } }
-```
-
-### 11. Using `object` type without schema
+### 10. Using `object` type without schema
 ```xs
 // WRONG: input { object data }
 // RIGHT — use json for arbitrary data:
@@ -144,14 +137,14 @@ input { json data }
 input { object data { schema { text name  int id } } }
 ```
 
-### 12. While loop outside of stack block
+### 11. While loop outside of stack block
 ```xs
 // WRONG: while (true) { each { ... } }
 // RIGHT:
 stack { while (true) { each { ... } } }
 ```
 
-### 13. Multiple constructs in one file
+### 12. Multiple constructs in one file
 ```
 // WRONG — two constructs in one file:
 // function "helper_a" { ... }
