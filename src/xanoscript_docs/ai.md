@@ -104,9 +104,9 @@ function "summarize_or_skip" {
 | `ai.image.generate` | `gemini-3.1-flash-image` | balanced | GA | **Suggested** (Nano Banana 2); sizes 1K/2K/4K |
 | | `gemini-3-pro-image` | best | GA | Nano Banana Pro; sizes 1K/2K/4K |
 | | `gemini-3.1-flash-lite-image` | fast | GA | size 1K only |
-| `ai.video.generate` | `veo-3.1-fast-generate-001` | balanced | GA | **Suggested** |
-| | `veo-3.1-generate-001` | best | GA | allows `resolution = "4k"` |
-| | `veo-3.1-lite-generate-001` | fast | Preview | |
+| `ai.video.generate` | `veo-3.1-fast-generate-001` | balanced | GA | **Suggested**; 720p, 1080p, 4k |
+| | `veo-3.1-generate-001` | best | GA | 720p, 1080p, 4k |
+| | `veo-3.1-lite-generate-001` | fast | Preview | 720p, 1080p |
 | `ai.speech.generate` | `gemini-3.8-flash-tts` | balanced | GA | **Suggested** |
 | | `gemini-3.8-flash-lite-tts` | fast | GA | |
 | `ai.speech.transcribe` | `gemini-3.5-transcribe` | default | GA | **Suggested** |
@@ -128,7 +128,7 @@ Generate text, or JSON that matches a schema, from a prompt, prior messages and 
 | `prompt` | — | text; required unless `messages` is set |
 | `system` | `""` | system instructions |
 | `messages` | `[]` | prior turns: `[{role: "user" \| "assistant", content: "..."}]` |
-| `files` | `[]` | file resources (image, PDF, audio, video) sent with the prompt |
+| `files` | `[]` | file resources sent with the prompt: image, PDF, audio and video on Gemini models; image and PDF on Claude |
 | `temperature` | `null` | decimal `0`..`2`; `null` uses the model default |
 | `max_tokens` | `null` | int; `null` uses the model default |
 | `response_format` | `"text"` | `"text"` or `"json"` |
@@ -272,7 +272,7 @@ Create a short video clip, optionally from a first and last frame. The statement
 | `image` | `null` | file resource; the first frame |
 | `last_image` | `null` | file resource; the last frame |
 | `aspect_ratio` | `"16:9"` | `16:9` or `9:16` |
-| `resolution` | `"720p"` | `720p`, `1080p`, or `4k` (only `veo-3.1-generate-001`) |
+| `resolution` | `"720p"` | `720p`, `1080p`, or `4k` (not on `veo-3.1-lite-generate-001`) |
 | `duration` | `8` | `4`, `6` or `8` seconds |
 | `generate_audio` | `true` | generate a soundtrack |
 | `timeout` | `300` | seconds to wait for the result |
