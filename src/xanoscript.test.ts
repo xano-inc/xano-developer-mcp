@@ -559,7 +559,9 @@ Even more content.
       // Raised 8000 -> 8300 when the expressions topic (DEV-6594) joined the **/*.xs
       // auto-load set: its Quick Reference + Choosing + Common Mistakes extraction is a
       // deliberate ~300-token addition steering agents toward filters over expressions.
-      const CEILING_TOKENS = 8300;
+      // Raised 8300 -> 8400 for essentials Common Mistake #17 (DEV-9270): a ~90-token entry
+      // steering agents away from api_key on ai.* statements and agents for one-shot calls.
+      const CEILING_TOKENS = 8400;
       for (const fp of COMMON_PATHS) {
         const docs = readXanoscriptDocsStructured(DOCS_PATH, { file_path: fp });
         const bytes = docs.reduce((sum, d) => sum + d.content.length, 0);
