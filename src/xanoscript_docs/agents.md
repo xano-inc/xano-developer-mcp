@@ -60,6 +60,8 @@ agent "Customer Support" {
 
 ## Calling Agents
 
+> **One-shot call?** A single prompt-to-answer (summarize, classify, extract JSON, generate an image, embed text) does not need an agent: use `ai.text.generate` and the other Xano AI statements (`xano_xanoscript_docs({ topic: "ai" })`). Use `ai.agent.run` when the model needs tools or multiple steps.
+
 ```xs
 ai.agent.run "Customer Support" {
   args = {}|set:"user_message":$input.message
@@ -387,6 +389,7 @@ agent "Research Agent" {
 
 | Topic | Description |
 |-------|-------------|
+| `ai` | One-shot Xano AI statements (`ai.text.generate`, `ai.image.generate`, ...) |
 | `tools` | Functions that agents can execute |
 | `mcp-servers` | MCP server configuration |
 | `triggers` | Agent triggers for events |

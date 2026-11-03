@@ -40,6 +40,7 @@ describe("xanoscript module", () => {
         "tasks",
         "triggers",
         "database",
+        "ai",
         "agents",
         "tools",
         "mcp-servers",

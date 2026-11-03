@@ -734,6 +734,10 @@ db.increment "product" {
 } as $products
 ```
 
+### 17. `api_key` on an `ai.*` statement, or an agent for a one-shot call
+
+`ai.text.generate`, `ai.image.generate` and the other Xano AI statements bill credits only: no `api_key`/`provider` key, and they fail with `credits_exhausted` when credits run out. One prompt → one answer is `ai.text.generate`; `ai.agent.run` is for tools or multi-step work. Topic: `ai`.
+
 ---
 
 ## Validation is syntax-only
@@ -754,5 +758,6 @@ Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:
 | `functions` | Reusable function stacks, async patterns, loops |
 | `apis` | HTTP endpoints, authentication, CRUD patterns |
 | `file-uploads` | Uploading files to Xano storage (`file?`, create_attachment, signed URLs) |
+| `ai` | Xano AI statements: generate text/images/video/speech/music, transcribe, embed, rerank |
 | `security` | Security best practices and authentication |
 | `integrations` | External API patterns (OpenAI, Stripe, etc.) |

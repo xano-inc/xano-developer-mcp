@@ -1,5 +1,5 @@
 {
-  "version": "2.8.0",
+  "version": "2.10.0",
   "description": "Machine-readable index for XanoScript documentation (version mirrors version.json)",
 
   "topics": {
@@ -117,12 +117,19 @@
       "priority": 5,
       "aliases": ["db", "crud", "query", "sql"]
     },
+    "ai": {
+      "file": "ai.md",
+      "description": "Xano AI statements (credits only): ai.text.generate, ai.image.generate, ai.video.generate, ai.speech.generate, ai.speech.transcribe, ai.embedding.create, ai.rerank, ai.music.generate",
+      "applyTo": [],
+      "priority": 9,
+      "aliases": ["xano-ai", "ai-statements", "generate", "image-generation", "embeddings", "embedding", "rerank", "transcribe", "tts", "text-to-speech", "speech-to-text"]
+    },
     "agents": {
       "file": "agents.md",
       "description": "AI agent configuration with LLM providers and tools",
       "applyTo": ["ai/agent/*.xs"],
       "priority": 3,
-      "aliases": ["ai", "llm", "chatbot"]
+      "aliases": ["agent", "llm", "chatbot"]
     },
     "tools": {
       "file": "tools.md",
@@ -393,6 +400,15 @@
   "operations": {
     "realtime.publish": { "file": "realtime-v2.md" },
     "realtime.get_session": { "file": "realtime-v2.md" },
+    "ai.agent.run": { "file": "agents.md" },
+    "ai.text.generate": { "file": "ai.md" },
+    "ai.image.generate": { "file": "ai.md" },
+    "ai.video.generate": { "file": "ai.md" },
+    "ai.speech.generate": { "file": "ai.md" },
+    "ai.speech.transcribe": { "file": "ai.md" },
+    "ai.embedding.create": { "file": "ai.md" },
+    "ai.rerank": { "file": "ai.md" },
+    "ai.music.generate": { "file": "ai.md" },
     "mcp.elicit": { "file": "mcp-servers.md" },
     "mcp.progress": { "file": "mcp-servers.md" },
     "db.query": { "file": "database.md" },
@@ -498,6 +514,8 @@
     "email": ["integrations/utilities.md"],
     "scheduled_jobs": ["tasks.md"],
     "realtime": ["realtime.md", "triggers.md"],
-    "ai_agents": ["agents.md", "tools.md", "mcp-servers.md"]
+    "ai_agents": ["agents.md", "tools.md", "mcp-servers.md"],
+    "ai_generation": ["ai.md", "file-uploads.md"],
+    "embeddings": ["ai.md", "database.md", "tables.md"]
   }
 }

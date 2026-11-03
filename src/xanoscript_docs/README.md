@@ -269,6 +269,7 @@ Use `xano_xanoscript_docs({ tier: "survival" })` or `xano_xanoscript_docs({ tier
 
 | Topic         | Description                                         | Key Sections |
 | ------------- | --------------------------------------------------- | ------------ |
+| `ai`          | Xano AI statements: text, image, video, speech, music, transcription, embeddings, rerank | Choosing a Statement, Billing, Models |
 | `agents`      | AI agent configuration with LLM providers and tools | LLM Config, Tool Binding |
 | `tools`       | AI tools for agents and MCP servers                 | Tool Schema, Parameters |
 | `mcp-servers` | MCP server definitions exposing tools               | Server Config, Tool Exposure |
