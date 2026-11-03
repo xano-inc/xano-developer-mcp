@@ -17,13 +17,6 @@ import { xanoscriptDocs } from "./xanoscript_docs.js";
 import { resolveTopic } from "../xanoscript.js";
 import docsIndex from "../xanoscript_docs/docs_index.json" with { type: "json" };
 
-// TODO(DEV-9270): the bundled parser comes from @xano/xanoscript-language-server, which
-// learns the eight ai.* statements in the release after 12.24.0 (xs-language-server branch
-// justin/DEV-9270/ai-statements). Until package.json depends on that version, the parser
-// tests below are skipped. After the bump, delete this flag and the skipIf calls.
-// To run them early against a local language-server checkout: XS_AI_GRAMMAR=1 npx vitest run
-const AI_GRAMMAR = process.env.XS_AI_GRAMMAR === "1";
-
 const STATEMENTS = [
   "ai.text.generate",
   "ai.image.generate",
@@ -63,13 +56,13 @@ describe("ai.md examples", () => {
   });
 
   for (const [index, code] of examples.entries()) {
-    it.skipIf(!AI_GRAMMAR)(`validates ai.md example ${index + 1}`, () => {
+    it(`validates ai.md example ${index + 1}`, () => {
       const result = validateXanoscript({ code });
       expect(result.valid, result.message).toBe(true);
     });
   }
 
-  it.skipIf(!AI_GRAMMAR)("validates the working.md cheat-sheet snippet", () => {
+  it("validates the working.md cheat-sheet snippet", () => {
     const working = read("working.md");
     const start = working.indexOf("## AI Statements (Xano AI)");
     const block = [...working.slice(start).matchAll(/```xs\n([\s\S]*?)```/g)][0][1];
@@ -78,7 +71,7 @@ describe("ai.md examples", () => {
   });
 });
 
-describe.skipIf(!AI_GRAMMAR)("ai.* grammar", () => {
+describe("ai.* grammar", () => {
   it("accepts every optional key on ai.text.generate", () => {
     const result = check(`    ai.text.generate {
       description = "Answer a question"
