@@ -8,6 +8,7 @@
  *   2. An unknown key (`api_key`: the statements bill Xano AI credits only) fails.
  *   3. A missing required key fails.
  *   4. The `ai` topic is wired into the index, aliases and operations.
+ *   5. `save_to_files` (DEV-9419) parses on the four media statements and is refused elsewhere.
  */
 
 import { readFileSync } from "node:fs";
@@ -16,6 +17,16 @@ import { validateXanoscript } from "./validate_xanoscript.js";
 import { xanoscriptDocs } from "./xanoscript_docs.js";
 import { resolveTopic } from "../xanoscript.js";
 import docsIndex from "../xanoscript_docs/docs_index.json" with { type: "json" };
+
+// TODO(DEV-9419): the bundled parser comes from @xano/xanoscript-language-server, which
+// learns `save_to_files` on the four media statements in the release after 12.26.0
+// (xs-language-server branch justin/DEV-9419/ai-save-and-models). Until package.json depends
+// on that version, the tests that parse `save_to_files` (and the ai.md examples that use it)
+// are skipped. After the bump, delete this flag and the skipIf calls.
+// To run them early against a local language-server checkout: XS_AI_SAVE_TO_FILES=1 npx vitest run
+const SAVE_TO_FILES = process.env.XS_AI_SAVE_TO_FILES === "1";
+
+const MEDIA_STATEMENTS = ["ai.image.generate", "ai.video.generate", "ai.speech.generate", "ai.music.generate"];
 
 const STATEMENTS = [
   "ai.text.generate",
@@ -56,7 +67,7 @@ describe("ai.md examples", () => {
   });
 
   for (const [index, code] of examples.entries()) {
-    it(`validates ai.md example ${index + 1}`, () => {
+    it.skipIf(!SAVE_TO_FILES && code.includes("save_to_files"))(`validates ai.md example ${index + 1}`, () => {
       const result = validateXanoscript({ code });
       expect(result.valid, result.message).toBe(true);
     });
@@ -139,6 +150,57 @@ describe("ai.* grammar", () => {
       language = "en-US"
     } as $transcript`);
     expect(result.valid).toBe(false);
+  });
+});
+
+describe.skipIf(!SAVE_TO_FILES)("save_to_files grammar", () => {
+  const minimal: Record<string, string> = {
+    "ai.image.generate": `model = "gemini-3.1-flash-image"\n      prompt = "A fox"`,
+    "ai.video.generate": `model = "veo-3.1-fast-generate-001"\n      prompt = "A fox running"`,
+    "ai.speech.generate": `model = "gemini-3.8-flash-tts"\n      text = "Hello"`,
+    "ai.music.generate": `model = "lyria-002"\n      prompt = "Calm piano"`,
+  };
+
+  for (const statement of MEDIA_STATEMENTS) {
+    it(`accepts save_to_files on ${statement}`, () => {
+      for (const value of [`""`, `"public"`, `"private"`]) {
+        const result = check(`    ${statement} {\n      ${minimal[statement]}\n      save_to_files = ${value}\n    } as $result`);
+        expect(result.valid, `${statement} = ${value}: ${result.message}`).toBe(true);
+      }
+    });
+  }
+
+  it("refuses save_to_files on ai.text.generate", () => {
+    const result = check(`    ai.text.generate {
+      model = "gemini-3.8-flash"
+      prompt = "Hi"
+      save_to_files = "public"
+    } as $result`);
+    expect(result.valid).toBe(false);
+  });
+});
+
+describe("save_to_files docs", () => {
+  const doc = read("ai.md");
+
+  it("has an ai.md example of each way to store media", () => {
+    const all = examples.join("\n");
+    expect(all).toContain(`save_to_files = "public"`);
+    expect(all).toContain(".saved_file");
+    for (const from of ["storage.create_image {", "storage.create_video {", "storage.create_audio {"]) expect(all, from).toContain(from);
+  });
+
+  it("documents the values, the From File equivalence and the file-column mistake", () => {
+    expect(doc).toContain("| `\"\"` (default) | off");
+    for (const statement of MEDIA_STATEMENTS) expect(doc, statement).toMatch(new RegExp(`\\| \`${statement.replace(/\./g, "\\.")}\` \\| \`storage\\.create_(image|video|audio)\``));
+    expect(doc).toContain("Putting `$result.image` / `$result.audio` / `$result.video` straight into a file column");
+    expect(read("essentials.md")).toContain("saved_file");
+  });
+
+  it("lists the new models and the Lyria 3 limits", () => {
+    for (const model of ["gemini-nano-banana-2.1", "lyria-3-clip-preview", "lyria-3-pro-preview"]) expect(doc, model).toContain(`\`${model}\``);
+    expect(doc).toContain("**`lyria-002` only**");
+    expect(doc).toContain("{audio, saved_file, lyrics, description, model}");
   });
 });
 

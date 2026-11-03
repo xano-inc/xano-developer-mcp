@@ -734,9 +734,9 @@ db.increment "product" {
 } as $products
 ```
 
-### 17. `api_key` on an `ai.*` statement, or an agent for a one-shot call
+### 17. `api_key` on `ai.*`, an agent for a one-shot call, or raw media in a file column
 
-`ai.text.generate`, `ai.image.generate` and the other Xano AI statements bill credits only: no `api_key`/`provider` key, and they fail with `credits_exhausted` when credits run out. One prompt → one answer is `ai.text.generate`; `ai.agent.run` is for tools or multi-step work. Topic: `ai`.
+Xano AI `ai.*` statements bill credits only: no `api_key`/`provider` key. One prompt → one answer is `ai.text.generate`; `ai.agent.run` is for tools or multi-step work. `$result.image`/`.audio` is a temporary file resource that saves `null` in a file column: store `$result.saved_file` (`save_to_files = "public"`) or a `storage.create_image`/`_audio`/`_video` result. Topic: `ai`.
 
 ---
 

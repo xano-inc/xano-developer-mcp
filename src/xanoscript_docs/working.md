@@ -630,7 +630,10 @@ ai.text.generate {
   prompt = $input.question
 } as $result
 
-// Media comes back as a file resource and is NOT stored automatically
+// Media comes back as a temporary file resource and is NOT stored automatically.
+// A file resource in a file column saves null: store it first. Either set
+// save_to_files = "public" on the media statement and use $gen.saved_file,
+// or use the From File statement (storage.create_image / create_video / create_audio):
 ai.image.generate {
   model = "gemini-3.1-flash-image"
   prompt = "A red fox, watercolor"
