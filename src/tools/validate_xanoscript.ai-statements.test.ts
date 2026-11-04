@@ -18,14 +18,6 @@ import { xanoscriptDocs } from "./xanoscript_docs.js";
 import { resolveTopic } from "../xanoscript.js";
 import docsIndex from "../xanoscript_docs/docs_index.json" with { type: "json" };
 
-// TODO(DEV-9419): the bundled parser comes from @xano/xanoscript-language-server, which
-// learns `save_to_files` on the four media statements in 12.27.0
-// (xano-labs/xanoscript-language-server#74, not yet published). Until package.json depends
-// on that version, the tests that parse `save_to_files` (and the ai.md examples that use it)
-// are skipped. After the bump, delete this flag and the skipIf calls.
-// To run them early against a local language-server checkout: XS_AI_SAVE_TO_FILES=1 npx vitest run
-const SAVE_TO_FILES = process.env.XS_AI_SAVE_TO_FILES === "1";
-
 const MEDIA_STATEMENTS = ["ai.image.generate", "ai.video.generate", "ai.speech.generate", "ai.music.generate"];
 
 const STATEMENTS = [
@@ -67,7 +59,7 @@ describe("ai.md examples", () => {
   });
 
   for (const [index, code] of examples.entries()) {
-    it.skipIf(!SAVE_TO_FILES && code.includes("save_to_files"))(`validates ai.md example ${index + 1}`, () => {
+    it(`validates ai.md example ${index + 1}`, () => {
       const result = validateXanoscript({ code });
       expect(result.valid, result.message).toBe(true);
     });
@@ -153,7 +145,7 @@ describe("ai.* grammar", () => {
   });
 });
 
-describe.skipIf(!SAVE_TO_FILES)("save_to_files grammar", () => {
+describe("save_to_files grammar", () => {
   const minimal: Record<string, string> = {
     "ai.image.generate": `model = "gemini-3.1-flash-image"\n      prompt = "A fox"`,
     "ai.video.generate": `model = "veo-3.1-fast-generate-001"\n      prompt = "A fox running"`,
