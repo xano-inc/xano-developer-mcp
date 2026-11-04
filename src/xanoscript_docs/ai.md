@@ -6,7 +6,7 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/*.xs, ai/tool/*.xs"
 
 One-shot model calls inside any function stack: generate text, images, video, speech and music, transcribe audio, create embeddings and rerank documents.
 
-> **TL;DR:** `ai.text.generate`, `ai.image.generate`, `ai.video.generate`, `ai.speech.generate`, `ai.speech.transcribe`, `ai.embedding.create`, `ai.rerank` and `ai.music.generate`. Each takes a `model` (a catalog model name), its inputs, and ends with `as $var`. They bill **Xano AI credits only**: there is no provider, `api_key` or BYO-model field. Media comes back as a **file resource**, which is not stored until you store it: set `save_to_files = "public"` (or `"private"`) and use `$result.saved_file`, or pass the file resource to `storage.create_image` / `storage.create_video` / `storage.create_audio`.
+> **TL;DR:** `ai.text.generate`, `ai.image.generate`, `ai.video.generate`, `ai.speech.generate`, `ai.speech.transcribe`, `ai.embedding.create`, `ai.rerank` and `ai.music.generate`. Each takes a `model` (a catalog model name), its inputs, and ends with `as $var`. They bill **Xano AI credits only**: there is no provider, `api_key` or BYO-model field. Media comes back as a **file resource**, which is not stored until you store it: set `save_to_files = "public"` (or `"private"`) and the media key (`image`/`video`/`audio`) holds the stored file instead, or pass the file resource to `storage.create_image` / `storage.create_video` / `storage.create_audio`.
 
 ## Choosing a Statement
 
@@ -31,13 +31,13 @@ Need a model to...
 | Statement | Purpose | Required keys | Returns (`as $result`) |
 |-----------|---------|---------------|------------------------|
 | `ai.text.generate` | Text or JSON generation | `model`, `prompt` (or `messages`) | `{text, json, model, finish_reason, usage}` |
-| `ai.image.generate` | Create or edit an image | `model`, `prompt` | `{image, saved_file, text, model, usage}` |
-| `ai.video.generate` | Create a video clip | `model`, `prompt` | `{video, saved_file, model, duration}` |
-| `ai.speech.generate` | Text to speech | `model`, `text` | `{audio, saved_file, model, usage}` |
+| `ai.image.generate` | Create or edit an image | `model`, `prompt` | `{image, text, model, usage}` |
+| `ai.video.generate` | Create a video clip | `model`, `prompt` | `{video, model, duration}` |
+| `ai.speech.generate` | Text to speech | `model`, `text` | `{audio, model, usage}` |
 | `ai.speech.transcribe` | Speech to text | `model`, `audio` | `{text, model, usage}` |
 | `ai.embedding.create` | Embedding vectors | `model`, `input` | `{embeddings, model, usage}` |
 | `ai.rerank` | Rank documents against a query | `model`, `query`, `documents` | `{results, model}` |
-| `ai.music.generate` | Music clip or song | `model`, `prompt` | `{audio, saved_file, lyrics, description, model}` |
+| `ai.music.generate` | Music clip or song | `model`, `prompt` | `{audio, lyrics, description, model}` |
 
 Every statement also accepts `description`, `disabled` and `mock`, like any other statement. `usage` is `{input_tokens, output_tokens}` when the model reports tokens, else `{}`.
 
@@ -51,13 +51,15 @@ Inputs that take media (`files`, `images`, `image`, `last_image`, `audio`, and f
 
 `ai.image.generate`, `ai.video.generate`, `ai.speech.generate` and `ai.music.generate` take an optional `save_to_files` key:
 
-| `save_to_files` | Effect | `saved_file` in the result |
-|-----------------|--------|----------------------------|
-| `""` (default) | off: only the temporary file resource is returned | `null` |
-| `"public"` | also saves the result to Files with public access | the stored file object |
-| `"private"` | also saves the result to Files with private access | the stored file object |
+| `save_to_files` | Effect | The media key (`image`/`video`/`audio`) holds |
+|-----------------|--------|-----------------------------------------------|
+| `""` (default) | off: nothing is stored | the temporary file resource |
+| `"public"` | saves the result to Files with public access | the stored file object (with `url`) |
+| `"private"` | saves the result to Files with private access | the stored file object |
 
-`save_to_files` is a **shortcut**. It saves exactly as the matching From File statement does, and `saved_file` is exactly what that statement returns (same vault path, same file object, same URL):
+There is no separate key for the stored file: with `save_to_files` set, the media key itself is the stored file. The other keys (`model`, `usage`, ...) are unchanged.
+
+`save_to_files` is a **shortcut**. It saves exactly as the matching From File statement does, and the media key holds exactly what that statement returns (same vault path, same file object, same URL):
 
 | Statement | Same as adding |
 |-----------|----------------|
@@ -66,7 +68,7 @@ Inputs that take media (`files`, `images`, `image`, `last_image`, `audio`, and f
 | `ai.speech.generate` | `storage.create_audio` (Create Audio From File) |
 | `ai.music.generate` | `storage.create_audio` (Create Audio From File) |
 
-The media output (`image`, `video`, `audio`) is still the file resource either way. Put `saved_file` (or the From File statement's result) into a file column, never the raw file resource: a file resource in a file column saves `null`.
+Put the stored file (the media key with `save_to_files` set, or the From File statement's result) into a file column, never the raw file resource: a file resource in a file column saves `null`.
 
 Both ways, storing a generated image in a table:
 
@@ -75,7 +77,7 @@ function "store_fox_shortcut" {
   input {
   }
   stack {
-    // 1. Shortcut: save_to_files, then use $fox.saved_file
+    // 1. Shortcut: with save_to_files set, $fox.image is the stored file
     ai.image.generate {
       model = "gemini-3.1-flash-image"
       prompt = "A red fox, watercolor"
@@ -84,7 +86,7 @@ function "store_fox_shortcut" {
 
     db.add "gallery" {
       data = {
-        image: $fox.saved_file
+        image: $fox.image
       }
     } as $row
   }
@@ -279,7 +281,7 @@ Create an image from a prompt, or edit one: passing any image in `images` makes 
 | `image_size` | `"1K"` | `1K`, `2K` or `4K`, as the model allows |
 | `save_to_files` | `""` | `""` (off), `"public"` or `"private"`; shortcut for `storage.create_image` |
 
-**Output:** `{image, saved_file, text, model, usage}`. `image` is a temporary file resource; `saved_file` is the stored file object when `save_to_files` is set, else `null`; `text` is any text the model returned, else `""`.
+**Output:** `{image, text, model, usage}`. `image` is the stored file object when `save_to_files` is set, else a temporary file resource; `text` is any text the model returned, else `""`.
 
 Generate an image and store it with the shortcut:
 
@@ -300,7 +302,7 @@ function "create_product_hero" {
     db.add "product_image" {
       data = {
         product_name: $input.product_name
-        image: $generated.saved_file
+        image: $generated.image
       }
     } as $row
   }
@@ -352,7 +354,7 @@ Create a short video clip, optionally from a first and last frame. The statement
 | `timeout` | `300` | seconds to wait for the result |
 | `save_to_files` | `""` | `""` (off), `"public"` or `"private"`; shortcut for `storage.create_video` |
 
-**Output:** `{video, saved_file, model, duration}`. `video` is a temporary file resource; `saved_file` is the stored file object when `save_to_files` is set, else `null`.
+**Output:** `{video, model, duration}`. `video` is the stored file object when `save_to_files` is set, else a temporary file resource.
 
 Store the clip with the shortcut:
 
@@ -375,7 +377,7 @@ function "animate_listing_photo" {
       save_to_files = "public"
     } as $clip
   }
-  response = $clip.saved_file
+  response = $clip.video
 }
 ```
 
@@ -417,7 +419,7 @@ Read text aloud (text to speech).
 | `instructions` | `""` | a style prompt, e.g. `"say cheerfully"` |
 | `save_to_files` | `""` | `""` (off), `"public"` or `"private"`; shortcut for `storage.create_audio` |
 
-**Output:** `{audio, saved_file, model, usage}`. `audio` is a temporary file resource (`audio/wav`); `saved_file` is the stored file object when `save_to_files` is set, else `null`.
+**Output:** `{audio, model, usage}`. `audio` is the stored file object when `save_to_files` is set, else a temporary file resource (`audio/wav`).
 
 Store the narration on a row with the shortcut:
 
@@ -440,7 +442,7 @@ function "narrate_article" {
       field_name = "id"
       field_value = $input.article_id
       data = {
-        narration: $speech.saved_file
+        narration: $speech.audio
       }
     } as $article
   }
@@ -477,6 +479,42 @@ function "narrate_article_explicit" {
     } as $article
   }
   response = $article
+}
+```
+
+Return the stored file from an API endpoint, with the model and usage alongside it:
+
+```xs
+query "speak" verb=POST {
+  api_group = "ai"
+  input {
+    text text
+  }
+  stack {
+    ai.speech.generate {
+      model = "gemini-3.8-flash-tts"
+      text = $input.text
+      save_to_files = "public"
+    } as $speech
+  }
+  response = $speech
+}
+```
+
+```json
+{
+  "audio": {
+    "access": "public",
+    "path": "/vault/…/speech.wav",
+    "name": "speech.wav",
+    "type": "audio",
+    "size": 214444,
+    "mime": "audio/wav",
+    "meta": {…},
+    "url": "https://…/vault/…/speech.wav"
+  },
+  "model": "gemini-3.8-flash-tts",
+  "usage": {"input_tokens": 13, "output_tokens": 107}
 }
 ```
 
@@ -652,7 +690,7 @@ Create a music clip (or, with the Lyria 3 models, a clip or full song with vocal
 | `seed` | `null` | int, for repeatable results; **`lyria-002` only** (refused on Lyria 3) |
 | `save_to_files` | `""` | `""` (off), `"public"` or `"private"`; shortcut for `storage.create_audio` |
 
-**Output:** `{audio, saved_file, lyrics, description, model}`. `audio` is a temporary file resource (WAV on `lyria-002`, MP3 on Lyria 3); `saved_file` is the stored file object when `save_to_files` is set, else `null`. `lyrics` and `description` are strings from the Lyria 3 models, or `null` when the model returns none (always `null` on `lyria-002`).
+**Output:** `{audio, lyrics, description, model}`. `audio` is the stored file object when `save_to_files` is set, else a temporary file resource (WAV on `lyria-002`, MP3 on Lyria 3). `lyrics` and `description` are strings from the Lyria 3 models, or `null` when the model returns none (always `null` on `lyria-002`).
 
 Store the jingle with the explicit From File statement (`storage.create_audio`):
 
@@ -693,7 +731,7 @@ function "make_theme_song" {
 
     db.add "song" {
       data = {
-        audio: $song.saved_file
+        audio: $song.audio
         lyrics: $song.lyrics
         description: $song.description
       }
@@ -713,17 +751,23 @@ function "make_theme_song" {
 4. **Reading `$result.json` without `response_format = "json"`.** `json` is `null` for text responses.
 5. **Mismatched embedding sizes.** `dimensions` must match the `vector` column `size`, and documents and queries must use the same model.
 6. **A model from the wrong statement.** Each statement accepts only its own catalog models (an image model on `ai.text.generate` is refused).
-7. **Putting `$result.image` / `$result.audio` / `$result.video` straight into a file column.** That is a temporary file resource, and the column saves `null`. Use `$result.saved_file` (with `save_to_files = "public"` or `"private"`) or the result of the From File statement (`storage.create_image` / `storage.create_video` / `storage.create_audio`).
+7. **Putting `$result.image` / `$result.audio` / `$result.video` straight into a file column.** That is a temporary file resource, and the column saves `null`. Set `save_to_files = "public"` (or `"private"`) on the statement (the key then holds the stored file), or use the result of the From File statement (`storage.create_image` / `storage.create_video` / `storage.create_audio`).
 
    ```xs
-   // ❌ saves null
+   // ❌ saves null (no save_to_files: $result.image is a file resource)
    db.add "gallery" {
      data = {image: $result.image}
    } as $row
 
-   // ✅
+   // ✅ save_to_files set: $result.image is the stored file
+   ai.image.generate {
+     model = "gemini-3.1-flash-image"
+     prompt = "A red fox, watercolor"
+     save_to_files = "public"
+   } as $result
+
    db.add "gallery" {
-     data = {image: $result.saved_file}
+     data = {image: $result.image}
    } as $row
    ```
 

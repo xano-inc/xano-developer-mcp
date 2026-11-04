@@ -19,8 +19,8 @@ import { resolveTopic } from "../xanoscript.js";
 import docsIndex from "../xanoscript_docs/docs_index.json" with { type: "json" };
 
 // TODO(DEV-9419): the bundled parser comes from @xano/xanoscript-language-server, which
-// learns `save_to_files` on the four media statements in the release after 12.26.0
-// (xs-language-server branch justin/DEV-9419/ai-save-and-models). Until package.json depends
+// learns `save_to_files` on the four media statements in 12.27.0
+// (xano-labs/xanoscript-language-server#74, not yet published). Until package.json depends
 // on that version, the tests that parse `save_to_files` (and the ai.md examples that use it)
 // are skipped. After the bump, delete this flag and the skipIf calls.
 // To run them early against a local language-server checkout: XS_AI_SAVE_TO_FILES=1 npx vitest run
@@ -186,7 +186,8 @@ describe("save_to_files docs", () => {
   it("has an ai.md example of each way to store media", () => {
     const all = examples.join("\n");
     expect(all).toContain(`save_to_files = "public"`);
-    expect(all).toContain(".saved_file");
+    expect(all).toContain("image: $fox.image");
+    expect(doc).not.toContain("saved_file");
     for (const from of ["storage.create_image {", "storage.create_video {", "storage.create_audio {"]) expect(all, from).toContain(from);
   });
 
@@ -194,13 +195,16 @@ describe("save_to_files docs", () => {
     expect(doc).toContain("| `\"\"` (default) | off");
     for (const statement of MEDIA_STATEMENTS) expect(doc, statement).toMatch(new RegExp(`\\| \`${statement.replace(/\./g, "\\.")}\` \\| \`storage\\.create_(image|video|audio)\``));
     expect(doc).toContain("Putting `$result.image` / `$result.audio` / `$result.video` straight into a file column");
-    expect(read("essentials.md")).toContain("saved_file");
+    expect(read("essentials.md")).toContain("the key then holds the stored file");
+    expect(read("essentials.md")).not.toContain("saved_file");
+    expect(read("working.md")).not.toContain("saved_file");
+    expect(doc).toContain("response = $speech");
   });
 
   it("lists the new models and the Lyria 3 limits", () => {
     for (const model of ["gemini-nano-banana-2.1", "lyria-3-clip-preview", "lyria-3-pro-preview"]) expect(doc, model).toContain(`\`${model}\``);
     expect(doc).toContain("**`lyria-002` only**");
-    expect(doc).toContain("{audio, saved_file, lyrics, description, model}");
+    expect(doc).toContain("{audio, lyrics, description, model}");
   });
 });
 
