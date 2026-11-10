@@ -6,7 +6,7 @@ applyTo: "function/**/*.xs, api/**/*.xs, task/*.xs, ai/tool/*.xs"
 
 One-shot model calls inside any function stack: generate text, images, video, speech and music, transcribe audio, create embeddings and rerank documents.
 
-> **TL;DR:** `ai.text.generate`, `ai.image.generate`, `ai.video.generate`, `ai.speech.generate`, `ai.speech.transcribe`, `ai.embedding.create`, `ai.rerank` and `ai.music.generate`. Each takes a `model` (a catalog model name), its inputs, and ends with `as $var`. They bill **Xano AI credits only**: there is no provider, `api_key` or BYO-model field. Media comes back as a **file resource**, which is not stored until you store it: set `save_to_files = "public"` (or `"private"`) and the media key (`image`/`video`/`audio`) holds the stored file instead, or pass the file resource to `storage.create_image` / `storage.create_video` / `storage.create_audio`.
+> **TL;DR:** `ai.text.generate`, `ai.image.generate`, `ai.video.generate`, `ai.speech.generate`, `ai.speech.transcribe`, `ai.embedding.create`, `ai.rerank` and `ai.music.generate`. Each takes a `model` (a catalog model name), its inputs, and ends with `as $var`. They bill **Xano AI credits only**: there is no provider, `api_key` or BYO-model field. Media comes back as a **file resource**, which is not stored until you store it: set `save_to_files = "public"` (or `"private"`) and the media key (`image`/`video`/`audio`) holds the stored file instead, or pass the file resource to `storage.create_image` / `storage.create_video` / `storage.create_audio`. An optional `location` (`"us"`, `"global"` or `"eu"`) picks where the model runs; blank uses the workspace's.
 
 ## Choosing a Statement
 
@@ -161,6 +161,39 @@ function "summarize_or_skip" {
     }
   }
   response = $summary
+}
+```
+
+---
+
+## Location: `location`
+
+Every `ai.*` statement takes an optional `location`: where Xano AI runs the model.
+
+| `location` | Effect |
+| --- | --- |
+| `""` (default) | The workspace's Xano AI location (Workspace Settings → AI Preferences), else Xano's default |
+| `"us"` | Processing stays in the US |
+| `"eu"` | Processing stays in the EU |
+| `"global"` | Runs where Xano's hub runs it (Google's global endpoint; `us-central1` for video and `lyria-002`) |
+
+- `"us"` and `"eu"` are offered only for the models that run there: the Gemini text models, the Claude models, `gemini-3.1-flash-image` and `gemini-embedding-2`. Any other model at `"us"` or `"eu"` is an error. The request is never moved to another location.
+- Any other value (such as `"europe-west4"`) is a validation error.
+- A Xano AI agent takes the same `location` in its `llm` block.
+
+```xs
+function "summarize_in_eu" {
+  input {
+    text body
+  }
+  stack {
+    ai.text.generate {
+      model = "gemini-3.8-flash"
+      prompt = $input.body
+      location = "eu"
+    } as $summary
+  }
+  response = $summary.text
 }
 ```
 

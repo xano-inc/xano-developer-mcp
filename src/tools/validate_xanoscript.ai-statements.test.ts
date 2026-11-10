@@ -9,6 +9,7 @@
  *   3. A missing required key fails.
  *   4. The `ai` topic is wired into the index, aliases and operations.
  *   5. `save_to_files` (DEV-9419) parses on the four media statements and is refused elsewhere.
+ *   6. `location` (us | global | eu) parses on all eight statements and is documented.
  */
 
 import { readFileSync } from "node:fs";
@@ -169,6 +170,37 @@ describe("save_to_files grammar", () => {
       save_to_files = "public"
     } as $result`);
     expect(result.valid).toBe(false);
+  });
+});
+
+describe("location grammar", () => {
+  const minimal: Record<string, string> = {
+    "ai.text.generate": `model = "gemini-3.8-flash"\n      prompt = "Hi"`,
+    "ai.image.generate": `model = "gemini-3.1-flash-image"\n      prompt = "A fox"`,
+    "ai.video.generate": `model = "veo-3.1-fast-generate-001"\n      prompt = "A fox running"`,
+    "ai.speech.generate": `model = "gemini-3.8-flash-tts"\n      text = "Hello"`,
+    "ai.speech.transcribe": `model = "gemini-3.5-transcribe"\n      audio = $input.recording`,
+    "ai.embedding.create": `model = "gemini-embedding-2"\n      input = "Hello"`,
+    "ai.rerank": `model = "semantic-ranker-default-005"\n      query = "q"\n      documents = ["a"]`,
+    "ai.music.generate": `model = "lyria-002"\n      prompt = "Calm piano"`,
+  };
+
+  for (const statement of STATEMENTS) {
+    it(`accepts location on ${statement}`, () => {
+      for (const value of [`""`, `"us"`, `"global"`, `"eu"`]) {
+        const result = check(`    ${statement} {\n      ${minimal[statement]}\n      location = ${value}\n    } as $result`);
+        expect(result.valid, `${statement} = ${value}: ${result.message}`).toBe(true);
+      }
+    });
+  }
+
+  it("documents the values, the models that run in-region and the agent llm key", () => {
+    const doc = read("ai.md");
+    expect(doc).toContain("## Location: `location`");
+    for (const value of [`\`"us"\``, `\`"eu"\``, `\`"global"\``]) expect(doc, value).toContain(`| ${value} |`);
+    expect(doc).toContain("never moved to another location");
+    expect(examples.join("\n")).toContain(`location = "eu"`);
+    expect(doc).toContain("takes the same `location` in its `llm` block");
   });
 });
 
