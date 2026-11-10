@@ -734,6 +734,10 @@ db.increment "product" {
 } as $products
 ```
 
+### 17. `api_key` on `ai.*`, an agent for a one-shot call, or raw media in a file column
+
+Xano AI `ai.*` statements bill credits only: no `api_key`/`provider` key. One prompt → one answer is `ai.text.generate`; `ai.agent.run` is for tools or multi-step work. `$result.image`/`.audio` is a temporary file resource (saves `null` in a file column) unless `save_to_files = "public"`: the key then holds the stored file. Or store a `storage.create_image`/`_audio`/`_video` result. Topic: `ai`.
+
 ---
 
 ## Validation is syntax-only
@@ -754,5 +758,6 @@ Explore more with `xano_xanoscript_docs({ topic: "<topic>" })`:
 | `functions` | Reusable function stacks, async patterns, loops |
 | `apis` | HTTP endpoints, authentication, CRUD patterns |
 | `file-uploads` | Uploading files to Xano storage (`file?`, create_attachment, signed URLs) |
+| `ai` | Xano AI statements: generate text/images/video/speech/music, transcribe, embed, rerank |
 | `security` | Security best practices and authentication |
 | `integrations` | External API patterns (OpenAI, Stripe, etc.) |

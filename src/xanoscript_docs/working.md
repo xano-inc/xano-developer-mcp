@@ -615,6 +615,41 @@ api.request {
 
 ---
 
+## AI Statements (Xano AI)
+
+```
+One-shot model call → ai.text.generate | ai.image.generate | ai.video.generate | ai.speech.generate
+                      ai.speech.transcribe | ai.embedding.create | ai.rerank | ai.music.generate
+Tools / multi-step   → ai.agent.run
+```
+
+```xs
+// Xano AI credits only: no api_key/provider key. Fails with credits_exhausted when credits run out.
+ai.text.generate {
+  model = "gemini-3.8-flash"
+  prompt = $input.question
+} as $result
+
+// Media comes back as a temporary file resource and is NOT stored automatically.
+// A file resource in a file column saves null: store it first. Either set
+// save_to_files = "public" on the media statement ($gen.image is then the stored
+// file, not a file resource), or use the From File statement (storage.create_image / create_video / create_audio):
+ai.image.generate {
+  model = "gemini-3.1-flash-image"
+  prompt = "A red fox, watercolor"
+} as $gen
+
+storage.create_image {
+  value = $gen.image
+  access = "public"
+  filename = "fox.png"
+} as $stored
+```
+
+> Keys, defaults, output shapes and the model table: `xano_xanoscript_docs({ topic: "ai" })`
+
+---
+
 ## Common Patterns
 
 ### Authentication Check
@@ -659,6 +694,7 @@ var $msg { value = ($status|to_text) ~ ": " ~ ($data|json_encode) }
 | `tables` | Database schema definitions | ~7KB |
 | `tasks` | Scheduled/cron jobs | ~6KB |
 | `triggers` | Event handlers (table, realtime, agent, MCP) | ~17KB |
+| `ai` | Xano AI statements (ai.text.generate, ai.image.generate, ...) | ~14KB |
 | `agents` | AI agent configuration | ~9KB |
 | `tools` | AI tools for agents | ~7KB |
 | `mcp-servers` | MCP server definitions | ~4KB |
