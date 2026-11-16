@@ -1,10 +1,10 @@
 ---
-applyTo: "function/**/*.xs, api/**/*.xs, middleware/*.xs"
+applyTo: "function/**/*.xs, api/**/*.xs, middleware/*.xs, ai/tool/*.xs, ai/prompt/*.xs, prompt/**/*.xs, ai/resource/*.xs, resource/**/*.xs"
 ---
 
 # Unit Testing
 
-Unit tests, mocks, and assertions defined inline within functions, API endpoints, and middleware. Unit tests validate individual construct behavior in isolation — for end-to-end workflow testing across multiple constructs, see `workflow-tests`.
+Unit tests, mocks, and assertions defined inline within functions, API endpoints, middleware, and MCP tools, prompts and resources. Unit tests validate individual construct behavior in isolation — for end-to-end workflow testing across multiple constructs, see `workflow-tests`.
 
 ## Quick Reference
 
@@ -269,6 +269,33 @@ query "products/{id}" verb=GET {
   test "handles not found" {
     input = { id: 999 }
     expect.to_be_null ($response)
+  }
+}
+```
+
+---
+
+## Testing MCP Tools, Prompts and Resources
+
+A `tool`, `prompt` or `resource` takes `test` blocks the same way. The test's `input` fills the declaration's inputs, and `$response` is its `response` value.
+
+```xs
+prompt "summarize" {
+  input {
+    text doc
+  }
+
+  stack {
+    var $messages {
+      value = [{role: "user", content: "Summarize: " ~ $input.doc}]
+    }
+  }
+
+  response = $messages
+
+  test "builds one user message" {
+    input = { doc: "hello" }
+    expect.to_not_equal ($response) { value = null }
   }
 }
 ```
