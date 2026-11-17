@@ -6,7 +6,7 @@ applyTo: "ai/agent/*.xs"
 
 AI-powered agents that use LLMs to perform tasks autonomously.
 
-> **TL;DR:** Define with `agent "name" { llm = { type: "provider", system_prompt: "...", prompt: "..." } tools = [...] }`. Providers: `xano-free`, `openai`, `anthropic`, `google-genai`. Tools give agents capabilities.
+> **TL;DR:** Define with `agent "name" { llm = { type: "provider", system_prompt: "...", prompt: "..." } tools = [...] }`. Providers: `xano-ai`, `openai`, `anthropic`, `google-genai` (`xano-free` is deprecated). Tools give agents capabilities.
 
 ---
 
@@ -29,7 +29,8 @@ agent "<name>" {
 ### LLM Providers
 | Provider | Type Value |
 |----------|------------|
-| Xano Free (Gemini) | `xano-free` |
+| Xano AI (charged in credits) | `xano-ai` |
+| Xano Free (deprecated, runs as Xano AI) | `xano-free` |
 | Google Gemini | `google-genai` |
 | OpenAI | `openai` |
 | Anthropic | `anthropic` |
@@ -43,7 +44,7 @@ agent "Customer Support" {
   canonical = "support-agent-v1"
   description = "Handles customer inquiries"
   llm = {
-    type: "xano-free"
+    type: "xano-ai"
     system_prompt: "You are a helpful customer support agent."
     prompt: "{{ $args.user_message }}"
     max_steps: 5
@@ -92,17 +93,22 @@ llm = {
 
 ## Provider Configurations
 
-### Xano Free (for testing)
+### Xano AI
+Runs on Xano's own models and is charged in AI credits, so it needs no API key. It uses Xano AI's default model; there is no `model` field.
 ```xs
 llm = {
-  type: "xano-free"
+  type: "xano-ai"
   system_prompt: "You are a helpful assistant."
   prompt: "{{ $args.message }}"
   max_steps: 3
   temperature: 0
   search_grounding: false               // Google Search grounding
+  location: "eu"                        // Optional: "us", "global" or "eu"; omit for the workspace default
 }
 ```
+
+### Xano Free (deprecated)
+`type: "xano-free"` is still valid, so existing agents keep working, but the validator marks it deprecated. Where Xano AI is available, a `xano-free` agent runs as Xano AI: charged in credits, on Xano AI's default model and the workspace's location. Write new agents with `type: "xano-ai"`.
 
 ### Google Gemini
 ```xs
